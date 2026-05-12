@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  role      String   @default("USER") // ADMIN or USER
+  createdAt DateTime @default(now())
+}
+
+model Vendor {
+  id           String       @id @default(cuid())
+  name         String
+  category     String
+  status       String       @default("NEGOTIATION") // NEGOTIATION, CONTRACTED, FINALIZED
+  contractLink String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  budgetItems  BudgetItem[]
+  payments     Payment[]
+}
+
+model BudgetItem {
+  id             String   @id @default(cuid())
+  title          String
+  estimatedValue Float
+  actualValue    Float?
+  vendorId       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  vendor         Vendor?  @relation(fields: [vendorId], references: [id])
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  amount            Float
+  dueDate           DateTime
+  status            String   @default("PENDING") // PENDING, PAID
+  method            String?  // PIX, CREDIT, BOLETO
+  installmentNumber Int?
+  totalInstallments Int?
+  vendorId          String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  vendor            Vendor   @relation(fields: [vendorId], references: [id])
+}
+
+model Asset {
+  id        String   @id @default(cuid())
+  title     String
+  amount    Float
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

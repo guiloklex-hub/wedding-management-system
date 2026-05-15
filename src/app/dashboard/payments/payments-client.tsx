@@ -412,25 +412,34 @@ export default function PaymentsClient({ payments, vendors }: Props) {
                         </select>
                       </div>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-zinc-400">Parcela #</label>
+                    <div>
+                      <p className="mb-1 text-sm font-medium text-zinc-400">
+                        Parcelas <span className="text-xs text-zinc-500">(opcional)</span>
+                      </p>
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                         <input
                           type="number"
                           name="installmentNumber"
                           min="1"
+                          max="999"
+                          placeholder="ex: 1"
+                          aria-label="Número da parcela atual"
                           className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
                         />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-zinc-400">de</label>
+                        <span className="text-zinc-500">de</span>
                         <input
                           type="number"
                           name="totalInstallments"
                           min="1"
+                          max="999"
+                          placeholder="ex: 12"
+                          aria-label="Total de parcelas"
                           className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
                         />
                       </div>
+                      <p className="mt-1 text-[11px] text-zinc-500">
+                        Deixe em branco para pagamento único.
+                      </p>
                     </div>
                   </>
                 ) : (
@@ -654,24 +663,30 @@ function EditPaymentModal({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Parcela #</label>
+          <div>
+            <p className="mb-1 text-sm font-medium text-zinc-400">
+              Parcelas <span className="text-xs text-zinc-500">(opcional)</span>
+            </p>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
               <input
                 type="number"
                 name="installmentNumber"
                 min="1"
+                max="999"
+                placeholder="ex: 1"
                 defaultValue={payment.installmentNumber ?? ""}
+                aria-label="Número da parcela atual"
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
               />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">de</label>
+              <span className="text-zinc-500">de</span>
               <input
                 type="number"
                 name="totalInstallments"
                 min="1"
+                max="999"
+                placeholder="ex: 12"
                 defaultValue={payment.totalInstallments ?? ""}
+                aria-label="Total de parcelas"
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
               />
             </div>

@@ -9,14 +9,26 @@ import type { ActionResult } from "@/types";
 
 const PaymentMethodSchema = z.enum(["PIX", "BOLETO", "CREDIT", "TRANSFER", "CASH"]);
 
-const PaymentCreateSchema = z.object({
-  amount: z.coerce.number().min(0.01),
+const optionalInstallment = z.preprocess(
+  (v) => (v === "" || v == null ? undefined : v),
+  z.coerce
+    .number({ message: "Parcela deve ser um número" })
+    .int("Parcela deve ser inteira")
+    .min(1, "Parcela deve ser pelo menos 1")
+    .max(999, "Parcela acima do limite (máx. 999)")
+    .optional(),
+);
+
+const PaymentBaseSchema = z.object({
+  amount: z.coerce
+    .number({ message: "Valor inválido" })
+    .min(0.01, "Valor deve ser maior que zero"),
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
   status: z.enum(["PENDING", "PAID"]),
   method: PaymentMethodSchema,
-  installmentNumber: z.coerce.number().int().min(1).max(120).optional(),
-  totalInstallments: z.coerce.number().int().min(1).max(120).optional(),
-  vendorId: z.string().min(1),
+  installmentNumber: optionalInstallment,
+  totalInstallments: optionalInstallment,
+  vendorId: z.string().min(1, "Selecione um fornecedor"),
   notes: z
     .string()
     .trim()
@@ -25,8 +37,34 @@ const PaymentCreateSchema = z.object({
     .transform((v) => (v && v.length > 0 ? v : undefined)),
 });
 
-const PaymentUpdateSchema = PaymentCreateSchema.extend({
+const PaymentCreateSchema = PaymentBaseSchema.superRefine((data, ctx) => {
+  if (
+    data.installmentNumber != null &&
+    data.totalInstallments != null &&
+    data.installmentNumber > data.totalInstallments
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["installmentNumber"],
+      message: "Parcela atual não pode ser maior que o total de parcelas",
+    });
+  }
+});
+
+const PaymentUpdateSchema = PaymentBaseSchema.extend({
   id: z.string().min(1),
+}).superRefine((data, ctx) => {
+  if (
+    data.installmentNumber != null &&
+    data.totalInstallments != null &&
+    data.installmentNumber > data.totalInstallments
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["installmentNumber"],
+      message: "Parcela atual não pode ser maior que o total de parcelas",
+    });
+  }
 });
 
 const SplitPaymentSchema = z.object({

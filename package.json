@@ -11,7 +11,10 @@
     "setup:prod": "bash setup.sh --prod",
     "db:push": "prisma db push --skip-generate && prisma generate",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@libsql/client": "^0.17.3",
@@ -36,16 +39,24 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.2",
+    "@vitest/coverage-v8": "^4.1.6",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "happy-dom": "^20.9.0",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.6",
+    "vitest-mock-extended": "^4.0.0"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

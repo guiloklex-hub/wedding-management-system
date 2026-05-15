@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
+  BarChart3,
   Building2,
   CheckSquare,
   CreditCard,
@@ -29,6 +30,7 @@ type NavLink = {
 
 const LINKS: NavLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: Home, exact: true },
+  { href: "/dashboard/insights", label: "Insights", icon: BarChart3 },
   { href: "/dashboard/vendors", label: "Fornecedores", icon: Users },
   { href: "/dashboard/venues", label: "Locais", icon: Building2 },
   { href: "/dashboard/tasks", label: "Tarefas", icon: CheckSquare },

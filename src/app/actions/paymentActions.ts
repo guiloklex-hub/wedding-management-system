@@ -1,114 +1,252 @@
-'use server';
+"use server";
 
-import { PrismaClient } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { audit } from "@/lib/audit";
+import { getEventConfig } from "@/lib/event-config";
+import type { ActionResult } from "@/types";
 
-const prisma = new PrismaClient();
+const PaymentMethodSchema = z.enum(["PIX", "BOLETO", "CREDIT", "TRANSFER", "CASH"]);
 
-const PaymentSchema = z.object({
+const PaymentCreateSchema = z.object({
   amount: z.coerce.number().min(0.01),
-  dueDate: z.string(),
-  status: z.enum(['PENDING', 'PAID']),
-  method: z.string(),
-  installmentNumber: z.coerce.number().optional(),
-  totalInstallments: z.coerce.number().optional(),
-  vendorId: z.string(),
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
+  status: z.enum(["PENDING", "PAID"]),
+  method: PaymentMethodSchema,
+  installmentNumber: z.coerce.number().int().min(1).max(120).optional(),
+  totalInstallments: z.coerce.number().int().min(1).max(120).optional(),
+  vendorId: z.string().min(1),
+  notes: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : undefined)),
 });
 
-export async function createPayment(state: any, formData: FormData) {
+const PaymentUpdateSchema = PaymentCreateSchema.extend({
+  id: z.string().min(1),
+});
+
+const SplitPaymentSchema = z.object({
+  depositAmount: z.coerce.number().min(0.01),
+  depositMethod: PaymentMethodSchema,
+  finalAmount: z.coerce.number().min(0.01),
+  finalDueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  finalMethod: PaymentMethodSchema.default("PIX"),
+  vendorId: z.string().min(1),
+});
+
+async function validateDueDateAgainstEvent(method: string, dueDate: Date): Promise<string | null> {
+  const cfg = await getEventConfig();
+  if (method !== "CREDIT" && dueDate > cfg.eventDate) {
+    return "Pagamentos (exceto crédito) não podem ser posteriores à data do evento.";
+  }
+  return null;
+}
+
+export async function createPayment(
+  _state: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
   const data = Object.fromEntries(formData.entries());
-  
-  const method = data.method as string;
-  const dueDateLimit = new Date('2026-11-15T00:00:00.000Z');
-  const dueDate = new Date(data.dueDate as string);
-  
-  if (method !== 'CREDIT' && dueDate > dueDateLimit) {
-    return { error: 'Pagamentos (exceto crédito) não podem ser posteriores à data do evento.' };
+  const parsed = PaymentCreateSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
-  const parsed = PaymentSchema.safeParse(data);
-  if (!parsed.success) {
-    return { error: 'Dados inválidos' };
-  }
+  const dueDate = new Date(parsed.data.dueDate);
+  const dateError = await validateDueDateAgainstEvent(parsed.data.method, dueDate);
+  if (dateError) return { success: false, error: dateError };
 
   try {
-    await prisma.payment.create({
+    const vendor = await prisma.vendor.findFirst({
+      where: { id: parsed.data.vendorId, deletedAt: null },
+    });
+    if (!vendor) return { success: false, error: "Fornecedor não encontrado" };
+
+    const created = await prisma.payment.create({
       data: {
         amount: parsed.data.amount,
-        dueDate: new Date(parsed.data.dueDate),
+        dueDate,
         status: parsed.data.status,
         method: parsed.data.method,
         installmentNumber: parsed.data.installmentNumber,
         totalInstallments: parsed.data.totalInstallments,
+        notes: parsed.data.notes,
         vendorId: parsed.data.vendorId,
-      }
+        paidAt: parsed.data.status === "PAID" ? new Date() : null,
+      },
     });
-    revalidatePath('/dashboard');
+
+    await audit("Payment", created.id, "CREATE", { vendorId: vendor.id, amount: created.amount });
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/payments");
     return { success: true };
-  } catch (error) {
-    return { error: 'Erro ao criar pagamento' };
+  } catch (err) {
+    console.error("[createPayment]", err);
+    return { success: false, error: "Erro ao criar pagamento" };
   }
 }
 
-export async function markPaymentAsPaid(paymentId: string) {
+export async function updatePayment(
+  _state: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const data = Object.fromEntries(formData.entries());
+  const parsed = PaymentUpdateSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+
+  const dueDate = new Date(parsed.data.dueDate);
+  const dateError = await validateDueDateAgainstEvent(parsed.data.method, dueDate);
+  if (dateError) return { success: false, error: dateError };
+
   try {
-    await prisma.payment.update({
-      where: { id: paymentId },
-      data: { status: 'PAID' }
+    const existing = await prisma.payment.findFirst({
+      where: { id: parsed.data.id, deletedAt: null },
     });
-    revalidatePath('/dashboard');
+    if (!existing) return { success: false, error: "Pagamento não encontrado" };
+
+    const wasPaid = existing.status === "PAID";
+    const nowPaid = parsed.data.status === "PAID";
+
+    await prisma.payment.update({
+      where: { id: parsed.data.id },
+      data: {
+        amount: parsed.data.amount,
+        dueDate,
+        status: parsed.data.status,
+        method: parsed.data.method,
+        installmentNumber: parsed.data.installmentNumber,
+        totalInstallments: parsed.data.totalInstallments,
+        notes: parsed.data.notes,
+        vendorId: parsed.data.vendorId,
+        paidAt: nowPaid ? existing.paidAt ?? new Date() : null,
+      },
+    });
+
+    await audit("Payment", parsed.data.id, "UPDATE", { wasPaid, nowPaid });
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/payments");
     return { success: true };
-  } catch (error) {
-    return { error: 'Erro ao atualizar pagamento' };
+  } catch (err) {
+    console.error("[updatePayment]", err);
+    return { success: false, error: "Erro ao atualizar pagamento" };
   }
 }
 
-const SplitPaymentSchema = z.object({
-  depositAmount: z.coerce.number().min(0.01),
-  depositMethod: z.string(),
-  finalAmount: z.coerce.number().min(0.01),
-  finalDueDate: z.string(),
-  vendorId: z.string(),
-});
+export async function markPaymentAsPaid(paymentId: string): Promise<ActionResult> {
+  try {
+    const result = await prisma.payment.updateMany({
+      where: { id: paymentId, deletedAt: null, status: "PENDING" },
+      data: { status: "PAID", paidAt: new Date() },
+    });
+    if (result.count === 0) return { success: false, error: "Pagamento não encontrado ou já pago" };
 
-export async function createSplitPayment(state: any, formData: FormData) {
+    await audit("Payment", paymentId, "MARK_PAID");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/payments");
+    return { success: true };
+  } catch (err) {
+    console.error("[markPaymentAsPaid]", err);
+    return { success: false, error: "Erro ao quitar pagamento" };
+  }
+}
+
+export async function undoPaymentPaid(paymentId: string): Promise<ActionResult> {
+  try {
+    const result = await prisma.payment.updateMany({
+      where: { id: paymentId, deletedAt: null, status: "PAID" },
+      data: { status: "PENDING", paidAt: null },
+    });
+    if (result.count === 0) return { success: false, error: "Não é possível estornar este pagamento" };
+
+    await audit("Payment", paymentId, "UNDO_PAID");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/payments");
+    return { success: true };
+  } catch (err) {
+    console.error("[undoPaymentPaid]", err);
+    return { success: false, error: "Erro ao estornar pagamento" };
+  }
+}
+
+export async function deletePayment(paymentId: string): Promise<ActionResult> {
+  try {
+    const result = await prisma.payment.updateMany({
+      where: { id: paymentId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+    if (result.count === 0) return { success: false, error: "Pagamento não encontrado" };
+
+    await audit("Payment", paymentId, "DELETE");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/payments");
+    return { success: true };
+  } catch (err) {
+    console.error("[deletePayment]", err);
+    return { success: false, error: "Erro ao excluir pagamento" };
+  }
+}
+
+export async function createSplitPayment(
+  _state: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
   const data = Object.fromEntries(formData.entries());
   const parsed = SplitPaymentSchema.safeParse(data);
   if (!parsed.success) {
-    return { error: 'Dados inválidos para split' };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos para split" };
   }
-  
+
+  const finalDue = new Date(parsed.data.finalDueDate);
+  const dateError = await validateDueDateAgainstEvent(parsed.data.finalMethod, finalDue);
+  if (dateError) return { success: false, error: dateError };
+
   try {
-    await prisma.$transaction(async (tx) => {
-      // Entrada
-      await tx.payment.create({
+    const vendor = await prisma.vendor.findFirst({
+      where: { id: parsed.data.vendorId, deletedAt: null },
+    });
+    if (!vendor) return { success: false, error: "Fornecedor não encontrado" };
+
+    const now = new Date();
+    const [deposit, balance] = await prisma.$transaction([
+      prisma.payment.create({
         data: {
           amount: parsed.data.depositAmount,
-          dueDate: new Date(),
-          status: 'PAID',
+          dueDate: now,
+          paidAt: now,
+          status: "PAID",
           method: parsed.data.depositMethod,
           vendorId: parsed.data.vendorId,
           installmentNumber: 1,
           totalInstallments: 2,
-        }
-      });
-      // Saldo Final
-      await tx.payment.create({
+        },
+      }),
+      prisma.payment.create({
         data: {
           amount: parsed.data.finalAmount,
-          dueDate: new Date(parsed.data.finalDueDate),
-          status: 'PENDING',
-          method: 'PIX', // default, can be edited later
+          dueDate: finalDue,
+          status: "PENDING",
+          method: parsed.data.finalMethod,
           vendorId: parsed.data.vendorId,
           installmentNumber: 2,
           totalInstallments: 2,
-        }
-      });
-    });
-    revalidatePath('/dashboard');
+        },
+      }),
+    ]);
+
+    await audit("Payment", deposit.id, "CREATE", { type: "split-deposit" });
+    await audit("Payment", balance.id, "CREATE", { type: "split-balance" });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/payments");
     return { success: true };
-  } catch (error) {
-    return { error: 'Erro ao criar pagamentos divididos' };
+  } catch (err) {
+    console.error("[createSplitPayment]", err);
+    return { success: false, error: "Erro ao criar pagamentos divididos" };
   }
 }

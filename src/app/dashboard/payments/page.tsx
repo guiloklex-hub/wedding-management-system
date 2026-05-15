@@ -1,21 +1,25 @@
-import { PrismaClient } from '@prisma/client';
-import PaymentsClient from './payments-client';
+import { prisma } from "@/lib/prisma";
+import PaymentsClient from "./payments-client";
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
+
 
 export default async function PaymentsPage() {
-  const payments = await prisma.payment.findMany({
-    include: { vendor: true },
-    orderBy: { dueDate: 'asc' }
-  });
-  
-  const vendors = await prisma.vendor.findMany({
-    where: { status: { in: ['CONTRACTED', 'FINALIZED'] } }
-  });
+  const [payments, vendors] = await Promise.all([
+    prisma.payment.findMany({
+      where: { deletedAt: null },
+      include: { vendor: true },
+      orderBy: { dueDate: "asc" },
+    }),
+    prisma.vendor.findMany({
+      where: { deletedAt: null, status: { in: ["CONTRACTED", "FINALIZED"] } },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-white">Pagamentos</h1>
       </div>
       <PaymentsClient payments={payments} vendors={vendors} />

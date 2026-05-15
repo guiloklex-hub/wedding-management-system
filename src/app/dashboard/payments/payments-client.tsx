@@ -1,178 +1,532 @@
-'use client';
+"use client";
 
-import { useState, useActionState, useEffect } from 'react';
-import { createPayment, markPaymentAsPaid, createSplitPayment } from '@/app/actions/paymentActions';
-import { Plus, Loader2, CheckCircle2 } from 'lucide-react';
+import { useMemo, useState, useTransition } from "react";
+import {
+  CheckCircle2,
+  Loader2,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Search,
+  Trash2,
+} from "lucide-react";
+import {
+  createPayment,
+  createSplitPayment,
+  deletePayment,
+  markPaymentAsPaid,
+  undoPaymentPaid,
+  updatePayment,
+} from "@/app/actions/paymentActions";
+import { useToast } from "@/components/toast";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { formatCurrency, formatDateBR, toIsoDate } from "@/lib/format";
+import type { Payment, PaymentMethod, PaymentStatus, Vendor } from "@/types";
 
-export default function PaymentsClient({ payments, vendors }: { payments: any[], vendors: any[] }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+type PaymentWithVendor = Payment & { vendor: Vendor };
+
+type Props = {
+  payments: PaymentWithVendor[];
+  vendors: Vendor[];
+};
+
+const METHODS: { value: PaymentMethod; label: string }[] = [
+  { value: "PIX", label: "PIX" },
+  { value: "BOLETO", label: "Boleto" },
+  { value: "CREDIT", label: "Cartão de Crédito" },
+  { value: "TRANSFER", label: "Transferência" },
+  { value: "CASH", label: "Dinheiro" },
+];
+
+export default function PaymentsClient({ payments, vendors }: Props) {
+  const toast = useToast();
+  const [isCreateOpen, setCreateOpen] = useState(false);
+  const [editing, setEditing] = useState<PaymentWithVendor | null>(null);
+  const [deleting, setDeleting] = useState<PaymentWithVendor | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | PaymentStatus>("ALL");
   const [isSplit, setIsSplit] = useState(false);
-  
-  const [createState, createAction, isCreating] = useActionState(createPayment, undefined);
-  const [splitState, splitAction, isSplitting] = useActionState(createSplitPayment, undefined);
+  const [, startTransition] = useTransition();
+  const [isCreating, setCreating] = useState(false);
+  const [isUpdating, setUpdating] = useState(false);
 
-  useEffect(() => {
-    if (createState?.error) alert(createState.error);
-    if (splitState?.error) alert(splitState.error);
-  }, [createState, splitState]);
+  function handleCreate(formData: FormData) {
+    setCreating(true);
+    startTransition(async () => {
+      try {
+        const r = isSplit
+          ? await createSplitPayment(undefined, formData)
+          : await createPayment(undefined, formData);
+        if (r.success) {
+          toast.success(isSplit ? "Entrada e saldo registrados" : "Pagamento criado");
+          setCreateOpen(false);
+          setIsSplit(false);
+        } else {
+          toast.error("Falha ao criar", r.error);
+        }
+      } finally {
+        setCreating(false);
+      }
+    });
+  }
+
+  function handleUpdate(formData: FormData) {
+    setUpdating(true);
+    startTransition(async () => {
+      try {
+        const r = await updatePayment(undefined, formData);
+        if (r.success) {
+          toast.success("Pagamento atualizado");
+          setEditing(null);
+        } else {
+          toast.error("Falha ao atualizar", r.error);
+        }
+      } finally {
+        setUpdating(false);
+      }
+    });
+  }
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return payments.filter((p) => {
+      if (statusFilter !== "ALL" && p.status !== statusFilter) return false;
+      if (term && !p.vendor.name.toLowerCase().includes(term)) return false;
+      return true;
+    });
+  }, [payments, search, statusFilter]);
+
+  function handleMarkPaid(payment: PaymentWithVendor) {
+    startTransition(async () => {
+      const r = await markPaymentAsPaid(payment.id);
+      if (r.success) toast.success("Pagamento quitado");
+      else toast.error("Falha", r.error);
+    });
+  }
+
+  function handleUndo(payment: PaymentWithVendor) {
+    startTransition(async () => {
+      const r = await undoPaymentPaid(payment.id);
+      if (r.success) toast.success("Pagamento estornado");
+      else toast.error("Falha", r.error);
+    });
+  }
+
+  function handleDelete() {
+    if (!deleting) return;
+    const target = deleting;
+    startTransition(async () => {
+      const r = await deletePayment(target.id);
+      if (r.success) {
+        toast.success("Pagamento excluído");
+        setDeleting(null);
+      } else {
+        toast.error("Falha ao excluir", r.error);
+      }
+    });
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-end">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por fornecedor..."
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as "ALL" | PaymentStatus)}
+            className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+          >
+            <option value="ALL">Todos os status</option>
+            <option value="PENDING">Pendente</option>
+            <option value="PAID">Pago</option>
+          </select>
+        </div>
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-2 bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-xl transition-colors font-medium text-sm shadow-lg"
+          onClick={() => setCreateOpen(true)}
+          className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-rose-500"
         >
           <Plus className="h-4 w-4" />
           <span>Novo Pagamento</span>
         </button>
       </div>
 
-      <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl overflow-hidden backdrop-blur-sm">
+      <div className="hidden overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-zinc-400">
-            <thead className="text-xs uppercase bg-zinc-900/80 text-zinc-500 border-b border-zinc-800">
+            <thead className="border-b border-zinc-800 bg-zinc-900/80 text-xs uppercase text-zinc-500">
               <tr>
-                <th className="px-6 py-4 font-medium">Data Vencimento</th>
+                <th className="px-6 py-4 font-medium">Vencimento</th>
                 <th className="px-6 py-4 font-medium">Fornecedor</th>
                 <th className="px-6 py-4 font-medium">Valor</th>
                 <th className="px-6 py-4 font-medium">Método</th>
+                <th className="px-6 py-4 font-medium">Parcela</th>
                 <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium text-right">Ações</th>
+                <th className="px-6 py-4 text-right font-medium">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {payments.length === 0 ? (
+              {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
-                    Nenhum pagamento cadastrado.
+                  <td colSpan={7} className="px-6 py-8 text-center text-zinc-500">
+                    {payments.length === 0 ? "Nenhum pagamento cadastrado." : "Nenhum resultado para o filtro."}
                   </td>
                 </tr>
               ) : (
-                payments.map((payment) => {
-                  return (
-                    <tr key={payment.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
-                      <td className="px-6 py-4 text-zinc-200">{new Date(payment.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
-                      <td className="px-6 py-4">{payment.vendor.name}</td>
-                      <td className="px-6 py-4 font-medium text-rose-400">
-                        R$ {payment.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-6 py-4">{payment.method}</td>
-                      <td className="px-6 py-4">
-                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
-                          payment.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                        }`}>
-                          {payment.status === 'PAID' ? 'Pago' : 'Pendente'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        {payment.status === 'PENDING' && (
-                          <button 
-                            onClick={async () => await markPaymentAsPaid(payment.id)}
-                            className="text-emerald-500 hover:text-emerald-400 transition-colors flex items-center justify-end w-full space-x-1"
+                filtered.map((payment) => (
+                  <tr key={payment.id} className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30">
+                    <td className="px-6 py-4 text-zinc-200">{formatDateBR(payment.dueDate)}</td>
+                    <td className="px-6 py-4">{payment.vendor.name}</td>
+                    <td className="px-6 py-4 font-medium text-rose-400">{formatCurrency(payment.amount)}</td>
+                    <td className="px-6 py-4">{payment.method ?? "—"}</td>
+                    <td className="px-6 py-4 text-xs text-zinc-500">
+                      {payment.installmentNumber && payment.totalInstallments
+                        ? `${payment.installmentNumber}/${payment.totalInstallments}`
+                        : "—"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
+                          payment.status === "PAID"
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        }`}
+                      >
+                        {payment.status === "PAID" ? "Pago" : "Pendente"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-1">
+                        {payment.status === "PENDING" ? (
+                          <button
+                            type="button"
+                            onClick={() => handleMarkPaid(payment)}
+                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-emerald-400 transition-colors hover:bg-emerald-500/10"
+                            aria-label="Quitar"
                           >
                             <CheckCircle2 className="h-4 w-4" />
-                            <span>Quitar</span>
+                            <span className="text-xs">Quitar</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleUndo(payment)}
+                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-amber-400 transition-colors hover:bg-amber-500/10"
+                            aria-label="Estornar"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                            <span className="text-xs">Estornar</span>
                           </button>
                         )}
-                      </td>
-                    </tr>
-                  );
-                })
+                        <button
+                          type="button"
+                          onClick={() => setEditing(payment)}
+                          className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+                          aria-label="Editar"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleting(payment)}
+                          className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+                          aria-label="Excluir"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {isModalOpen && (
+      <div className="space-y-3 md:hidden">
+        {filtered.length === 0 ? (
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 px-4 py-8 text-center text-sm text-zinc-500">
+            {payments.length === 0 ? "Nenhum pagamento cadastrado." : "Nenhum resultado para o filtro."}
+          </div>
+        ) : (
+          filtered.map((payment) => (
+            <div key={payment.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-zinc-100">{payment.vendor.name}</p>
+                  <p className="mt-1 text-xs text-zinc-500">Vence em {formatDateBR(payment.dueDate)}</p>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                    payment.status === "PAID"
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                  }`}
+                >
+                  {payment.status === "PAID" ? "Pago" : "Pendente"}
+                </span>
+              </div>
+              <div className="mt-3 flex items-end justify-between">
+                <div>
+                  <p className="text-lg font-semibold text-rose-400">{formatCurrency(payment.amount)}</p>
+                  <p className="text-[11px] text-zinc-500">
+                    {payment.method ?? "—"}
+                    {payment.installmentNumber && payment.totalInstallments
+                      ? ` · ${payment.installmentNumber}/${payment.totalInstallments}`
+                      : ""}
+                  </p>
+                </div>
+                <div className="flex gap-1">
+                  {payment.status === "PENDING" ? (
+                    <button
+                      type="button"
+                      onClick={() => handleMarkPaid(payment)}
+                      className="rounded-lg bg-emerald-500/10 p-2 text-emerald-400"
+                      aria-label="Quitar"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleUndo(payment)}
+                      className="rounded-lg bg-amber-500/10 p-2 text-amber-400"
+                      aria-label="Estornar"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setEditing(payment)}
+                    className="rounded-lg bg-zinc-800/60 p-2 text-zinc-300"
+                    aria-label="Editar"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleting(payment)}
+                    className="rounded-lg bg-zinc-800/60 p-2 text-rose-400"
+                    aria-label="Excluir"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
             <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
+              <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-white">Novo Pagamento</h2>
-                <label className="flex items-center space-x-2 text-sm text-zinc-400 cursor-pointer">
-                  <input type="checkbox" checked={isSplit} onChange={(e) => setIsSplit(e.target.checked)} className="accent-rose-500" />
-                  <span>Dividir (Entrada + Saldo)</span>
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400">
+                  <input
+                    type="checkbox"
+                    checked={isSplit}
+                    onChange={(e) => setIsSplit(e.target.checked)}
+                    className="accent-rose-500"
+                  />
+                  <span>Entrada + Saldo</span>
                 </label>
               </div>
-              
-              <form action={(formData) => { 
-                  if (isSplit) {
-                    splitAction(formData);
-                  } else {
-                    createAction(formData);
-                  }
-                  setIsModalOpen(false); 
-                }} 
-                className="space-y-4"
-              >
+
+              <form action={handleCreate} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1">Fornecedor</label>
-                  <select name="vendorId" required className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50">
+                  <label className="mb-1 block text-sm font-medium text-zinc-400">Fornecedor</label>
+                  <select
+                    name="vendorId"
+                    required
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+                  >
                     <option value="">Selecione...</option>
-                    {vendors.map(v => (
-                      <option key={v.id} value={v.id}>{v.name}</option>
+                    {vendors.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 {!isSplit ? (
                   <>
-                    <div>
-                      <label className="block text-sm font-medium text-zinc-400 mb-1">Valor da Parcela (R$)</label>
-                      <input type="number" step="0.01" name="amount" required className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-zinc-400 mb-1">Data de Vencimento</label>
-                      <input type="date" name="dueDate" required className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-zinc-400 mb-1">Método</label>
-                      <select name="method" required className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50">
-                        <option value="PIX">PIX</option>
-                        <option value="BOLETO">Boleto</option>
-                        <option value="CREDIT">Cartão de Crédito</option>
-                      </select>
-                    </div>
-                    <input type="hidden" name="status" value="PENDING" />
-                  </>
-                ) : (
-                  <>
-                    <div className="p-3 rounded-lg border border-zinc-800 bg-zinc-950/50 space-y-3">
-                      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">1. Entrada (Já Paga hoje)</h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-zinc-400 mb-1">Valor da Entrada (R$)</label>
-                        <input type="number" step="0.01" name="depositAmount" required className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-zinc-200 outline-none focus:border-rose-500/50" />
+                        <label className="mb-1 block text-sm font-medium text-zinc-400">Valor (R$)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          name="amount"
+                          required
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+                        />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-zinc-400 mb-1">Método da Entrada</label>
-                        <select name="depositMethod" required className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-zinc-200 outline-none focus:border-rose-500/50">
-                          <option value="PIX">PIX</option>
-                          <option value="BOLETO">Boleto</option>
-                          <option value="CREDIT">Cartão de Crédito</option>
+                        <label className="mb-1 block text-sm font-medium text-zinc-400">Vencimento</label>
+                        <input
+                          type="date"
+                          name="dueDate"
+                          required
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-zinc-400">Método</label>
+                        <select
+                          name="method"
+                          required
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+                        >
+                          {METHODS.map((m) => (
+                            <option key={m.value} value={m.value}>
+                              {m.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-zinc-400">Status</label>
+                        <select
+                          name="status"
+                          defaultValue="PENDING"
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+                        >
+                          <option value="PENDING">Pendente</option>
+                          <option value="PAID">Pago</option>
                         </select>
                       </div>
                     </div>
-                    
-                    <div className="p-3 rounded-lg border border-zinc-800 bg-zinc-950/50 space-y-3">
-                      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">2. Saldo Final (Pendente)</h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-zinc-400 mb-1">Valor do Saldo (R$)</label>
-                        <input type="number" step="0.01" name="finalAmount" required className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-zinc-200 outline-none focus:border-rose-500/50" />
+                        <label className="mb-1 block text-sm font-medium text-zinc-400">Parcela #</label>
+                        <input
+                          type="number"
+                          name="installmentNumber"
+                          min="1"
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+                        />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-zinc-400 mb-1">Data Vencimento Saldo</label>
-                        <input type="date" name="finalDueDate" defaultValue="2026-10-31" required className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-zinc-200 outline-none focus:border-rose-500/50" />
+                        <label className="mb-1 block text-sm font-medium text-zinc-400">de</label>
+                        <input
+                          type="number"
+                          name="totalInstallments"
+                          min="1"
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                        1. Entrada (paga hoje)
+                      </h3>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-zinc-400">Valor (R$)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            name="depositAmount"
+                            required
+                            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2 text-zinc-200 outline-none focus:border-rose-500/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-zinc-400">Método</label>
+                          <select
+                            name="depositMethod"
+                            required
+                            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2 text-zinc-200 outline-none focus:border-rose-500/50"
+                          >
+                            {METHODS.map((m) => (
+                              <option key={m.value} value={m.value}>
+                                {m.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                        2. Saldo final (pendente)
+                      </h3>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-zinc-400">Valor (R$)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            name="finalAmount"
+                            required
+                            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2 text-zinc-200 outline-none focus:border-rose-500/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-zinc-400">Vencimento</label>
+                          <input
+                            type="date"
+                            name="finalDueDate"
+                            required
+                            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2 text-zinc-200 outline-none focus:border-rose-500/50"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-zinc-400">Método do saldo</label>
+                        <select
+                          name="finalMethod"
+                          defaultValue="PIX"
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2 text-zinc-200 outline-none focus:border-rose-500/50"
+                        >
+                          {METHODS.map((m) => (
+                            <option key={m.value} value={m.value}>
+                              {m.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </>
                 )}
-                
-                <div className="flex space-x-3 pt-4">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl py-2.5 transition-colors font-medium text-sm">Cancelar</button>
-                  <button type="submit" disabled={isCreating || isSplitting} className="flex-1 flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white rounded-xl py-2.5 transition-colors font-medium text-sm disabled:opacity-50">
-                    {isCreating || isSplitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar Pagamento'}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreateOpen(false);
+                      setIsSplit(false);
+                    }}
+                    className="flex-1 rounded-xl bg-zinc-800 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isCreating}
+                    className="flex flex-1 items-center justify-center rounded-xl bg-rose-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-rose-500 disabled:opacity-50"
+                  >
+                    {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
                   </button>
                 </div>
               </form>
@@ -180,6 +534,178 @@ export default function PaymentsClient({ payments, vendors }: { payments: any[],
           </div>
         </div>
       )}
+
+      {editing && (
+        <EditPaymentModal
+          payment={editing}
+          vendors={vendors}
+          isBusy={isUpdating}
+          formAction={handleUpdate}
+          onClose={() => setEditing(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        open={!!deleting}
+        title="Excluir pagamento?"
+        description={
+          deleting
+            ? `Pagamento de ${formatCurrency(deleting.amount)} para ${deleting.vendor.name}.\nEssa ação fará exclusão lógica e o registro sumirá das listagens.`
+            : undefined
+        }
+        confirmLabel="Excluir"
+        tone="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleting(null)}
+      />
+    </div>
+  );
+}
+
+function EditPaymentModal({
+  payment,
+  vendors,
+  isBusy,
+  formAction,
+  onClose,
+}: {
+  payment: PaymentWithVendor;
+  vendors: Vendor[];
+  isBusy: boolean;
+  formAction: (formData: FormData) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
+        <form action={formAction} className="space-y-4 p-6">
+          <h2 className="text-xl font-bold text-white">Editar pagamento</h2>
+          <input type="hidden" name="id" value={payment.id} />
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">Fornecedor</label>
+            <select
+              name="vendorId"
+              defaultValue={payment.vendorId}
+              required
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+            >
+              {vendors.find((v) => v.id === payment.vendorId) ? null : (
+                <option value={payment.vendorId}>{payment.vendor.name}</option>
+              )}
+              {vendors.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">Valor (R$)</label>
+              <input
+                type="number"
+                step="0.01"
+                name="amount"
+                required
+                defaultValue={payment.amount}
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">Vencimento</label>
+              <input
+                type="date"
+                name="dueDate"
+                required
+                defaultValue={toIsoDate(new Date(payment.dueDate))}
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">Método</label>
+              <select
+                name="method"
+                defaultValue={payment.method ?? "PIX"}
+                required
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+              >
+                {METHODS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">Status</label>
+              <select
+                name="status"
+                defaultValue={payment.status}
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+              >
+                <option value="PENDING">Pendente</option>
+                <option value="PAID">Pago</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">Parcela #</label>
+              <input
+                type="number"
+                name="installmentNumber"
+                min="1"
+                defaultValue={payment.installmentNumber ?? ""}
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">de</label>
+              <input
+                type="number"
+                name="totalInstallments"
+                min="1"
+                defaultValue={payment.totalInstallments ?? ""}
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">Notas</label>
+            <textarea
+              name="notes"
+              rows={2}
+              defaultValue={payment.notes ?? ""}
+              maxLength={500}
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl bg-zinc-800 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isBusy}
+              className="flex flex-1 items-center justify-center rounded-xl bg-rose-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-rose-500 disabled:opacity-50"
+            >
+              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

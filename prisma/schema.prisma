@@ -12,18 +12,30 @@ model User {
   name      String?
   email     String   @unique
   password  String
-  role      String   @default("USER") // ADMIN or USER
+  role      String   @default("USER")
   createdAt DateTime @default(now())
+}
+
+model EventSettings {
+  id                 String   @id @default("singleton")
+  eventDate          DateTime
+  contingencyPercent Float    @default(10)
+  currency           String   @default("BRL")
+  coupleNames        String?
+  updatedAt          DateTime @updatedAt
 }
 
 model Vendor {
   id           String       @id @default(cuid())
   name         String
   category     String
-  status       String       @default("NEGOTIATION") // NEGOTIATION, CONTRACTED, FINALIZED
+  categoryKey  String?
+  status       String       @default("NEGOTIATION")
   contractLink String?
+  notes        String?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+  deletedAt    DateTime?
 
   budgetItems  BudgetItem[]
   payments     Payment[]
@@ -37,6 +49,7 @@ model BudgetItem {
   vendorId       String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
 
   vendor         Vendor?  @relation(fields: [vendorId], references: [id])
 }
@@ -45,13 +58,16 @@ model Payment {
   id                String   @id @default(cuid())
   amount            Float
   dueDate           DateTime
-  status            String   @default("PENDING") // PENDING, PAID
-  method            String?  // PIX, CREDIT, BOLETO
+  paidAt            DateTime?
+  status            String   @default("PENDING")
+  method            String?
   installmentNumber Int?
   totalInstallments Int?
+  notes             String?
   vendorId          String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
 
   vendor            Vendor   @relation(fields: [vendorId], references: [id])
 }
@@ -61,6 +77,21 @@ model Asset {
   title     String
   amount    Float
   date      DateTime
+  notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  entity    String
+  entityId  String
+  action    String
+  payload   String?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
 }

@@ -1,127 +1,134 @@
-import { PrismaClient } from '@prisma/client';
-import { CreditCard, Wallet, AlertCircle, CalendarClock, TrendingDown } from 'lucide-react';
-import DashboardCharts from './charts';
+import { AlertCircle, CalendarClock, CalendarHeart, CreditCard, TrendingDown, Wallet } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
+
+import { getEventConfig, daysUntil } from "@/lib/event-config";
+import { resolveCategoryColor, resolveCategoryLabel } from "@/lib/categories";
+import { formatCurrency, formatDateBR } from "@/lib/format";
+import DashboardCharts, { type ChartDatum } from "./charts";
 
 export default async function DashboardPage() {
-  const vendors = await prisma.vendor.findMany({
-    include: { budgetItems: true, payments: true }
-  });
-  const assets = await prisma.asset.findMany();
-  
-  // Fundo de Contingência (10% do total contratado)
-  const contractedVendors = vendors.filter(v => v.status === 'CONTRACTED' || v.status === 'FINALIZED');
+  const cfg = await getEventConfig();
+
+  const [vendors, payments, assets] = await Promise.all([
+    prisma.vendor.findMany({
+      where: { deletedAt: null },
+      include: {
+        budgetItems: { where: { deletedAt: null } },
+        payments: { where: { deletedAt: null } },
+      },
+    }),
+    prisma.payment.findMany({
+      where: { deletedAt: null },
+      include: { vendor: true },
+      orderBy: { dueDate: "asc" },
+    }),
+    prisma.asset.findMany({ where: { deletedAt: null } }),
+  ]);
+
+  const contractedVendors = vendors.filter((v) => v.status === "CONTRACTED" || v.status === "FINALIZED");
   const totalContracted = contractedVendors.reduce((acc, v) => {
-    const cost = v.budgetItems.reduce((sum, item) => sum + (item.actualValue || item.estimatedValue), 0);
+    const cost = v.budgetItems.reduce((sum, item) => sum + (item.actualValue ?? item.estimatedValue), 0);
     return acc + cost;
   }, 0);
-  const contingencyFund = totalContracted * 0.10;
-  
-  // Orçamento Total (Estimado + Contratado + Contingência)
-  const totalBudget = vendors.reduce((acc, v) => {
-    const cost = v.budgetItems.reduce((sum, item) => sum + (item.actualValue || item.estimatedValue), 0);
-    return acc + cost;
-  }, 0) + contingencyFund;
-  
-  // Total Já Pago
-  const payments = await prisma.payment.findMany();
-  const totalPaid = payments.filter(p => p.status === 'PAID').reduce((acc, p) => acc + p.amount, 0);
-  
-  // Saldo Devedor Restante
+  const contingencyFund = totalContracted * (cfg.contingencyPercent / 100);
+
+  const totalBudget =
+    vendors.reduce((acc, v) => {
+      const cost = v.budgetItems.reduce((sum, item) => sum + (item.actualValue ?? item.estimatedValue), 0);
+      return acc + cost;
+    }, 0) + contingencyFund;
+
+  const totalPaid = payments.filter((p) => p.status === "PAID").reduce((acc, p) => acc + p.amount, 0);
   const remainingBalance = totalBudget - totalPaid;
-  
-  // Cobertura de Caixa
   const totalAssets = assets.reduce((acc, a) => acc + a.amount, 0);
-  
-  // Distribuição por Categoria
-  const categoryDataMap = new Map<string, number>();
-  vendors.forEach(v => {
-    const cost = v.budgetItems.reduce((sum, item) => sum + (item.actualValue || item.estimatedValue), 0);
-    categoryDataMap.set(v.category, (categoryDataMap.get(v.category) || 0) + cost);
-  });
-  if (contingencyFund > 0) {
-    categoryDataMap.set('Fundo de Contingência', contingencyFund);
+
+  const categoryMap = new Map<string, { value: number; color: string }>();
+  for (const v of vendors) {
+    const cost = v.budgetItems.reduce((sum, item) => sum + (item.actualValue ?? item.estimatedValue), 0);
+    const label = resolveCategoryLabel(v.categoryKey, v.category);
+    const color = resolveCategoryColor(v.categoryKey);
+    const current = categoryMap.get(label);
+    categoryMap.set(label, { value: (current?.value ?? 0) + cost, color });
   }
-  
-  const categoryData = Array.from(categoryDataMap.entries()).map(([name, value]) => ({ name, value }));
+  if (contingencyFund > 0) {
+    categoryMap.set("Fundo de Contingência", { value: contingencyFund, color: "#a1a1aa" });
+  }
+  const categoryData: ChartDatum[] = Array.from(categoryMap.entries()).map(([name, v]) => ({
+    name,
+    value: v.value,
+    color: v.color,
+  }));
 
-  // Próximos Vencimentos (30 dias) e Alerta de Quitação (menos de 20 dias da data do evento)
   const today = new Date();
-  const next30Days = new Date(today);
-  next30Days.setDate(today.getDate() + 30);
-  
-  const upcomingPayments = payments
-    .filter(p => p.status === 'PENDING' && p.dueDate <= next30Days)
-    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+  const next30 = new Date(today);
+  next30.setDate(today.getDate() + 30);
+  const upcoming = payments.filter((p) => p.status === "PENDING" && p.dueDate <= next30);
 
-  // Alerta Quitação: Fornecedores com saldo pendente e faltando < 20 dias pro evento
-  const eventDate = new Date('2026-11-15T00:00:00.000Z');
-  const daysUntilEvent = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
-  const showQuitAlert = daysUntilEvent <= 20;
-
-  const vendorsWithPendingPayments = vendors.filter(v => {
-    const vendorPayments = payments.filter(p => p.vendorId === v.id);
-    const vendorPaid = vendorPayments.filter(p => p.status === 'PAID').reduce((sum, p) => sum + p.amount, 0);
-    const vendorTotal = v.budgetItems.reduce((sum, i) => sum + (i.actualValue || i.estimatedValue), 0);
-    return vendorTotal > vendorPaid;
+  const daysToEvent = daysUntil(cfg.eventDate, today);
+  const showQuitAlert = daysToEvent <= 20;
+  const vendorsWithPending = vendors.filter((v) => {
+    const total = v.budgetItems.reduce((s, i) => s + (i.actualValue ?? i.estimatedValue), 0);
+    const paid = v.payments.filter((p) => p.status === "PAID").reduce((s, p) => s + p.amount, 0);
+    return total > paid;
   });
+
+  const subtitle = cfg.coupleNames
+    ? `${cfg.coupleNames} · ${formatDateBR(cfg.eventDate)}`
+    : `Casamento em ${formatDateBR(cfg.eventDate)}`;
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-tight">Visão Geral</h1>
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Visão Geral</h1>
+          <p className="text-sm text-zinc-500">{subtitle}</p>
+        </div>
+        <CountdownPill days={daysToEvent} />
       </div>
-      
-      {showQuitAlert && vendorsWithPendingPayments.length > 0 && (
-        <div className="flex items-center space-x-3 bg-red-500/10 border border-red-500/20 p-4 rounded-xl text-red-500 shadow-sm backdrop-blur-sm">
+
+      {showQuitAlert && vendorsWithPending.length > 0 ? (
+        <div className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-400 shadow-sm backdrop-blur-sm">
           <AlertCircle className="h-5 w-5" />
           <div>
             <h3 className="font-semibold">Alerta de Quitação!</h3>
-            <p className="text-sm">Faltam menos de 20 dias para o evento e há fornecedores com saldo devedor.</p>
+            <p className="text-sm">Faltam {daysToEvent} dia(s) e há {vendorsWithPending.length} fornecedor(es) com saldo devedor.</p>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {/* KPIs */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Orçamento Total" value={totalBudget} icon={<Wallet className="h-5 w-5" />} />
-        <Card title="Total Já Pago" value={totalPaid} icon={<CreditCard className="h-5 w-5" />} />
-        <Card title="Saldo Devedor" value={remainingBalance} icon={<TrendingDown className="h-5 w-5 text-rose-500" />} />
-        <Card title="Cobertura de Caixa" value={totalAssets} icon={<Wallet className="h-5 w-5 text-emerald-500" />} />
+        <Card title="Total Já Pago" value={totalPaid} icon={<CreditCard className="h-5 w-5" />} accent="emerald" />
+        <Card title="Saldo Devedor" value={remainingBalance} icon={<TrendingDown className="h-5 w-5" />} accent="rose" />
+        <Card title="Cobertura de Caixa" value={totalAssets} icon={<Wallet className="h-5 w-5" />} accent="emerald" />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Gráfico de Distribuição */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4 text-zinc-100">Distribuição do Orçamento</h2>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-100">Distribuição do Orçamento</h2>
           <DashboardCharts data={categoryData} />
         </div>
 
-        {/* Próximos Vencimentos */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-zinc-100">Próximos Vencimentos (30 dias)</h2>
             <CalendarClock className="h-5 w-5 text-zinc-400" />
           </div>
-          <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-            {upcomingPayments.length === 0 ? (
-              <p className="text-zinc-500 text-sm">Nenhum pagamento para os próximos 30 dias.</p>
+          <div className="custom-scrollbar max-h-[300px] space-y-3 overflow-y-auto pr-2">
+            {upcoming.length === 0 ? (
+              <p className="text-sm text-zinc-500">Nenhum pagamento para os próximos 30 dias.</p>
             ) : (
-              upcomingPayments.map(p => {
-                const vendor = vendors.find(v => v.id === p.vendorId);
-                return (
-                  <div key={p.id} className="flex justify-between items-center p-3 rounded-xl bg-zinc-800/50 border border-zinc-800/80 hover:bg-zinc-800 transition-colors">
-                    <div>
-                      <p className="font-medium text-zinc-200">{vendor?.name || 'Fornecedor'}</p>
-                      <p className="text-xs text-zinc-500 mt-1">Vencimento: {new Date(p.dueDate).toLocaleDateString('pt-BR')}</p>
-                    </div>
-                    <span className="font-semibold text-rose-400">
-                      R$ {p.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
+              upcoming.map((p) => (
+                <div key={p.id} className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-800/50 p-3">
+                  <div>
+                    <p className="font-medium text-zinc-200">{p.vendor.name}</p>
+                    <p className="mt-1 text-xs text-zinc-500">Vencimento: {formatDateBR(p.dueDate)}</p>
                   </div>
-                );
-              })
+                  <span className="font-semibold text-rose-400">{formatCurrency(p.amount)}</span>
+                </div>
+              ))
             )}
           </div>
         </div>
@@ -130,18 +137,53 @@ export default async function DashboardPage() {
   );
 }
 
-function Card({ title, value, icon }: { title: string, value: number, icon: React.ReactNode }) {
+function Card({
+  title,
+  value,
+  icon,
+  accent = "default",
+}: {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+  accent?: "default" | "rose" | "emerald";
+}) {
+  const accentClass =
+    accent === "rose"
+      ? "text-rose-500"
+      : accent === "emerald"
+        ? "text-emerald-500"
+        : "text-zinc-500";
+
   return (
     <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm backdrop-blur-sm transition-all hover:bg-zinc-800/50">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-zinc-400">{title}</h3>
-        <div className="text-zinc-500 p-2 rounded-lg bg-zinc-800/50 border border-zinc-800">{icon}</div>
+        <div className={`rounded-lg border border-zinc-800 bg-zinc-800/50 p-2 ${accentClass}`}>{icon}</div>
       </div>
       <div className="mt-4">
-        <span className="text-3xl font-bold text-zinc-100 tracking-tight">
-          R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </span>
+        <span className="text-3xl font-bold tracking-tight text-zinc-100">{formatCurrency(value)}</span>
       </div>
     </div>
+  );
+}
+
+function CountdownPill({ days }: { days: number }) {
+  const status =
+    days < 0
+      ? { text: "Evento já passou", tone: "bg-zinc-800 text-zinc-400 border-zinc-700" }
+      : days === 0
+        ? { text: "Hoje é o dia!", tone: "bg-rose-500/15 text-rose-300 border-rose-500/30" }
+        : days <= 30
+          ? { text: `Faltam ${days} dias`, tone: "bg-rose-500/10 text-rose-300 border-rose-500/30" }
+          : days <= 90
+            ? { text: `Faltam ${days} dias`, tone: "bg-amber-500/10 text-amber-300 border-amber-500/30" }
+            : { text: `Faltam ${days} dias`, tone: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" };
+
+  return (
+    <span className={`inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-sm font-medium ${status.tone}`}>
+      <CalendarHeart className="h-4 w-4" />
+      {status.text}
+    </span>
   );
 }

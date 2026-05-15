@@ -1,36 +1,102 @@
-'use server';
+"use server";
 
-import { PrismaClient } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { audit } from "@/lib/audit";
+import type { ActionResult } from "@/types";
 
-const prisma = new PrismaClient();
-
-const AssetSchema = z.object({
-  title: z.string().min(1, "Título é obrigatório"),
+const AssetCreateSchema = z.object({
+  title: z.string().trim().min(1, "Título é obrigatório").max(120),
   amount: z.coerce.number().min(0.01, "Valor deve ser positivo"),
-  date: z.string(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
+  notes: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : undefined)),
 });
 
-export async function createAsset(state: any, formData: FormData) {
+const AssetUpdateSchema = AssetCreateSchema.extend({
+  id: z.string().min(1),
+});
+
+export async function createAsset(
+  _state: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
   const data = Object.fromEntries(formData.entries());
-  const parsed = AssetSchema.safeParse(data);
-  
+  const parsed = AssetCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { error: 'Dados inválidos' };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
-  
+
   try {
-    await prisma.asset.create({
+    const created = await prisma.asset.create({
       data: {
         title: parsed.data.title,
         amount: parsed.data.amount,
         date: new Date(parsed.data.date),
-      }
+        notes: parsed.data.notes,
+      },
     });
-    revalidatePath('/dashboard');
+    await audit("Asset", created.id, "CREATE", { amount: created.amount });
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/assets");
     return { success: true };
-  } catch (error) {
-    return { error: 'Erro ao criar aporte' };
+  } catch (err) {
+    console.error("[createAsset]", err);
+    return { success: false, error: "Erro ao criar aporte" };
+  }
+}
+
+export async function updateAsset(
+  _state: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const data = Object.fromEntries(formData.entries());
+  const parsed = AssetUpdateSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+
+  try {
+    const result = await prisma.asset.updateMany({
+      where: { id: parsed.data.id, deletedAt: null },
+      data: {
+        title: parsed.data.title,
+        amount: parsed.data.amount,
+        date: new Date(parsed.data.date),
+        notes: parsed.data.notes ?? null,
+      },
+    });
+    if (result.count === 0) return { success: false, error: "Aporte não encontrado" };
+
+    await audit("Asset", parsed.data.id, "UPDATE");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/assets");
+    return { success: true };
+  } catch (err) {
+    console.error("[updateAsset]", err);
+    return { success: false, error: "Erro ao atualizar aporte" };
+  }
+}
+
+export async function deleteAsset(assetId: string): Promise<ActionResult> {
+  try {
+    const result = await prisma.asset.updateMany({
+      where: { id: assetId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+    if (result.count === 0) return { success: false, error: "Aporte não encontrado" };
+
+    await audit("Asset", assetId, "DELETE");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/assets");
+    return { success: true };
+  } catch (err) {
+    console.error("[deleteAsset]", err);
+    return { success: false, error: "Erro ao excluir aporte" };
   }
 }

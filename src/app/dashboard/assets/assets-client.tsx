@@ -8,13 +8,16 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { formatCurrency, formatDateBR, toIsoDate } from "@/lib/format";
 import type { Asset } from "@/types";
 
-type Props = { assets: Asset[] };
+type GoalRef = { id: string; name: string };
+type AssetRow = Asset & { goal: GoalRef | null };
 
-export default function AssetsClient({ assets }: Props) {
+type Props = { assets: AssetRow[]; goals: GoalRef[] };
+
+export default function AssetsClient({ assets, goals }: Props) {
   const toast = useToast();
   const [isCreateOpen, setCreateOpen] = useState(false);
-  const [editing, setEditing] = useState<Asset | null>(null);
-  const [deleting, setDeleting] = useState<Asset | null>(null);
+  const [editing, setEditing] = useState<AssetRow | null>(null);
+  const [deleting, setDeleting] = useState<AssetRow | null>(null);
   const [search, setSearch] = useState("");
   const [, startTransition] = useTransition();
   const [isCreating, setCreating] = useState(false);
@@ -127,7 +130,10 @@ export default function AssetsClient({ assets }: Props) {
                     <td className="px-6 py-4 text-zinc-200">{formatDateBR(asset.date)}</td>
                     <td className="px-6 py-4">
                       <div className="text-zinc-200">{asset.title}</div>
-                      {asset.notes ? <div className="mt-0.5 text-xs text-zinc-500">{asset.notes}</div> : null}
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-zinc-500">
+                        {asset.goal ? <span className="text-rose-300">🎯 {asset.goal.name}</span> : null}
+                        {asset.notes ? <span>{asset.notes}</span> : null}
+                      </div>
                     </td>
                     <td className="px-6 py-4 font-medium text-emerald-400">{formatCurrency(asset.amount)}</td>
                     <td className="px-6 py-4 text-right">
@@ -162,6 +168,7 @@ export default function AssetsClient({ assets }: Props) {
         <AssetFormModal
           mode={editing ? "edit" : "create"}
           asset={editing ?? undefined}
+          goals={goals}
           isBusy={editing ? isUpdating : isCreating}
           formAction={editing ? handleUpdate : handleCreate}
           onClose={() => {
@@ -187,12 +194,14 @@ export default function AssetsClient({ assets }: Props) {
 function AssetFormModal({
   mode,
   asset,
+  goals,
   isBusy,
   formAction,
   onClose,
 }: {
   mode: "create" | "edit";
-  asset?: Asset;
+  asset?: AssetRow;
+  goals: GoalRef[];
   isBusy: boolean;
   formAction: (formData: FormData) => void;
   onClose: () => void;
@@ -241,6 +250,22 @@ function AssetFormModal({
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-emerald-500/50"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">Vincular a uma meta (opcional)</label>
+            <select
+              name="goalId"
+              defaultValue={asset?.goalId ?? ""}
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-emerald-500/50"
+            >
+              <option value="">— sem meta —</option>
+              {goals.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

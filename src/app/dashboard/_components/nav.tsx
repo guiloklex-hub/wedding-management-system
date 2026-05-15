@@ -11,7 +11,9 @@ import {
   Home,
   LogOut,
   Menu,
+  PiggyBank,
   Settings as SettingsIcon,
+  Target,
   Users,
   Wallet,
   X,
@@ -31,7 +33,9 @@ const LINKS: NavLink[] = [
   { href: "/dashboard/venues", label: "Locais", icon: Building2 },
   { href: "/dashboard/tasks", label: "Tarefas", icon: CheckSquare },
   { href: "/dashboard/payments", label: "Pagamentos", icon: CreditCard },
+  { href: "/dashboard/income", label: "Receitas", icon: PiggyBank },
   { href: "/dashboard/assets", label: "Caixa", icon: Wallet },
+  { href: "/dashboard/goals", label: "Metas", icon: Target },
   { href: "/dashboard/settings", label: "Ajustes", icon: SettingsIcon },
 ];
 

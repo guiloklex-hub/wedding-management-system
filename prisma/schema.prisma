@@ -202,9 +202,46 @@ model Asset {
   amount    Float
   date      DateTime
   notes     String?
+  goalId    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
+
+  goal      SavingsGoal? @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+  @@index([goalId])
+}
+
+model Income {
+  id           String   @id @default(cuid())
+  title        String
+  source       String   @default("SALARY")
+  amount       Float
+  expectedDate DateTime?
+  receivedAt   DateTime?
+  status       String   @default("EXPECTED")
+  frequency    String   @default("ONE_TIME")
+  givenByName  String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  @@index([status, expectedDate])
+}
+
+model SavingsGoal {
+  id           String   @id @default(cuid())
+  name         String
+  targetAmount Float
+  targetDate   DateTime?
+  notes        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  assets       Asset[]
 }
 
 model Task {

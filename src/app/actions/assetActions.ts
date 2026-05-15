@@ -10,6 +10,7 @@ const AssetCreateSchema = z.object({
   title: z.string().trim().min(1, "Título é obrigatório").max(120),
   amount: z.coerce.number().min(0.01, "Valor deve ser positivo"),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
+  goalId: z.string().optional().transform((v) => (v && v.length > 0 ? v : null)),
   notes: z
     .string()
     .trim()
@@ -38,6 +39,7 @@ export async function createAsset(
         title: parsed.data.title,
         amount: parsed.data.amount,
         date: new Date(parsed.data.date),
+        goalId: parsed.data.goalId ?? null,
         notes: parsed.data.notes,
       },
     });
@@ -68,6 +70,7 @@ export async function updateAsset(
         title: parsed.data.title,
         amount: parsed.data.amount,
         date: new Date(parsed.data.date),
+        goalId: parsed.data.goalId ?? null,
         notes: parsed.data.notes ?? null,
       },
     });

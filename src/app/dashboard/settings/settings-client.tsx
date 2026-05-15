@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import {
   Archive,
   ArchiveRestore,
   Check,
-  Copy,
   Download,
   KeyRound,
   Loader2,
@@ -16,10 +15,11 @@ import {
   RefreshCw,
   Save,
   Search,
+  Send,
   ShieldAlert,
   ShieldCheck,
   ShieldOff,
-  Trash2,
+  Smartphone,
   UserCheck,
   UserPlus,
   Users,
@@ -27,11 +27,16 @@ import {
 import { updateSettings } from "@/app/actions/settingsActions";
 import {
   confirmTwoFactor,
-  createInvite,
   disableTwoFactor,
-  revokeInvite,
   startTwoFactorSetup,
 } from "@/app/actions/securityActions";
+import {
+  connectWhatsApp,
+  disconnectWhatsAppAction,
+  getWhatsAppStatusAction,
+  sendWhatsAppTest,
+  type WhatsAppStatusPayload,
+} from "@/app/actions/whatsappActions";
 import {
   archiveUser,
   changeOwnPassword,
@@ -72,6 +77,7 @@ type Member = {
   id: string;
   email: string;
   name: string | null;
+  phone: string | null;
   role: string;
   isActive: boolean;
   archivedAt: Date | null;
@@ -81,35 +87,25 @@ type Member = {
   createdAt: Date;
 };
 
-type Invite = {
-  id: string;
-  email: string;
-  role: string;
-  token: string;
-  expiresAt: Date;
-  createdAt: Date;
-};
-
 const ROLE_OPTIONS: Role[] = [...ROLES];
 
-type Tab = "event" | "security" | "team" | "profile" | "backup";
+type Tab = "event" | "security" | "team" | "whatsapp" | "profile" | "backup";
 
 export default function SettingsClient({
   initial,
   me,
   members,
-  invites,
   securitySettings,
 }: {
   initial: Initial;
   me: Me;
   members: Member[];
-  invites: Invite[];
   securitySettings: SecuritySettings;
 }) {
   const toast = useToast();
   const [tab, setTab] = useState<Tab>("event");
   const manageUsers = canManageUsers(me?.role);
+  const isAdmin = me?.role === "ADMIN";
 
   return (
     <div className="space-y-4">
@@ -123,6 +119,11 @@ export default function SettingsClient({
         <TabBtn current={tab} value="team" onClick={() => setTab("team")}>
           Time
         </TabBtn>
+        {isAdmin ? (
+          <TabBtn current={tab} value="whatsapp" onClick={() => setTab("whatsapp")}>
+            WhatsApp
+          </TabBtn>
+        ) : null}
         <TabBtn current={tab} value="profile" onClick={() => setTab("profile")}>
           Perfil
         </TabBtn>
@@ -139,12 +140,12 @@ export default function SettingsClient({
         <TeamTab
           me={me}
           members={members}
-          invites={invites}
           securitySettings={securitySettings}
           manageUsers={manageUsers}
           toast={toast}
         />
       ) : null}
+      {tab === "whatsapp" && isAdmin ? <WhatsAppTab toast={toast} /> : null}
       {tab === "profile" ? <ProfileTab me={me} toast={toast} /> : null}
       {tab === "backup" ? <BackupTab /> : null}
     </div>
@@ -463,14 +464,12 @@ function SecurityTab({
 function TeamTab({
   me,
   members,
-  invites,
   securitySettings,
   manageUsers,
   toast,
 }: {
   me: Me;
   members: Member[];
-  invites: Invite[];
   securitySettings: SecuritySettings;
   manageUsers: boolean;
   toast: ReturnType<typeof useToast>;
@@ -490,8 +489,6 @@ function TeamTab({
         action: () => Promise<void>;
       }
   >(null);
-  const [busy, setBusy] = useState(false);
-  const [createdLink, setCreatedLink] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"ALL" | Role>("ALL");
   const [showArchived, setShowArchived] = useState(false);
@@ -507,22 +504,6 @@ function TeamTab({
       return true;
     });
   }, [members, search, roleFilter, showArchived]);
-
-  function handleInvite(formData: FormData) {
-    setBusy(true);
-    setCreatedLink(null);
-    startTransition(async () => {
-      try {
-        const r = await createInvite(undefined, formData);
-        if (r.success && r.data) {
-          setCreatedLink(`${window.location.origin}/invite/${r.data.token}`);
-          toast.success("Convite criado");
-        } else if (!r.success) toast.error("Falha", r.error);
-      } finally {
-        setBusy(false);
-      }
-    });
-  }
 
   function runAction(label: string, run: () => Promise<{ success: boolean; error?: string }>) {
     startTransition(async () => {
@@ -540,7 +521,7 @@ function TeamTab({
             <h2 className="text-lg font-semibold text-zinc-100">Membros</h2>
             <p className="text-sm text-zinc-500">
               {manageUsers
-                ? "Crie usuários direto, ou gere um link de convite para autosserviço."
+                ? "Crie usuários direto. O sistema envia as credenciais por email e/ou WhatsApp."
                 : "Apenas administradores e os noivos podem gerenciar membros."}
             </p>
           </div>
@@ -661,131 +642,6 @@ function TeamTab({
           ))}
         </ul>
       </section>
-
-      {manageUsers ? (
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-          <h2 className="text-lg font-semibold text-zinc-100">Convites por link</h2>
-          <p className="text-sm text-zinc-500">
-            Alternativa ao cadastro direto: gere um link e compartilhe por WhatsApp. O convidado cria a própria conta.
-          </p>
-          <form action={handleInvite} className="mt-4 grid gap-3 sm:grid-cols-2">
-            <Field name="email" label="Email" type="email" required />
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Função</label>
-              <select
-                name="role"
-                defaultValue="PLANNER"
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
-              >
-                {ROLE_OPTIONS.filter((r) => r !== "ADMIN").map((r) => (
-                  <option key={r} value={r}>
-                    {ROLE_LABEL[r]} — {ROLE_DESCRIPTION[r]}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Recado (opcional)</label>
-              <textarea
-                name="message"
-                rows={2}
-                maxLength={500}
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <button
-                type="submit"
-                disabled={busy}
-                className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
-              >
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                Gerar convite
-              </button>
-            </div>
-          </form>
-
-          {createdLink ? (
-            <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm text-emerald-200">
-              <p>Convite criado. Compartilhe este link:</p>
-              <div className="mt-2 flex items-center gap-2">
-                <code className="flex-1 truncate rounded bg-zinc-950 px-2 py-1 font-mono text-xs">
-                  {createdLink}
-                </code>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(createdLink);
-                    toast.success("Copiado");
-                  }}
-                  className="rounded-lg p-1.5 text-emerald-300 hover:bg-emerald-500/10"
-                  aria-label="Copiar"
-                >
-                  <Copy className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-          {invites.length > 0 ? (
-            <div className="mt-6">
-              <p className="mb-2 text-sm font-medium text-zinc-300">Convites pendentes</p>
-              <ul className="space-y-2">
-                {invites.map((inv) => (
-                  <li
-                    key={inv.id}
-                    className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950/40 px-3 py-2"
-                  >
-                    <div>
-                      <p className="text-sm text-zinc-200">{inv.email}</p>
-                      <p className="text-[11px] text-zinc-500">
-                        {ROLE_LABEL[inv.role as Role] ?? inv.role} · criado{" "}
-                        {formatDateTimeBR(inv.createdAt)} · expira {formatDateBR(inv.expiresAt)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(
-                            `${window.location.origin}/invite/${inv.token}`,
-                          );
-                          toast.success("Link copiado");
-                        }}
-                        className="rounded-lg p-1.5 text-zinc-300 hover:bg-zinc-800"
-                        aria-label="Copiar link"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setConfirm({
-                            title: "Revogar convite?",
-                            description: `O link enviado para ${inv.email} deixará de funcionar.`,
-                            confirmLabel: "Revogar",
-                            tone: "danger",
-                            action: async () => {
-                              const r = await revokeInvite(inv.id);
-                              if (r.success) toast.success("Convite revogado");
-                              else toast.error("Falha", r.error);
-                              setConfirm(null);
-                            },
-                          })
-                        }
-                        className="rounded-lg p-1.5 text-rose-300 hover:bg-rose-500/10"
-                        aria-label="Revogar"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </section>
-      ) : null}
 
       {isAdmin ? (
         <SecuritySettingsCard initial={securitySettings} toast={toast} />
@@ -1068,6 +924,15 @@ function CreateUserModal({
       <form action={handle} className="space-y-3">
         <Field name="name" label="Nome" required />
         <Field name="email" label="Email" type="email" required />
+        <Field
+          name="phone"
+          label="Telefone (WhatsApp, opcional)"
+          placeholder="+5511999999999"
+          pattern="^\+\d{10,15}$"
+        />
+        <p className="-mt-2 text-[11px] text-zinc-500">
+          Formato E.164 (com + e DDI). Usado para enviar credenciais e lembretes.
+        </p>
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-400">
             Senha provisória (mínimo {minPasswordLength} caracteres)
@@ -1172,6 +1037,13 @@ function EditUserModal({
     <Modal onClose={onClose} title={`Editar ${member.name ?? member.email}`}>
       <form action={handle} className="space-y-3">
         <Field name="name" label="Nome" required defaultValue={member.name ?? ""} />
+        <Field
+          name="phone"
+          label="Telefone (WhatsApp, opcional)"
+          placeholder="+5511999999999"
+          pattern="^\+\d{10,15}$"
+          defaultValue={member.phone ?? ""}
+        />
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-400">Função</label>
           <select
@@ -1559,6 +1431,196 @@ function Modal({
   );
 }
 
+function WhatsAppTab({
+  toast,
+}: {
+  toast: ReturnType<typeof useToast>;
+}) {
+  const [status, setStatus] = useState<WhatsAppStatusPayload | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [testNumber, setTestNumber] = useState("");
+
+  const refresh = useCallback(async () => {
+    try {
+      const s = await getWhatsAppStatusAction();
+      setStatus(s);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    const tick = () => {
+      if (!alive) return;
+      refresh();
+    };
+    const id = setInterval(tick, 3000);
+    tick();
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [refresh]);
+
+  async function handleConnect() {
+    setBusy(true);
+    try {
+      const r = await connectWhatsApp();
+      if (!r.success) toast.error("Falha", r.error);
+      else toast.success("Iniciando conexão. Escaneie o QR Code.");
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDisconnect() {
+    setBusy(true);
+    try {
+      const r = await disconnectWhatsAppAction();
+      if (!r.success) toast.error("Falha", r.error);
+      else toast.success("WhatsApp desconectado");
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleTest() {
+    if (!testNumber) {
+      toast.error("Informe um número");
+      return;
+    }
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("phone", testNumber);
+      const r = await sendWhatsAppTest(undefined, fd);
+      if (r.success) toast.success("Mensagem de teste enviada");
+      else toast.error("Falha", r.error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const state = status?.state ?? "DISCONNECTED";
+  const label =
+    state === "CONNECTED"
+      ? `Conectado${status?.phoneNumber ? ` (${status.phoneNumber})` : ""}`
+      : state === "WAITING_QR"
+        ? "Aguardando leitura do QR Code"
+        : state === "CONNECTING"
+          ? "Conectando..."
+          : "Desconectado";
+
+  return (
+    <section className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <Smartphone className="h-5 w-5 text-rose-400" />
+          <h2 className="text-lg font-semibold text-zinc-100">WhatsApp</h2>
+        </div>
+        <p className="text-sm text-zinc-500">
+          Conecte um número para enviar credenciais, lembretes e redefinições
+          de senha pelo WhatsApp.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950/40 px-4 py-3">
+        <div
+          className={`h-2.5 w-2.5 rounded-full ${
+            state === "CONNECTED"
+              ? "bg-emerald-400"
+              : state === "WAITING_QR" || state === "CONNECTING"
+                ? "bg-amber-400 animate-pulse"
+                : "bg-zinc-600"
+          }`}
+        />
+        <span className="text-sm text-zinc-200">{label}</span>
+        {status?.lastError ? (
+          <span className="ml-auto text-xs text-rose-300">{status.lastError}</span>
+        ) : null}
+      </div>
+
+      {state === "WAITING_QR" && status?.qrDataUrl ? (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
+          <p className="mb-3 text-sm text-zinc-300">
+            Abra o WhatsApp no celular → Configurações → Aparelhos conectados →
+            Conectar um aparelho. Escaneie:
+          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={status.qrDataUrl}
+            alt="QR Code do WhatsApp"
+            className="mx-auto h-64 w-64 rounded-lg bg-white p-2"
+          />
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap gap-2">
+        {state === "CONNECTED" ? (
+          <button
+            type="button"
+            onClick={handleDisconnect}
+            disabled={busy}
+            className="inline-flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-200 hover:bg-rose-500/20 disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PowerOff className="h-4 w-4" />}
+            Desconectar
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleConnect}
+            disabled={busy || state === "CONNECTING"}
+            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
+          >
+            {busy || state === "CONNECTING" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Smartphone className="h-4 w-4" />
+            )}
+            {state === "WAITING_QR" ? "Reabrir QR" : "Conectar"}
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={refresh}
+          className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800"
+        >
+          <RefreshCw className="h-4 w-4" /> Atualizar
+        </button>
+      </div>
+
+      {state === "CONNECTED" ? (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
+          <p className="mb-2 text-sm font-medium text-zinc-300">Enviar mensagem de teste</p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              type="text"
+              value={testNumber}
+              onChange={(e) => setTestNumber(e.target.value)}
+              placeholder="+5511999999999"
+              className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+            />
+            <button
+              type="button"
+              onClick={handleTest}
+              disabled={busy}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Enviar teste
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function Field({
   name,
   label,
@@ -1566,6 +1628,8 @@ function Field({
   required,
   step,
   defaultValue,
+  placeholder,
+  pattern,
 }: {
   name: string;
   label: string;
@@ -1573,6 +1637,8 @@ function Field({
   required?: boolean;
   step?: string;
   defaultValue?: string;
+  placeholder?: string;
+  pattern?: string;
 }) {
   return (
     <div>
@@ -1583,6 +1649,8 @@ function Field({
         required={required}
         step={step}
         defaultValue={defaultValue}
+        placeholder={placeholder}
+        pattern={pattern}
         className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
       />
     </div>

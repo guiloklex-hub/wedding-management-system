@@ -26,6 +26,13 @@ vi.mock("next-auth", () => ({
 beforeEach(async () => {
   vi.spyOn(console, "error").mockImplementation(() => {});
   captured.authorize = null;
+  prismaMock.securitySettings.upsert.mockResolvedValue({
+    id: "singleton",
+    require2FARoles: "[]",
+    passwordMinLength: 8,
+    updatedAt: new Date(),
+  } as never);
+  prismaMock.user.update.mockResolvedValue({} as never);
   vi.resetModules();
   // Re-import after reset so module-side-effect re-registers the credentials provider
   await import("./auth");
@@ -56,6 +63,8 @@ describe("auth.ts authorize callback", () => {
       name: "Ana",
       role: "OWNER",
       password: hashed,
+      isActive: true,
+      archivedAt: null,
       twoFactorEnabled: false,
       twoFactorSecret: null,
       twoFactorBackupCodes: null,
@@ -73,6 +82,8 @@ describe("auth.ts authorize callback", () => {
       name: "Ana",
       role: "OWNER",
       password: hashed,
+      isActive: true,
+      archivedAt: null,
       twoFactorEnabled: false,
       twoFactorSecret: null,
       twoFactorBackupCodes: null,
@@ -97,6 +108,8 @@ describe("auth.ts authorize callback", () => {
       name: "Ana",
       role: "OWNER",
       password: hashed,
+      isActive: true,
+      archivedAt: null,
       twoFactorEnabled: true,
       twoFactorSecret: "ANYSECRET",
       twoFactorBackupCodes: null,
@@ -116,6 +129,8 @@ describe("auth.ts authorize callback", () => {
       name: "Ana",
       role: "OWNER",
       password: hashed,
+      isActive: true,
+      archivedAt: null,
       twoFactorEnabled: true,
       twoFactorSecret: secret,
       twoFactorBackupCodes: null,
@@ -138,6 +153,8 @@ describe("auth.ts authorize callback", () => {
       name: "Ana",
       role: "OWNER",
       password: hashed,
+      isActive: true,
+      archivedAt: null,
       twoFactorEnabled: true,
       twoFactorSecret: generateSecret(),
       twoFactorBackupCodes: null,
@@ -159,6 +176,8 @@ describe("auth.ts authorize callback", () => {
       name: "Ana",
       role: "OWNER",
       password: hashed,
+      isActive: true,
+      archivedAt: null,
       twoFactorEnabled: true,
       twoFactorSecret: generateSecret(),
       twoFactorBackupCodes: JSON.stringify(["AAAAA-11111", "BBBBB-22222"]),

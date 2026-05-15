@@ -50,3 +50,6 @@ dev.db-journal
 
 # Uploaded files (storage local)
 /uploads
+
+# WhatsApp (Baileys) auth session
+/.whatsapp-auth

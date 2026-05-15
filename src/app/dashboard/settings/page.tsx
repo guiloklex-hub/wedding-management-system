@@ -34,6 +34,7 @@ export default async function SettingsPage() {
       id: true,
       email: true,
       name: true,
+      phone: true,
       role: true,
       isActive: true,
       archivedAt: true,
@@ -43,11 +44,6 @@ export default async function SettingsPage() {
       createdAt: true,
     },
     orderBy: [{ archivedAt: "asc" }, { createdAt: "asc" }],
-  });
-
-  const invites = await prisma.invite.findMany({
-    where: { acceptedAt: null, expiresAt: { gte: new Date() } },
-    orderBy: { createdAt: "desc" },
   });
 
   const securitySettings = await getSecuritySettings();
@@ -67,7 +63,6 @@ export default async function SettingsPage() {
         }}
         me={me}
         members={members}
-        invites={invites}
         securitySettings={securitySettings}
       />
     </div>

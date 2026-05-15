@@ -8,7 +8,24 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { ROLES, canManageUsers, type Role } from "@/lib/permissions";
 import { getSecuritySettings, setSecuritySettings } from "@/lib/security-settings";
+import { notify } from "@/lib/notifications";
 import type { ActionResult } from "@/types";
+
+function buildLoginUrl(): string {
+  const base =
+    process.env.APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3005";
+  return `${base.replace(/\/$/, "")}/login`;
+}
+
+const PhoneSchema = z
+  .string()
+  .trim()
+  .transform((v) => (v.length === 0 ? null : v))
+  .nullable()
+  .refine(
+    (v) => v === null || /^\+\d{10,15}$/.test(v),
+    "Telefone deve estar no formato +5511999999999",
+  );
 
 async function requireManager(): Promise<
   | { ok: true; me: { id: string; email: string; role: string } }
@@ -83,6 +100,7 @@ const RoleSchema = z.enum(ROLES);
 const CreateSchema = z.object({
   name: z.string().trim().min(1, "Nome obrigatório").max(120),
   email: emailSchema(),
+  phone: PhoneSchema.optional(),
   password: z.string().min(6).max(128),
   role: RoleSchema,
 });
@@ -113,13 +131,14 @@ export async function createUser(
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
+        phone: parsed.data.phone ?? null,
         password: hashed,
         role: parsed.data.role,
         isActive: true,
         mustChangePassword: true,
         passwordUpdatedAt: new Date(),
       },
-      select: { id: true, email: true },
+      select: { id: true, email: true, phone: true, name: true },
     });
 
     await audit("User", created.id, "CREATE", {
@@ -127,6 +146,18 @@ export async function createUser(
       role: parsed.data.role,
       by: guard.me.id,
     });
+
+    notify(
+      { userId: created.id, email: created.email, phone: created.phone },
+      {
+        kind: "ACCOUNT_CREATED",
+        userName: created.name ?? created.email,
+        tempPassword: parsed.data.password,
+        loginUrl: buildLoginUrl(),
+      },
+      { refType: "User", refId: created.id },
+    ).catch((err) => console.error("[createUser] notify falhou", err));
+
     revalidatePath("/dashboard/settings");
     return { success: true, data: { id: created.id } };
   } catch (err) {
@@ -138,6 +169,7 @@ export async function createUser(
 const UpdateSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1).max(120).optional(),
+  phone: PhoneSchema.optional(),
   role: RoleSchema.optional(),
   isActive: z
     .union([z.boolean(), z.string()])
@@ -161,7 +193,7 @@ export async function updateUser(
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
-  const { id, name, role, isActive } = parsed.data;
+  const { id, name, phone, role, isActive } = parsed.data;
 
   try {
     const target = await prisma.user.findUnique({
@@ -188,6 +220,7 @@ export async function updateUser(
 
     const data: Record<string, unknown> = {};
     if (typeof name === "string") data.name = name;
+    if (phone !== undefined) data.phone = phone;
     if (role) data.role = role;
     if (typeof isActive === "boolean") data.isActive = isActive;
     if (Object.keys(data).length === 0) return { success: true };
@@ -238,6 +271,18 @@ export async function resetUserPassword(
       },
     });
     await audit("User", target.id, "RESET_PASSWORD", { by: guard.me.id });
+
+    notify(
+      { userId: target.id, email: target.email, phone: target.phone },
+      {
+        kind: "PASSWORD_RESET_BY_ADMIN",
+        userName: target.name ?? target.email,
+        tempPassword: parsed.data.newPassword,
+        loginUrl: buildLoginUrl(),
+      },
+      { refType: "User", refId: target.id },
+    ).catch((err) => console.error("[resetUserPassword] notify falhou", err));
+
     revalidatePath("/dashboard/settings");
     return { success: true };
   } catch (err) {

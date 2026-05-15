@@ -8,11 +8,8 @@ vi.mock("@/auth", () => ({
 }));
 
 import {
-  acceptInvite,
   confirmTwoFactor,
-  createInvite,
   disableTwoFactor,
-  revokeInvite,
   startTwoFactorSetup,
 } from "./securityActions";
 
@@ -177,96 +174,5 @@ describe("disableTwoFactor", () => {
     fd.set("token", "999999");
     const r = await disableTwoFactor(undefined, fd);
     expect(r.success).toBe(false);
-  });
-});
-
-describe("createInvite", () => {
-  it("rejeita sem sessão", async () => {
-    authMock.mockResolvedValue(null);
-    const fd = new FormData();
-    fd.set("email", "a@example.com");
-    const r = await createInvite(undefined, fd);
-    expect(r.success).toBe(false);
-  });
-
-  it("rejeita email inválido", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1", email: "owner@x.com" } });
-    const fd = new FormData();
-    fd.set("email", "not-an-email");
-    const r = await createInvite(undefined, fd);
-    expect(r.success).toBe(false);
-  });
-
-  it("normaliza email lowercase e seta expiresAt em ~30 dias", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1", email: "owner@x.com" } });
-    prismaMock.invite.create.mockResolvedValue({ token: "tok", email: "a@example.com" } as never);
-
-    const fd = new FormData();
-    fd.set("email", "A@EXAMPLE.COM");
-    fd.set("role", "PARTNER");
-    await createInvite(undefined, fd);
-
-    const data = (prismaMock.invite.create.mock.calls[0][0] as { data: Record<string, unknown> }).data;
-    expect(data.email).toBe("a@example.com");
-    const diff = (data.expiresAt as Date).getTime() - Date.now();
-    expect(diff).toBeGreaterThan(29 * 24 * 60 * 60 * 1000);
-    expect(diff).toBeLessThan(31 * 24 * 60 * 60 * 1000);
-  });
-});
-
-describe("revokeInvite", () => {
-  it("rejeita sem sessão", async () => {
-    authMock.mockResolvedValue(null);
-    const r = await revokeInvite("i1");
-    expect(r.success).toBe(false);
-  });
-
-  it("deleta com sessão", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1" } });
-    prismaMock.invite.delete.mockResolvedValue({} as never);
-    const r = await revokeInvite("i1");
-    expect(r.success).toBe(true);
-  });
-});
-
-describe("acceptInvite", () => {
-  it("rejeita sem sessão", async () => {
-    authMock.mockResolvedValue(null);
-    const r = await acceptInvite("tok");
-    expect(r.success).toBe(false);
-  });
-
-  it("rejeita convite inexistente ou expirado", async () => {
-    authMock.mockResolvedValue({ user: { email: "a@example.com" } });
-    prismaMock.invite.findFirst.mockResolvedValue(null);
-    const r = await acceptInvite("tok");
-    expect(r.success).toBe(false);
-  });
-
-  it("rejeita quando email da sessão != email do convite", async () => {
-    authMock.mockResolvedValue({ user: { email: "outro@example.com" } });
-    prismaMock.invite.findFirst.mockResolvedValue({
-      id: "i1",
-      email: "alvo@example.com",
-      role: "PARTNER",
-    } as never);
-    const r = await acceptInvite("tok");
-    expect(r.success).toBe(false);
-    if (!r.success) expect(r.error).toMatch(/foi enviado para/);
-  });
-
-  it("aplica role e marca aceito em transação", async () => {
-    authMock.mockResolvedValue({ user: { email: "a@example.com" } });
-    prismaMock.invite.findFirst.mockResolvedValue({
-      id: "i1",
-      email: "a@example.com",
-      role: "VIEWER",
-    } as never);
-    prismaMock.user.findUnique.mockResolvedValue({ id: "u1", email: "a@example.com" } as never);
-    prismaMock.$transaction.mockResolvedValue([] as never);
-
-    const r = await acceptInvite("tok");
-    expect(r.success).toBe(true);
-    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
   });
 });

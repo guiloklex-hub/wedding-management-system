@@ -26,8 +26,12 @@ describe("authConfig.callbacks.authorized", () => {
     expect(callAuthorized({ isLoggedIn: false, pathname: "/rsvp/abc" })).toBe(true);
   });
 
-  it("permite /invite/* sem login", () => {
-    expect(callAuthorized({ isLoggedIn: false, pathname: "/invite/xyz" })).toBe(true);
+  it("permite /forgot-password sem login", () => {
+    expect(callAuthorized({ isLoggedIn: false, pathname: "/forgot-password" })).toBe(true);
+  });
+
+  it("permite /reset-password/[token] sem login", () => {
+    expect(callAuthorized({ isLoggedIn: false, pathname: "/reset-password/abc" })).toBe(true);
   });
 
   it("nega /dashboard quando deslogado", () => {
@@ -47,14 +51,6 @@ describe("authConfig.callbacks.authorized", () => {
     expect(r).toBeInstanceOf(Response);
     if (r instanceof Response) {
       expect(r.status).toBeGreaterThanOrEqual(300);
-      expect(r.headers.get("location")).toContain("/dashboard");
-    }
-  });
-
-  it("redireciona logado de /register para /dashboard", () => {
-    const r = callAuthorized({ isLoggedIn: true, pathname: "/register" });
-    expect(r).toBeInstanceOf(Response);
-    if (r instanceof Response) {
       expect(r.headers.get("location")).toContain("/dashboard");
     }
   });

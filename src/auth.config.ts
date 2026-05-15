@@ -10,7 +10,8 @@ export const authConfig = {
       const p = nextUrl.pathname;
 
       if (p.startsWith("/rsvp")) return true;
-      if (p.startsWith("/invite")) return true;
+      if (p.startsWith("/forgot-password")) return true;
+      if (p.startsWith("/reset-password")) return true;
 
       if (p.startsWith("/dashboard")) {
         if (!isLoggedIn) return false;
@@ -22,7 +23,7 @@ export const authConfig = {
         return true;
       }
       if (isLoggedIn) {
-        if (p === "/login" || p === "/register" || p === "/") {
+        if (p === "/login" || p === "/") {
           return Response.redirect(new URL("/dashboard", nextUrl));
         }
       }

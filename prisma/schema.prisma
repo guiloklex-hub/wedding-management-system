@@ -11,6 +11,7 @@ model User {
   id                   String    @id @default(cuid())
   name                 String?
   email                String    @unique
+  phone                String?
   password             String
   role                 String    @default("ADMIN")
   isActive             Boolean   @default(true)
@@ -26,27 +27,40 @@ model User {
   updatedAt            DateTime  @default(now()) @updatedAt
 }
 
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model NotificationLog {
+  id          String   @id @default(cuid())
+  kind        String
+  channel     String
+  userId      String?
+  targetEmail String?
+  targetPhone String?
+  status      String
+  errorMsg    String?
+  refType     String?
+  refId       String?
+  createdAt   DateTime @default(now())
+
+  @@index([kind, refType, refId])
+  @@index([createdAt])
+}
+
 model SecuritySettings {
   id                String   @id @default("singleton")
   require2FARoles   String   @default("[]")
   passwordMinLength Int      @default(8)
   updatedAt         DateTime @default(now()) @updatedAt
-}
-
-model Invite {
-  id          String    @id @default(cuid())
-  email       String
-  role        String    @default("PARTNER")
-  token       String    @unique @default(cuid())
-  message     String?
-  expiresAt   DateTime
-  acceptedAt  DateTime?
-  acceptedBy  String?
-  createdBy   String
-  createdAt   DateTime  @default(now())
-
-  @@index([email])
-  @@index([token])
 }
 
 model EventSettings {

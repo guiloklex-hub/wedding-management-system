@@ -101,12 +101,12 @@ export default function LoginForm() {
       </button>
 
       <div className="text-center">
-        <p className="text-sm text-zinc-400">
-          Não tem uma conta?{" "}
-          <Link href="/register" className="font-medium text-rose-500 hover:text-rose-400">
-            Crie aqui
-          </Link>
-        </p>
+        <Link
+          href="/forgot-password"
+          className="text-sm text-zinc-400 hover:text-rose-400"
+        >
+          Esqueci minha senha
+        </Link>
       </div>
     </form>
   );

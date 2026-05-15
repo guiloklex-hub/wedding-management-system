@@ -32,6 +32,7 @@ export function formatDateTimeBR(date: Date | string): string {
   }).format(d);
 }
 
-export function toIsoDate(date: Date): string {
+export function toIsoDate(date: Date | null): string {
+  if (!date) return "";
   return date.toISOString().split("T")[0];
 }

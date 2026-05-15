@@ -1,106 +1,213 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<h1 align="center">💍 Wedding Finance Planner</h1>
 
-## Getting Started
+<p align="center">
+  <strong>Sistema open-source para casais organizarem o casamento.</strong><br/>
+  Orçamento, fornecedores, convidados, lua de mel e enxoval — tudo em um só lugar, no seu próprio servidor.
+</p>
 
-First, run the development server:
+<p align="center">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?logo=next.js">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white">
+  <img alt="Prisma" src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white">
+  <img alt="PWA" src="https://img.shields.io/badge/PWA-ready-5A0FC8">
+  <img alt="Made with ❤" src="https://img.shields.io/badge/feito_com-♥-rose">
+</p>
+
+---
+
+## ✨ O que faz
+
+Um app web completo para o **casal organizar a vida durante o noivado** —
+sem planilhas dispersas, sem perder prazo de pagamento, sem esquecer quem
+confirmou a presença.
+
+- 💸 Orçamento detalhado com **fluxo de caixa projetado** mês a mês
+- 🤝 Catálogo de **fornecedores** (negociação → contratado → finalizado)
+- 📄 **Contratos versionados** com anexos
+- 🏛️ **Locais** com checklist de visitação
+- 💳 **Pagamentos parcelados** com lembretes automáticos
+- 💰 **Receitas** (salário, donativos, ajuda dos pais)
+- 🏦 **Caixa e metas de poupança**
+- ✅ **Tarefas** com ~40 templates pré-prontos baseados na data do casamento
+- 👥 **Convidados** com **RSVP por link público**, +1s, dietary, padrinhos
+- 🎁 **Presentes** (cash/item) com controle de agradecimentos
+- 🌴 **Lua de mel** (destino, atividades, hospedagens, vôos)
+- 🛏️ **Enxoval** por cômodo
+- 💍 **Painel do Dia D** (cronograma, plano B chuva, contatos críticos, check-in)
+- 📊 **Insights** financeiros (health score, heatmap, detector de creep)
+- 📨 **Notificações por email + WhatsApp** (Baileys)
+- 🔐 **2FA TOTP**, reset por email/WhatsApp, audit log
+- 📅 **iCalendar (.ics)** para sincronizar com Google/Apple Calendar
+- 💾 **Backup JSON** completo de todos os dados
+- 📱 **PWA** — instalável no celular, funciona offline básico
+- ❓ **Central de Ajuda interna** com busca, filtros, passo-a-passo e FAQ
+
+---
+
+## 🚀 Começando (3 passos)
+
+> 📖 Guias detalhados:
+> [Linux/macOS](docs/instalacao-linux.md) ·
+> [Windows](docs/instalacao-windows.md) ·
+> [WSL2](docs/instalacao-wsl.md)
+
+### 🐧 Linux, macOS ou WSL2
 
 ```bash
+git clone https://github.com/SEU_USUARIO/wfv-management-system.git
+cd wfv-management-system
+./setup.sh
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 🪟 Windows (PowerShell)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+git clone https://github.com/SEU_USUARIO/wfv-management-system.git
+cd wfv-management-system
+.\setup.ps1
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Abra <http://localhost:3005> no navegador.
 
-## Learn More
+**Login inicial:** `admin@admin.com` / `admin`
 
-To learn more about Next.js, take a look at the following resources:
+> 🪄 No primeiro acesso você é guiado(a) por um **wizard de configuração**
+> que personaliza o sistema para o seu casamento (nomes, data, moeda,
+> contingência). Em ~2 minutos está tudo pronto.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Pré-requisitos
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Node.js 20+** ([nodejs.org](https://nodejs.org/))
+- **Git** ([git-scm.com](https://git-scm.com/))
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠️ Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Camada | Tecnologia |
+|---|---|
+| Framework | [Next.js 16](https://nextjs.org/) (App Router, Server Components) |
+| UI | [React 19](https://react.dev/) + [Tailwind CSS 4](https://tailwindcss.com/) |
+| Banco | [SQLite](https://sqlite.org/) + [Prisma 6](https://www.prisma.io/) |
+| Auth | [Auth.js v5](https://authjs.dev/) + TOTP 2FA |
+| Email | [Nodemailer](https://nodemailer.com/) |
+| WhatsApp | [Baileys](https://github.com/WhiskeySockets/Baileys) |
+| Validação | [Zod 4](https://zod.dev/) |
+| Gráficos | [Recharts](https://recharts.org/) |
+| Testes | [Vitest 4](https://vitest.dev/) + Testing Library |
 
-## Notificações (Email + WhatsApp)
+---
 
-O sistema envia notificações por **email (SMTP via Nodemailer)** e **WhatsApp
-(Baileys embutido)**. Os dois canais funcionam em paralelo sempre que o
-usuário tiver email e telefone cadastrados.
+## 📚 Documentação
 
-### Eventos notificados
+| Tópico | Documento |
+|---|---|
+| **Instalar no Linux/macOS** | [docs/instalacao-linux.md](docs/instalacao-linux.md) |
+| **Instalar no Windows** | [docs/instalacao-windows.md](docs/instalacao-windows.md) |
+| **Instalar via WSL2** | [docs/instalacao-wsl.md](docs/instalacao-wsl.md) |
+| Arquitetura geral | [docs/arquitetura.md](docs/arquitetura.md) |
+| Módulos e como usar | [docs/modulos.md](docs/modulos.md) |
+| Modelo de dados (Prisma) | [docs/banco-de-dados.md](docs/banco-de-dados.md) |
+| Endpoints da API | [docs/api.md](docs/api.md) |
+| Notificações (email + WhatsApp) | [docs/notificacoes.md](docs/notificacoes.md) |
+| Segurança e 2FA | [docs/seguranca.md](docs/seguranca.md) |
+| Backup e restauração | [docs/backup-restore.md](docs/backup-restore.md) |
+| **Deploy em produção** | [docs/deploy.md](docs/deploy.md) |
+| **Solução de problemas** | [docs/troubleshooting.md](docs/troubleshooting.md) |
+| Como contribuir | [docs/contribuindo.md](docs/contribuindo.md) |
+| Glossário do app | [docs/glossario.md](docs/glossario.md) |
 
-- `ACCOUNT_CREATED` — admin cria conta, envia credenciais ao novo usuário.
-- `PASSWORD_RESET` — fluxo de "esqueci minha senha" (link expira em 60 min).
-- `PASSWORD_RESET_BY_ADMIN` — admin redefine senha de outro usuário.
-- `PAYMENT_DUE` / `PAYMENT_OVERDUE` — pagamentos próximos do vencimento (até 3
-  dias) e atrasados.
-- `TASK_DUE` / `TASK_OVERDUE` — tarefas próximas do deadline (até 2 dias) e
-  atrasadas.
+Tudo organizado em [docs/README.md](docs/README.md).
 
-Cada envio é registrado em `NotificationLog` (sucesso ou falha + mensagem
-de erro). Lembretes recorrentes são idempotentes por dia: um pagamento `X`
-nunca recebe duas notificações `PAYMENT_DUE` no mesmo dia.
+E dentro do app: **Menu → Ajuda** abre a Central de Ajuda interativa.
 
-### Configuração SMTP
+---
 
-Defina no `.env`:
+## ⚙️ Comandos úteis
 
 ```bash
-SMTP_HOST=...
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=...
-SMTP_PASS=...
-SMTP_FROM="\"Wedding Finance\" <noreply@dominio.com>"
-APP_URL="https://seu.dominio"   # usado para montar links em emails/WhatsApp
+npm run dev            # servidor de desenvolvimento (porta 3005)
+npm run build          # build de produção
+npm run start          # servidor de produção
+npm run lint           # ESLint
+
+npm run db:push        # aplicar schema ao SQLite (sem perder dados)
+npm run db:seed        # rodar o seed (cria admin@admin.com)
+npm run db:studio      # abre o Prisma Studio em http://localhost:5555
+
+npm run test           # vitest em watch
+npm run test:run       # vitest single run
+npm run test:coverage  # cobertura
+
+./setup.sh             # reinstala/atualiza tudo (Linux/Mac/WSL)
+./setup.sh --prod      # build + PM2
+./setup.sh --reset-db  # ⚠️ apaga o banco e refaz
+
+.\setup.ps1            # equivalente Windows nativo
+.\setup.ps1 -Prod      # build + PM2
+.\setup.ps1 -ResetDb   # ⚠️ apaga o banco e refaz
 ```
 
-### Conectando WhatsApp
+---
 
-1. Acesse `/dashboard/settings` como **ADMIN**.
-2. Aba **WhatsApp** → botão **Conectar**.
-3. Escaneie o QR Code que aparece na tela com o app do WhatsApp do número
-   que vai disparar mensagens (WhatsApp → Configurações → Aparelhos
-   conectados → Conectar um aparelho).
-4. Status muda para `Conectado (<número>)`. A sessão fica persistida em
-   `./.whatsapp-auth/` (já no `.gitignore`).
-5. Use **Enviar teste** para validar.
+## 🌐 Deploy em produção
 
-### Cron de lembretes
+Veja [docs/deploy.md](docs/deploy.md) para um passo-a-passo completo com:
 
-Endpoint: `GET /api/cron/reminders` — protegido por
-`Authorization: Bearer ${CRON_SECRET}` (comparação timing-safe).
+- VPS Ubuntu + PM2
+- Cloudflare Tunnel (HTTPS automático, sem abrir portas) **ou** nginx + Let's Encrypt
+- Cron de lembretes (`*/30 * * * *`)
+- Cron de backup diário
+- Conexão WhatsApp via QR Code
+- Atualizações com zero downtime (`git pull && ./setup.sh --prod --skip-seed`)
 
-Recomendado rodar a cada 30 minutos via crontab do servidor:
+---
 
-```cron
-*/30 * * * * curl -fsS -H "Authorization: Bearer SEU_SECRET" \
-  http://localhost:3005/api/cron/reminders >> /var/log/wfv-cron.log 2>&1
-```
+## 🤝 Contribuindo
 
-Gere o secret com `openssl rand -hex 32` e coloque em `CRON_SECRET` no `.env`.
+PRs são muito bem-vindos! Antes de mandar, leia
+[docs/contribuindo.md](docs/contribuindo.md) — basicamente:
 
-## Conta de usuário
+1. Discuta features grandes em uma issue antes.
+2. `npm run lint` e `npm run test:run` precisam passar.
+3. Atualize a documentação (`docs/`, `/help`) na mesma PR.
+4. Mensagem de commit clara em pt-BR ou en (`feat(payments): …`).
 
-O cadastro público foi removido. **Somente admins criam contas** em
-`/dashboard/settings` → **Time** → **Novo usuário**. O sistema gera uma senha
-temporária, envia por email e/ou WhatsApp para o novo usuário e exige a
-troca no primeiro login.
+Para agentes de IA (Claude Code, Gemini Code, Cursor, etc.), leia
+[AGENTS.md](AGENTS.md) — é a fonte de verdade técnica.
 
-Esqueceu a senha? Acesse `/forgot-password` e o link de redefinição é enviado
-por email e WhatsApp simultaneamente (quando ambos os contatos existem).
+---
 
+## 🔐 Privacidade
+
+- **Single-tenant.** Uma instalação = um casamento. Nada é compartilhado
+  entre casais.
+- **Sem cloud obrigatória.** SQLite local. Você decide se hospeda na
+  nuvem ou no PC de casa.
+- **Sem telemetria.** Zero "phone home". Zero analytics. O projeto não
+  envia nada para lugar nenhum.
+
+---
+
+## 📄 Licença
+
+[MIT](LICENSE) — use, modifique e distribua livremente, inclusive
+comercialmente.
+
+---
+
+## 💬 Suporte
+
+- 🐛 **Bugs:** abra uma [issue](https://github.com/SEU_USUARIO/wfv-management-system/issues/new?template=bug.md)
+- 💡 **Ideias:** abra uma [issue de feature](https://github.com/SEU_USUARIO/wfv-management-system/issues/new?template=feature.md)
+- ❓ **Dúvidas de uso:** veja a **Central de Ajuda** dentro do app
+  (`/dashboard/help`) ou [docs/troubleshooting.md](docs/troubleshooting.md)
+
+---
+
+<p align="center">
+  Feito com ♥ para casais que querem chegar ao altar com o orçamento sob controle.
+</p>

@@ -64,15 +64,16 @@ model SecuritySettings {
 }
 
 model EventSettings {
-  id                 String   @id @default("singleton")
-  eventDate          DateTime
-  contingencyPercent Float    @default(10)
-  currency           String   @default("BRL")
-  coupleNames        String?
-  rainPlanB          String?
-  daySchedule        String?
-  daySpecialNotes    String?
-  updatedAt          DateTime @updatedAt
+  id                     String    @id @default("singleton")
+  eventDate              DateTime?
+  contingencyPercent     Float     @default(10)
+  currency               String    @default("BRL")
+  coupleNames            String?
+  rainPlanB              String?
+  daySchedule            String?
+  daySpecialNotes        String?
+  onboardingCompletedAt  DateTime?
+  updatedAt              DateTime  @updatedAt
 }
 
 model Vendor {

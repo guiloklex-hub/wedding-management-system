@@ -26,12 +26,17 @@ export default async function PublicRsvpPage({
         </p>
         <h1 className="mt-2 text-center text-2xl font-bold text-white">Oi {guest.name}!</h1>
         <p className="mt-3 text-center text-sm text-zinc-300">
-          Você está sendo convidado(a) para o nosso casamento em{" "}
-          <span className="font-semibold text-white">
-            {new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeZone: "UTC" }).format(
-              cfg.eventDate,
-            )}
-          </span>
+          Você está sendo convidado(a) para o nosso casamento
+          {cfg.eventDate ? (
+            <>
+              {" em "}
+              <span className="font-semibold text-white">
+                {new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeZone: "UTC" }).format(
+                  cfg.eventDate,
+                )}
+              </span>
+            </>
+          ) : null}
           .
         </p>
         <RsvpForm guest={guest} />

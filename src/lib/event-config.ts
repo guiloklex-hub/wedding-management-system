@@ -1,13 +1,12 @@
 import { prisma } from "./prisma";
 
 export type EventConfig = {
-  eventDate: Date;
+  eventDate: Date | null;
   contingencyPercent: number;
   currency: string;
   coupleNames: string | null;
+  onboardingCompletedAt: Date | null;
 };
-
-const DEFAULT_EVENT_DATE_ISO = "2026-11-15T00:00:00.000Z";
 
 export async function getEventConfig(): Promise<EventConfig> {
   const settings = await prisma.eventSettings.upsert({
@@ -15,7 +14,6 @@ export async function getEventConfig(): Promise<EventConfig> {
     update: {},
     create: {
       id: "singleton",
-      eventDate: new Date(DEFAULT_EVENT_DATE_ISO),
       contingencyPercent: 10,
       currency: "BRL",
     },
@@ -26,21 +24,27 @@ export async function getEventConfig(): Promise<EventConfig> {
     contingencyPercent: settings.contingencyPercent,
     currency: settings.currency,
     coupleNames: settings.coupleNames,
+    onboardingCompletedAt: settings.onboardingCompletedAt,
   };
 }
 
 export async function updateEventConfig(
-  input: Partial<Omit<EventConfig, "eventDate">> & { eventDate?: Date },
+  input: Partial<Omit<EventConfig, "eventDate" | "onboardingCompletedAt">> & {
+    eventDate?: Date | null;
+    onboardingCompletedAt?: Date | null;
+  },
 ): Promise<EventConfig> {
   await getEventConfig();
 
   const updated = await prisma.eventSettings.update({
     where: { id: "singleton" },
     data: {
-      eventDate: input.eventDate ?? undefined,
+      eventDate: input.eventDate === undefined ? undefined : input.eventDate,
       contingencyPercent: input.contingencyPercent ?? undefined,
       currency: input.currency ?? undefined,
       coupleNames: input.coupleNames ?? undefined,
+      onboardingCompletedAt:
+        input.onboardingCompletedAt === undefined ? undefined : input.onboardingCompletedAt,
     },
   });
 
@@ -49,7 +53,12 @@ export async function updateEventConfig(
     contingencyPercent: updated.contingencyPercent,
     currency: updated.currency,
     coupleNames: updated.coupleNames,
+    onboardingCompletedAt: updated.onboardingCompletedAt,
   };
+}
+
+export function isOnboardingComplete(cfg: EventConfig): boolean {
+  return Boolean(cfg.onboardingCompletedAt && cfg.eventDate && cfg.coupleNames);
 }
 
 export function daysUntil(target: Date, from: Date = new Date()): number {

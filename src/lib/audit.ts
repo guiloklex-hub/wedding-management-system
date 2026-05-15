@@ -12,7 +12,10 @@ export type AuditAction =
   | "RESET_PASSWORD"
   | "RESET_2FA"
   | "CHANGE_OWN_PASSWORD"
-  | "LOGIN";
+  | "LOGIN"
+  | "ONBOARDING_COUPLE"
+  | "ONBOARDING_BUDGET"
+  | "ONBOARDING_FINISH";
 
 export type AuditEntity =
   | "Vendor"

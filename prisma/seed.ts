@@ -34,10 +34,12 @@ async function main() {
         password: hashedPassword,
         role: 'ADMIN',
         isActive: true,
+        mustChangePassword: true,
         passwordUpdatedAt: new Date(),
       },
     })
     console.log('✅ Usuário administrador criado com sucesso!')
+    console.log('   Você será orientado a trocar a senha e configurar o evento no primeiro login.')
   } else {
     console.log('⚠️ Usuário administrador já existe.')
   }

@@ -146,6 +146,13 @@ export async function deleteTask(taskId: string): Promise<ActionResult> {
 export async function loadTaskTemplates(skipExisting = true): Promise<ActionResult<{ created: number }>> {
   try {
     const cfg = await getEventConfig();
+    if (!cfg.eventDate) {
+      return {
+        success: false,
+        error: "Configure a data do evento em Ajustes para usar os templates.",
+      };
+    }
+    const eventDate = cfg.eventDate;
     const existing = skipExisting
       ? new Set(
           (
@@ -162,7 +169,7 @@ export async function loadTaskTemplates(skipExisting = true): Promise<ActionResu
     const data = TASK_TEMPLATES.filter((t) => !existing.has(t.key)).map((t) => ({
       title: t.title,
       description: t.description ?? null,
-      deadline: templateDeadline(cfg.eventDate, t),
+      deadline: templateDeadline(eventDate, t),
       status: "TODO",
       priority: t.priority,
       responsible: t.responsible ?? null,

@@ -6,6 +6,7 @@ import { authConfig } from "./auth.config";
 import { prisma } from "@/lib/prisma";
 import { checkBackupCode, verifyTotpToken } from "@/lib/totp";
 import { getSecuritySettings, role2FARequired } from "@/lib/security-settings";
+import { getEventConfig, isOnboardingComplete } from "@/lib/event-config";
 
 export const TWO_FACTOR_REQUIRED = "2FA_REQUIRED";
 export const TWO_FACTOR_SETUP_REQUIRED = "2FA_SETUP_REQUIRED";
@@ -71,12 +72,15 @@ export const {
           data: { lastLoginAt: new Date() },
         });
 
+        const cfg = await getEventConfig();
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
           mustChangePassword: user.mustChangePassword,
+          onboardingCompleted: isOnboardingComplete(cfg),
         };
       },
     }),

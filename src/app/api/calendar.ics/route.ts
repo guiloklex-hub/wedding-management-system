@@ -25,12 +25,16 @@ export async function GET() {
   ]);
 
   const events = [
-    {
-      uid: `event-day-${cfg.eventDate.toISOString()}`,
-      summary: cfg.coupleNames ? `Casamento ${cfg.coupleNames}` : "Casamento",
-      date: cfg.eventDate,
-      allDay: true,
-    },
+    ...(cfg.eventDate
+      ? [
+          {
+            uid: `event-day-${cfg.eventDate.toISOString()}`,
+            summary: cfg.coupleNames ? `Casamento ${cfg.coupleNames}` : "Casamento",
+            date: cfg.eventDate,
+            allDay: true,
+          },
+        ]
+      : []),
     ...tasks
       .filter((t) => t.deadline)
       .map((t) => ({

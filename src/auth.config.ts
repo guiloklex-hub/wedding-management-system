@@ -15,11 +15,29 @@ export const authConfig = {
 
       if (p.startsWith("/dashboard")) {
         if (!isLoggedIn) return false;
-        const mustChange = (auth?.user as { mustChangePassword?: boolean } | undefined)?.mustChangePassword;
+
+        const u = auth?.user as
+          | { role?: string; mustChangePassword?: boolean; onboardingCompleted?: boolean }
+          | undefined;
+
+        const mustChange = u?.mustChangePassword;
         const forcePath = "/dashboard/profile/change-password";
         if (mustChange && !p.startsWith(forcePath) && !p.startsWith("/api/auth")) {
           return Response.redirect(new URL(forcePath, nextUrl));
         }
+
+        const onboardingPath = "/dashboard/onboarding";
+        const needsOnboarding =
+          u?.role === "ADMIN" && u?.onboardingCompleted === false && !mustChange;
+        if (
+          needsOnboarding &&
+          !p.startsWith(onboardingPath) &&
+          !p.startsWith(forcePath) &&
+          !p.startsWith("/api/auth")
+        ) {
+          return Response.redirect(new URL(onboardingPath, nextUrl));
+        }
+
         return true;
       }
       if (isLoggedIn) {
@@ -31,14 +49,26 @@ export const authConfig = {
     },
     jwt({ token, user, trigger, session }) {
       if (user) {
-        const u = user as { role?: string; mustChangePassword?: boolean };
+        const u = user as {
+          role?: string;
+          mustChangePassword?: boolean;
+          onboardingCompleted?: boolean;
+        };
         if (u.role !== undefined) token.role = u.role;
         if (u.mustChangePassword !== undefined) token.mustChangePassword = u.mustChangePassword;
+        if (u.onboardingCompleted !== undefined)
+          token.onboardingCompleted = u.onboardingCompleted;
       }
       if (trigger === "update" && session) {
-        const s = session as { mustChangePassword?: boolean; role?: string };
+        const s = session as {
+          mustChangePassword?: boolean;
+          role?: string;
+          onboardingCompleted?: boolean;
+        };
         if (typeof s.mustChangePassword === "boolean") token.mustChangePassword = s.mustChangePassword;
         if (s.role) token.role = s.role;
+        if (typeof s.onboardingCompleted === "boolean")
+          token.onboardingCompleted = s.onboardingCompleted;
       }
       return token;
     },
@@ -48,10 +78,12 @@ export const authConfig = {
           id?: string;
           role?: string;
           mustChangePassword?: boolean;
+          onboardingCompleted?: boolean;
         };
         if (typeof token.sub === "string") ext.id = token.sub;
         ext.role = token.role as string | undefined;
         ext.mustChangePassword = (token.mustChangePassword as boolean | undefined) ?? false;
+        ext.onboardingCompleted = (token.onboardingCompleted as boolean | undefined) ?? true;
       }
       return session;
     },

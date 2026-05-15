@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getEventConfig, daysUntil } from "@/lib/event-config";
 import WeddingDayClient from "./wedding-day-client";
@@ -13,8 +14,11 @@ function endOfDay(d: Date): Date {
 
 export default async function WeddingDayPage() {
   const cfg = await getEventConfig();
-  const dayStart = startOfDay(cfg.eventDate);
-  const dayEnd = endOfDay(cfg.eventDate);
+  if (!cfg.eventDate) redirect("/dashboard/onboarding");
+
+  const eventDate = cfg.eventDate;
+  const dayStart = startOfDay(eventDate);
+  const dayEnd = endOfDay(eventDate);
 
   const [tasksToday, paymentsToday, criticalVendors, guestStats] = await Promise.all([
     prisma.task.findMany({
@@ -56,8 +60,8 @@ export default async function WeddingDayPage() {
 
   return (
     <WeddingDayClient
-      eventDate={cfg.eventDate}
-      daysToEvent={daysUntil(cfg.eventDate)}
+      eventDate={eventDate}
+      daysToEvent={daysUntil(eventDate)}
       coupleNames={cfg.coupleNames}
       rainPlanB={null}
       daySchedule={null}

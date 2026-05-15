@@ -63,15 +63,22 @@ ok "Node $(node -v)  ·  npm $(npm -v)"
 if [ ! -f .env ]; then
   info "Criando .env inicial..."
   SECRET="$(node -e 'console.log(require("crypto").randomBytes(32).toString("base64url"))')"
+  if command -v openssl >/dev/null 2>&1; then
+    CRON="$(openssl rand -hex 32)"
+  else
+    CRON="$(node -e 'console.log(require("crypto").randomBytes(32).toString("hex"))')"
+  fi
   cat > .env <<EOF
 # Wedding Finance — variáveis locais (não commitar)
 DATABASE_URL="file:./dev.db"
 NEXTAUTH_SECRET="$SECRET"
 NEXTAUTH_URL="http://localhost:3005"
+APP_URL="http://localhost:3005"
 ADMIN_PASSWORD="admin"
+CRON_SECRET="$CRON"
 EOF
-  ok ".env criado com NEXTAUTH_SECRET gerado aleatoriamente."
-  warn "Lembre de definir NEXTAUTH_URL real em produção."
+  ok ".env criado com NEXTAUTH_SECRET e CRON_SECRET gerados aleatoriamente."
+  warn "Lembre de definir NEXTAUTH_URL e APP_URL reais em produção."
 else
   ok ".env já existe — mantido."
 fi
@@ -143,8 +150,16 @@ if ! $PROD_MODE; then
   echo "Comece com:  npm run dev"
   echo "Acesse:      http://localhost:3005"
   echo "Login:       admin@admin.com  /  admin"
+  echo
+  echo "🪄 No primeiro login você será orientado(a) a:"
+  echo "   1) Trocar a senha provisória."
+  echo "   2) Configurar o casamento (nomes do casal, data, contingência)."
+  echo
+  echo "Para configurar SMTP/WhatsApp depois, vá em Ajustes."
 else
   echo "Aplicação rodando em produção via PM2."
   echo "Status:      pm2 status $APP_NAME"
   echo "Logs:        pm2 logs $APP_NAME"
+  echo
+  echo "Lembre de ajustar NEXTAUTH_URL e APP_URL para seu domínio em .env"
 fi

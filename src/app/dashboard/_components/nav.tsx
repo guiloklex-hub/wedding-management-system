@@ -11,6 +11,7 @@ import {
   CreditCard,
   Gift,
   Heart,
+  HelpCircle,
   Home,
   LogOut,
   Menu,
@@ -49,6 +50,7 @@ const LINKS: NavLink[] = [
   { href: "/dashboard/honeymoon", label: "Lua de mel", icon: Plane },
   { href: "/dashboard/trousseau", label: "Enxoval", icon: ShoppingBasket },
   { href: "/dashboard/settings", label: "Ajustes", icon: SettingsIcon },
+  { href: "/dashboard/help", label: "Ajuda", icon: HelpCircle },
 ];
 
 function isActive(pathname: string, href: string, exact?: boolean): boolean {

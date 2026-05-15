@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getEventConfig, daysUntil } from "@/lib/event-config";
 import { resolveCategoryColor, resolveCategoryLabel } from "@/lib/categories";
@@ -13,6 +14,9 @@ export const dynamic = "force-dynamic";
 
 export default async function InsightsPage() {
   const cfg = await getEventConfig();
+  if (!cfg.eventDate) redirect("/dashboard/onboarding");
+
+  const eventDate = cfg.eventDate;
   const [vendors, payments, assets, incomes, tasks] = await Promise.all([
     prisma.vendor.findMany({
       where: { deletedAt: null },
@@ -55,7 +59,7 @@ export default async function InsightsPage() {
   const today = new Date();
   const cashflow = buildMonthlyCashflow({
     startingCash: totalCash,
-    eventDate: cfg.eventDate,
+    eventDate: eventDate,
     today,
     incomes,
     payments: payments.filter((p) => p.status === "PENDING"),
@@ -70,7 +74,7 @@ export default async function InsightsPage() {
     (t) => t.status !== "DONE" && t.deadline && new Date(t.deadline) < today,
   ).length;
 
-  const daysToEvent = daysUntil(cfg.eventDate, today);
+  const daysToEvent = daysUntil(eventDate, today);
   const health = computeHealthScore({
     totalBudget,
     totalContracted,
@@ -91,7 +95,7 @@ export default async function InsightsPage() {
   const heatmap = buildPaymentHeatmap(
     payments.filter((p) => p.status === "PENDING"),
     heatStart,
-    cfg.eventDate,
+    eventDate,
   );
 
   return (
@@ -103,7 +107,7 @@ export default async function InsightsPage() {
         </p>
       </div>
       <InsightsClient
-        eventDate={cfg.eventDate}
+        eventDate={eventDate}
         contingencyPercent={cfg.contingencyPercent}
         totals={{
           budget: totalBudget,

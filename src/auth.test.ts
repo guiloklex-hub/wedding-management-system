@@ -32,6 +32,18 @@ beforeEach(async () => {
     passwordMinLength: 8,
     updatedAt: new Date(),
   } as never);
+  prismaMock.eventSettings.upsert.mockResolvedValue({
+    id: "singleton",
+    eventDate: null,
+    contingencyPercent: 10,
+    currency: "BRL",
+    coupleNames: null,
+    rainPlanB: null,
+    daySchedule: null,
+    daySpecialNotes: null,
+    onboardingCompletedAt: null,
+    updatedAt: new Date(),
+  } as never);
   prismaMock.user.update.mockResolvedValue({} as never);
   vi.resetModules();
   // Re-import after reset so module-side-effect re-registers the credentials provider
@@ -96,7 +108,14 @@ describe("auth.ts authorize callback", () => {
       role: string;
       password?: string;
     };
-    expect(r).toEqual({ id: "u1", email: "a@example.com", name: "Ana", role: "OWNER" });
+    expect(r).toEqual({
+      id: "u1",
+      email: "a@example.com",
+      name: "Ana",
+      role: "OWNER",
+      mustChangePassword: undefined,
+      onboardingCompleted: false,
+    });
     expect(r.password).toBeUndefined();
   });
 

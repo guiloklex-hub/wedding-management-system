@@ -1,4 +1,5 @@
-import { AlertCircle, CalendarClock, CalendarHeart, CreditCard, TrendingDown, Wallet } from "lucide-react";
+import Link from "next/link";
+import { AlertCircle, CalendarClock, CalendarHeart, CreditCard, Sparkles, TrendingDown, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ import DashboardCharts, { type ChartDatum } from "./charts";
 
 export default async function DashboardPage() {
   const cfg = await getEventConfig();
+  const eventDate = cfg.eventDate;
 
   const [vendors, payments, assets] = await Promise.all([
     prisma.vendor.findMany({
@@ -66,17 +68,19 @@ export default async function DashboardPage() {
   next30.setDate(today.getDate() + 30);
   const upcoming = payments.filter((p) => p.status === "PENDING" && p.dueDate <= next30);
 
-  const daysToEvent = daysUntil(cfg.eventDate, today);
-  const showQuitAlert = daysToEvent <= 20;
+  const daysToEvent = eventDate ? daysUntil(eventDate, today) : null;
+  const showQuitAlert = daysToEvent !== null && daysToEvent <= 20;
   const vendorsWithPending = vendors.filter((v) => {
     const total = v.budgetItems.reduce((s, i) => s + (i.actualValue ?? i.estimatedValue), 0);
     const paid = v.payments.filter((p) => p.status === "PAID").reduce((s, p) => s + p.amount, 0);
     return total > paid;
   });
 
-  const subtitle = cfg.coupleNames
-    ? `${cfg.coupleNames} · ${formatDateBR(cfg.eventDate)}`
-    : `Casamento em ${formatDateBR(cfg.eventDate)}`;
+  const subtitle = eventDate
+    ? cfg.coupleNames
+      ? `${cfg.coupleNames} · ${formatDateBR(eventDate)}`
+      : `Casamento em ${formatDateBR(eventDate)}`
+    : "Configure seu evento para começar";
 
   return (
     <div className="space-y-6">
@@ -85,10 +89,26 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight">Visão Geral</h1>
           <p className="text-sm text-zinc-500">{subtitle}</p>
         </div>
-        <CountdownPill days={daysToEvent} />
+        {daysToEvent !== null ? <CountdownPill days={daysToEvent} /> : null}
       </div>
 
-      {showQuitAlert && vendorsWithPending.length > 0 ? (
+      {!eventDate ? (
+        <Link
+          href="/dashboard/onboarding"
+          className="flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-gradient-to-br from-rose-500/15 via-rose-500/5 to-zinc-900/30 p-5 shadow-sm transition-colors hover:from-rose-500/25"
+        >
+          <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-rose-300" />
+          <div>
+            <h3 className="font-semibold text-rose-100">Vamos configurar seu casamento?</h3>
+            <p className="mt-1 text-sm text-zinc-300">
+              Em menos de 2 minutos você define a data, os nomes do casal e como as
+              notificações vão funcionar. Clique aqui para iniciar o assistente.
+            </p>
+          </div>
+        </Link>
+      ) : null}
+
+      {showQuitAlert && vendorsWithPending.length > 0 && daysToEvent !== null ? (
         <div className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-400 shadow-sm backdrop-blur-sm">
           <AlertCircle className="h-5 w-5" />
           <div>

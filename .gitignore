@@ -47,3 +47,6 @@ dev.db
 dev.db-journal
 *.sqlite
 *.sqlite-journal
+
+# Uploaded files (storage local)
+/uploads

@@ -33,12 +33,93 @@ model Vendor {
   status       String       @default("NEGOTIATION")
   contractLink String?
   notes        String?
+  rating       Int?
+  tags         String?
+  indicatedBy  String?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   deletedAt    DateTime?
 
   budgetItems  BudgetItem[]
   payments     Payment[]
+  contacts     VendorContact[]
+  vendorNotes  VendorNote[]
+  contracts    Contract[]
+  attachments  Attachment[]
+}
+
+model VendorContact {
+  id        String   @id @default(cuid())
+  vendorId  String
+  name      String
+  role      String?
+  phone     String?
+  email     String?
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+}
+
+model VendorNote {
+  id        String   @id @default(cuid())
+  vendorId  String
+  body      String
+  kind      String   @default("NOTE")
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId, createdAt])
+}
+
+model Contract {
+  id                 String   @id @default(cuid())
+  vendorId           String
+  title              String
+  version            Int      @default(1)
+  status             String   @default("DRAFT")
+  signedAt           DateTime?
+  expiresAt          DateTime?
+  totalValue         Float?
+  paymentTerms       String?
+  cancellationPolicy String?
+  includedItems      String?
+  excludedItems      String?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  deletedAt          DateTime?
+
+  vendor             Vendor       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  attachments        Attachment[]
+
+  @@index([vendorId])
+}
+
+model Attachment {
+  id          String   @id @default(cuid())
+  ownerType   String
+  ownerId     String
+  vendorId    String?
+  contractId  String?
+  kind        String   @default("OTHER")
+  filename    String
+  mimeType    String
+  size        Int
+  storagePath String
+  createdAt   DateTime @default(now())
+  deletedAt   DateTime?
+
+  vendor      Vendor?   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  contract    Contract? @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([ownerType, ownerId])
 }
 
 model BudgetItem {

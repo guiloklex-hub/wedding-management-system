@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Plus, Loader2, Pencil, Trash2, Search } from "lucide-react";
+import Link from "next/link";
+import { Plus, Loader2, Pencil, Trash2, Search, Star } from "lucide-react";
 import {
   createVendor,
   updateVendor,
@@ -191,7 +192,24 @@ export default function VendorsClient({ vendors, categories }: Props) {
                   return (
                     <tr key={vendor.id} className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-zinc-200">{vendor.name}</div>
+                        <Link
+                          href={`/dashboard/vendors/${vendor.id}`}
+                          className="font-medium text-zinc-200 hover:text-rose-300"
+                        >
+                          {vendor.name}
+                        </Link>
+                        {vendor.rating ? (
+                          <div className="mt-0.5 flex items-center gap-0.5">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-3 w-3 ${
+                                  i < (vendor.rating ?? 0) ? "fill-amber-400 text-amber-400" : "text-zinc-700"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        ) : null}
                         {vendor.notes ? (
                           <div className="mt-0.5 line-clamp-1 text-xs text-zinc-500">{vendor.notes}</div>
                         ) : null}
@@ -273,7 +291,12 @@ export default function VendorsClient({ vendors, categories }: Props) {
                       />
                       <span className="text-xs text-zinc-400">{category?.label ?? vendor.category}</span>
                     </div>
-                    <h3 className="mt-1 truncate font-semibold text-zinc-100">{vendor.name}</h3>
+                    <Link
+                      href={`/dashboard/vendors/${vendor.id}`}
+                      className="mt-1 block truncate font-semibold text-zinc-100 hover:text-rose-300"
+                    >
+                      {vendor.name}
+                    </Link>
                     <div className="mt-2 text-sm text-zinc-300">
                       {formatCurrency(value)}{" "}
                       <span className="text-xs text-zinc-500">({isReal ? "Real" : "Estimado"})</span>

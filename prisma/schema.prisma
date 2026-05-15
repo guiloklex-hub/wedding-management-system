@@ -22,6 +22,9 @@ model EventSettings {
   contingencyPercent Float    @default(10)
   currency           String   @default("BRL")
   coupleNames        String?
+  rainPlanB          String?
+  daySchedule        String?
+  daySpecialNotes    String?
   updatedAt          DateTime @updatedAt
 }
 
@@ -242,6 +245,57 @@ model SavingsGoal {
   deletedAt    DateTime?
 
   assets       Asset[]
+}
+
+model Guest {
+  id                String   @id @default(cuid())
+  name              String
+  phone             String?
+  email             String?
+  side              String?
+  groupName         String?
+  rsvpStatus        String   @default("INVITED")
+  rsvpToken         String   @unique @default(cuid())
+  rsvpRespondedAt   DateTime?
+  plusOnesAllowed   Int      @default(0)
+  plusOnesConfirmed Int      @default(0)
+  isChild           Boolean  @default(false)
+  isVIP             Boolean  @default(false)
+  isPadrinho        Boolean  @default(false)
+  dietary           String?
+  tableNumber       String?
+  city              String?
+  checkedInAt       DateTime?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
+
+  gifts             Gift[]
+
+  @@index([rsvpStatus])
+  @@index([deletedAt])
+}
+
+model Gift {
+  id          String   @id @default(cuid())
+  guestId     String?
+  giverName   String?
+  type        String   @default("CASH")
+  amount      Float?
+  description String?
+  status      String   @default("RECEIVED")
+  receivedAt  DateTime @default(now())
+  thankedAt   DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  guest       Guest?   @relation(fields: [guestId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([guestId])
 }
 
 model Task {

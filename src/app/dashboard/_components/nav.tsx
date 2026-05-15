@@ -6,8 +6,10 @@ import { useState } from "react";
 import {
   BarChart3,
   Building2,
+  CalendarHeart,
   CheckSquare,
   CreditCard,
+  Gift,
   Heart,
   Home,
   LogOut,
@@ -16,6 +18,7 @@ import {
   Settings as SettingsIcon,
   Target,
   Users,
+  UserPlus,
   Wallet,
   X,
 } from "lucide-react";
@@ -38,6 +41,9 @@ const LINKS: NavLink[] = [
   { href: "/dashboard/income", label: "Receitas", icon: PiggyBank },
   { href: "/dashboard/assets", label: "Caixa", icon: Wallet },
   { href: "/dashboard/goals", label: "Metas", icon: Target },
+  { href: "/dashboard/guests", label: "Convidados", icon: UserPlus },
+  { href: "/dashboard/gifts", label: "Presentes", icon: Gift },
+  { href: "/dashboard/wedding-day", label: "Dia D", icon: CalendarHeart },
   { href: "/dashboard/settings", label: "Ajustes", icon: SettingsIcon },
 ];
 

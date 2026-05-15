@@ -22,12 +22,6 @@ function buildResetUrl(token: string): string {
   return `${base.replace(/\/$/, "")}/reset-password/${token}`;
 }
 
-function buildLoginUrl(): string {
-  const base =
-    process.env.APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3005";
-  return `${base.replace(/\/$/, "")}/login`;
-}
-
 const RequestSchema = z.object({
   email: z.string().trim().toLowerCase().email("Email inválido").max(160),
 });

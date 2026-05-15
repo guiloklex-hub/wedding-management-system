@@ -8,12 +8,31 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String?
-  email     String   @unique
-  password  String
-  role      String   @default("USER")
-  createdAt DateTime @default(now())
+  id                  String    @id @default(cuid())
+  name                String?
+  email               String    @unique
+  password            String
+  role                String    @default("OWNER")
+  twoFactorEnabled    Boolean   @default(false)
+  twoFactorSecret     String?
+  twoFactorBackupCodes String?
+  createdAt           DateTime  @default(now())
+}
+
+model Invite {
+  id          String    @id @default(cuid())
+  email       String
+  role        String    @default("PARTNER")
+  token       String    @unique @default(cuid())
+  message     String?
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  acceptedBy  String?
+  createdBy   String
+  createdAt   DateTime  @default(now())
+
+  @@index([email])
+  @@index([token])
 }
 
 model EventSettings {

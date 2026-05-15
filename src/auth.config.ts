@@ -10,6 +10,7 @@ export const authConfig = {
       const p = nextUrl.pathname;
 
       if (p.startsWith("/rsvp")) return true;
+      if (p.startsWith("/invite")) return true;
 
       if (p.startsWith("/dashboard")) {
         return isLoggedIn;

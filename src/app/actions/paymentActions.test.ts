@@ -81,8 +81,8 @@ describe("createPayment - validações Zod", () => {
   });
 });
 
-describe("createPayment - regras de data x evento", () => {
-  it("bloqueia PIX após a data do evento", async () => {
+describe("createPayment - data posterior ao evento (sem bloqueio)", () => {
+  it("permite PIX após a data do evento (parcelamento via PIX recorrente)", async () => {
     prismaMock.eventSettings.upsert.mockResolvedValue({
       id: "singleton",
       eventDate: new Date("2026-01-01T00:00:00Z"),
@@ -90,11 +90,11 @@ describe("createPayment - regras de data x evento", () => {
       currency: "BRL",
       coupleNames: null,
     } as never);
+    prismaMock.vendor.findFirst.mockResolvedValue({ id: "v1" } as never);
+    prismaMock.payment.create.mockResolvedValue({ id: "p1" } as never);
     const fd = basePaymentForm({ dueDate: "2026-12-01", method: "PIX" });
     const r = await createPayment(undefined, fd);
-    expect(r.success).toBe(false);
-    if (!r.success) expect(r.error).toMatch(/posteriores à data do evento/i);
-    expect(prismaMock.payment.create).not.toHaveBeenCalled();
+    expect(r.success).toBe(true);
   });
 
   it("permite CREDIT após a data do evento (parcelamento)", async () => {

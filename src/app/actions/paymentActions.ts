@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
-import { getEventConfig } from "@/lib/event-config";
 import type { ActionResult } from "@/types";
 
 const PaymentMethodSchema = z.enum(["PIX", "BOLETO", "CREDIT", "TRANSFER", "CASH"]);
@@ -76,14 +75,6 @@ const SplitPaymentSchema = z.object({
   vendorId: z.string().min(1),
 });
 
-async function validateDueDateAgainstEvent(method: string, dueDate: Date): Promise<string | null> {
-  const cfg = await getEventConfig();
-  if (method !== "CREDIT" && dueDate > cfg.eventDate) {
-    return "Pagamentos (exceto crédito) não podem ser posteriores à data do evento.";
-  }
-  return null;
-}
-
 export async function createPayment(
   _state: ActionResult | undefined,
   formData: FormData,
@@ -95,8 +86,6 @@ export async function createPayment(
   }
 
   const dueDate = new Date(parsed.data.dueDate);
-  const dateError = await validateDueDateAgainstEvent(parsed.data.method, dueDate);
-  if (dateError) return { success: false, error: dateError };
 
   try {
     const vendor = await prisma.vendor.findFirst({
@@ -139,8 +128,6 @@ export async function updatePayment(
   }
 
   const dueDate = new Date(parsed.data.dueDate);
-  const dateError = await validateDueDateAgainstEvent(parsed.data.method, dueDate);
-  if (dateError) return { success: false, error: dateError };
 
   try {
     const existing = await prisma.payment.findFirst({
@@ -241,8 +228,6 @@ export async function createSplitPayment(
   }
 
   const finalDue = new Date(parsed.data.finalDueDate);
-  const dateError = await validateDueDateAgainstEvent(parsed.data.finalMethod, finalDue);
-  if (dateError) return { success: false, error: dateError };
 
   try {
     const vendor = await prisma.vendor.findFirst({

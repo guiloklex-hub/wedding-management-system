@@ -44,9 +44,11 @@ export const authConfig = {
     session({ session, token }) {
       if (session.user) {
         const ext = session.user as {
+          id?: string;
           role?: string;
           mustChangePassword?: boolean;
         };
+        if (typeof token.sub === "string") ext.id = token.sub;
         ext.role = token.role as string | undefined;
         ext.mustChangePassword = (token.mustChangePassword as boolean | undefined) ?? false;
       }

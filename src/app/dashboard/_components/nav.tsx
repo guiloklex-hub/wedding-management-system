@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   Building2,
+  CheckSquare,
   CreditCard,
   Heart,
   Home,
@@ -28,6 +29,7 @@ const LINKS: NavLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: Home, exact: true },
   { href: "/dashboard/vendors", label: "Fornecedores", icon: Users },
   { href: "/dashboard/venues", label: "Locais", icon: Building2 },
+  { href: "/dashboard/tasks", label: "Tarefas", icon: CheckSquare },
   { href: "/dashboard/payments", label: "Pagamentos", icon: CreditCard },
   { href: "/dashboard/assets", label: "Caixa", icon: Wallet },
   { href: "/dashboard/settings", label: "Ajustes", icon: SettingsIcon },

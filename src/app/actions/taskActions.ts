@@ -1,0 +1,182 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { audit } from "@/lib/audit";
+import { getEventConfig } from "@/lib/event-config";
+import { TASK_TEMPLATES, templateDeadline } from "@/lib/task-templates";
+import type { ActionResult } from "@/types";
+
+const TaskStatusSchema = z.enum(["TODO", "IN_PROGRESS", "DONE", "BLOCKED"]);
+const TaskPrioritySchema = z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]);
+
+const optStr = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null));
+
+const TaskBaseSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  description: optStr(2000),
+  deadline: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.length > 0 ? new Date(v) : null)),
+  status: TaskStatusSchema.default("TODO"),
+  priority: TaskPrioritySchema.default("MEDIUM"),
+  responsible: optStr(40),
+  vendorId: z.string().optional().transform((v) => (v && v.length > 0 ? v : null)),
+  venueId: z.string().optional().transform((v) => (v && v.length > 0 ? v : null)),
+});
+
+const TaskCreateSchema = TaskBaseSchema;
+const TaskUpdateSchema = TaskBaseSchema.extend({ id: z.string().min(1) });
+
+export async function createTask(
+  _state: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const data = Object.fromEntries(formData.entries());
+  const parsed = TaskCreateSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+  try {
+    const created = await prisma.task.create({
+      data: {
+        title: parsed.data.title,
+        description: parsed.data.description,
+        deadline: parsed.data.deadline,
+        status: parsed.data.status,
+        priority: parsed.data.priority,
+        responsible: parsed.data.responsible,
+        vendorId: parsed.data.vendorId,
+        venueId: parsed.data.venueId,
+        completedAt: parsed.data.status === "DONE" ? new Date() : null,
+      },
+    });
+    revalidatePath("/dashboard/tasks");
+    return { success: true, data: { id: created.id } } as ActionResult<{ id: string }>;
+  } catch (err) {
+    console.error("[createTask]", err);
+    return { success: false, error: "Erro ao criar tarefa" };
+  }
+}
+
+export async function updateTask(
+  _state: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const data = Object.fromEntries(formData.entries());
+  const parsed = TaskUpdateSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+  try {
+    const existing = await prisma.task.findFirst({
+      where: { id: parsed.data.id, deletedAt: null },
+    });
+    if (!existing) return { success: false, error: "Tarefa não encontrada" };
+
+    const completedAt =
+      parsed.data.status === "DONE" ? existing.completedAt ?? new Date() : null;
+
+    await prisma.task.update({
+      where: { id: parsed.data.id },
+      data: {
+        title: parsed.data.title,
+        description: parsed.data.description,
+        deadline: parsed.data.deadline,
+        status: parsed.data.status,
+        priority: parsed.data.priority,
+        responsible: parsed.data.responsible,
+        vendorId: parsed.data.vendorId,
+        venueId: parsed.data.venueId,
+        completedAt,
+      },
+    });
+    revalidatePath("/dashboard/tasks");
+    return { success: true };
+  } catch (err) {
+    console.error("[updateTask]", err);
+    return { success: false, error: "Erro ao atualizar tarefa" };
+  }
+}
+
+export async function setTaskStatus(
+  taskId: string,
+  status: "TODO" | "IN_PROGRESS" | "DONE" | "BLOCKED",
+): Promise<ActionResult> {
+  try {
+    const result = await prisma.task.updateMany({
+      where: { id: taskId, deletedAt: null },
+      data: {
+        status,
+        completedAt: status === "DONE" ? new Date() : null,
+      },
+    });
+    if (result.count === 0) return { success: false, error: "Tarefa não encontrada" };
+    revalidatePath("/dashboard/tasks");
+    return { success: true };
+  } catch (err) {
+    console.error("[setTaskStatus]", err);
+    return { success: false, error: "Erro ao atualizar status" };
+  }
+}
+
+export async function deleteTask(taskId: string): Promise<ActionResult> {
+  try {
+    const result = await prisma.task.updateMany({
+      where: { id: taskId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+    if (result.count === 0) return { success: false, error: "Tarefa não encontrada" };
+    revalidatePath("/dashboard/tasks");
+    return { success: true };
+  } catch (err) {
+    console.error("[deleteTask]", err);
+    return { success: false, error: "Erro ao excluir tarefa" };
+  }
+}
+
+export async function loadTaskTemplates(skipExisting = true): Promise<ActionResult<{ created: number }>> {
+  try {
+    const cfg = await getEventConfig();
+    const existing = skipExisting
+      ? new Set(
+          (
+            await prisma.task.findMany({
+              where: { templateKey: { not: null }, deletedAt: null },
+              select: { templateKey: true },
+            })
+          )
+            .map((t) => t.templateKey)
+            .filter((k): k is string => !!k),
+        )
+      : new Set<string>();
+
+    const data = TASK_TEMPLATES.filter((t) => !existing.has(t.key)).map((t) => ({
+      title: t.title,
+      description: t.description ?? null,
+      deadline: templateDeadline(cfg.eventDate, t),
+      status: "TODO",
+      priority: t.priority,
+      responsible: t.responsible ?? null,
+      templateKey: t.key,
+    }));
+
+    if (data.length === 0) return { success: true, data: { created: 0 } };
+
+    const result = await prisma.task.createMany({ data });
+    await audit("Vendor", "system", "CREATE", { templates: result.count });
+    revalidatePath("/dashboard/tasks");
+    return { success: true, data: { created: result.count } };
+  } catch (err) {
+    console.error("[loadTaskTemplates]", err);
+    return { success: false, error: "Erro ao carregar template" };
+  }
+}

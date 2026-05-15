@@ -46,6 +46,7 @@ model Vendor {
   vendorNotes  VendorNote[]
   contracts    Contract[]
   attachments  Attachment[]
+  tasks        Task[]
 }
 
 model VendorContact {
@@ -147,6 +148,7 @@ model Venue {
 
   checklistItems   VenueChecklistItem[]
   attachments      Attachment[]
+  tasks            Task[]
 }
 
 model VenueChecklistItem {
@@ -203,6 +205,30 @@ model Asset {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
+}
+
+model Task {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  deadline     DateTime?
+  completedAt  DateTime?
+  status       String   @default("TODO")
+  priority     String   @default("MEDIUM")
+  responsible  String?
+  vendorId     String?
+  venueId      String?
+  sortOrder    Int      @default(0)
+  templateKey  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  vendor       Vendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  venue        Venue?   @relation(fields: [venueId], references: [id], onDelete: SetNull)
+
+  @@index([status, deadline])
+  @@index([deadline])
 }
 
 model AuditLog {

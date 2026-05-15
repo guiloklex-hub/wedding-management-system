@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Plus, Loader2, Pencil, Trash2, Search, Star } from "lucide-react";
+import { GitCompare, Plus, Loader2, Pencil, Trash2, Search, Star } from "lucide-react";
 import {
   createVendor,
   updateVendor,
@@ -44,6 +44,21 @@ export default function VendorsClient({ vendors, categories }: Props) {
   const [isPendingTransition, startTransition] = useTransition();
   const [isCreating, setCreating] = useState(false);
   const [isUpdating, setUpdating] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else if (next.size < 4) next.add(id);
+      return next;
+    });
+  }
+
+  const compareHref =
+    selected.size >= 2
+      ? `/dashboard/vendors/compare?ids=${Array.from(selected).join(",")}`
+      : null;
 
   function handleCreate(formData: FormData) {
     setCreating(true);
@@ -153,13 +168,29 @@ export default function VendorsClient({ vendors, categories }: Props) {
             <option value="FINALIZED">Finalizado</option>
           </select>
         </div>
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-rose-500"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Novo Fornecedor</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {selected.size > 0 ? (
+            compareHref ? (
+              <Link
+                href={compareHref}
+                className="flex items-center gap-1.5 rounded-xl bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-700"
+              >
+                <GitCompare className="h-4 w-4" /> Comparar ({selected.size})
+              </Link>
+            ) : (
+              <span className="rounded-xl bg-zinc-800/50 px-3 py-2 text-xs text-zinc-400">
+                Selecione mais 1 para comparar
+              </span>
+            )
+          ) : null}
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-rose-500"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Novo Fornecedor</span>
+          </button>
+        </div>
       </div>
 
       <div className="hidden overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm md:block">
@@ -167,6 +198,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
           <table className="w-full text-left text-sm text-zinc-400">
             <thead className="border-b border-zinc-800 bg-zinc-900/80 text-xs uppercase text-zinc-500">
               <tr>
+                <th className="px-4 py-4 font-medium" aria-label="Selecionar"></th>
                 <th className="px-6 py-4 font-medium">Nome</th>
                 <th className="px-6 py-4 font-medium">Categoria</th>
                 <th className="px-6 py-4 font-medium">Status</th>
@@ -177,7 +209,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-zinc-500">
+                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
                     {vendors.length === 0 ? "Nenhum fornecedor cadastrado." : "Nenhum resultado para o filtro."}
                   </td>
                 </tr>
@@ -188,9 +220,20 @@ export default function VendorsClient({ vendors, categories }: Props) {
                   const isReal = budget?.actualValue != null;
                   const status = vendor.status as VendorStatus;
                   const category = categories.find((c) => c.key === vendor.categoryKey);
+                  const isSelected = selected.has(vendor.id);
 
                   return (
-                    <tr key={vendor.id} className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30">
+                    <tr key={vendor.id} className={`border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30 ${isSelected ? "bg-rose-500/5" : ""}`}>
+                      <td className="px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelected(vendor.id)}
+                          disabled={!isSelected && selected.size >= 4}
+                          aria-label={`Selecionar ${vendor.name}`}
+                          className="h-4 w-4 accent-rose-500"
+                        />
+                      </td>
                       <td className="px-6 py-4">
                         <Link
                           href={`/dashboard/vendors/${vendor.id}`}
@@ -280,11 +323,25 @@ export default function VendorsClient({ vendors, categories }: Props) {
             const isReal = budget?.actualValue != null;
             const status = vendor.status as VendorStatus;
             const category = categories.find((c) => c.key === vendor.categoryKey);
+            const isSelected = selected.has(vendor.id);
             return (
-              <div key={vendor.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+              <div
+                key={vendor.id}
+                className={`rounded-2xl border bg-zinc-900/50 p-4 ${
+                  isSelected ? "border-rose-500/40" : "border-zinc-800"
+                }`}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelected(vendor.id)}
+                        disabled={!isSelected && selected.size >= 4}
+                        aria-label={`Selecionar ${vendor.name}`}
+                        className="h-4 w-4 accent-rose-500"
+                      />
                       <span
                         className="inline-block h-2 w-2 rounded-full"
                         style={{ background: category?.color ?? "#71717a" }}

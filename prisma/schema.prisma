@@ -108,6 +108,7 @@ model Attachment {
   ownerId     String
   vendorId    String?
   contractId  String?
+  venueId     String?
   kind        String   @default("OTHER")
   filename    String
   mimeType    String
@@ -118,8 +119,48 @@ model Attachment {
 
   vendor      Vendor?   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   contract    Contract? @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  venue       Venue?    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([ownerType, ownerId])
+}
+
+model Venue {
+  id               String   @id @default(cuid())
+  name             String
+  address          String?
+  mapsUrl          String?
+  capacitySeated   Int?
+  capacityStanding Int?
+  baseRate         Float?
+  pricingNotes     String?
+  restrictions     String?
+  pros             String?
+  cons             String?
+  isShortlisted    Boolean  @default(false)
+  visitedAt        DateTime?
+  contactName      String?
+  contactPhone     String?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  deletedAt        DateTime?
+
+  checklistItems   VenueChecklistItem[]
+  attachments      Attachment[]
+}
+
+model VenueChecklistItem {
+  id        String   @id @default(cuid())
+  venueId   String
+  label     String
+  checked   Boolean  @default(false)
+  value     String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId, sortOrder])
 }
 
 model BudgetItem {

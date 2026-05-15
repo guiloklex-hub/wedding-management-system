@@ -43,6 +43,7 @@ export async function uploadAttachment(
 
   let vendorId: string | null = null;
   let contractId: string | null = null;
+  let venueId: string | null = null;
 
   if (ownerType === "VENDOR") {
     const v = await prisma.vendor.findFirst({ where: { id: ownerId, deletedAt: null } });
@@ -53,6 +54,10 @@ export async function uploadAttachment(
     if (!c) return { success: false, error: "Contrato não encontrado" };
     contractId = c.id;
     vendorId = c.vendorId;
+  } else if (ownerType === "VENUE") {
+    const v = await prisma.venue.findFirst({ where: { id: ownerId, deletedAt: null } });
+    if (!v) return { success: false, error: "Local não encontrado" };
+    venueId = v.id;
   }
 
   try {
@@ -63,6 +68,7 @@ export async function uploadAttachment(
         ownerId,
         vendorId,
         contractId,
+        venueId,
         kind,
         filename: stored.filename,
         mimeType: stored.mimeType,
@@ -70,9 +76,10 @@ export async function uploadAttachment(
         storagePath: stored.storagePath,
       },
     });
-    await audit("Vendor", vendorId ?? ownerId, "UPDATE", { uploadedAttachment: created.id });
+    await audit("Vendor", vendorId ?? venueId ?? ownerId, "UPDATE", { uploadedAttachment: created.id });
 
     if (vendorId) revalidatePath(`/dashboard/vendors/${vendorId}`);
+    if (venueId) revalidatePath(`/dashboard/venues/${venueId}`);
     return { success: true };
   } catch (err) {
     console.error("[uploadAttachment]", err);
@@ -97,6 +104,7 @@ export async function deleteAttachment(attachmentId: string): Promise<ActionResu
     await removeUpload(existing.storagePath);
 
     if (existing.vendorId) revalidatePath(`/dashboard/vendors/${existing.vendorId}`);
+    if (existing.venueId) revalidatePath(`/dashboard/venues/${existing.venueId}`);
     return { success: true };
   } catch (err) {
     console.error("[deleteAttachment]", err);

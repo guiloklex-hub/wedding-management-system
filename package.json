@@ -6,7 +6,12 @@
     "dev": "next dev -p 3005",
     "build": "next build",
     "start": "next start -p 3005",
-    "lint": "eslint"
+    "lint": "eslint",
+    "setup": "bash setup.sh",
+    "setup:prod": "bash setup.sh --prod",
+    "db:push": "prisma db push --skip-generate && prisma generate",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@libsql/client": "^0.17.3",

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { KeyRound, Loader2, ShieldAlert } from "lucide-react";
 import { changeOwnPassword } from "@/app/actions/userActions";
@@ -18,6 +19,7 @@ export default function ChangePasswordForm({
 }) {
   const toast = useToast();
   const router = useRouter();
+  const { update } = useSession();
   const [, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,7 @@ export default function ChangePasswordForm({
       try {
         const r = await changeOwnPassword(undefined, formData);
         if (r.success) {
+          await update({ mustChangePassword: false });
           toast.success("Senha atualizada");
           router.replace("/dashboard");
           router.refresh();

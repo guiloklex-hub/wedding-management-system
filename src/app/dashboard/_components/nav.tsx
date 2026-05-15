@@ -15,7 +15,9 @@ import {
   LogOut,
   Menu,
   PiggyBank,
+  Plane,
   Settings as SettingsIcon,
+  ShoppingBasket,
   Target,
   Users,
   UserPlus,
@@ -44,6 +46,8 @@ const LINKS: NavLink[] = [
   { href: "/dashboard/guests", label: "Convidados", icon: UserPlus },
   { href: "/dashboard/gifts", label: "Presentes", icon: Gift },
   { href: "/dashboard/wedding-day", label: "Dia D", icon: CalendarHeart },
+  { href: "/dashboard/honeymoon", label: "Lua de mel", icon: Plane },
+  { href: "/dashboard/trousseau", label: "Enxoval", icon: ShoppingBasket },
   { href: "/dashboard/settings", label: "Ajustes", icon: SettingsIcon },
 ];
 

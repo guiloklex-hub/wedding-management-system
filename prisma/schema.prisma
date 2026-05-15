@@ -247,6 +247,60 @@ model SavingsGoal {
   assets       Asset[]
 }
 
+model Honeymoon {
+  id          String   @id @default("singleton")
+  destination String?
+  startDate   DateTime?
+  endDate     DateTime?
+  budget      Float?
+  currency    String   @default("BRL")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items       HoneymoonItem[]
+}
+
+model HoneymoonItem {
+  id                 String   @id @default(cuid())
+  honeymoonId        String
+  kind               String   @default("ACTIVITY")
+  title              String
+  vendor             String?
+  startAt            DateTime?
+  endAt              DateTime?
+  amount             Float?
+  currency           String   @default("BRL")
+  status             String   @default("PLANNED")
+  confirmationNumber String?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  deletedAt          DateTime?
+
+  honeymoon          Honeymoon @relation(fields: [honeymoonId], references: [id], onDelete: Cascade)
+
+  @@index([honeymoonId, kind])
+}
+
+model TrousseauItem {
+  id             String   @id @default(cuid())
+  title          String
+  room           String   @default("OTHER")
+  priority       String   @default("NICE_TO_HAVE")
+  status         String   @default("TO_BUY")
+  estimatedPrice Float?
+  actualPrice    Float?
+  store          String?
+  link           String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  @@index([room, status])
+}
+
 model Guest {
   id                String   @id @default(cuid())
   name              String

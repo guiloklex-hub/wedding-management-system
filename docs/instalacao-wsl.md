@@ -69,7 +69,7 @@ git --version
 ```bash
 mkdir -p ~/projetos
 cd ~/projetos
-git clone https://github.com/SEU_USUARIO/wfv-management-system.git
+git clone https://github.com/guiloklex-hub/wfv-management-system.git
 cd wfv-management-system
 ```
 

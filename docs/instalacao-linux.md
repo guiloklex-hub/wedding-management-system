@@ -41,11 +41,11 @@ node -v   # esperado: v20.x.x
 ## 2. Clone o projeto
 
 ```bash
-git clone https://github.com/SEU_USUARIO/wfv-management-system.git
+git clone https://github.com/guiloklex-hub/wfv-management-system.git
 cd wfv-management-system
 ```
 
-> ⚠️ Substitua `SEU_USUARIO` pela conta dona do repositório no GitHub.
+> ⚠️ Substitua `guiloklex-hub` pela conta dona do repositório no GitHub.
 
 ---
 

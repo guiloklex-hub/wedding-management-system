@@ -55,7 +55,7 @@ confirmou a presença.
 ### 🐧 Linux, macOS ou WSL2
 
 ```bash
-git clone https://github.com/SEU_USUARIO/wfv-management-system.git
+git clone https://github.com/guiloklex-hub/wfv-management-system.git
 cd wfv-management-system
 ./setup.sh
 npm run dev
@@ -64,7 +64,7 @@ npm run dev
 ### 🪟 Windows (PowerShell)
 
 ```powershell
-git clone https://github.com/SEU_USUARIO/wfv-management-system.git
+git clone https://github.com/guiloklex_hub/wfv-management-system.git
 cd wfv-management-system
 .\setup.ps1
 npm run dev
@@ -201,8 +201,8 @@ comercialmente.
 
 ## 💬 Suporte
 
-- 🐛 **Bugs:** abra uma [issue](https://github.com/SEU_USUARIO/wfv-management-system/issues/new?template=bug.md)
-- 💡 **Ideias:** abra uma [issue de feature](https://github.com/SEU_USUARIO/wfv-management-system/issues/new?template=feature.md)
+- 🐛 **Bugs:** abra uma [issue](https://github.com/guiloklex-hub/wfv-management-system/issues/new?template=bug.md)
+- 💡 **Ideias:** abra uma [issue de feature](https://github.com/guiloklex-hub/wfv-management-system/issues/new?template=feature.md)
 - ❓ **Dúvidas de uso:** veja a **Central de Ajuda** dentro do app
   (`/dashboard/help`) ou [docs/troubleshooting.md](docs/troubleshooting.md)
 

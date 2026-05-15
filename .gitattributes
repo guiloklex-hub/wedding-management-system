@@ -1,0 +1,29 @@
+# Normaliza line endings — evita "guerra de CRLF/LF" entre Windows e Linux
+* text=auto eol=lf
+
+# Scripts shell sempre LF (rodam dentro do WSL/Linux)
+*.sh text eol=lf
+setup.sh text eol=lf
+
+# Scripts PowerShell sempre CRLF (Windows nativo prefere)
+*.ps1 text eol=crlf
+setup.ps1 text eol=crlf
+
+# Arquivos binários — não tentar diff/merge textual
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar.gz binary
+*.db binary
+*.sqlite binary
+
+# Linguistic — não infla métricas de "linguagens detectadas" no GitHub
+prisma/schema.prisma linguist-vendored=false
+docs/** linguist-documentation=true
+*.md linguist-documentation=true
+package-lock.json linguist-generated=true

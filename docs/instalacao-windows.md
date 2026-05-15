@@ -53,7 +53,7 @@ projeto (ex.: `C:\Projetos`):
 
 ```powershell
 cd C:\Projetos
-git clone https://github.com/SEU_USUARIO/wfv-management-system.git
+git clone https://github.com/guiloklex-hub/wfv-management-system.git
 cd wfv-management-system
 ```
 

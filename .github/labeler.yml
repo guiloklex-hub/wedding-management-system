@@ -1,0 +1,65 @@
+# Auto-labeler — aplicado pelo workflow .github/workflows/labeler.yml
+# Sintaxe: actions/labeler v5
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**"
+          - "**/*.md"
+          - "README.md"
+          - "AGENTS.md"
+          - "GEMINI.md"
+          - "CLAUDE.md"
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+          - ".gitattributes"
+          - "setup.sh"
+          - "setup.ps1"
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "package.json"
+          - "package-lock.json"
+
+database:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "prisma/**"
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/app/**"
+          - "src/components/**"
+
+backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/app/api/**"
+          - "src/app/actions/**"
+          - "src/lib/**"
+          - "src/auth*.ts"
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.test.ts"
+          - "**/*.test.tsx"
+
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/lib/timing-safe.ts"
+          - "src/lib/rate-limit.ts"
+          - "src/auth*.ts"
+          - "src/app/api/cron/**"
+          - "SECURITY.md"
+
+notifications:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/lib/notifications/**"

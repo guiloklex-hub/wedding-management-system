@@ -31,7 +31,7 @@ npm install -g pm2
 
 ```bash
 cd /var/www
-sudo git clone https://github.com/SEU_USUARIO/wfv-management-system.git wfv
+sudo git clone https://github.com/guiloklex-hub/wfv-management-system.git wfv
 sudo chown -R $USER:$USER wfv
 cd wfv
 ```

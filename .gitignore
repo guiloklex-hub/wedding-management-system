@@ -54,3 +54,30 @@ dev.db-journal
 
 # WhatsApp (Baileys) auth session
 /.whatsapp-auth
+
+# IDE / editor local
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS junk
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Logs locais
+*.log
+logs/
+
+# Backups locais
+*.bak
+*.backup
+backups/
+/migration.tar.gz
+
+# Builds locais e cache do Turbopack
+.turbo/
+
+# Plan files (Claude Code)
+.claude/plans/

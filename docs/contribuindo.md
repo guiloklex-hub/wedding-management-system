@@ -26,7 +26,7 @@ tradução, testes, sugestões.
 ## Setup local
 
 ```bash
-git clone https://github.com/SEU_USUARIO/wfv-management-system.git
+git clone https://github.com/guiloklex-hub/wfv-management-system.git
 cd wfv-management-system
 ./setup.sh        # ou .\setup.ps1 no Windows
 npm run dev

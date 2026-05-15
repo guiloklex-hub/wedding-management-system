@@ -37,6 +37,7 @@ Se você é um casal querendo apenas usar o sistema, comece pelo
 |---|---|
 | Como contribuir | [contribuindo.md](contribuindo.md) |
 | Glossário do app | [glossario.md](glossario.md) |
+| Configurar o repositório no GitHub | [github-setup.md](github-setup.md) |
 
 ## Central de ajuda interna
 

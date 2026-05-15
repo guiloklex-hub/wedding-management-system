@@ -41,7 +41,7 @@ jobs:
           NEXTAUTH_URL: "http://localhost:3005"
 
       - name: Criar GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
           draft: false

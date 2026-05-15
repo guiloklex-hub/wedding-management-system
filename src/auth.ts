@@ -5,8 +5,11 @@ import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 import { prisma } from "@/lib/prisma";
 import { checkBackupCode, verifyTotpToken } from "@/lib/totp";
+import { getSecuritySettings, role2FARequired } from "@/lib/security-settings";
 
 export const TWO_FACTOR_REQUIRED = "2FA_REQUIRED";
+export const TWO_FACTOR_SETUP_REQUIRED = "2FA_SETUP_REQUIRED";
+export const ACCOUNT_DISABLED = "ACCOUNT_DISABLED";
 
 export const {
   handlers: { GET, POST },
@@ -34,6 +37,10 @@ export const {
         const match = await bcrypt.compare(parsed.data.password, user.password);
         if (!match) return null;
 
+        if (!user.isActive || user.archivedAt) {
+          throw new Error(ACCOUNT_DISABLED);
+        }
+
         if (user.twoFactorEnabled && user.twoFactorSecret) {
           const token = (parsed.data.totp ?? "").trim();
           if (!token) throw new Error(TWO_FACTOR_REQUIRED);
@@ -51,9 +58,25 @@ export const {
             }
           }
           if (!isTotp && !isBackup) return null;
+        } else {
+          const settings = await getSecuritySettings();
+          if (role2FARequired(user.role, settings)) {
+            throw new Error(TWO_FACTOR_SETUP_REQUIRED);
+          }
         }
 
-        return { id: user.id, email: user.email, name: user.name, role: user.role };
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        });
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          mustChangePassword: user.mustChangePassword,
+        };
       },
     }),
   ],

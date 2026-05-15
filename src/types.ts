@@ -1,4 +1,5 @@
 import type { Vendor, BudgetItem, Payment, Asset } from "@prisma/client";
+import type { Role } from "@/lib/permissions";
 
 export type VendorStatus = "NEGOTIATION" | "CONTRACTED" | "FINALIZED";
 export type PaymentStatus = "PENDING" | "PAID";
@@ -18,3 +19,4 @@ export type ActionResult<T = unknown> =
   | { success: false; error: string };
 
 export type { Vendor, BudgetItem, Payment, Asset };
+export type { Role };

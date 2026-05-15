@@ -7,14 +7,21 @@ export type AuditAction =
   | "RESTORE"
   | "MARK_PAID"
   | "UNDO_PAID"
-  | "STATUS_CHANGE";
+  | "STATUS_CHANGE"
+  | "ARCHIVE"
+  | "RESET_PASSWORD"
+  | "RESET_2FA"
+  | "CHANGE_OWN_PASSWORD"
+  | "LOGIN";
 
 export type AuditEntity =
   | "Vendor"
   | "BudgetItem"
   | "Payment"
   | "Asset"
-  | "EventSettings";
+  | "EventSettings"
+  | "User"
+  | "SecuritySettings";
 
 export async function audit(
   entity: AuditEntity,

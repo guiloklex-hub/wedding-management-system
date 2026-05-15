@@ -5,6 +5,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { ROLES, canManageUsers } from "@/lib/permissions";
 import {
   checkBackupCode,
   createTotpSetup,
@@ -116,8 +117,8 @@ export async function disableTwoFactor(
 }
 
 const InviteSchema = z.object({
-  email: z.string().trim().email().max(160),
-  role: z.enum(["PARTNER", "VIEWER"]).default("PARTNER"),
+  email: z.string().trim().toLowerCase().email().max(160),
+  role: z.enum(ROLES).default("PLANNER"),
   message: z
     .string()
     .trim()
@@ -132,7 +133,9 @@ export async function createInvite(
 ): Promise<ActionResult<{ token: string }>> {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
+  const role = (session?.user as { role?: string } | undefined)?.role;
   if (!session?.user?.email || !userId) return { success: false, error: "Não autorizado" };
+  if (!canManageUsers(role)) return { success: false, error: "Sem permissão" };
 
   const parsed = InviteSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -144,7 +147,7 @@ export async function createInvite(
     expiresAt.setDate(expiresAt.getDate() + 30);
     const invite = await prisma.invite.create({
       data: {
-        email: parsed.data.email.toLowerCase(),
+        email: parsed.data.email,
         role: parsed.data.role,
         message: parsed.data.message,
         expiresAt,
@@ -162,7 +165,9 @@ export async function createInvite(
 
 export async function revokeInvite(inviteId: string): Promise<ActionResult> {
   const session = await auth();
+  const role = (session?.user as { role?: string } | undefined)?.role;
   if (!session?.user) return { success: false, error: "Não autorizado" };
+  if (!canManageUsers(role)) return { success: false, error: "Sem permissão" };
   try {
     await prisma.invite.delete({ where: { id: inviteId } });
     revalidatePath("/dashboard/settings");

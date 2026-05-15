@@ -3,8 +3,15 @@
 import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
-import { signIn, signOut, TWO_FACTOR_REQUIRED } from "@/auth";
+import {
+  signIn,
+  signOut,
+  TWO_FACTOR_REQUIRED,
+  TWO_FACTOR_SETUP_REQUIRED,
+  ACCOUNT_DISABLED,
+} from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { isRole } from "@/lib/permissions";
 
 export async function authenticate(
   _prevState: string | undefined,
@@ -16,6 +23,8 @@ export async function authenticate(
     if (error instanceof AuthError) {
       const cause = (error.cause as { err?: { message?: string } } | undefined)?.err?.message;
       if (cause === TWO_FACTOR_REQUIRED) return TWO_FACTOR_REQUIRED;
+      if (cause === TWO_FACTOR_SETUP_REQUIRED) return TWO_FACTOR_SETUP_REQUIRED;
+      if (cause === ACCOUNT_DISABLED) return ACCOUNT_DISABLED;
       switch (error.type) {
         case "CredentialsSignin":
           return "Credenciais inválidas.";
@@ -42,15 +51,30 @@ export async function registerUser(
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return "Email já está em uso.";
 
-    const ownerExists = await prisma.user.findFirst({ where: { role: "OWNER" } });
+    const adminExists = await prisma.user.findFirst({
+      where: { role: "ADMIN", isActive: true, archivedAt: null },
+    });
     const pendingInvite = await prisma.invite.findFirst({
       where: { email, acceptedAt: null, expiresAt: { gte: new Date() } },
     });
 
-    const role = ownerExists ? (pendingInvite?.role ?? "VIEWER") : "OWNER";
+    if (adminExists && !pendingInvite) {
+      return "Cadastro disponível apenas mediante convite. Solicite um link ao administrador.";
+    }
+
+    const inviteRole = pendingInvite && isRole(pendingInvite.role) ? pendingInvite.role : null;
+    const role = adminExists ? (inviteRole ?? "VIEWER") : "ADMIN";
+
     const hashed = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { name, email, password: hashed, role },
+      data: {
+        name,
+        email,
+        password: hashed,
+        role,
+        isActive: true,
+        passwordUpdatedAt: new Date(),
+      },
     });
 
     if (pendingInvite) {

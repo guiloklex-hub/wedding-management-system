@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getEventConfig } from "@/lib/event-config";
+import { getSecuritySettings } from "@/lib/security-settings";
 import { toIsoDate } from "@/lib/format";
 import SettingsClient from "./settings-client";
 
@@ -21,19 +22,35 @@ export default async function SettingsPage() {
           role: true,
           twoFactorEnabled: true,
           twoFactorBackupCodes: true,
+          lastLoginAt: true,
+          passwordUpdatedAt: true,
+          mustChangePassword: true,
         },
       })
     : null;
 
   const members = await prisma.user.findMany({
-    select: { id: true, email: true, name: true, role: true, createdAt: true },
-    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      isActive: true,
+      archivedAt: true,
+      twoFactorEnabled: true,
+      mustChangePassword: true,
+      lastLoginAt: true,
+      createdAt: true,
+    },
+    orderBy: [{ archivedAt: "asc" }, { createdAt: "asc" }],
   });
 
   const invites = await prisma.invite.findMany({
     where: { acceptedAt: null, expiresAt: { gte: new Date() } },
     orderBy: { createdAt: "desc" },
   });
+
+  const securitySettings = await getSecuritySettings();
 
   return (
     <div className="space-y-6">
@@ -51,6 +68,7 @@ export default async function SettingsPage() {
         me={me}
         members={members}
         invites={invites}
+        securitySettings={securitySettings}
       />
     </div>
   );

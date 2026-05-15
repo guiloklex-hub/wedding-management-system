@@ -6,10 +6,22 @@ import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 const TWO_FACTOR_REQUIRED = "2FA_REQUIRED";
+const TWO_FACTOR_SETUP_REQUIRED = "2FA_SETUP_REQUIRED";
+const ACCOUNT_DISABLED = "ACCOUNT_DISABLED";
+
+const FRIENDLY_ERROR: Record<string, string> = {
+  [TWO_FACTOR_SETUP_REQUIRED]:
+    "Sua função exige 2FA. Peça para um administrador resetar sua senha e configure 2FA na primeira entrada — ou peça para ele afrouxar a política.",
+  [ACCOUNT_DISABLED]: "Conta desativada. Procure um administrador.",
+};
 
 export default function LoginForm() {
   const [errorMessage, formAction, isPending] = useActionState(authenticate, undefined);
   const needs2fa = errorMessage === TWO_FACTOR_REQUIRED;
+  const friendly =
+    errorMessage && errorMessage !== TWO_FACTOR_REQUIRED
+      ? FRIENDLY_ERROR[errorMessage] ?? errorMessage
+      : null;
 
   return (
     <form
@@ -67,9 +79,9 @@ export default function LoginForm() {
         ) : null}
       </div>
 
-      {errorMessage && !needs2fa ? (
+      {friendly ? (
         <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
-          {errorMessage}
+          {friendly}
         </div>
       ) : null}
 

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { DEFAULT_VENUE_CHECKLIST } from "@/lib/venue-checklist";
+import { denyIfNoEdit } from "@/lib/finance-access";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -42,6 +43,8 @@ export async function createVenue(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = VenueCreateSchema.safeParse(data);
   if (!parsed.success) {
@@ -95,6 +98,8 @@ export async function updateVenue(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = VenueUpdateSchema.safeParse(data);
   if (!parsed.success) {
@@ -132,6 +137,8 @@ export async function updateVenue(
 }
 
 export async function deleteVenue(venueId: string): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const result = await prisma.venue.updateMany({
       where: { id: venueId, deletedAt: null },
@@ -155,6 +162,8 @@ export async function addChecklistItem(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = ChecklistAddSchema.safeParse(data);
   if (!parsed.success) {
@@ -182,6 +191,8 @@ export async function toggleChecklistItem(
   checked: boolean,
   value?: string,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const item = await prisma.venueChecklistItem.update({
       where: { id: itemId },
@@ -196,6 +207,8 @@ export async function toggleChecklistItem(
 }
 
 export async function deleteChecklistItem(itemId: string): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const item = await prisma.venueChecklistItem.findUnique({ where: { id: itemId } });
     if (!item) return { success: false, error: "Item não encontrado" };

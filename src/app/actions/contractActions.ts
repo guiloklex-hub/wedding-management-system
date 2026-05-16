@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { denyIfNoEdit } from "@/lib/finance-access";
 import type { ActionResult } from "@/types";
 
 const ContractStatusSchema = z.enum([
@@ -39,6 +40,8 @@ export async function createContract(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = ContractCreateSchema.safeParse(data);
   if (!parsed.success) {
@@ -77,6 +80,8 @@ export async function updateContract(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = ContractUpdateSchema.safeParse(data);
   if (!parsed.success) {
@@ -109,6 +114,8 @@ export async function updateContract(
 }
 
 export async function deleteContract(contractId: string, vendorId: string): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const result = await prisma.contract.updateMany({
       where: { id: contractId, vendorId, deletedAt: null },

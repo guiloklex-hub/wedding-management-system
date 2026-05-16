@@ -47,6 +47,41 @@ const isValid = verifyTotpToken(token, secret);  // retorna boolean
 A versão atual do helper já abstrai a API do `otplib`. Não chame `verify`
 direto — passe sempre por [src/lib/totp.ts](../src/lib/totp.ts).
 
+## Autorização — Server Actions e endpoints sensíveis
+
+Em Next.js App Router, **toda função exportada de um arquivo `"use server"`
+é um endpoint HTTP público**. Não basta esconder a action no frontend — um
+atacante autenticado (ou nem isso) pode invocá-la diretamente via POST.
+
+Use sempre um dos helpers em
+[src/lib/finance-access.ts](../src/lib/finance-access.ts) como **primeira
+instrução** de cada Server Action:
+
+```typescript
+import { denyIfNoEdit } from "@/lib/finance-access";
+
+export async function updateGuest(_state, formData) {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
+  // ...
+}
+```
+
+| Helper | Permite | Use para |
+|---|---|---|
+| `denyIfNoEdit()` | ADMIN, GROOM, BRIDE, PLANNER | Conteúdo operacional do casamento (convidados, fornecedores, tarefas, lua de mel, enxoval, dia D). |
+| `denyIfNoFinance()` | ADMIN, GROOM, BRIDE | Pagamentos, receitas, metas, ativos — qualquer mutação financeira direta. |
+| `denyIfNoManage()` | ADMIN, GROOM, BRIDE | Configuração do evento (data, moeda, dados Pix, nomes do casal). |
+
+Exceções (ações públicas por design): `requestPasswordReset`,
+`consumePasswordReset`, `validateResetToken`, `publicRsvpRespond`. Estas
+**precisam de rate-limit** no lugar do auth check.
+
+Endpoints REST que servem dados financeiros (`/api/backup`, `/api/files/[id]`)
+checam role via `canViewSensitiveFinance()` direto — qualquer autenticado
+que não esteja nesse grupo recebe `403`. Todo download via `/api/backup`
+grava `AuditLog` (`BACKUP_EXPORT`) para rastreabilidade.
+
 ## Comparação de secrets — timing-safe
 
 Toda comparação de Bearer token, HMAC, código de reset (quando comparado em
@@ -72,10 +107,19 @@ Chave deve combinar IP + recurso. Exemplo:
 
 ```typescript
 const ip = getClientIp(req);
-if (!rateLimit(`login:${ip}`, 10, 60_000)) {
+const rl = rateLimit(`login:${ip}`, 10, 60_000);
+if (!rl.ok) {
   return Response.json({ error: "Calma" }, { status: 429 });
 }
 ```
+
+O limiter faz **eviction periódica** (sweep a cada 60 s) de buckets
+expirados — o `Map` interno não cresce indefinidamente, mesmo sob spray de
+IPs únicos.
+
+`getClientIp(headers)` aceita apenas `cf-connecting-ip` (Cloudflare) e o
+**último hop** de `x-forwarded-for`. Não confiamos em `x-real-ip` porque
+qualquer cliente pode forjar o header quando não há proxy na frente.
 
 > ⚠️ Para deploys com múltiplas réplicas, troque o limiter por Redis.
 

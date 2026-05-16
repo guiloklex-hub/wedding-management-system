@@ -31,7 +31,7 @@ describe("GET /api/files/[id]", () => {
   });
 
   it("retorna 404 quando attachment não existe", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1" } });
+    authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
     prismaMock.attachment.findFirst.mockResolvedValue(null);
 
     const res = await GET(new Request("http://x/api/files/a1"), paramsFor("a1"));
@@ -39,7 +39,7 @@ describe("GET /api/files/[id]", () => {
   });
 
   it("retorna 404 quando readUpload falha (ENOENT/etc.)", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1" } });
+    authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
     prismaMock.attachment.findFirst.mockResolvedValue({
       id: "a1",
       storagePath: "vendor/v1/foo.pdf",
@@ -53,7 +53,7 @@ describe("GET /api/files/[id]", () => {
   });
 
   it("PDF retorna disposição inline", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1" } });
+    authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
     prismaMock.attachment.findFirst.mockResolvedValue({
       id: "a1",
       storagePath: "vendor/v1/foo.pdf",
@@ -70,7 +70,7 @@ describe("GET /api/files/[id]", () => {
   });
 
   it("imagem retorna disposição inline", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1" } });
+    authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
     prismaMock.attachment.findFirst.mockResolvedValue({
       id: "a2",
       storagePath: "vendor/v1/foto.png",
@@ -84,7 +84,7 @@ describe("GET /api/files/[id]", () => {
   });
 
   it("outros mimetypes retornam disposição attachment", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1" } });
+    authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
     prismaMock.attachment.findFirst.mockResolvedValue({
       id: "a3",
       storagePath: "vendor/v1/x.docx",
@@ -98,7 +98,7 @@ describe("GET /api/files/[id]", () => {
   });
 
   it("body contém os bytes lidos do storage", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1" } });
+    authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
     prismaMock.attachment.findFirst.mockResolvedValue({
       id: "a1",
       storagePath: "vendor/v1/foo.pdf",

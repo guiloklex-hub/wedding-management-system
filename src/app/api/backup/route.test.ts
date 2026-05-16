@@ -21,7 +21,7 @@ describe("GET /api/backup", () => {
   });
 
   it("retorna 200 JSON com headers de download", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1" } });
+    authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
     prismaMock.eventSettings.findUnique.mockResolvedValue({ id: "singleton" } as never);
     prismaMock.vendor.findMany.mockResolvedValue([] as never);
     prismaMock.budgetItem.findMany.mockResolvedValue([] as never);
@@ -38,7 +38,7 @@ describe("GET /api/backup", () => {
   });
 
   it("payload contém exportedAt, version e todas as 5 coleções", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1" } });
+    authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
     const sample = { id: "v1" };
     prismaMock.eventSettings.findUnique.mockResolvedValue({ id: "singleton" } as never);
     prismaMock.vendor.findMany.mockResolvedValue([sample] as never);
@@ -67,7 +67,7 @@ describe("GET /api/backup", () => {
   });
 
   it("ordenação asc por createdAt nas coleções de auditoria", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1" } });
+    authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
     prismaMock.eventSettings.findUnique.mockResolvedValue({} as never);
     prismaMock.vendor.findMany.mockResolvedValue([] as never);
     prismaMock.budgetItem.findMany.mockResolvedValue([] as never);

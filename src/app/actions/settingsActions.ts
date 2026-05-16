@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { updateEventConfig } from "@/lib/event-config";
 import { audit } from "@/lib/audit";
+import { denyIfNoManage } from "@/lib/finance-access";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -35,6 +36,8 @@ export async function updateSettings(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoManage();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = SettingsSchema.safeParse(data);
   if (!parsed.success) {
@@ -64,6 +67,8 @@ export async function updatePixSettings(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoManage();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = PixSettingsSchema.safeParse(data);
   if (!parsed.success) {

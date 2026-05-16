@@ -1,9 +1,12 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { denyIfNoEdit } from "@/lib/finance-access";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import type { ActionResult } from "@/types";
 
 const RsvpStatusSchema = z.enum(["NOT_INVITED", "INVITED", "CONFIRMED", "DECLINED", "MAYBE"]);
@@ -40,6 +43,8 @@ export async function createGuest(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = GuestCreateSchema.safeParse(data);
   if (!parsed.success) {
@@ -77,6 +82,8 @@ export async function updateGuest(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = GuestUpdateSchema.safeParse(data);
   if (!parsed.success) {
@@ -112,6 +119,8 @@ export async function updateGuest(
 }
 
 export async function deleteGuest(guestId: string): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const result = await prisma.guest.updateMany({
       where: { id: guestId, deletedAt: null },
@@ -127,6 +136,8 @@ export async function deleteGuest(guestId: string): Promise<ActionResult> {
 }
 
 export async function toggleCheckin(guestId: string, present: boolean): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const result = await prisma.guest.updateMany({
       where: { id: guestId, deletedAt: null },
@@ -160,6 +171,8 @@ export async function bulkImportGuests(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult<{ created: number; skipped: number }>> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = ImportSchema.safeParse(data);
   if (!parsed.success) {
@@ -222,6 +235,11 @@ export async function publicRsvpRespond(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult<{ name: string; status: string }>> {
+  const ip = getClientIp(await headers());
+  const rl = rateLimit(`rsvp:${ip}`, 10, 60_000);
+  if (!rl.ok) {
+    return { success: false, error: "Muitas tentativas. Tente novamente em alguns minutos." };
+  }
   const data = Object.fromEntries(formData.entries());
   const parsed = RsvpPublicSchema.safeParse(data);
   if (!parsed.success) {

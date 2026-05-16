@@ -17,6 +17,9 @@ export type WhatsAppStatusPayload = {
   phoneNumber: string | null;
   lastError: string | null;
   qrDataUrl: string | null;
+  attempts: number;
+  lastDisconnectAt: string | null;
+  needsManualAction: boolean;
 };
 
 async function requireAdmin(): Promise<
@@ -39,6 +42,9 @@ export async function getWhatsAppStatusAction(): Promise<WhatsAppStatusPayload> 
       phoneNumber: null,
       lastError: guard.error,
       qrDataUrl: null,
+      attempts: 0,
+      lastDisconnectAt: null,
+      needsManualAction: false,
     };
   }
   const status = getWhatsAppStatus();
@@ -48,6 +54,11 @@ export async function getWhatsAppStatusAction(): Promise<WhatsAppStatusPayload> 
     phoneNumber: status.phoneNumber,
     lastError: status.lastError,
     qrDataUrl,
+    attempts: status.attempts,
+    lastDisconnectAt: status.lastDisconnectAt
+      ? status.lastDisconnectAt.toISOString()
+      : null,
+    needsManualAction: status.needsManualAction,
   };
 }
 

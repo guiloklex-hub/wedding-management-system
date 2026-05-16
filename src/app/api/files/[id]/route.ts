@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { canViewSensitiveFinance } from "@/lib/permissions";
 import { readUpload } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+  if (!canViewSensitiveFinance((session.user as { role?: string }).role)) {
+    return NextResponse.json({ error: "Sem permissão para esta área" }, { status: 403 });
   }
 
   const { id } = await params;

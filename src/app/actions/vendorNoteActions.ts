@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { denyIfNoEdit } from "@/lib/finance-access";
 import type { ActionResult } from "@/types";
 
 const NoteSchema = z.object({
@@ -15,6 +16,8 @@ export async function createVendorNote(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = NoteSchema.safeParse(data);
   if (!parsed.success) {
@@ -37,6 +40,8 @@ export async function createVendorNote(
 }
 
 export async function deleteVendorNote(noteId: string, vendorId: string): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const result = await prisma.vendorNote.updateMany({
       where: { id: noteId, vendorId, deletedAt: null },

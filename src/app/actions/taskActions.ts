@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { getEventConfig } from "@/lib/event-config";
 import { TASK_TEMPLATES, templateDeadline } from "@/lib/task-templates";
+import { denyIfNoEdit } from "@/lib/finance-access";
 import type { ActionResult } from "@/types";
 
 const TaskStatusSchema = z.enum(["TODO", "IN_PROGRESS", "DONE", "BLOCKED"]);
@@ -40,6 +41,8 @@ export async function createTask(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = TaskCreateSchema.safeParse(data);
   if (!parsed.success) {
@@ -71,6 +74,8 @@ export async function updateTask(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = TaskUpdateSchema.safeParse(data);
   if (!parsed.success) {
@@ -111,6 +116,8 @@ export async function setTaskStatus(
   taskId: string,
   status: "TODO" | "IN_PROGRESS" | "DONE" | "BLOCKED",
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const result = await prisma.task.updateMany({
       where: { id: taskId, deletedAt: null },
@@ -129,6 +136,8 @@ export async function setTaskStatus(
 }
 
 export async function deleteTask(taskId: string): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const result = await prisma.task.updateMany({
       where: { id: taskId, deletedAt: null },
@@ -144,6 +153,8 @@ export async function deleteTask(taskId: string): Promise<ActionResult> {
 }
 
 export async function loadTaskTemplates(skipExisting = true): Promise<ActionResult<{ created: number }>> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const cfg = await getEventConfig();
     if (!cfg.eventDate) {

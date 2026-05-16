@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { denyIfNoEdit } from "@/lib/finance-access";
 import type { ActionResult } from "@/types";
 
 type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
@@ -39,6 +40,8 @@ export async function createGift(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = GiftCreateSchema.safeParse(data);
   if (!parsed.success) {
@@ -69,6 +72,8 @@ export async function updateGift(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = GiftUpdateSchema.safeParse(data);
   if (!parsed.success) {
@@ -98,6 +103,8 @@ export async function updateGift(
 }
 
 export async function markGiftThanked(giftId: string, thanked: boolean): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const result = await prisma.gift.updateMany({
       where: { id: giftId, deletedAt: null },
@@ -116,6 +123,8 @@ export async function markGiftThanked(giftId: string, thanked: boolean): Promise
 }
 
 export async function deleteGift(giftId: string): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const result = await prisma.gift.updateMany({
       where: { id: giftId, deletedAt: null },
@@ -134,6 +143,8 @@ export async function markGiftAsPixReceived(
   giftId: string,
   alsoCreateAsset = false,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const gift = await prisma.gift.findFirst({
       where: { id: giftId, deletedAt: null },

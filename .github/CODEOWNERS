@@ -1,0 +1,9 @@
+# Default owner (todos os arquivos)
+*       @guiloklex-hub
+
+# Áreas sensíveis
+/src/auth*.ts           @guiloklex-hub
+/src/lib/timing-safe.ts @guiloklex-hub
+/src/lib/rate-limit.ts  @guiloklex-hub
+/.github/               @guiloklex-hub
+SECURITY.md             @guiloklex-hub

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { CheckCircle2, Gift as GiftIcon, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, Gift as GiftIcon, Heart, Loader2, Pencil, Plus, QrCode, Trash2 } from "lucide-react";
 import {
   createGift,
   deleteGift,
@@ -22,6 +23,8 @@ type GiftRow = {
   status: string;
   receivedAt: Date;
   thankedAt: Date | null;
+  isHoneymoonShare: boolean;
+  pixPaidAt: Date | null;
   notes: string | null;
   guest: { id: string; name: string } | null;
 };
@@ -155,9 +158,33 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
               </div>
               <div className="flex items-center gap-3">
                 {g.type === "CASH" && g.amount ? (
-                  <span className="text-lg font-semibold text-emerald-300">{formatCurrency(g.amount)}</span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-lg font-semibold text-emerald-300">{formatCurrency(g.amount)}</span>
+                    <div className="flex items-center gap-1">
+                      {g.isHoneymoonShare ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-1.5 py-0.5 text-[10px] text-rose-300">
+                          <Heart className="h-2.5 w-2.5" /> lua de mel
+                        </span>
+                      ) : null}
+                      {g.pixPaidAt ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-300">
+                          Pix recebido
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
                 ) : null}
                 <div className="flex items-center gap-1">
+                  {g.type === "CASH" ? (
+                    <Link
+                      href={`/dashboard/gifts/${g.id}/pix`}
+                      aria-label="Gerar QR Pix"
+                      title="Gerar QR Pix"
+                      className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                    >
+                      <QrCode className="h-4 w-4" />
+                    </Link>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => handleThanked(g)}
@@ -305,6 +332,17 @@ function GiftFormModal({
             type="date"
             defaultValue={gift ? toIsoDate(new Date(gift.receivedAt)) : toIsoDate(new Date())}
           />
+          {type === "CASH" ? (
+            <label className="flex items-center gap-2 text-sm text-zinc-300">
+              <input
+                type="checkbox"
+                name="isHoneymoonShare"
+                defaultChecked={gift?.isHoneymoonShare ?? false}
+                className="h-4 w-4 rounded border-zinc-700 bg-zinc-800"
+              />
+              Cota da lua de mel (mostrar QR Pix dedicado)
+            </label>
+          ) : null}
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-400">Notas</label>
             <textarea

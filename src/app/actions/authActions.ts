@@ -9,10 +9,21 @@ import {
   ACCOUNT_DISABLED,
 } from "@/auth";
 
+function safeRedirect(input: FormDataEntryValue | null | undefined): string {
+  if (typeof input !== "string" || !input) return "/dashboard";
+  if (!input.startsWith("/") || input.startsWith("//")) return "/dashboard";
+  if (input === "/login" || input.startsWith("/login?") || input.startsWith("/login/")) {
+    return "/dashboard";
+  }
+  return input;
+}
+
 export async function authenticate(
   _prevState: string | undefined,
   formData: FormData,
 ): Promise<string | undefined> {
+  formData.set("redirectTo", safeRedirect(formData.get("redirectTo")));
+
   try {
     await signIn("credentials", formData);
   } catch (error) {

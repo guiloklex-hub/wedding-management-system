@@ -6,6 +6,10 @@ export type EventConfig = {
   currency: string;
   coupleNames: string | null;
   onboardingCompletedAt: Date | null;
+  pixKey: string | null;
+  pixKeyType: string | null;
+  pixHolderName: string | null;
+  pixCity: string | null;
 };
 
 export async function getEventConfig(): Promise<EventConfig> {
@@ -25,11 +29,17 @@ export async function getEventConfig(): Promise<EventConfig> {
     currency: settings.currency,
     coupleNames: settings.coupleNames,
     onboardingCompletedAt: settings.onboardingCompletedAt,
+    pixKey: settings.pixKey,
+    pixKeyType: settings.pixKeyType,
+    pixHolderName: settings.pixHolderName,
+    pixCity: settings.pixCity,
   };
 }
 
 export async function updateEventConfig(
-  input: Partial<Omit<EventConfig, "eventDate" | "onboardingCompletedAt">> & {
+  input: Partial<
+    Omit<EventConfig, "eventDate" | "onboardingCompletedAt">
+  > & {
     eventDate?: Date | null;
     onboardingCompletedAt?: Date | null;
   },
@@ -45,6 +55,10 @@ export async function updateEventConfig(
       coupleNames: input.coupleNames ?? undefined,
       onboardingCompletedAt:
         input.onboardingCompletedAt === undefined ? undefined : input.onboardingCompletedAt,
+      pixKey: input.pixKey === undefined ? undefined : input.pixKey,
+      pixKeyType: input.pixKeyType === undefined ? undefined : input.pixKeyType,
+      pixHolderName: input.pixHolderName === undefined ? undefined : input.pixHolderName,
+      pixCity: input.pixCity === undefined ? undefined : input.pixCity,
     },
   });
 
@@ -54,6 +68,10 @@ export async function updateEventConfig(
     currency: updated.currency,
     coupleNames: updated.coupleNames,
     onboardingCompletedAt: updated.onboardingCompletedAt,
+    pixKey: updated.pixKey,
+    pixKeyType: updated.pixKeyType,
+    pixHolderName: updated.pixHolderName,
+    pixCity: updated.pixCity,
   };
 }
 

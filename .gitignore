@@ -46,8 +46,12 @@ next-env.d.ts
 # SQLite database
 dev.db
 dev.db-journal
+dev.db-wal
+dev.db-shm
 *.sqlite
 *.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 
 # Uploaded files (storage local)
 /uploads

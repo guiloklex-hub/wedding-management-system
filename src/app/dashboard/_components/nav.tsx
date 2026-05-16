@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { canViewSensitiveFinance } from "@/lib/permissions";
 import {
   BarChart3,
   Building2,
@@ -32,26 +34,35 @@ type NavLink = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
+  finance?: boolean;
 };
 
 const LINKS: NavLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: Home, exact: true },
-  { href: "/dashboard/insights", label: "Insights", icon: BarChart3 },
+  { href: "/dashboard/insights", label: "Insights", icon: BarChart3, finance: true },
   { href: "/dashboard/vendors", label: "Fornecedores", icon: Users },
   { href: "/dashboard/venues", label: "Locais", icon: Building2 },
   { href: "/dashboard/tasks", label: "Tarefas", icon: CheckSquare },
-  { href: "/dashboard/payments", label: "Pagamentos", icon: CreditCard },
-  { href: "/dashboard/income", label: "Receitas", icon: PiggyBank },
-  { href: "/dashboard/assets", label: "Caixa", icon: Wallet },
-  { href: "/dashboard/goals", label: "Metas", icon: Target },
+  { href: "/dashboard/payments", label: "Pagamentos", icon: CreditCard, finance: true },
+  { href: "/dashboard/income", label: "Receitas", icon: PiggyBank, finance: true },
+  { href: "/dashboard/assets", label: "Caixa", icon: Wallet, finance: true },
+  { href: "/dashboard/goals", label: "Metas", icon: Target, finance: true },
   { href: "/dashboard/guests", label: "Convidados", icon: UserPlus },
   { href: "/dashboard/gifts", label: "Presentes", icon: Gift },
   { href: "/dashboard/wedding-day", label: "Dia D", icon: CalendarHeart },
+  { href: "/dashboard/wedding-day/seating", label: "Mapa de assentos", icon: Users },
   { href: "/dashboard/honeymoon", label: "Lua de mel", icon: Plane },
   { href: "/dashboard/trousseau", label: "Enxoval", icon: ShoppingBasket },
   { href: "/dashboard/settings", label: "Ajustes", icon: SettingsIcon },
   { href: "/dashboard/help", label: "Ajuda", icon: HelpCircle },
 ];
+
+function useVisibleLinks(): NavLink[] {
+  const { data: session } = useSession();
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const canFinance = canViewSensitiveFinance(role);
+  return LINKS.filter((l) => !l.finance || canFinance);
+}
 
 function isActive(pathname: string, href: string, exact?: boolean): boolean {
   if (exact) return pathname === href;
@@ -60,6 +71,7 @@ function isActive(pathname: string, href: string, exact?: boolean): boolean {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const visibleLinks = useVisibleLinks();
   return (
     <aside className="hidden w-64 flex-col border-r border-zinc-800 bg-zinc-950 md:flex">
       <div className="flex items-center gap-3 border-b border-zinc-800 p-6">
@@ -69,7 +81,7 @@ export function Sidebar() {
         <span className="font-semibold tracking-tight text-zinc-100">Wedding Finance</span>
       </div>
       <nav className="flex-1 space-y-1 p-4">
-        {LINKS.map((l) => {
+        {visibleLinks.map((l) => {
           const active = isActive(pathname, l.href, l.exact);
           const Icon = l.icon;
           return (
@@ -106,6 +118,7 @@ export function Sidebar() {
 export function MobileHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const visibleLinks = useVisibleLinks();
 
   return (
     <>
@@ -150,7 +163,7 @@ export function MobileHeader() {
               </button>
             </div>
             <nav className="flex-1 space-y-1 p-3">
-              {LINKS.map((l) => {
+              {visibleLinks.map((l) => {
                 const active = isActive(pathname, l.href, l.exact);
                 const Icon = l.icon;
                 return (
@@ -190,7 +203,8 @@ export function MobileHeader() {
 
 export function BottomNav() {
   const pathname = usePathname();
-  const primary: NavLink[] = LINKS.slice(0, 4);
+  const visibleLinks = useVisibleLinks();
+  const primary: NavLink[] = visibleLinks.slice(0, 4);
   return (
     <nav className="safe-pb fixed bottom-0 left-0 right-0 z-30 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur md:hidden">
       <div className="grid grid-cols-4">

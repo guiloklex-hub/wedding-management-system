@@ -27,9 +27,18 @@ Se você é um casal querendo apenas usar o sistema, comece pelo
 |---|---|
 | Notificações (email + WhatsApp) | [notificacoes.md](notificacoes.md) |
 | Segurança e 2FA | [seguranca.md](seguranca.md) |
+| Roles e permissões | [permissoes.md](permissoes.md) |
 | Backup e restauração | [backup-restore.md](backup-restore.md) |
 | Deploy em produção | [deploy.md](deploy.md) |
 | Solução de problemas | [troubleshooting.md](troubleshooting.md) |
+
+## Features específicas
+
+| Tópico | Documento |
+|---|---|
+| Mapa de assentos (seating chart) | [seating-chart.md](seating-chart.md) |
+| RSVP individual e em grupo | [rsvp.md](rsvp.md) |
+| Pix nos presentes (cota lua de mel) | [pix.md](pix.md) |
 
 ## Para quem vai contribuir
 

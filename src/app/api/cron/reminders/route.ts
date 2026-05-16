@@ -4,6 +4,7 @@ import { notify } from "@/lib/notifications";
 import { wasNotifiedToday } from "@/lib/notifications/log";
 import { timingSafeEquals } from "@/lib/timing-safe";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
+import { computeAdjustedAmount } from "@/lib/payment-adjustment";
 
 export const dynamic = "force-dynamic";
 
@@ -122,6 +123,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       continue;
     }
     const daysOverdue = Math.max(1, daysBetween(p.dueDate, today));
+    const adj = computeAdjustedAmount(p, today);
     for (const u of recipients) {
       await notify(
         { userId: u.id, email: u.email, phone: u.phone },
@@ -129,7 +131,7 @@ export async function GET(req: Request): Promise<NextResponse> {
           kind: "PAYMENT_OVERDUE",
           userName: u.name ?? u.email,
           vendorName: p.vendor.name,
-          amount: p.amount,
+          amount: adj.adjusted,
           dueDate: p.dueDate,
           daysOverdue,
         },

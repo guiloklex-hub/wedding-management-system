@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { requireFinanceAccess } from "@/lib/finance-access";
 import GoalsClient from "./goals-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function GoalsPage() {
+  await requireFinanceAccess();
+
   const goals = await prisma.savingsGoal.findMany({
     where: { deletedAt: null },
     include: { assets: { where: { deletedAt: null } } },

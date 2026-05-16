@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { denyIfNoFinance } from "@/lib/finance-access";
 import type { ActionResult } from "@/types";
 
 const SourceSchema = z.enum(["SALARY", "BONUS", "GIFT", "FREELANCE", "SALE", "RESTITUTION", "OTHER"]);
@@ -39,6 +40,8 @@ export async function createIncome(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = IncomeCreateSchema.safeParse(data);
   if (!parsed.success) {
@@ -73,6 +76,8 @@ export async function updateIncome(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = IncomeUpdateSchema.safeParse(data);
   if (!parsed.success) {
@@ -111,6 +116,8 @@ export async function updateIncome(
 }
 
 export async function markIncomeReceived(incomeId: string): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   try {
     const result = await prisma.income.updateMany({
       where: { id: incomeId, deletedAt: null },
@@ -127,6 +134,8 @@ export async function markIncomeReceived(incomeId: string): Promise<ActionResult
 }
 
 export async function deleteIncome(incomeId: string): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   try {
     const result = await prisma.income.updateMany({
       where: { id: incomeId, deletedAt: null },

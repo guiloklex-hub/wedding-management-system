@@ -107,6 +107,28 @@ Tente:
 2. Recarregar e logar.
 3. Verificar Network → resposta do `/api/auth/callback/credentials`.
 
+### Login trava na própria tela; só vai pro dashboard ao recarregar
+
+Sintoma: você submete o form de login, a página fica em `/login`, e só
+quando recarrega manualmente é que aparece o dashboard.
+
+Causa: o `signIn` da Auth.js v5, sem `redirectTo` explícito, usa o
+`Referer` como destino — que é a própria página de login
+(`/login?callbackUrl=...`). O cookie é setado corretamente, mas o
+soft-nav do App Router pro mesmo path não dispara o `Response.redirect`
+do `proxy.ts` em algumas combinações Next.js 16 + Auth.js v5 beta.
+
+Correção (já aplicada no projeto): o `LoginForm` agora injeta
+`redirectTo` no `formData`, lendo o `callbackUrl` da query string (com
+sanitização contra open-redirect) e caindo em `/dashboard` por padrão.
+O Server Action `authenticate` também sanitiza o `redirectTo` recebido.
+
+Se reaparecer após upgrade de `next-auth`, confirme que
+[src/app/login/login-form.tsx](../src/app/login/login-form.tsx) ainda
+emite o `<input type="hidden" name="redirectTo">` e que
+[src/app/actions/authActions.ts](../src/app/actions/authActions.ts)
+chama `formData.set("redirectTo", ...)` antes do `signIn`.
+
 ### Esqueci a senha do admin
 
 Sem SMTP configurado? Você pode resetar via banco:

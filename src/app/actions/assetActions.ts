@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { denyIfNoFinance } from "@/lib/finance-access";
 import type { ActionResult } from "@/types";
 
 const AssetCreateSchema = z.object({
@@ -27,6 +28,8 @@ export async function createAsset(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = AssetCreateSchema.safeParse(data);
   if (!parsed.success) {
@@ -57,6 +60,8 @@ export async function updateAsset(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = AssetUpdateSchema.safeParse(data);
   if (!parsed.success) {
@@ -87,6 +92,8 @@ export async function updateAsset(
 }
 
 export async function deleteAsset(assetId: string): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   try {
     const result = await prisma.asset.updateMany({
       where: { id: assetId, deletedAt: null },

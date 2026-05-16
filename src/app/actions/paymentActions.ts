@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { denyIfNoFinance } from "@/lib/finance-access";
+import { splitAmountCents } from "@/lib/installment-math";
 import type { ActionResult } from "@/types";
 
 const PaymentMethodSchema = z.enum(["PIX", "BOLETO", "CREDIT", "TRANSFER", "CASH"]);
@@ -18,6 +20,15 @@ const optionalInstallment = z.preprocess(
     .optional(),
 );
 
+const optionalPercent = z.preprocess(
+  (v) => (v === "" || v == null ? undefined : v),
+  z.coerce
+    .number({ message: "Percentual inválido" })
+    .min(0, "Percentual deve ser ≥ 0")
+    .max(100, "Percentual deve ser ≤ 100")
+    .optional(),
+);
+
 const PaymentBaseSchema = z.object({
   amount: z.coerce
     .number({ message: "Valor inválido" })
@@ -27,6 +38,8 @@ const PaymentBaseSchema = z.object({
   method: PaymentMethodSchema,
   installmentNumber: optionalInstallment,
   totalInstallments: optionalInstallment,
+  lateFeePercent: optionalPercent,
+  interestPercentPerMonth: optionalPercent,
   vendorId: z.string().min(1, "Selecione um fornecedor"),
   notes: z
     .string()
@@ -79,6 +92,8 @@ export async function createPayment(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = PaymentCreateSchema.safeParse(data);
   if (!parsed.success) {
@@ -101,6 +116,8 @@ export async function createPayment(
         method: parsed.data.method,
         installmentNumber: parsed.data.installmentNumber,
         totalInstallments: parsed.data.totalInstallments,
+        lateFeePercent: parsed.data.lateFeePercent ?? null,
+        interestPercentPerMonth: parsed.data.interestPercentPerMonth ?? null,
         notes: parsed.data.notes,
         vendorId: parsed.data.vendorId,
         paidAt: parsed.data.status === "PAID" ? new Date() : null,
@@ -121,6 +138,8 @@ export async function updatePayment(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = PaymentUpdateSchema.safeParse(data);
   if (!parsed.success) {
@@ -147,6 +166,8 @@ export async function updatePayment(
         method: parsed.data.method,
         installmentNumber: parsed.data.installmentNumber,
         totalInstallments: parsed.data.totalInstallments,
+        lateFeePercent: parsed.data.lateFeePercent ?? null,
+        interestPercentPerMonth: parsed.data.interestPercentPerMonth ?? null,
         notes: parsed.data.notes,
         vendorId: parsed.data.vendorId,
         paidAt: nowPaid ? existing.paidAt ?? new Date() : null,
@@ -164,6 +185,8 @@ export async function updatePayment(
 }
 
 export async function markPaymentAsPaid(paymentId: string): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   try {
     const result = await prisma.payment.updateMany({
       where: { id: paymentId, deletedAt: null, status: "PENDING" },
@@ -182,6 +205,8 @@ export async function markPaymentAsPaid(paymentId: string): Promise<ActionResult
 }
 
 export async function undoPaymentPaid(paymentId: string): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   try {
     const result = await prisma.payment.updateMany({
       where: { id: paymentId, deletedAt: null, status: "PAID" },
@@ -200,6 +225,8 @@ export async function undoPaymentPaid(paymentId: string): Promise<ActionResult> 
 }
 
 export async function deletePayment(paymentId: string): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   try {
     const result = await prisma.payment.updateMany({
       where: { id: paymentId, deletedAt: null },
@@ -221,6 +248,8 @@ export async function createSplitPayment(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = SplitPaymentSchema.safeParse(data);
   if (!parsed.success) {
@@ -271,5 +300,87 @@ export async function createSplitPayment(
   } catch (err) {
     console.error("[createSplitPayment]", err);
     return { success: false, error: "Erro ao criar pagamentos divididos" };
+  }
+}
+
+const InstallmentsSchema = z.object({
+  vendorId: z.string().min(1).max(64),
+  totalAmount: z.coerce.number().min(0.01).max(10_000_000),
+  installmentsCount: z.coerce.number().int().min(1).max(60),
+  firstDueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
+  intervalDays: z.coerce.number().int().min(1).max(366).default(30),
+  method: PaymentMethodSchema.default("PIX"),
+  lateFeePercent: optionalPercent,
+  interestPercentPerMonth: optionalPercent,
+  notes: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : undefined)),
+});
+
+export async function generateInstallments(input: {
+  vendorId: string;
+  totalAmount: number;
+  installmentsCount: number;
+  firstDueDate: string;
+  intervalDays?: number;
+  method?: "PIX" | "BOLETO" | "CREDIT" | "TRANSFER" | "CASH";
+  lateFeePercent?: number;
+  interestPercentPerMonth?: number;
+  notes?: string;
+}): Promise<ActionResult<{ count: number }>> {
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
+  const parsed = InstallmentsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+  try {
+    const vendor = await prisma.vendor.findFirst({
+      where: { id: parsed.data.vendorId, deletedAt: null },
+    });
+    if (!vendor) return { success: false, error: "Fornecedor não encontrado" };
+
+    const totalCents = Math.round(parsed.data.totalAmount * 100);
+    const amountsCents = splitAmountCents(totalCents, parsed.data.installmentsCount);
+    const first = new Date(`${parsed.data.firstDueDate}T00:00:00Z`);
+
+    const created = await prisma.$transaction(
+      amountsCents.map((cents, idx) => {
+        const due = new Date(first.getTime());
+        due.setUTCDate(due.getUTCDate() + idx * parsed.data.intervalDays);
+        return prisma.payment.create({
+          data: {
+            amount: cents / 100,
+            dueDate: due,
+            status: "PENDING",
+            method: parsed.data.method,
+            installmentNumber: idx + 1,
+            totalInstallments: parsed.data.installmentsCount,
+            lateFeePercent: parsed.data.lateFeePercent ?? null,
+            interestPercentPerMonth: parsed.data.interestPercentPerMonth ?? null,
+            notes: parsed.data.notes,
+            vendorId: parsed.data.vendorId,
+          },
+        });
+      }),
+    );
+
+    if (created.length > 0) {
+      await audit("Payment", created[0].id, "BULK_CREATE", {
+        count: created.length,
+        vendorId: vendor.id,
+        totalAmount: parsed.data.totalAmount,
+      });
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/payments");
+    return { success: true, data: { count: created.length } };
+  } catch (err) {
+    console.error("[generateInstallments]", err);
+    return { success: false, error: "Erro ao gerar parcelas" };
   }
 }

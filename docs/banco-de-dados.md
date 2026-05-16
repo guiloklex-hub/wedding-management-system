@@ -133,15 +133,49 @@ node
 
 ## Performance
 
-SQLite em modo padrão é serial — apenas uma transação write por vez.
-Suficiente para 1 usuário simultâneo. Se você esperar muito tráfego (RSVP em
-massa via link público), considere ativar **WAL mode**:
+A partir da v0.3.0 o singleton em [src/lib/prisma.ts](../src/lib/prisma.ts)
+aplica automaticamente, na primeira inicialização do PrismaClient:
+
+- `PRAGMA journal_mode = WAL` — permite reads concorrentes durante writes.
+- `PRAGMA busy_timeout = 5000` — espera até 5s antes de dar `SQLITE_BUSY`
+  quando há contenção (útil quando o cron de reminders escreve junto com o
+  usuário).
+
+Se você quiser verificar manualmente:
 
 ```bash
-sqlite3 prisma/dev.db "PRAGMA journal_mode=WAL;"
+sqlite3 prisma/dev.db "PRAGMA journal_mode"   # deve retornar 'wal'
 ```
 
-Isso permite reads concorrentes durante writes.
+WAL gera dois arquivos auxiliares ao lado do `dev.db`: `dev.db-wal` e
+`dev.db-shm`. Inclua os três no backup ou use `VACUUM INTO` para gerar um
+snapshot consolidado.
+
+## Soft delete via Prisma Client Extension
+
+16 modelos têm `deletedAt: DateTime?`. Em vez de escrever
+`where: { deletedAt: null }` em cada query, o singleton aplica uma
+**Client Extension** (`$extends`) que:
+
+- Injeta `deletedAt: null` automaticamente em `findMany`, `findFirst`,
+  `findFirstOrThrow`, `count`, `aggregate`, `groupBy`.
+- Em `findUnique`/`findUniqueOrThrow`, pós-filtra: se o registro encontrado
+  tiver `deletedAt != null`, retorna `null` (ou lança em `OrThrow`).
+- Em `delete` e `deleteMany`, converte automaticamente para `update`
+  setando `deletedAt = new Date()` — ou seja, todo `.delete()` em modelo
+  com `deletedAt` vira soft delete sem mudar código existente.
+
+Lista de modelos soft delete (constante `SOFT_DELETE_MODELS` em
+[src/lib/prisma.ts](../src/lib/prisma.ts)):
+
+`Vendor`, `VendorContact`, `VendorNote`, `Contract`, `Attachment`,
+`Venue`, `BudgetItem`, `Payment`, `Asset`, `Income`, `SavingsGoal`,
+`HoneymoonItem`, `TrousseauItem`, `Guest`, `Gift`, `Task`, `SeatingTable`,
+`GuestGroup`.
+
+> Se precisar ler **registros soft-deletados** (telas de "lixeira"), passe
+> `where: { deletedAt: { not: null } }` explicitamente — a extension só
+> injeta `null` quando você **não** especifica o campo.
 
 ## Migração para outro banco
 

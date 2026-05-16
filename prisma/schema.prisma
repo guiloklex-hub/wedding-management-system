@@ -73,6 +73,10 @@ model EventSettings {
   daySchedule            String?
   daySpecialNotes        String?
   onboardingCompletedAt  DateTime?
+  pixKey                 String?
+  pixKeyType             String?
+  pixHolderName          String?
+  pixCity                String?
   updatedAt              DateTime  @updatedAt
 }
 
@@ -230,21 +234,23 @@ model BudgetItem {
 }
 
 model Payment {
-  id                String   @id @default(cuid())
-  amount            Float
-  dueDate           DateTime
-  paidAt            DateTime?
-  status            String   @default("PENDING")
-  method            String?
-  installmentNumber Int?
-  totalInstallments Int?
-  notes             String?
-  vendorId          String
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  deletedAt         DateTime?
+  id                       String   @id @default(cuid())
+  amount                   Float
+  dueDate                  DateTime
+  paidAt                   DateTime?
+  status                   String   @default("PENDING")
+  method                   String?
+  installmentNumber        Int?
+  totalInstallments        Int?
+  lateFeePercent           Float?
+  interestPercentPerMonth  Float?
+  notes                    String?
+  vendorId                 String
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  deletedAt                DateTime?
 
-  vendor            Vendor   @relation(fields: [vendorId], references: [id])
+  vendor                   Vendor   @relation(fields: [vendorId], references: [id])
 }
 
 model Asset {
@@ -356,6 +362,7 @@ model Guest {
   email             String?
   side              String?
   groupName         String?
+  groupId           String?
   rsvpStatus        String   @default("INVITED")
   rsvpToken         String   @unique @default(cuid())
   rsvpRespondedAt   DateTime?
@@ -366,6 +373,7 @@ model Guest {
   isPadrinho        Boolean  @default(false)
   dietary           String?
   tableNumber       String?
+  tableId           String?
   city              String?
   checkedInAt       DateTime?
   notes             String?
@@ -374,27 +382,67 @@ model Guest {
   deletedAt         DateTime?
 
   gifts             Gift[]
+  group             GuestGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  table             SeatingTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
 
   @@index([rsvpStatus])
   @@index([deletedAt])
+  @@index([groupId])
+  @@index([tableId])
 }
 
-model Gift {
+model GuestGroup {
+  id            String   @id @default(cuid())
+  name          String
+  rsvpToken     String   @unique @default(cuid())
+  contactName   String?
+  contactEmail  String?
+  contactPhone  String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  guests        Guest[]
+
+  @@index([deletedAt])
+}
+
+model SeatingTable {
   id          String   @id @default(cuid())
-  guestId     String?
-  giverName   String?
-  type        String   @default("CASH")
-  amount      Float?
-  description String?
-  status      String   @default("RECEIVED")
-  receivedAt  DateTime @default(now())
-  thankedAt   DateTime?
+  name        String
+  capacity    Int      @default(8)
+  shape       String   @default("ROUND")
+  x           Float    @default(0)
+  y           Float    @default(0)
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   deletedAt   DateTime?
 
-  guest       Guest?   @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  guests      Guest[]
+
+  @@index([deletedAt])
+}
+
+model Gift {
+  id                String   @id @default(cuid())
+  guestId           String?
+  giverName         String?
+  type              String   @default("CASH")
+  amount            Float?
+  description       String?
+  status            String   @default("RECEIVED")
+  receivedAt        DateTime @default(now())
+  thankedAt         DateTime?
+  isHoneymoonShare  Boolean  @default(false)
+  pixPaidAt         DateTime?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
+
+  guest             Guest?   @relation(fields: [guestId], references: [id], onDelete: SetNull)
 
   @@index([status])
   @@index([guestId])

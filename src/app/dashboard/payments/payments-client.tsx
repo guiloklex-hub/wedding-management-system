@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import {
   CheckCircle2,
+  Layers,
   Loader2,
   Pencil,
   Plus,
@@ -14,6 +15,7 @@ import {
   createPayment,
   createSplitPayment,
   deletePayment,
+  generateInstallments,
   markPaymentAsPaid,
   undoPaymentPaid,
   updatePayment,
@@ -21,6 +23,7 @@ import {
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { formatCurrency, formatDateBR, toIsoDate } from "@/lib/format";
+import { computeAdjustedAmount } from "@/lib/payment-adjustment";
 import type { Payment, PaymentMethod, PaymentStatus, Vendor } from "@/types";
 
 type PaymentWithVendor = Payment & { vendor: Vendor };
@@ -41,6 +44,7 @@ const METHODS: { value: PaymentMethod; label: string }[] = [
 export default function PaymentsClient({ payments, vendors }: Props) {
   const toast = useToast();
   const [isCreateOpen, setCreateOpen] = useState(false);
+  const [isInstallmentsOpen, setInstallmentsOpen] = useState(false);
   const [editing, setEditing] = useState<PaymentWithVendor | null>(null);
   const [deleting, setDeleting] = useState<PaymentWithVendor | null>(null);
   const [search, setSearch] = useState("");
@@ -151,6 +155,13 @@ export default function PaymentsClient({ payments, vendors }: Props) {
           </select>
         </div>
         <button
+          onClick={() => setInstallmentsOpen(true)}
+          className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800"
+        >
+          <Layers className="h-4 w-4" />
+          <span>Gerar Parcelas</span>
+        </button>
+        <button
           onClick={() => setCreateOpen(true)}
           className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-rose-500"
         >
@@ -185,7 +196,9 @@ export default function PaymentsClient({ payments, vendors }: Props) {
                   <tr key={payment.id} className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30">
                     <td className="px-6 py-4 text-zinc-200">{formatDateBR(payment.dueDate)}</td>
                     <td className="px-6 py-4">{payment.vendor.name}</td>
-                    <td className="px-6 py-4 font-medium text-rose-400">{formatCurrency(payment.amount)}</td>
+                    <td className="px-6 py-4">
+                      <AmountCell payment={payment} />
+                    </td>
                     <td className="px-6 py-4">{payment.method ?? "—"}</td>
                     <td className="px-6 py-4 text-xs text-zinc-500">
                       {payment.installmentNumber && payment.totalInstallments
@@ -277,7 +290,9 @@ export default function PaymentsClient({ payments, vendors }: Props) {
               </div>
               <div className="mt-3 flex items-end justify-between">
                 <div>
-                  <p className="text-lg font-semibold text-rose-400">{formatCurrency(payment.amount)}</p>
+                  <div className="text-lg font-semibold text-rose-400">
+                    <AmountCell payment={payment} />
+                  </div>
                   <p className="text-[11px] text-zinc-500">
                     {payment.method ?? "—"}
                     {payment.installmentNumber && payment.totalInstallments
@@ -441,6 +456,36 @@ export default function PaymentsClient({ payments, vendors }: Props) {
                         Deixe em branco para pagamento único.
                       </p>
                     </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-zinc-400">
+                          Multa (%) <span className="text-xs text-zinc-500">opcional</span>
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          name="lateFeePercent"
+                          placeholder="ex: 2"
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-zinc-400">
+                          Juros %/mês <span className="text-xs text-zinc-500">opcional</span>
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          name="interestPercentPerMonth"
+                          placeholder="ex: 1"
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+                        />
+                      </div>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -567,6 +612,247 @@ export default function PaymentsClient({ payments, vendors }: Props) {
         onConfirm={handleDelete}
         onCancel={() => setDeleting(null)}
       />
+
+      {isInstallmentsOpen ? (
+        <InstallmentsModal
+          vendors={vendors}
+          onClose={() => setInstallmentsOpen(false)}
+          onSuccess={() => {
+            toast.success("Parcelas geradas");
+            setInstallmentsOpen(false);
+            startTransition(() => {});
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function AmountCell({ payment }: { payment: PaymentWithVendor }) {
+  const adj = computeAdjustedAmount({
+    amount: payment.amount,
+    dueDate: payment.dueDate,
+    paidAt: payment.paidAt,
+    status: payment.status,
+    lateFeePercent: payment.lateFeePercent,
+    interestPercentPerMonth: payment.interestPercentPerMonth,
+  });
+  if (!adj.hasAdjustment) {
+    return <span className="font-medium text-rose-400">{formatCurrency(payment.amount)}</span>;
+  }
+  return (
+    <span
+      className="font-medium text-rose-400"
+      title={`Base ${formatCurrency(adj.amount)} + multa ${formatCurrency(adj.lateFee)} + juros ${formatCurrency(adj.interest)} (${adj.lateDays} dia(s) em atraso)`}
+    >
+      <span className="text-zinc-500 line-through">{formatCurrency(adj.amount)}</span>{" "}
+      <span>{formatCurrency(adj.adjusted)}</span>
+      <span className="ml-1 rounded bg-rose-500/10 px-1.5 py-0.5 text-[10px] text-rose-300">
+        +{adj.lateDays}d
+      </span>
+    </span>
+  );
+}
+
+function InstallmentsModal({
+  vendors,
+  onClose,
+  onSuccess,
+}: {
+  vendors: Vendor[];
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const [count, setCount] = useState(10);
+  const [totalAmount, setTotalAmount] = useState("");
+  const [vendorId, setVendorId] = useState(vendors[0]?.id ?? "");
+  const [firstDueDate, setFirstDueDate] = useState(toIsoDate(new Date()));
+  const [intervalDays, setIntervalDays] = useState(30);
+  const [method, setMethod] = useState<PaymentMethod>("PIX");
+  const [lateFeePercent, setLateFeePercent] = useState<string>("");
+  const [interestPercentPerMonth, setInterestPercentPerMonth] = useState<string>("");
+  const [notes, setNotes] = useState("");
+  const [, startTransition] = useTransition();
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const res = await generateInstallments({
+      vendorId,
+      totalAmount: Number(totalAmount),
+      installmentsCount: count,
+      firstDueDate,
+      intervalDays,
+      method,
+      lateFeePercent: lateFeePercent ? Number(lateFeePercent) : undefined,
+      interestPercentPerMonth: interestPercentPerMonth
+        ? Number(interestPercentPerMonth)
+        : undefined,
+      notes: notes.trim() || undefined,
+    });
+    setBusy(false);
+    if (!res.success) {
+      toast.error("Erro", res.error);
+      return;
+    }
+    startTransition(() => onSuccess());
+  }
+
+  const installmentValue =
+    Number(totalAmount) > 0 && count > 0
+      ? formatCurrency(Number(totalAmount) / count)
+      : "—";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <form
+        onSubmit={submit}
+        className="w-full max-w-md space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-5"
+      >
+        <h2 className="text-base font-semibold text-zinc-100">Gerar parcelas</h2>
+        <p className="text-xs text-zinc-500">
+          Cria N pagamentos pendentes com intervalo fixo. Útil para contratos parcelados.
+        </p>
+        <label className="block space-y-1">
+          <span className="text-xs font-medium text-zinc-400">Fornecedor</span>
+          <select
+            value={vendorId}
+            onChange={(e) => setVendorId(e.target.value)}
+            required
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+          >
+            {vendors.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-zinc-400">Valor total (R$)</span>
+            <input
+              type="number"
+              step="0.01"
+              min={0.01}
+              value={totalAmount}
+              onChange={(e) => setTotalAmount(e.target.value)}
+              required
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-zinc-400">Nº de parcelas</span>
+            <input
+              type="number"
+              min={1}
+              max={60}
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              required
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+            />
+          </label>
+        </div>
+        <p className="text-xs text-zinc-500">
+          Cada parcela: <strong className="text-zinc-200">{installmentValue}</strong>
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-zinc-400">1ª data</span>
+            <input
+              type="date"
+              value={firstDueDate}
+              onChange={(e) => setFirstDueDate(e.target.value)}
+              required
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-zinc-400">Intervalo (dias)</span>
+            <input
+              type="number"
+              min={1}
+              max={366}
+              value={intervalDays}
+              onChange={(e) => setIntervalDays(Number(e.target.value))}
+              required
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+            />
+          </label>
+        </div>
+        <label className="block space-y-1">
+          <span className="text-xs font-medium text-zinc-400">Método</span>
+          <select
+            value={method}
+            onChange={(e) => setMethod(e.target.value as PaymentMethod)}
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+          >
+            {METHODS.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-zinc-400">Multa (%) opcional</span>
+            <input
+              type="number"
+              step="0.1"
+              min={0}
+              max={100}
+              value={lateFeePercent}
+              onChange={(e) => setLateFeePercent(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+              placeholder="ex: 2"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-zinc-400">Juros %/mês opcional</span>
+            <input
+              type="number"
+              step="0.1"
+              min={0}
+              max={100}
+              value={interestPercentPerMonth}
+              onChange={(e) => setInterestPercentPerMonth(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+              placeholder="ex: 1"
+            />
+          </label>
+        </div>
+        <label className="block space-y-1">
+          <span className="text-xs font-medium text-zinc-400">Notas</span>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            maxLength={500}
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+          />
+        </label>
+        <div className="flex justify-end gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={busy}
+            className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-60"
+          >
+            {busy ? "Gerando..." : `Gerar ${count} parcelas`}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
@@ -687,6 +973,39 @@ function EditPaymentModal({
                 placeholder="ex: 12"
                 defaultValue={payment.totalInstallments ?? ""}
                 aria-label="Total de parcelas"
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">
+                Multa (%) <span className="text-xs text-zinc-500">opcional</span>
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                name="lateFeePercent"
+                defaultValue={payment.lateFeePercent ?? ""}
+                placeholder="ex: 2"
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">
+                Juros %/mês <span className="text-xs text-zinc-500">opcional</span>
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                name="interestPercentPerMonth"
+                defaultValue={payment.interestPercentPerMonth ?? ""}
+                placeholder="ex: 1"
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
               />
             </div>

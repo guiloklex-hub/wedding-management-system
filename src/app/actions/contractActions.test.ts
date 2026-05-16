@@ -6,6 +6,10 @@ vi.mock("@/auth", () => ({
   auth: () => authMock(),
 }));
 
+vi.mock("next/headers", () => ({
+  headers: async () => new Headers(),
+}));
+
 const saveUploadMock = vi.fn();
 vi.mock("@/lib/storage", () => ({
   saveUpload: (...args: unknown[]) => saveUploadMock(...args),
@@ -14,6 +18,7 @@ vi.mock("@/lib/storage", () => ({
 import {
   createContract,
   deleteContract,
+  replaceContractFile,
   updateContract,
 } from "./contractActions";
 
@@ -93,5 +98,94 @@ describe("deleteContract", () => {
       where: { id: "c1", vendorId: "v1", deletedAt: null },
       data: { deletedAt: expect.any(Date) },
     });
+  });
+});
+
+describe("replaceContractFile", () => {
+  function pdfFile(name = "contrato.pdf"): File {
+    const header = Buffer.from("%PDF-1.4\nconteudo de teste", "ascii");
+    return new File([header], name, { type: "application/pdf" });
+  }
+
+  function fdWith(file: File): FormData {
+    const fd = new FormData();
+    fd.set("contractId", "c1");
+    fd.set("vendorId", "v1");
+    fd.set("file", file);
+    return fd;
+  }
+
+  function setupTransaction(): void {
+    prismaMock.$transaction.mockImplementation(async (arg: unknown) => {
+      if (typeof arg === "function") {
+        return (arg as (tx: typeof prismaMock) => Promise<unknown>)(prismaMock);
+      }
+      return arg;
+    });
+  }
+
+  beforeEach(() => {
+    authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
+    saveUploadMock.mockResolvedValue({
+      filename: "contrato.pdf",
+      mimeType: "application/pdf",
+      size: 1024,
+      storagePath: "uploads/contract/c1/v1/abc_contrato.pdf",
+      sha256Full: "a".repeat(64),
+    });
+    prismaMock.attachment.updateMany.mockResolvedValue({ count: 0 } as never);
+    prismaMock.attachment.create.mockResolvedValue({ id: "att1" } as never);
+    prismaMock.contract.update.mockResolvedValue({} as never);
+    setupTransaction();
+  });
+
+  it("primeiro upload mantém a versão atual do contrato (v1 → v1)", async () => {
+    prismaMock.contract.findFirst.mockResolvedValue({
+      id: "c1",
+      vendorId: "v1",
+      version: 1,
+    } as never);
+    prismaMock.attachment.count.mockResolvedValue(0 as never);
+
+    const r = await replaceContractFile(undefined, fdWith(pdfFile()));
+    expect(r.success).toBe(true);
+
+    expect(prismaMock.contract.update).not.toHaveBeenCalled();
+    expect(prismaMock.attachment.updateMany).not.toHaveBeenCalled();
+
+    const subdir = (saveUploadMock.mock.calls[0][1] as { subdir: string }).subdir;
+    expect(subdir).toBe("v1");
+
+    const createdVersion = (
+      prismaMock.attachment.create.mock.calls[0][0] as { data: { version: number } }
+    ).data.version;
+    expect(createdVersion).toBe(1);
+  });
+
+  it("substituição com PDF existente incrementa para v2", async () => {
+    prismaMock.contract.findFirst.mockResolvedValue({
+      id: "c1",
+      vendorId: "v1",
+      version: 1,
+    } as never);
+    prismaMock.attachment.count.mockResolvedValue(1 as never);
+    prismaMock.attachment.updateMany.mockResolvedValue({ count: 1 } as never);
+
+    const r = await replaceContractFile(undefined, fdWith(pdfFile()));
+    expect(r.success).toBe(true);
+
+    expect(prismaMock.attachment.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ contractId: "c1", kind: "CONTRACT", deletedAt: null }),
+        data: { deletedAt: expect.any(Date) },
+      }),
+    );
+    expect(prismaMock.contract.update).toHaveBeenCalledWith({
+      where: { id: "c1" },
+      data: { version: 2 },
+    });
+
+    const subdir = (saveUploadMock.mock.calls[0][1] as { subdir: string }).subdir;
+    expect(subdir).toBe("v2");
   });
 });

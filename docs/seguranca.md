@@ -204,9 +204,9 @@ detalhes completos. Resumo das proteções:
 - **Rate limit**: 10 uploads/min por usuário, 30/min por IP. Download:
   20/min por (usuário+anexo), 120/min por IP.
 - **Audit** em UPLOAD/DOWNLOAD/REPLACE/SIGN/DELETE.
-- **Versionamento de contrato**: `replaceContractFile` cria v2, v3…
-  atomicamente em `prisma.$transaction`; versão antiga soft-deletada por
-  30 dias.
+- **Versionamento de contrato**: o primeiro PDF mantém a versão atual
+  do contrato; substituições posteriores criam v2, v3… atomicamente em
+  `prisma.$transaction`; versão antiga soft-deletada por 30 dias.
 - **/api/files/[id]** ganhou ownership granular por kind
   (`canViewAttachmentKind`), headers `X-Content-Type-Options: nosniff`,
   `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: no-referrer`,

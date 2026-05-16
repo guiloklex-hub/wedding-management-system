@@ -6,6 +6,14 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.4.2",
+    date: "2026-05-16",
+    highlights: [
+      "📎 Primeiro PDF anexado a um contrato agora respeita a versão atual do contrato — antes, criar o contrato (v1) e enviar o PDF imediatamente já saltava para v2 sem motivo. Substituições posteriores continuam incrementando v2, v3…",
+      "💬 O confirm dialog 'Criar nova versão?' só aparece quando já existe PDF anexado — primeiro upload é direto.",
+    ],
+  },
+  {
     version: "0.4.1",
     date: "2026-05-16",
     highlights: [

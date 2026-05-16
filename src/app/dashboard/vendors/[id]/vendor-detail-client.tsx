@@ -1023,25 +1023,37 @@ function ContractFileBlock({
     );
   }
 
-  function submitReplace(formData: FormData) {
-    setConfirmReplace(formData);
-  }
-
-  function confirmDoReplace() {
-    const fd = confirmReplace;
-    if (!fd) return;
+  function doUpload(fd: FormData) {
     setBusy(true);
     startTransition(async () => {
       try {
         const r = await replaceContractFile(undefined, fd);
         if (r.success) {
-          toast.success("Contrato atualizado", `Nova versão v${contract.version + 1}`);
+          if (current) {
+            toast.success("Contrato atualizado", `Nova versão v${contract.version + 1}`);
+          } else {
+            toast.success("PDF do contrato enviado", `Mantido como v${contract.version}`);
+          }
         } else toast.error("Falha", r.error);
       } finally {
         setBusy(false);
         setConfirmReplace(null);
       }
     });
+  }
+
+  function submitReplace(formData: FormData) {
+    if (!current) {
+      doUpload(formData);
+      return;
+    }
+    setConfirmReplace(formData);
+  }
+
+  function confirmDoReplace() {
+    const fd = confirmReplace;
+    if (!fd) return;
+    doUpload(fd);
   }
 
   function handleSign(method: "DIGITAL" | "PHYSICAL") {

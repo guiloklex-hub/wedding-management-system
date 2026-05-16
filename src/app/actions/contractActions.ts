@@ -250,7 +250,11 @@ export async function replaceContractFile(
     assertMagicMatchesMime(detected, file.type);
     assertAllowedForKind("CONTRACT", file.type);
 
-    const nextVersion = contract.version + 1;
+    const existingActive = await prisma.attachment.count({
+      where: { contractId: contract.id, kind: "CONTRACT", deletedAt: null },
+    });
+    const isFirstUpload = existingActive === 0;
+    const nextVersion = isFirstUpload ? contract.version : contract.version + 1;
     const stored = await saveUpload(file, {
       ownerType: "CONTRACT",
       ownerId: contract.id,
@@ -258,14 +262,16 @@ export async function replaceContractFile(
     });
 
     const result = await prisma.$transaction(async (tx) => {
-      await tx.attachment.updateMany({
-        where: {
-          contractId: contract.id,
-          kind: "CONTRACT",
-          deletedAt: null,
-        },
-        data: { deletedAt: new Date() },
-      });
+      if (!isFirstUpload) {
+        await tx.attachment.updateMany({
+          where: {
+            contractId: contract.id,
+            kind: "CONTRACT",
+            deletedAt: null,
+          },
+          data: { deletedAt: new Date() },
+        });
+      }
 
       const newAtt = await tx.attachment.create({
         data: {
@@ -284,10 +290,12 @@ export async function replaceContractFile(
         },
       });
 
-      await tx.contract.update({
-        where: { id: contract.id },
-        data: { version: nextVersion },
-      });
+      if (!isFirstUpload) {
+        await tx.contract.update({
+          where: { id: contract.id },
+          data: { version: nextVersion },
+        });
+      }
 
       return newAtt;
     });
@@ -295,7 +303,7 @@ export async function replaceContractFile(
     await audit(
       "Contract",
       contract.id,
-      "REPLACE",
+      isFirstUpload ? "UPLOAD" : "REPLACE",
       {
         fromVersion: contract.version,
         toVersion: nextVersion,

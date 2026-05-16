@@ -25,6 +25,8 @@ model User {
   twoFactorUpdatedAt   DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @default(now()) @updatedAt
+
+  attachmentsUploaded  Attachment[] @relation("AttachmentUploader")
 }
 
 model PasswordResetToken {
@@ -159,25 +161,31 @@ model Contract {
 }
 
 model Attachment {
-  id          String   @id @default(cuid())
-  ownerType   String
-  ownerId     String
-  vendorId    String?
-  contractId  String?
-  venueId     String?
-  kind        String   @default("OTHER")
-  filename    String
-  mimeType    String
-  size        Int
-  storagePath String
-  createdAt   DateTime @default(now())
-  deletedAt   DateTime?
+  id           String   @id @default(cuid())
+  ownerType    String
+  ownerId      String
+  vendorId     String?
+  contractId   String?
+  venueId      String?
+  kind         String   @default("OTHER")
+  filename     String
+  mimeType     String
+  size         Int
+  storagePath  String
+  sha256Full   String?
+  version      Int      @default(1)
+  uploadedById String?
+  createdAt    DateTime @default(now())
+  deletedAt    DateTime?
 
-  vendor      Vendor?   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  contract    Contract? @relation(fields: [contractId], references: [id], onDelete: Cascade)
-  venue       Venue?    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  vendor       Vendor?   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  contract     Contract? @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  venue        Venue?    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  uploadedBy   User?     @relation("AttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
 
   @@index([ownerType, ownerId])
+  @@index([contractId, kind])
+  @@index([sha256Full])
 }
 
 model Venue {

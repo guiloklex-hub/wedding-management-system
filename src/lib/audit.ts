@@ -21,7 +21,11 @@ export type AuditAction =
   | "UNASSIGN_TABLE"
   | "RSVP_GROUP_RESPOND"
   | "MARK_PIX_RECEIVED"
-  | "BACKUP_EXPORT";
+  | "BACKUP_EXPORT"
+  | "UPLOAD"
+  | "DOWNLOAD"
+  | "REPLACE"
+  | "SIGN";
 
 export type AuditEntity =
   | "Vendor"
@@ -34,7 +38,9 @@ export type AuditEntity =
   | "SeatingTable"
   | "Guest"
   | "GuestGroup"
-  | "Gift";
+  | "Gift"
+  | "Contract"
+  | "Attachment";
 
 export async function audit(
   entity: AuditEntity,

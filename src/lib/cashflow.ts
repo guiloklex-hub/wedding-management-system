@@ -210,6 +210,27 @@ export type PaymentHeatCell = {
   count: number;
 };
 
+export type WaterfallBar = {
+  name: string;
+  delta: number;
+  running: number;
+  positive: boolean;
+};
+
+export function buildCategoryWaterfall(creeps: CategoryCreep[]): WaterfallBar[] {
+  const sorted = [...creeps].sort((a, b) => b.delta - a.delta);
+  const bars: WaterfallBar[] = [];
+  let running = 0;
+  for (const c of sorted) {
+    if (c.delta === 0) continue;
+    running += c.delta;
+    bars.push({ name: c.category, delta: c.delta, running, positive: c.delta >= 0 });
+  }
+  const total = sorted.reduce((s, c) => s + c.delta, 0);
+  bars.push({ name: "Total", delta: total, running: total, positive: total >= 0 });
+  return bars;
+}
+
 export function buildPaymentHeatmap(
   payments: Array<{ amount: number; dueDate: Date }>,
   from: Date,

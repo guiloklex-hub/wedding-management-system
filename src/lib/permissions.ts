@@ -34,3 +34,45 @@ export function canEdit(role?: string | null): boolean {
 export function canViewSensitiveFinance(role?: string | null): boolean {
   return ["ADMIN", "GROOM", "BRIDE"].includes(role ?? "");
 }
+
+const CONTRACT_KINDS = new Set(["CONTRACT", "INVOICE", "RECEIPT"]);
+const PLANNER_KINDS = new Set([
+  "CONTRACT",
+  "INVOICE",
+  "RECEIPT",
+  "PROPOSAL",
+  "ID_DOC",
+  "PHOTO",
+  "OTHER",
+]);
+const FAMILY_KINDS = new Set(["PROPOSAL", "PHOTO", "OTHER"]);
+
+export function canUploadContract(role?: string | null): boolean {
+  return ["ADMIN", "GROOM", "BRIDE", "PLANNER"].includes(role ?? "");
+}
+
+export function canViewContract(role?: string | null): boolean {
+  return ["ADMIN", "GROOM", "BRIDE", "PLANNER"].includes(role ?? "");
+}
+
+export function canManageContract(role?: string | null): boolean {
+  return ["ADMIN", "GROOM", "BRIDE"].includes(role ?? "");
+}
+
+export function canSignContract(role?: string | null): boolean {
+  return ["ADMIN", "GROOM", "BRIDE"].includes(role ?? "");
+}
+
+export function canViewAttachmentKind(role: string | null | undefined, kind: string): boolean {
+  const safeRole = role ?? "";
+  if (!isRole(safeRole) && safeRole !== "ADMIN") return false;
+  if (CONTRACT_KINDS.has(kind)) return canViewContract(safeRole);
+  if (["ADMIN", "GROOM", "BRIDE", "PLANNER"].includes(safeRole)) return PLANNER_KINDS.has(kind) || kind === "OTHER";
+  if (safeRole === "FAMILY") return FAMILY_KINDS.has(kind);
+  return false;
+}
+
+export function canUploadAttachmentKind(role: string | null | undefined, kind: string): boolean {
+  if (CONTRACT_KINDS.has(kind)) return canUploadContract(role);
+  return canEdit(role);
+}

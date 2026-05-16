@@ -1,16 +1,19 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Banknote,
+  BarChart3,
   CalendarHeart,
   CheckCircle2,
   CreditCard,
   Database,
+  FileText,
   Gift,
   Lock,
   MessageSquare,
   PiggyBank,
   Plane,
   Rocket,
+  ShieldCheck,
   ShoppingBasket,
   Sparkles,
   Target,
@@ -30,6 +33,7 @@ export type HelpCategoryId =
   | "honeymoon-trousseau"
   | "wedding-day"
   | "communications"
+  | "reports"
   | "security"
   | "backup-calendar"
   | "troubleshooting";
@@ -112,6 +116,13 @@ export const HELP_CATEGORIES: HelpCategory[] = [
     description: "Email e WhatsApp",
     icon: MessageSquare,
     color: "emerald",
+  },
+  {
+    id: "reports",
+    label: "Relatórios de BI",
+    description: "Curva S, Funil, RSVP, Risk Radar e mais",
+    icon: BarChart3,
+    color: "violet",
   },
   {
     id: "security",
@@ -794,6 +805,80 @@ export const HELP_ARTICLES: HelpArticle[] = [
     tips: [
       "PLANNER NÃO acessa: Receitas, Caixa, Metas, Pagamentos, Insights.",
       "PLANNER acessa: Fornecedores, Locais, Tarefas, Convidados, Presentes, Dia D, Lua de mel, Enxoval.",
+      "Contratos: PLANNER pode subir e ver, mas não pode marcar como assinado nem excluir.",
+    ],
+  },
+  // ============ reports ============
+  {
+    id: "reports-hub",
+    title: "Onde achar os relatórios de BI",
+    category: "reports",
+    keywords: ["relatórios", "bi", "gráficos", "insights", "kpi", "dashboard"],
+    icon: BarChart3,
+    summary:
+      "Hub de relatórios analíticos em /dashboard/reports — funil de fornecedores, RSVP, presentes, risk radar, lua de mel, enxoval e timeline de atividade.",
+    steps: [
+      {
+        title: "Abra Relatórios",
+        body: "Menu lateral › Relatórios. Lista os relatórios disponíveis ao seu perfil.",
+      },
+      {
+        title: "Insights continua o lar dos gráficos financeiros",
+        body: "Curva S, Burndown e Waterfall ficam em /dashboard/insights (financeiros). Os atalhos no hub levam direto para a seção.",
+      },
+      {
+        title: "FAMILY/VIEWER",
+        body: "Esses perfis veem versão sem valores em R$ — métricas operacionais permanecem visíveis.",
+      },
+    ],
+    tips: [
+      "Risk Radar consolida liquidez, contratos expirando, tarefas atrasadas e fornecedores estourando o orçamento.",
+      "Audit Timeline aparece só para ADMIN/GROOM/BRIDE.",
+    ],
+  },
+  {
+    id: "contract-upload",
+    title: "Como anexar o PDF do contrato",
+    category: "vendors",
+    keywords: ["contrato", "pdf", "upload", "anexar", "versão", "assinar"],
+    icon: FileText,
+    summary:
+      "Cada contrato aceita um PDF (até 8 MB). Substituir cria uma nova versão e arquiva a anterior automaticamente.",
+    steps: [
+      {
+        title: "Crie o contrato primeiro",
+        body: "Em Fornecedores › abra o fornecedor › seção Contratos › Novo. Preencha título, valor, etc.",
+      },
+      {
+        title: "Envie o PDF",
+        body: "Dentro do contrato criado, o bloco 'Arquivo do contrato' aceita PDF até 8 MB. O preview aparece embutido após o envio.",
+      },
+      {
+        title: "Substituir = nova versão",
+        body: "Subir um novo PDF arquiva o anterior e gera v2, v3… O histórico fica acessível para ADMIN/GROOM/BRIDE.",
+      },
+      {
+        title: "Registrar assinatura",
+        body: "ADMIN, GROOM ou BRIDE podem marcar o contrato como SIGNED_DIGITAL ou SIGNED_PHYSICAL com data de hoje.",
+      },
+    ],
+    warnings: [
+      "Apenas PDF é aceito para CONTRACT. JPG/PNG/HEIC continuam liberados para anexos não-sensíveis (PHOTO, PROPOSAL).",
+      "FAMILY e VIEWER não conseguem visualizar contratos — apenas o restante dos dados do fornecedor.",
+    ],
+  },
+  {
+    id: "contract-security",
+    title: "Segurança e auditoria de anexos",
+    category: "security",
+    keywords: ["upload", "magic bytes", "audit", "contrato", "anexo", "segurança"],
+    icon: ShieldCheck,
+    summary:
+      "Validação por magic bytes, hash SHA-256, ownership por kind, rate-limit em upload e download, audit log de UPLOAD/DOWNLOAD/REPLACE/SIGN.",
+    tips: [
+      "Tentativas de subir .exe renomeado como .pdf são bloqueadas (não passa no magic byte).",
+      "Arquivos soft-deletados são removidos do disco depois de 30 dias pelo cron /api/cron/cleanup-files.",
+      "Toda visualização de contrato registra um evento DOWNLOAD na auditoria.",
     ],
   },
 ];

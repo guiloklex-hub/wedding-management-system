@@ -4,11 +4,14 @@ import { getEventConfig, daysUntil } from "@/lib/event-config";
 import { resolveCategoryColor, resolveCategoryLabel } from "@/lib/categories";
 import { requireFinanceAccess } from "@/lib/finance-access";
 import {
+  buildCategoryWaterfall,
   buildMonthlyCashflow,
   buildPaymentHeatmap,
   computeCategoryCreep,
   computeHealthScore,
 } from "@/lib/cashflow";
+import { buildPaymentSCurve } from "@/lib/reports/payment-curve";
+import { buildTaskBurndown } from "@/lib/reports/task-burndown";
 import InsightsClient from "./insights-client";
 
 export const dynamic = "force-dynamic";
@@ -101,6 +104,29 @@ export default async function InsightsPage() {
     eventDate,
   );
 
+  const sCurve = buildPaymentSCurve(
+    payments.map((p) => ({
+      amount: p.amount,
+      dueDate: p.dueDate,
+      paidAt: p.paidAt,
+      status: p.status,
+    })),
+    cfg.contingencyPercent,
+  );
+
+  const burndown = buildTaskBurndown(
+    tasks.map((t) => ({
+      status: t.status,
+      createdAt: t.createdAt,
+      deadline: t.deadline,
+      completedAt: t.completedAt,
+    })),
+    eventDate,
+    today,
+  );
+
+  const waterfall = buildCategoryWaterfall(creep);
+
   return (
     <div className="space-y-6">
       <div>
@@ -124,6 +150,9 @@ export default async function InsightsPage() {
         health={health}
         creep={creep}
         heatmap={heatmap}
+        sCurve={sCurve}
+        burndown={burndown}
+        waterfall={waterfall}
       />
     </div>
   );

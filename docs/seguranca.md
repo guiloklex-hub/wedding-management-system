@@ -186,6 +186,36 @@ recomendações:
 - Aceite pedidos de remoção (delete físico, não soft-delete) em até 15 dias.
 - Não compartilhe o banco fora do casal.
 
+## Upload de anexos e contratos (v0.4.0)
+
+Endurecimento aplicado ao módulo de anexos — veja [anexos.md](anexos.md) para
+detalhes completos. Resumo das proteções:
+
+- **Magic bytes** em `src/lib/file-validation.ts` validam o tipo real do
+  arquivo (`detectMagic` + `assertMagicMatchesMime`) antes de aceitar.
+  PDF, PNG, JPEG, WEBP e HEIC são reconhecidos.
+- **MIME allowlist por kind**: `CONTRACT` só aceita `application/pdf`;
+  `INVOICE`/`RECEIPT`/`ID_DOC` aceitam PDF + JPG/PNG; `PHOTO` aceita
+  imagens (inclusive HEIC).
+- **Tamanho por kind**: 8 MB para contratos, 10 MB demais.
+- **Hash SHA-256 completo** armazenado em `Attachment.sha256Full`.
+- **Path-traversal robusto** em `src/lib/storage.ts` usa
+  `path.resolve` + `startsWith(UPLOADS_ROOT)`.
+- **Rate limit**: 10 uploads/min por usuário, 30/min por IP. Download:
+  20/min por (usuário+anexo), 120/min por IP.
+- **Audit** em UPLOAD/DOWNLOAD/REPLACE/SIGN/DELETE.
+- **Versionamento de contrato**: `replaceContractFile` cria v2, v3…
+  atomicamente em `prisma.$transaction`; versão antiga soft-deletada por
+  30 dias.
+- **/api/files/[id]** ganhou ownership granular por kind
+  (`canViewAttachmentKind`), headers `X-Content-Type-Options: nosniff`,
+  `Content-Security-Policy: default-src 'none'; sandbox`,
+  `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` para
+  contratos.
+- **Cron diário** `/api/cron/cleanup-files` remove arquivos soft-deletados
+  após 30 dias e órfãos no FS. Protegido por `CRON_SECRET` via
+  `timingSafeEquals`.
+
 ## Checklist do reviewer
 
 Ao revisar PR que toque endpoints/Server Actions, conferir:
@@ -198,4 +228,8 @@ Ao revisar PR que toque endpoints/Server Actions, conferir:
 - [ ] Dados de usuário em HTML passam por escape
 - [ ] Ação relevante grava em `AuditLog`
 - [ ] Sem `console.log` de informação sensível
+- [ ] Uploads passam por `detectMagic` + `assertMagicMatchesMime` +
+      `assertAllowedForKind` + `assertSizeForKind`
+- [ ] Downloads através de `/api/files/[id]` (nunca expor `storagePath`
+      diretamente)
 - [ ] Datas no fuso correto (`America/Sao_Paulo` para display, UTC para storage)

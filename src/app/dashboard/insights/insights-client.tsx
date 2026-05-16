@@ -20,7 +20,13 @@ import type {
   HealthScoreResult,
   MonthlyPoint,
   PaymentHeatCell,
+  WaterfallBar,
 } from "@/lib/cashflow";
+import type { PaymentCurvePoint } from "@/lib/reports/payment-curve";
+import type { BurndownPoint } from "@/lib/reports/task-burndown";
+import { SCurve } from "@/components/charts/s-curve";
+import { Burndown } from "@/components/charts/burndown";
+import { Waterfall } from "@/components/charts/waterfall";
 
 type Props = {
   eventDate: Date;
@@ -32,6 +38,9 @@ type Props = {
   health: HealthScoreResult;
   creep: CategoryCreep[];
   heatmap: PaymentHeatCell[];
+  sCurve: PaymentCurvePoint[];
+  burndown: BurndownPoint[];
+  waterfall: WaterfallBar[];
 };
 
 export default function InsightsClient({
@@ -43,6 +52,9 @@ export default function InsightsClient({
   health,
   creep,
   heatmap,
+  sCurve,
+  burndown,
+  waterfall,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -53,7 +65,40 @@ export default function InsightsClient({
         <WaterfallChart cashflow={cashflow} />
       </div>
 
+      <section
+        id="scurve"
+        className="scroll-mt-24 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm"
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-zinc-100">Curva S — Previsto vs Realizado</h2>
+          <span className="text-xs text-zinc-500">Banda = contingência configurada</span>
+        </div>
+        <SCurve data={sCurve} valueFormatter={(n) => formatCurrency(n)} />
+      </section>
+
+      <section
+        id="burndown"
+        className="scroll-mt-24 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm"
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-zinc-100">Burndown de Tarefas</h2>
+          <span className="text-xs text-zinc-500">Ideal vs real até a data do evento</span>
+        </div>
+        <Burndown data={burndown} />
+      </section>
+
       <WhatIfSimulator totals={totals} cashflow={cashflow} eventDate={eventDate} />
+
+      <section
+        id="waterfall"
+        className="scroll-mt-24 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm"
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-zinc-100">Variação por Categoria</h2>
+          <span className="text-xs text-zinc-500">Verde = poupou · Rosa = estourou</span>
+        </div>
+        <Waterfall data={waterfall} valueFormatter={(n) => formatCurrency(n)} />
+      </section>
 
       <CreepCard items={creep} />
 

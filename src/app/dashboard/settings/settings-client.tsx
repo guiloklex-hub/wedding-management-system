@@ -1617,6 +1617,22 @@ function WhatsAppTab({
         ) : null}
       </div>
 
+      {state === "DISCONNECTED" && status?.needsManualAction ? (
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          Ação necessária: a sessão expirou ou foi desvinculada. Clique em
+          &quot;Conectar&quot; para gerar um novo QR Code.
+        </div>
+      ) : null}
+
+      {state === "DISCONNECTED" && !status?.needsManualAction && (status?.attempts ?? 0) > 0 ? (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+          Tentando reconectar automaticamente · tentativas: {status?.attempts}
+          {status?.lastDisconnectAt
+            ? ` · caiu em ${new Date(status.lastDisconnectAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`
+            : ""}
+        </div>
+      ) : null}
+
       {state === "WAITING_QR" && status?.qrDataUrl ? (
         <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
           <p className="mb-3 text-sm text-zinc-300">

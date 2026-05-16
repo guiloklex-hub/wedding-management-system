@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { authenticate } from "@/app/actions/authActions";
 import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -34,6 +34,8 @@ function resolveRedirectTo(): string {
 
 export default function LoginForm() {
   const [errorMessage, formAction, isPending] = useActionState(authenticate, undefined);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const redirectRef = useRef<HTMLInputElement>(null);
   const needs2fa = errorMessage === TWO_FACTOR_REQUIRED;
   const friendly =
@@ -64,7 +66,10 @@ export default function LoginForm() {
             type="email"
             name="email"
             placeholder="seu@email.com"
+            autoComplete="email"
             required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
         <div>
@@ -77,8 +82,11 @@ export default function LoginForm() {
             type="password"
             name="password"
             placeholder="••••••••"
+            autoComplete="current-password"
             required
             minLength={1}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
         {needs2fa ? (

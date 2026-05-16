@@ -1,21 +1,33 @@
 import path from "node:path";
 import { rm } from "node:fs/promises";
+import { maybeSendDownAlert, sendRecoveredAlert } from "./whatsapp-alerts";
 
 const AUTH_DIR = path.join(process.cwd(), ".whatsapp-auth");
 
+const ALERT_AFTER_ATTEMPTS = 3;
+const ALERT_COOLDOWN_MS = 30 * 60_000;
+const WATCHDOG_INTERVAL_MS = 60_000;
+const WATCHDOG_IDLE_THRESHOLD_MS = 90_000;
+
 type State = "DISCONNECTED" | "CONNECTING" | "WAITING_QR" | "CONNECTED";
 
-type WhatsAppStatus = {
+export type WhatsAppStatus = {
   state: State;
   qr: string | null;
   phoneNumber: string | null;
   lastError: string | null;
+  attempts: number;
+  lastDisconnectAt: Date | null;
+  lastConnectedAt: Date | null;
+  needsManualAction: boolean;
+  downAlertSentAt: Date | null;
 };
 
 type WaGlobals = {
   _waSock?: unknown;
   _waState?: WhatsAppStatus;
   _waStarting?: Promise<void> | null;
+  _waWatchdog?: ReturnType<typeof setInterval> | null;
 };
 const g = globalThis as unknown as WaGlobals;
 
@@ -26,6 +38,11 @@ function getStateRef(): WhatsAppStatus {
       qr: null,
       phoneNumber: null,
       lastError: null,
+      attempts: 0,
+      lastDisconnectAt: null,
+      lastConnectedAt: null,
+      needsManualAction: false,
+      downAlertSentAt: null,
     };
   }
   return g._waState;
@@ -33,6 +50,16 @@ function getStateRef(): WhatsAppStatus {
 
 export function getWhatsAppStatus(): WhatsAppStatus {
   return { ...getStateRef() };
+}
+
+export function backoffDelay(attempts: number): number {
+  if (attempts <= 0) return 3000;
+  return Math.min(60_000, 3000 * 2 ** (attempts - 1));
+}
+
+function shouldSendDownAlert(ref: WhatsAppStatus): boolean {
+  if (!ref.downAlertSentAt) return true;
+  return Date.now() - ref.downAlertSentAt.getTime() > ALERT_COOLDOWN_MS;
 }
 
 async function importBaileys() {
@@ -94,35 +121,88 @@ async function startSocket(): Promise<void> {
       const u = update as {
         qr?: string;
         connection?: "open" | "close" | "connecting";
-        lastDisconnect?: { error?: { output?: { statusCode?: number } } };
+        lastDisconnect?: {
+          error?: { output?: { statusCode?: number }; message?: string };
+        };
       };
 
       if (u.qr) {
+        const wasConnectedBefore = ref.lastConnectedAt !== null;
         ref.state = "WAITING_QR";
         ref.qr = u.qr;
+        if (wasConnectedBefore) {
+          ref.needsManualAction = true;
+          if (shouldSendDownAlert(ref)) {
+            ref.downAlertSentAt = new Date();
+            void maybeSendDownAlert({
+              reason: "WAITING_QR_AGAIN",
+              attempts: ref.attempts,
+              lastError: ref.lastError,
+            });
+          }
+        }
       }
 
       if (u.connection === "open") {
+        const wasDown = ref.state !== "CONNECTED" && ref.downAlertSentAt !== null;
+        const downtimeMs =
+          wasDown && ref.lastDisconnectAt
+            ? Date.now() - ref.lastDisconnectAt.getTime()
+            : 0;
         ref.state = "CONNECTED";
         ref.qr = null;
         ref.lastError = null;
+        ref.attempts = 0;
+        ref.needsManualAction = false;
+        ref.lastConnectedAt = new Date();
         const id = (sock as { user?: { id?: string } }).user?.id;
         ref.phoneNumber = id ? id.split(":")[0].split("@")[0] : null;
+        if (wasDown) {
+          ref.downAlertSentAt = null;
+          const downtimeMinutes = Math.max(1, Math.round(downtimeMs / 60_000));
+          void sendRecoveredAlert(downtimeMinutes);
+        }
       }
 
       if (u.connection === "close") {
         const code = u.lastDisconnect?.error?.output?.statusCode;
+        const message = u.lastDisconnect?.error?.message;
         const loggedOut = code === DisconnectReason.loggedOut;
         ref.state = "DISCONNECTED";
         ref.qr = null;
         ref.phoneNumber = null;
+        ref.lastDisconnectAt = new Date();
+        ref.needsManualAction = loggedOut;
+        if (message) ref.lastError = message;
         g._waSock = undefined;
         g._waStarting = null;
-        if (!loggedOut) {
-          setTimeout(() => {
-            startSocket().catch(() => {});
-          }, 3000);
+
+        if (loggedOut) {
+          if (shouldSendDownAlert(ref)) {
+            ref.downAlertSentAt = new Date();
+            void maybeSendDownAlert({
+              reason: "LOGGED_OUT",
+              attempts: ref.attempts,
+              lastError: ref.lastError,
+            });
+          }
+          return;
         }
+
+        ref.attempts += 1;
+        if (ref.attempts >= ALERT_AFTER_ATTEMPTS && shouldSendDownAlert(ref)) {
+          ref.downAlertSentAt = new Date();
+          void maybeSendDownAlert({
+            reason: "CONNECTION_LOST",
+            attempts: ref.attempts,
+            lastError: ref.lastError,
+          });
+        }
+
+        const delayMs = backoffDelay(ref.attempts);
+        setTimeout(() => {
+          startSocket().catch(() => {});
+        }, delayMs);
       }
     });
   } catch (err) {
@@ -167,10 +247,44 @@ export async function disconnectWhatsApp(): Promise<void> {
   ref.qr = null;
   ref.phoneNumber = null;
   ref.lastError = null;
+  ref.attempts = 0;
+  ref.lastDisconnectAt = null;
+  ref.lastConnectedAt = null;
+  ref.needsManualAction = false;
+  ref.downAlertSentAt = null;
 
   try {
     await rm(AUTH_DIR, { recursive: true, force: true });
   } catch {}
+}
+
+export function startWatchdog(): void {
+  if (g._waWatchdog) return;
+  const timer = setInterval(() => {
+    const ref = getStateRef();
+    if (ref.state !== "DISCONNECTED") return;
+    if (ref.needsManualAction) return;
+    if (g._waStarting) return;
+    const idleMs = ref.lastDisconnectAt
+      ? Date.now() - ref.lastDisconnectAt.getTime()
+      : Number.POSITIVE_INFINITY;
+    if (idleMs > WATCHDOG_IDLE_THRESHOLD_MS) {
+      ensureWhatsAppStarted().catch((err) => {
+        console.error("[whatsapp] watchdog falhou ao reiniciar:", err);
+      });
+    }
+  }, WATCHDOG_INTERVAL_MS);
+  if (typeof (timer as { unref?: () => void }).unref === "function") {
+    (timer as { unref: () => void }).unref();
+  }
+  g._waWatchdog = timer;
+}
+
+export function stopWatchdog(): void {
+  if (g._waWatchdog) {
+    clearInterval(g._waWatchdog);
+    g._waWatchdog = null;
+  }
 }
 
 function normalizePhone(phone: string): string | null {

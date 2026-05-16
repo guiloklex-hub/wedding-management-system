@@ -6,6 +6,28 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.3.2",
+    date: "2026-05-16",
+    highlights: [
+      "📱 Menu mobile unificado: o hamburger e o drawer lateral saíram. Agora só existe uma barra inferior com 4 atalhos fixos (Dashboard, Tarefas, Fornecedores, Convidados) + botão 'Mais'.",
+      "👆 'Mais' abre uma gaveta deslizante (bottom sheet) com todos os itens agrupados por categoria (Financeiro / Casamento / Pessoas & Negócios / Sistema).",
+      "↕️ Dá pra abrir a gaveta também arrastando para cima na barra inferior, e fechar arrastando para baixo, tocando fora ou pressionando Esc.",
+      "🧭 'Mapa de assentos' deixou de aparecer no menu top-level — continua acessível dentro de 'Dia D'.",
+      "♿ Foco preso dentro da gaveta enquanto aberta e devolvido ao botão 'Mais' ao fechar.",
+    ],
+  },
+  {
+    version: "0.3.1",
+    date: "2026-05-16",
+    highlights: [
+      "🔌 WhatsApp agora sobe sozinho no boot do servidor (instrumentation.ts) — não depende mais do admin abrir o painel.",
+      "🔁 Reconexão automática com back-off exponencial (3s → 60s) e watchdog que destrava a cadeia se algo prender.",
+      "📧 Alerta por email para todos os ADMINs se a conexão ficar fora do ar > 1 min, ou se o WhatsApp pedir novo QR Code.",
+      "✅ Email de recuperação quando a conexão volta. Anti-spam: no máximo 1 alerta por dia + 1 recovery por dia.",
+      "ℹ️ Painel `/dashboard/settings` agora mostra contador de tentativas e horário da última queda enquanto o sistema reconecta.",
+    ],
+  },
+  {
     version: "0.3.0",
     date: "2026-05-16",
     highlights: [

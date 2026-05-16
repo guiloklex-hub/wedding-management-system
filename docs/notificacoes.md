@@ -15,6 +15,8 @@ independentes que funcionam em paralelo: **email (SMTP via Nodemailer)** e
 | `PAYMENT_OVERDUE` | Pagamento já passou da data | ✅ | ✅ |
 | `TASK_DUE` | Tarefa vence em até 2 dias | ✅ | ✅ |
 | `TASK_OVERDUE` | Tarefa já passou da data | ✅ | ✅ |
+| `SYSTEM_WHATSAPP_DOWN` | Conexão WhatsApp caiu por > ~1 min, ou exige novo QR | ✅ (admins) | — |
+| `SYSTEM_WHATSAPP_RECOVERED` | Conexão WhatsApp voltou após queda já avisada | ✅ (admins) | — |
 
 Cada envio é registrado em `NotificationLog`:
 - `status` = `OK` | `ERROR`
@@ -87,6 +89,30 @@ Botão **Enviar teste** dispara uma mensagem para o número do próprio admin.
 Se a sessão expirar (acontece a cada algumas semanas, ou se você desconectar do
 celular), repita os passos acima. O sistema continua funcionando — apenas o
 WhatsApp para de enviar até reconectar.
+
+### Auto-ressurect e alertas por email
+
+A integração sobe sozinha junto com o servidor (hook
+[`src/instrumentation.ts`](../src/instrumentation.ts) do Next.js 16). Se a
+conexão cair, o socket é reiniciado em **back-off exponencial**: 3s, 6s, 12s,
+24s, 48s e teto de 60s. Um **watchdog** roda a cada 60s e força o restart se
+algum erro inesperado interromper a cadeia de reconexão.
+
+Além disso, **os admins ativos recebem email automaticamente** quando:
+
+- A conexão fica fora do ar por mais de ~1 minuto (≥ 3 tentativas falhas
+  consecutivas) — assunto começa com `🔌 WhatsApp instável`.
+- O WhatsApp pede um novo QR Code (sessão expirada/invalidada) — assunto
+  começa com `⚠ Ação necessária`.
+- A sessão é desvinculada do celular (logout) — também `⚠ Ação necessária`.
+- A conexão **volta** após uma queda já alertada — assunto `✅ WhatsApp voltou`.
+
+Anti-spam: cada queda gera no máximo **1 email DOWN por dia** (idempotência
+via `NotificationLog` + cooldown de 30 min em memória) e **1 email RECOVERED
+por dia**, e somente se houve um DOWN antes no mesmo dia.
+
+Variável de ambiente opcional `WHATSAPP_AUTOSTART="false"` desliga o autostart
+(útil em dev).
 
 ## Cron de lembretes
 

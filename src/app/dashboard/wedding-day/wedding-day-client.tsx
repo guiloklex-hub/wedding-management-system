@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import {
   AlertTriangle,
   CalendarHeart,
@@ -217,8 +218,13 @@ export default function WeddingDayClient({
           <ul className="grid gap-2 sm:grid-cols-2">
             {criticalVendors.map((v) => (
               <li key={v.id} className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
-                <p className="font-medium text-zinc-100">{v.name}</p>
-                <p className="text-xs text-zinc-500">{v.category}</p>
+                <Link
+                  href={`/dashboard/vendors/${v.id}`}
+                  className="block hover:text-rose-300"
+                >
+                  <p className="font-medium text-zinc-100">{v.name}</p>
+                  <p className="text-xs text-zinc-500">{v.category}</p>
+                </Link>
                 {v.contactName ? <p className="mt-1 text-sm text-zinc-300">{v.contactName}</p> : null}
                 {v.contactPhone ? (
                   <a
@@ -230,7 +236,12 @@ export default function WeddingDayClient({
                     <Phone className="h-3.5 w-3.5" /> {v.contactPhone}
                   </a>
                 ) : (
-                  <p className="mt-1 text-xs text-zinc-600">Sem contato cadastrado</p>
+                  <Link
+                    href={`/dashboard/vendors/${v.id}`}
+                    className="mt-1 inline-flex items-center gap-1 text-xs text-rose-400 hover:text-rose-300"
+                  >
+                    <Phone className="h-3 w-3" /> Cadastrar contato
+                  </Link>
                 )}
               </li>
             ))}

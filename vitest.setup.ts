@@ -22,12 +22,24 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+vi.mock("next/headers", () => ({
+  headers: vi.fn(async () => new Headers()),
+  cookies: vi.fn(async () => ({
+    get: () => undefined,
+    getAll: () => [],
+    set: () => undefined,
+    delete: () => undefined,
+  })),
+}));
+
 vi.mock("@/lib/finance-access", () => ({
   requireFinanceAccess: vi.fn().mockResolvedValue({
     user: { id: "test-user", role: "ADMIN" },
   }),
   hasFinanceAccess: vi.fn().mockResolvedValue(true),
   denyIfNoFinance: vi.fn().mockResolvedValue(null),
+  denyIfNoEdit: vi.fn().mockResolvedValue(null),
+  denyIfNoManage: vi.fn().mockResolvedValue(null),
 }));
 
 afterEach(async () => {

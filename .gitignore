@@ -86,3 +86,6 @@ backups/
 # Plan files (Claude Code)
 .claude/plans/
 .claude/settings.local.json
+
+# Arquivos temporarios
+temp.md

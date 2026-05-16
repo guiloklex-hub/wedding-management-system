@@ -86,16 +86,25 @@ Implementado em `src/lib/permissions.ts`:
 
 ## Versionamento de contratos
 
-`Contract.version` é incrementado a cada `replaceContractFile`. Fluxo:
+Regra: o **primeiro PDF** enviado a um contrato é gravado na versão
+atual do contrato (ex.: contrato criado em v1 + primeiro upload =
+attachment v1). **Substituições** posteriores incrementam (v2, v3…).
 
-1. Carrega contrato + última versão.
-2. Atomicamente (em `prisma.$transaction`):
-   - `Attachment.updateMany` setando `deletedAt = now()` em CONTRACT
-     atuais do contrato.
-   - `Attachment.create` com `version: n+1`, `kind: CONTRACT`,
-     `subdir: v{n+1}`.
-   - `Contract.update` incrementando `version`.
-3. Registra `audit("Contract", id, "REPLACE", { fromVersion, toVersion })`.
+Fluxo de `replaceContractFile`:
+
+1. Carrega contrato + conta CONTRACT attachments ativos.
+2. Define `nextVersion`:
+   - **Sem attachment ativo** (primeiro upload) → `nextVersion = contract.version`.
+   - **Com attachment ativo** (substituição) → `nextVersion = contract.version + 1`.
+3. Atomicamente (em `prisma.$transaction`):
+   - Se substituição: `Attachment.updateMany` setando `deletedAt = now()`
+     no CONTRACT ativo do contrato.
+   - `Attachment.create` com `version: nextVersion`, `kind: CONTRACT`,
+     `subdir: v{nextVersion}`.
+   - Se substituição: `Contract.update` setando `version = nextVersion`.
+4. Registra `audit("Contract", id, "UPLOAD" | "REPLACE", { fromVersion, toVersion })`.
+   - `UPLOAD` no primeiro envio (fromVersion === toVersion).
+   - `REPLACE` quando houve troca de versão.
 
 Arquivos da versão antiga **não são removidos do disco imediatamente** —
 ficam soft-deletados por 30 dias.

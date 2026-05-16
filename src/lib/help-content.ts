@@ -843,19 +843,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
     keywords: ["contrato", "pdf", "upload", "anexar", "versão", "assinar"],
     icon: FileText,
     summary:
-      "Cada contrato aceita um PDF (até 8 MB). Substituir cria uma nova versão e arquiva a anterior automaticamente.",
+      "Cada contrato aceita um PDF (até 8 MB). O primeiro envio fica na versão atual do contrato; só a substituição posterior cria uma nova versão.",
     steps: [
       {
         title: "Crie o contrato primeiro",
-        body: "Em Fornecedores › abra o fornecedor › seção Contratos › Novo. Preencha título, valor, etc.",
+        body: "Em Fornecedores › abra o fornecedor › seção Contratos › Novo. Preencha título, valor, etc. O contrato começa em v1.",
       },
       {
-        title: "Envie o PDF",
-        body: "Dentro do contrato criado, o bloco 'Arquivo do contrato' aceita PDF até 8 MB. O preview aparece embutido logo após o envio. Se o navegador não conseguir renderizar inline (ex.: extensões bloqueando), use o link 'Baixar PDF' ou 'Abrir em nova aba'.",
+        title: "Envie o PDF (continua v1)",
+        body: "Dentro do contrato criado, o bloco 'Arquivo do contrato' aceita PDF até 8 MB. O primeiro PDF é gravado na mesma versão do contrato — se você criou em v1, o PDF também fica como v1. O preview aparece embutido logo após o envio.",
       },
       {
         title: "Substituir = nova versão",
-        body: "Subir um novo PDF arquiva o anterior e gera v2, v3… O histórico fica acessível para ADMIN/GROOM/BRIDE.",
+        body: "Subir um PDF novo no lugar de um já anexado arquiva o anterior e gera v2, v3… O histórico fica acessível para ADMIN/GROOM/BRIDE.",
       },
       {
         title: "Registrar assinatura",

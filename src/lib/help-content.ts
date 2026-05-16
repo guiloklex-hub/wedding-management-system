@@ -851,7 +851,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       },
       {
         title: "Envie o PDF",
-        body: "Dentro do contrato criado, o bloco 'Arquivo do contrato' aceita PDF até 8 MB. O preview aparece embutido após o envio.",
+        body: "Dentro do contrato criado, o bloco 'Arquivo do contrato' aceita PDF até 8 MB. O preview aparece embutido logo após o envio. Se o navegador não conseguir renderizar inline (ex.: extensões bloqueando), use o link 'Baixar PDF' ou 'Abrir em nova aba'.",
       },
       {
         title: "Substituir = nova versão",

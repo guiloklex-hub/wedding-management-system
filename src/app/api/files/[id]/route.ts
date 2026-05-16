@@ -53,8 +53,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   );
 
   const isContract = att.kind === "CONTRACT";
-  const isInlineable = att.mimeType.startsWith("image/") || att.mimeType === "application/pdf";
+  const isPdf = att.mimeType === "application/pdf";
+  const isImage = att.mimeType.startsWith("image/");
+  const isInlineable = isPdf || isImage;
   const disposition = isInlineable ? "inline" : "attachment";
+
+  const csp = isPdf
+    ? "frame-ancestors 'self'"
+    : "default-src 'none'; sandbox; style-src 'unsafe-inline'; frame-ancestors 'self'";
 
   return new NextResponse(new Uint8Array(body), {
     status: 200,
@@ -63,7 +69,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       "Content-Disposition": `${disposition}; filename="${att.filename}"`,
       "Cache-Control": isContract ? "private, no-store" : "private, max-age=60",
       "X-Content-Type-Options": "nosniff",
-      "Content-Security-Policy": "default-src 'none'; sandbox; style-src 'unsafe-inline'",
+      "X-Frame-Options": "SAMEORIGIN",
+      "Content-Security-Policy": csp,
       "Referrer-Policy": "no-referrer",
     },
   });

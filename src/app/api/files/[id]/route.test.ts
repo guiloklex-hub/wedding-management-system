@@ -90,7 +90,28 @@ describe("GET /api/files/[id]", () => {
     expect(res.headers.get("Content-Disposition")).toBe('inline; filename="contrato.pdf"');
     expect(res.headers.get("Cache-Control")).toBe("private, no-store");
     expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
-    expect(res.headers.get("Content-Security-Policy")).toContain("sandbox");
+    expect(res.headers.get("X-Frame-Options")).toBe("SAMEORIGIN");
+    const csp = res.headers.get("Content-Security-Policy") ?? "";
+    expect(csp).toContain("frame-ancestors 'self'");
+    expect(csp).not.toContain("sandbox");
+  });
+
+  it("não-PDF mantém CSP sandbox como defesa em profundidade", async () => {
+    authMock.mockResolvedValue(ADMIN);
+    prismaMock.attachment.findUnique.mockResolvedValue({
+      id: "a4",
+      kind: "PHOTO",
+      storagePath: "vendor/v1/foto.png",
+      mimeType: "image/png",
+      filename: "foto.png",
+      deletedAt: null,
+    } as never);
+    readUploadMock.mockResolvedValue(Buffer.from("PNG"));
+
+    const res = await GET(new Request("http://x/api/files/a4"), paramsFor("a4"));
+    const csp = res.headers.get("Content-Security-Policy") ?? "";
+    expect(csp).toContain("sandbox");
+    expect(csp).toContain("frame-ancestors 'self'");
   });
 
   it("imagem retorna disposição inline", async () => {

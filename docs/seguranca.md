@@ -209,9 +209,11 @@ detalhes completos. Resumo das proteções:
   30 dias.
 - **/api/files/[id]** ganhou ownership granular por kind
   (`canViewAttachmentKind`), headers `X-Content-Type-Options: nosniff`,
-  `Content-Security-Policy: default-src 'none'; sandbox`,
-  `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` para
-  contratos.
+  `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: no-referrer`,
+  `Cache-Control: private, no-store` para contratos. CSP varia por MIME:
+  PDFs usam apenas `frame-ancestors 'self'` (sem `sandbox`, que bloqueava
+  o visualizador interno do Chrome); demais MIMEs mantêm
+  `default-src 'none'; sandbox; style-src 'unsafe-inline'; frame-ancestors 'self'`.
 - **Cron diário** `/api/cron/cleanup-files` remove arquivos soft-deletados
   após 30 dias e órfãos no FS. Protegido por `CRON_SECRET` via
   `timingSafeEquals`.

@@ -51,8 +51,8 @@ export function ConfirmDialog({
       : "bg-rose-600 hover:bg-rose-500";
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
+    <div className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
+      <div className="my-4 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
         <div className="p-6">
           <div className="mb-3 flex items-center gap-3">
             {tone === "danger" ? (

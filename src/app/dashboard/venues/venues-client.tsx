@@ -127,8 +127,8 @@ export default function VenuesClient({ venues }: { venues: VenueRow[] }) {
       )}
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm">
-          <div className="my-8 w-full max-w-xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
+          <div className="my-4 w-full max-w-xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
             <h2 className="text-lg font-semibold text-white">Novo local</h2>
             <form action={handleSubmit} className="mt-4 space-y-3">
               <Input name="name" label="Nome" required placeholder="Ex: Vila dos Lagos" />

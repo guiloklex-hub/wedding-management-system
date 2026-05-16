@@ -6,6 +6,14 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.4.1",
+    date: "2026-05-16",
+    highlights: [
+      "📄 Preview do PDF do contrato voltou a abrir embutido no Chrome — o CSP `sandbox` que bloqueava o visualizador foi substituído por `frame-ancestors 'self'` + `X-Frame-Options: SAMEORIGIN`, mantendo a proteção contra clickjacking.",
+      "📱 Modais com muitos campos agora rolam corretamente em telas pequenas — antes o botão Salvar/Cancelar ficava cortado fora da tela em telefones. Padronizamos a abertura em `items-start` no mobile + `overflow-y-auto`.",
+    ],
+  },
+  {
     version: "0.4.0",
     date: "2026-05-16",
     highlights: [

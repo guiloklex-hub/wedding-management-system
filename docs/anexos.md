@@ -69,8 +69,15 @@ Implementado em `src/lib/permissions.ts`:
 - Rate limit `20/min` por usuário+anexo, `120/min` por IP.
 - Headers de segurança:
   - `X-Content-Type-Options: nosniff`
-  - `Content-Security-Policy: default-src 'none'; sandbox; style-src 'unsafe-inline'`
-    (mitiga PDF com JS embutido)
+  - `X-Frame-Options: SAMEORIGIN` (impede embedding cross-origin do arquivo)
+  - `Content-Security-Policy`:
+    - **PDF** (`application/pdf`): `frame-ancestors 'self'`. O `sandbox`
+      foi removido porque o visualizador interno do Chrome depende de
+      executar scripts próprios para renderizar — o sandbox sem
+      `allow-scripts` produzia tela cinza com "página bloqueada".
+    - **Demais MIMEs** (imagem, outros inline): mantém
+      `default-src 'none'; sandbox; style-src 'unsafe-inline'; frame-ancestors 'self'`
+      como defesa em profundidade.
   - `Referrer-Policy: no-referrer`
   - `Cache-Control: private, no-store` para contratos / `max-age=60` para os demais
 - Registra `audit("Attachment", id, "DOWNLOAD")` a cada acesso.
@@ -110,8 +117,11 @@ Cloudflare Cron Workers etc.) para rodar 1× ao dia.
 `/dashboard/vendors/[id]` ganhou bloco "Arquivo do contrato" embutido em
 cada contrato, com:
 
-- `<iframe src="/api/files/{id}" sandbox="allow-same-origin">` para
-  preview do PDF.
+- `<object data="/api/files/{id}#toolbar=1&navpanes=0" type="application/pdf">`
+  para preview do PDF. (Antes usávamos `<iframe sandbox="allow-same-origin">`,
+  mas o sandbox sem `allow-scripts` bloqueava o visualizador interno do
+  Chrome. Como o arquivo é servido same-origin com `X-Frame-Options:
+  SAMEORIGIN`, não há regressão de superfície.)
 - Botão "Baixar PDF" e info de upload (filename, tamanho, hash truncado,
   data, quem subiu).
 - Form de substituir (gated por `canUploadContract`) com confirm dialog.
@@ -121,7 +131,8 @@ cada contrato, com:
 
 ## Limitações conhecidas
 
-- Não há scan de antivírus — execução não-confiável de PDFs depende do
-  CSP `sandbox`.
+- Não há scan de antivírus. PDFs são servidos same-origin com
+  `X-Frame-Options: SAMEORIGIN` + `frame-ancestors 'self'` (impede embedding
+  externo) e o navegador roda o visualizador interno em seu próprio sandbox.
 - Sem URL pré-assinada com expiração: a sessão Auth.js é o gate.
 - Sem barra de progresso real no upload (limitação de Server Actions).

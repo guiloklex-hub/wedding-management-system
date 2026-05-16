@@ -355,10 +355,10 @@ function TableForm({
   onSubmit: (fd: FormData) => void;
 }) {
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:items-center">
       <form
         action={onSubmit}
-        className="w-full max-w-md space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-5"
+        className="my-4 w-full max-w-md space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl"
       >
         <h2 className="text-base font-semibold text-zinc-100">{title}</h2>
         <Field label="Nome">

@@ -468,8 +468,8 @@ function GuestFormModal({
   formAction: (formData: FormData) => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm">
-      <div className="my-8 w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
+      <div className="my-4 w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
         <h2 className="text-lg font-semibold text-white">
           {mode === "create" ? "Novo convidado" : `Editar ${guest?.name ?? ""}`}
         </h2>
@@ -576,8 +576,8 @@ function ImportModal({
   formAction: (formData: FormData) => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm">
-      <div className="my-8 w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
+      <div className="my-4 w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Importar convidados em massa</h2>
           <button

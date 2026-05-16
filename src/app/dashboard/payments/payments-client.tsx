@@ -344,8 +344,8 @@ export default function PaymentsClient({ payments, vendors }: Props) {
       </div>
 
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
+          <div className="my-4 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
             <div className="p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-white">Novo Pagamento</h2>
@@ -706,10 +706,10 @@ function InstallmentsModal({
       : "—";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:items-center">
       <form
         onSubmit={submit}
-        className="w-full max-w-md space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-5"
+        className="my-4 w-full max-w-md space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-5"
       >
         <h2 className="text-base font-semibold text-zinc-100">Gerar parcelas</h2>
         <p className="text-xs text-zinc-500">
@@ -871,8 +871,8 @@ function EditPaymentModal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
+      <div className="my-4 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
         <form action={formAction} className="space-y-4 p-6">
           <h2 className="text-xl font-bold text-white">Editar pagamento</h2>
           <input type="hidden" name="id" value={payment.id} />

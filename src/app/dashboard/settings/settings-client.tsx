@@ -24,7 +24,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import { updateSettings } from "@/app/actions/settingsActions";
+import { updatePixSettings, updateSettings } from "@/app/actions/settingsActions";
 import {
   confirmTwoFactor,
   disableTwoFactor,
@@ -61,6 +61,13 @@ type Initial = {
   coupleNames: string;
 };
 
+type PixSettings = {
+  pixKey: string;
+  pixKeyType: string;
+  pixHolderName: string;
+  pixCity: string;
+};
+
 type Me = {
   id: string;
   email: string;
@@ -93,11 +100,13 @@ type Tab = "event" | "security" | "team" | "whatsapp" | "profile" | "backup";
 
 export default function SettingsClient({
   initial,
+  pixSettings,
   me,
   members,
   securitySettings,
 }: {
   initial: Initial;
+  pixSettings: PixSettings;
   me: Me;
   members: Member[];
   securitySettings: SecuritySettings;
@@ -132,7 +141,9 @@ export default function SettingsClient({
         </TabBtn>
       </nav>
 
-      {tab === "event" ? <EventTab initial={initial} toast={toast} /> : null}
+      {tab === "event" ? (
+        <EventTab initial={initial} pixSettings={pixSettings} toast={toast} />
+      ) : null}
       {tab === "security" ? (
         <SecurityTab me={me} toast={toast} securitySettings={securitySettings} />
       ) : null}
@@ -179,13 +190,16 @@ function TabBtn({
 
 function EventTab({
   initial,
+  pixSettings,
   toast,
 }: {
   initial: Initial;
+  pixSettings: PixSettings;
   toast: ReturnType<typeof useToast>;
 }) {
   const [, startTransition] = useTransition();
   const [isPending, setPending] = useState(false);
+  const [pixPending, setPixPending] = useState(false);
 
   function handleSubmit(formData: FormData) {
     setPending(true);
@@ -200,43 +214,103 @@ function EventTab({
     });
   }
 
+  function handlePixSubmit(formData: FormData) {
+    setPixPending(true);
+    startTransition(async () => {
+      try {
+        const r = await updatePixSettings(undefined, formData);
+        if (r.success) toast.success("Pix atualizado");
+        else toast.error("Falha ao salvar", r.error);
+      } finally {
+        setPixPending(false);
+      }
+    });
+  }
+
   return (
-    <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-      <h2 className="text-lg font-semibold text-zinc-100">Dados do casamento</h2>
-      <form action={handleSubmit} className="mt-4 grid gap-3 sm:grid-cols-2">
-        <Field name="coupleNames" label="Nomes do casal" defaultValue={initial.coupleNames} />
-        <Field name="eventDate" label="Data do evento" type="date" required defaultValue={initial.eventDate} />
-        <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-400">Moeda</label>
-          <select
-            name="currency"
-            defaultValue={initial.currency}
-            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
-          >
-            <option value="BRL">Real (BRL)</option>
-            <option value="USD">Dólar (USD)</option>
-            <option value="EUR">Euro (EUR)</option>
-          </select>
-        </div>
-        <Field
-          name="contingencyPercent"
-          label="Contingência (%)"
-          type="number"
-          step="0.1"
-          defaultValue={String(initial.contingencyPercent)}
-        />
-        <div className="sm:col-span-2">
-          <button
-            type="submit"
-            disabled={isPending}
-            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
-          >
-            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Salvar
-          </button>
-        </div>
-      </form>
-    </section>
+    <div className="space-y-4">
+      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+        <h2 className="text-lg font-semibold text-zinc-100">Dados do casamento</h2>
+        <form action={handleSubmit} className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Field name="coupleNames" label="Nomes do casal" defaultValue={initial.coupleNames} />
+          <Field name="eventDate" label="Data do evento" type="date" required defaultValue={initial.eventDate} />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">Moeda</label>
+            <select
+              name="currency"
+              defaultValue={initial.currency}
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
+            >
+              <option value="BRL">Real (BRL)</option>
+              <option value="USD">Dólar (USD)</option>
+              <option value="EUR">Euro (EUR)</option>
+            </select>
+          </div>
+          <Field
+            name="contingencyPercent"
+            label="Contingência (%)"
+            type="number"
+            step="0.1"
+            defaultValue={String(initial.contingencyPercent)}
+          />
+          <div className="sm:col-span-2">
+            <button
+              type="submit"
+              disabled={isPending}
+              className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
+            >
+              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Salvar
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+        <h2 className="text-lg font-semibold text-zinc-100">Pix (cota lua de mel)</h2>
+        <p className="mt-1 text-xs text-zinc-500">
+          Configure a chave Pix do casal para gerar QR Code estático nos presentes em dinheiro.
+        </p>
+        <form action={handlePixSubmit} className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Field name="pixKey" label="Chave Pix" defaultValue={pixSettings.pixKey} />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">Tipo de chave</label>
+            <select
+              name="pixKeyType"
+              defaultValue={pixSettings.pixKeyType}
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
+            >
+              <option value="">—</option>
+              <option value="CPF">CPF</option>
+              <option value="CNPJ">CNPJ</option>
+              <option value="EMAIL">Email</option>
+              <option value="PHONE">Telefone</option>
+              <option value="RANDOM">Aleatória</option>
+            </select>
+          </div>
+          <Field
+            name="pixHolderName"
+            label="Nome do recebedor (máx. 25)"
+            defaultValue={pixSettings.pixHolderName}
+          />
+          <Field
+            name="pixCity"
+            label="Cidade do recebedor (máx. 15)"
+            defaultValue={pixSettings.pixCity}
+          />
+          <div className="sm:col-span-2">
+            <button
+              type="submit"
+              disabled={pixPending}
+              className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
+            >
+              {pixPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Salvar Pix
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
   );
 }
 

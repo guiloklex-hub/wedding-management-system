@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { requireFinanceAccess } from "@/lib/finance-access";
 import AssetsClient from "./assets-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function AssetsPage() {
+  await requireFinanceAccess();
+
   const [assets, goals] = await Promise.all([
     prisma.asset.findMany({
       where: { deletedAt: null },

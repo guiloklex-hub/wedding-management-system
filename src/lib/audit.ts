@@ -15,7 +15,12 @@ export type AuditAction =
   | "LOGIN"
   | "ONBOARDING_COUPLE"
   | "ONBOARDING_BUDGET"
-  | "ONBOARDING_FINISH";
+  | "ONBOARDING_FINISH"
+  | "BULK_CREATE"
+  | "ASSIGN_TABLE"
+  | "UNASSIGN_TABLE"
+  | "RSVP_GROUP_RESPOND"
+  | "MARK_PIX_RECEIVED";
 
 export type AuditEntity =
   | "Vendor"
@@ -24,7 +29,11 @@ export type AuditEntity =
   | "Asset"
   | "EventSettings"
   | "User"
-  | "SecuritySettings";
+  | "SecuritySettings"
+  | "SeatingTable"
+  | "Guest"
+  | "GuestGroup"
+  | "Gift";
 
 export async function audit(
   entity: AuditEntity,

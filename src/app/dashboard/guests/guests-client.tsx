@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import {
   CheckCircle2,
   ChevronDown,
@@ -12,6 +13,7 @@ import {
   Search,
   Trash2,
   Upload,
+  Users,
   X,
 } from "lucide-react";
 import {
@@ -251,6 +253,12 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
           </select>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/dashboard/guests/groups"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-700"
+          >
+            <Users className="h-4 w-4" /> Grupos
+          </Link>
           <button
             type="button"
             onClick={exportCsv}

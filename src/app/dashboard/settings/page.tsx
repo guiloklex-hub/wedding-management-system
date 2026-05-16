@@ -61,6 +61,12 @@ export default async function SettingsPage() {
           currency: cfg.currency,
           coupleNames: cfg.coupleNames ?? "",
         }}
+        pixSettings={{
+          pixKey: cfg.pixKey ?? "",
+          pixKeyType: cfg.pixKeyType ?? "",
+          pixHolderName: cfg.pixHolderName ?? "",
+          pixCity: cfg.pixCity ?? "",
+        }}
         me={me}
         members={members}
         securitySettings={securitySettings}

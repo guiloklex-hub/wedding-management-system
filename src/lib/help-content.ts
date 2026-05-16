@@ -626,9 +626,112 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "**Gmail rejeitando email:** use App Password, não a senha normal.",
       "**WhatsApp desconectou:** reconecte em Ajustes › WhatsApp.",
       "**Loop login → dashboard → login:** apague cookies e reload.",
+      "**Login trava na própria tela após submeter:** o sistema agora redireciona direto pra `/dashboard` (ou o `callbackUrl` válido). Se ainda travar, confira se há service worker antigo cacheado.",
       "**Templates de tarefas dão erro:** configure a data do evento em Ajustes › Casamento.",
     ],
     externalDoc: "/docs/troubleshooting.md",
+  },
+  // ============ novos artigos (0.3.0) ============
+  {
+    id: "seating-chart",
+    title: "Mapa visual de assentos",
+    category: "wedding-day",
+    keywords: ["mesa", "assento", "lugar", "seating", "salão", "layout", "drag"],
+    icon: Users,
+    summary:
+      "Arraste convidados confirmados para mesas com capacidade definida. Use no /dashboard/wedding-day/seating.",
+    steps: [
+      { title: "Crie mesas", body: "Botão 'Nova mesa' — defina nome, capacidade e formato (redonda/retangular/quadrada)." },
+      { title: "Arraste convidados", body: "O pool lateral lista só quem está CONFIRMADO. Solte um chip em cima da mesa; a capacidade considera +1 confirmados." },
+      { title: "Desaloque ou reorganize", body: "Solte de volta no pool para liberar o assento, ou em outra mesa para realocar." },
+    ],
+    tips: [
+      "Capacidade leva em conta acompanhantes. Convidado com +2 ocupa 3 assentos.",
+      "Mesa cheia recusa o drop e mostra toast.",
+    ],
+  },
+  {
+    id: "guest-groups",
+    title: "Grupos / Famílias e RSVP coletivo",
+    category: "guests",
+    keywords: ["grupo", "família", "rsvp", "convite", "household"],
+    icon: Users,
+    summary:
+      "Junte convidados em um grupo e envie um único link de RSVP — o responsável confirma por todos.",
+    steps: [
+      { title: "Crie um grupo", body: "Em Convidados, clique 'Grupos' › 'Novo grupo'. Preencha nome (ex.: Família Silva) e contato do responsável." },
+      { title: "Adicione membros", body: "Clique 'Membros' no grupo, marque os convidados que pertencem a ele." },
+      { title: "Envie o link", body: "Botão 'Copiar link' gera /rsvp/group/{token}. Envie pelo WhatsApp ao responsável." },
+    ],
+    tips: [
+      "RSVP individual continua funcionando — o link de grupo é alternativa, não substituto.",
+      "Cada convidado pode estar em apenas um grupo.",
+    ],
+  },
+  {
+    id: "gift-pix-static",
+    title: "QR Code Pix nos presentes (cota lua de mel)",
+    category: "gifts",
+    keywords: ["pix", "qr", "cota", "lua de mel", "dinheiro", "presente"],
+    icon: Gift,
+    summary:
+      "Gere um QR Code Pix estático para qualquer presente em dinheiro e dê baixa manual quando receber.",
+    steps: [
+      { title: "Configure a chave Pix", body: "Ajustes › Casamento › 'Pix (cota lua de mel)'. Informe chave, tipo, nome do recebedor (max 25 chars) e cidade (max 15)." },
+      { title: "Marque 'Cota de lua de mel' no presente", body: "Crie ou edite um presente em dinheiro e ative a opção." },
+      { title: "Compartilhe o QR", body: "Botão de QR na lista de presentes abre a tela com QR + Pix copia-e-cola. Envie ao convidado." },
+      { title: "Confirme recebimento", body: "Após ver o Pix entrar na conta, clique 'Marcar como recebido'. Opcionalmente cria entrada em Caixa." },
+    ],
+    warnings: [
+      "Pix estático não valida o valor — confira o extrato antes de marcar como recebido.",
+    ],
+  },
+  {
+    id: "generate-installments",
+    title: "Gerar N parcelas de uma vez",
+    category: "financial",
+    keywords: ["parcela", "parcelamento", "buffet", "contrato", "10x"],
+    icon: CreditCard,
+    summary:
+      "Para contratos parcelados (ex.: buffet em 10x), gere todos os pagamentos pendentes de uma vez.",
+    steps: [
+      { title: "Abra o gerador", body: "Em Pagamentos, clique 'Gerar Parcelas'." },
+      { title: "Defina dados", body: "Fornecedor, valor total, número de parcelas (1–60), 1ª data, intervalo (padrão 30 dias)." },
+      { title: "Multa e juros (opcional)", body: "Aplica os mesmos valores em todas as parcelas geradas." },
+    ],
+    tips: [
+      "A última parcela absorve o resto dos centavos para a soma bater exatamente.",
+    ],
+  },
+  {
+    id: "late-fee-interest",
+    title: "Multa e juros em pagamentos atrasados",
+    category: "financial",
+    keywords: ["multa", "juros", "atraso", "vencido"],
+    icon: CreditCard,
+    summary:
+      "Adicione multa e juros %/mês em qualquer pagamento. O valor ajustado é mostrado em lista e nas notificações.",
+    steps: [
+      { title: "Configure os campos", body: "No form de pagamento, preencha 'Multa (%)' e 'Juros %/mês'. Exemplo padrão: 2% multa + 1%/mês." },
+      { title: "Veja o ajuste", body: "Se o pagamento ficar atrasado, a lista mostra valor original riscado e valor ajustado ao lado." },
+    ],
+    tips: [
+      "Juros são proporcionais aos dias de atraso (1%/mês × 15 dias = 0,5%).",
+      "Cálculo é sempre on-demand — não há campo persistido.",
+    ],
+  },
+  {
+    id: "role-planner",
+    title: "Role Planner (cerimonialista)",
+    category: "security",
+    keywords: ["role", "cerimonial", "planner", "permissão", "acesso"],
+    icon: Lock,
+    summary:
+      "Convide o cerimonialista com role PLANNER. Ele gerencia fornecedores, tarefas e dia D — mas não vê valores.",
+    tips: [
+      "PLANNER NÃO acessa: Receitas, Caixa, Metas, Pagamentos, Insights.",
+      "PLANNER acessa: Fornecedores, Locais, Tarefas, Convidados, Presentes, Dia D, Lua de mel, Enxoval.",
+    ],
   },
 ];
 

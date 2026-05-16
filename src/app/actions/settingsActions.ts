@@ -6,16 +6,29 @@ import { updateEventConfig } from "@/lib/event-config";
 import { audit } from "@/lib/audit";
 import type { ActionResult } from "@/types";
 
+const optStr = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null));
+
 const SettingsSchema = z.object({
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
   contingencyPercent: z.coerce.number().min(0).max(100),
   currency: z.enum(["BRL", "USD", "EUR"]).default("BRL"),
-  coupleNames: z
-    .string()
-    .trim()
-    .max(120)
+  coupleNames: optStr(120),
+});
+
+const PixSettingsSchema = z.object({
+  pixKey: optStr(77),
+  pixKeyType: z
+    .enum(["CPF", "CNPJ", "EMAIL", "PHONE", "RANDOM", ""])
     .optional()
     .transform((v) => (v && v.length > 0 ? v : null)),
+  pixHolderName: optStr(25),
+  pixCity: optStr(15),
 });
 
 export async function updateSettings(
@@ -44,5 +57,31 @@ export async function updateSettings(
   } catch (err) {
     console.error("[updateSettings]", err);
     return { success: false, error: "Erro ao salvar configurações" };
+  }
+}
+
+export async function updatePixSettings(
+  _state: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const data = Object.fromEntries(formData.entries());
+  const parsed = PixSettingsSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+  try {
+    await updateEventConfig({
+      pixKey: parsed.data.pixKey,
+      pixKeyType: parsed.data.pixKeyType,
+      pixHolderName: parsed.data.pixHolderName,
+      pixCity: parsed.data.pixCity,
+    });
+    await audit("EventSettings", "singleton", "UPDATE", { pix: true });
+    revalidatePath("/dashboard/settings");
+    revalidatePath("/dashboard/gifts");
+    return { success: true };
+  } catch (err) {
+    console.error("[updatePixSettings]", err);
+    return { success: false, error: "Erro ao salvar configurações Pix" };
   }
 }

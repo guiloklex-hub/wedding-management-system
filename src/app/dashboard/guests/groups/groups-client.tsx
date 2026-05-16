@@ -1,0 +1,513 @@
+"use client";
+
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Plus, Link2, Trash2, Edit3, Users, CheckCircle2, X } from "lucide-react";
+import { useToast } from "@/components/toast";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import {
+  createGuestGroup,
+  deleteGuestGroup,
+  setGroupMembers,
+  updateGuestGroup,
+} from "@/app/actions/guestGroupActions";
+
+type GuestRef = {
+  id: string;
+  name: string;
+  groupId: string | null;
+  rsvpStatus: string;
+};
+
+type Group = {
+  id: string;
+  name: string;
+  rsvpToken: string;
+  contactName: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  notes: string | null;
+  guests: { id: string; name: string; rsvpStatus: string }[];
+};
+
+export default function GroupsClient({
+  initialGroups,
+  allGuests,
+}: {
+  initialGroups: Group[];
+  allGuests: GuestRef[];
+}) {
+  const router = useRouter();
+  const toast = useToast();
+  const [groups, setGroups] = useState(initialGroups);
+  const [guests, setGuests] = useState(allGuests);
+  const [showCreate, setShowCreate] = useState(false);
+  const [editing, setEditing] = useState<Group | null>(null);
+  const [managingMembersOf, setManagingMembersOf] = useState<Group | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Group | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [, startTransition] = useTransition();
+
+  const [prevGroupsProp, setPrevGroupsProp] = useState(initialGroups);
+  const [prevGuestsProp, setPrevGuestsProp] = useState(allGuests);
+  if (initialGroups !== prevGroupsProp) {
+    setPrevGroupsProp(initialGroups);
+    setGroups(initialGroups);
+  }
+  if (allGuests !== prevGuestsProp) {
+    setPrevGuestsProp(allGuests);
+    setGuests(allGuests);
+  }
+
+  function copyLink(token: string) {
+    const url = `${window.location.origin}/rsvp/group/${token}`;
+    navigator.clipboard.writeText(url).then(
+      () => toast.success("Link copiado", url),
+      () => toast.error("Erro", "Não foi possível copiar"),
+    );
+  }
+
+  async function handleCreate(formData: FormData) {
+    setBusy(true);
+    const res = await createGuestGroup(undefined, formData);
+    setBusy(false);
+    if (!res.success) {
+      toast.error("Erro", res.error);
+      return;
+    }
+    toast.success("Grupo criado");
+    setShowCreate(false);
+    startTransition(() => router.refresh());
+  }
+
+  async function handleEdit(formData: FormData) {
+    if (!editing) return;
+    formData.append("id", editing.id);
+    setBusy(true);
+    const res = await updateGuestGroup(undefined, formData);
+    setBusy(false);
+    if (!res.success) {
+      toast.error("Erro", res.error);
+      return;
+    }
+    toast.success("Grupo atualizado");
+    setEditing(null);
+    startTransition(() => router.refresh());
+  }
+
+  async function handleDelete() {
+    if (!confirmDelete) return;
+    setBusy(true);
+    const res = await deleteGuestGroup(confirmDelete.id);
+    setBusy(false);
+    if (!res.success) {
+      toast.error("Erro", res.error);
+      return;
+    }
+    toast.success("Grupo excluído");
+    setConfirmDelete(null);
+    startTransition(() => router.refresh());
+  }
+
+  async function handleSaveMembers(guestIds: string[]) {
+    if (!managingMembersOf) return;
+    setBusy(true);
+    const res = await setGroupMembers({ groupId: managingMembersOf.id, guestIds });
+    setBusy(false);
+    if (!res.success) {
+      toast.error("Erro", res.error);
+      return;
+    }
+    toast.success("Membros atualizados");
+    setManagingMembersOf(null);
+    startTransition(() => router.refresh());
+  }
+
+  return (
+    <div className="space-y-4 p-4 md:p-6">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-zinc-100 md:text-2xl">Grupos / Famílias</h1>
+          <p className="text-sm text-zinc-400">
+            Crie grupos para gerar um único link de RSVP por família.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowCreate(true)}
+          className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500"
+        >
+          <Plus className="h-4 w-4" />
+          Novo grupo
+        </button>
+      </header>
+
+      {groups.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-zinc-700 p-8 text-center">
+          <Users className="mx-auto mb-3 h-8 w-8 text-zinc-500" />
+          <p className="text-sm text-zinc-400">Nenhum grupo cadastrado.</p>
+        </div>
+      ) : (
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {groups.map((g) => {
+            const confirmed = g.guests.filter((m) => m.rsvpStatus === "CONFIRMED").length;
+            const declined = g.guests.filter((m) => m.rsvpStatus === "DECLINED").length;
+            const pending = g.guests.length - confirmed - declined;
+            return (
+              <li
+                key={g.id}
+                className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4"
+              >
+                <header className="mb-2 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h2 className="truncate text-base font-semibold text-zinc-100">{g.name}</h2>
+                    {g.contactName ? (
+                      <p className="text-xs text-zinc-500">Contato: {g.contactName}</p>
+                    ) : null}
+                  </div>
+                  <span className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
+                    {g.guests.length} pessoas
+                  </span>
+                </header>
+                <div className="mb-3 grid grid-cols-3 gap-1 text-center text-[10px]">
+                  <span className="rounded bg-emerald-500/10 px-1.5 py-1 text-emerald-300">
+                    {confirmed} sim
+                  </span>
+                  <span className="rounded bg-amber-500/10 px-1.5 py-1 text-amber-300">
+                    {pending} pendente
+                  </span>
+                  <span className="rounded bg-rose-500/10 px-1.5 py-1 text-rose-300">
+                    {declined} não
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => copyLink(g.rsvpToken)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
+                  >
+                    <Link2 className="h-3.5 w-3.5" />
+                    Copiar link
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setManagingMembersOf(g)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
+                  >
+                    <Users className="h-3.5 w-3.5" />
+                    Membros
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditing(g)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" />
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(g)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-rose-300 hover:bg-rose-500/10"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Excluir
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {showCreate ? (
+        <GroupForm
+          title="Novo grupo"
+          busy={busy}
+          onCancel={() => setShowCreate(false)}
+          onSubmit={handleCreate}
+        />
+      ) : null}
+
+      {editing ? (
+        <GroupForm
+          title="Editar grupo"
+          initial={editing}
+          busy={busy}
+          onCancel={() => setEditing(null)}
+          onSubmit={handleEdit}
+        />
+      ) : null}
+
+      {managingMembersOf ? (
+        <MembersDialog
+          group={managingMembersOf}
+          allGuests={guests}
+          busy={busy}
+          onCancel={() => setManagingMembersOf(null)}
+          onSave={handleSaveMembers}
+        />
+      ) : null}
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Excluir grupo?"
+        description={
+          confirmDelete
+            ? `O grupo "${confirmDelete.name}" será removido. Os convidados não serão excluídos.`
+            : ""
+        }
+        tone="danger"
+        busy={busy}
+        confirmLabel="Excluir"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
+    </div>
+  );
+}
+
+function GroupForm({
+  title,
+  initial,
+  busy,
+  onCancel,
+  onSubmit,
+}: {
+  title: string;
+  initial?: Pick<Group, "name" | "contactName" | "contactEmail" | "contactPhone" | "notes">;
+  busy: boolean;
+  onCancel: () => void;
+  onSubmit: (fd: FormData) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <form
+        action={onSubmit}
+        className="w-full max-w-md space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-5"
+      >
+        <h2 className="text-base font-semibold text-zinc-100">{title}</h2>
+        <FieldInput name="name" label="Nome do grupo" defaultValue={initial?.name} required maxLength={120} />
+        <FieldInput
+          name="contactName"
+          label="Contato (opcional)"
+          defaultValue={initial?.contactName ?? ""}
+          maxLength={120}
+        />
+        <div className="grid grid-cols-2 gap-3">
+          <FieldInput
+            name="contactEmail"
+            label="Email"
+            defaultValue={initial?.contactEmail ?? ""}
+            type="email"
+            maxLength={160}
+          />
+          <FieldInput
+            name="contactPhone"
+            label="Telefone"
+            defaultValue={initial?.contactPhone ?? ""}
+            maxLength={40}
+          />
+        </div>
+        <FieldTextarea
+          name="notes"
+          label="Observações"
+          defaultValue={initial?.notes ?? ""}
+          rows={2}
+          maxLength={500}
+        />
+        <div className="flex justify-end gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={busy}
+            className="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={busy}
+            className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-60"
+          >
+            {busy ? "Salvando..." : "Salvar"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function MembersDialog({
+  group,
+  allGuests,
+  busy,
+  onCancel,
+  onSave,
+}: {
+  group: Group;
+  allGuests: GuestRef[];
+  busy: boolean;
+  onCancel: () => void;
+  onSave: (ids: string[]) => void;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(
+    new Set(group.guests.map((g) => g.id)),
+  );
+  const [filter, setFilter] = useState("");
+
+  const visible = useMemo(() => {
+    const f = filter.trim().toLowerCase();
+    return allGuests
+      .filter((g) => !g.groupId || g.groupId === group.id)
+      .filter((g) => (f.length === 0 ? true : g.name.toLowerCase().includes(f)));
+  }, [allGuests, filter, group.id]);
+
+  function toggle(id: string) {
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl border border-zinc-800 bg-zinc-900">
+        <header className="flex items-center justify-between border-b border-zinc-800 p-4">
+          <div>
+            <h2 className="text-base font-semibold text-zinc-100">Membros de {group.name}</h2>
+            <p className="text-xs text-zinc-500">
+              Selecione os convidados que pertencem a este grupo.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            aria-label="Fechar"
+            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </header>
+        <div className="border-b border-zinc-800 p-3">
+          <input
+            type="search"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Buscar convidado..."
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-rose-500 focus:outline-none"
+          />
+        </div>
+        <ul className="flex-1 overflow-y-auto p-2">
+          {visible.length === 0 ? (
+            <p className="p-4 text-center text-sm text-zinc-500">Nenhum convidado disponível.</p>
+          ) : (
+            visible.map((g) => {
+              const isSelected = selected.has(g.id);
+              return (
+                <li key={g.id}>
+                  <button
+                    type="button"
+                    onClick={() => toggle(g.id)}
+                    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
+                      isSelected
+                        ? "bg-rose-500/10 text-rose-100"
+                        : "text-zinc-200 hover:bg-zinc-800"
+                    }`}
+                  >
+                    {isSelected ? (
+                      <CheckCircle2 className="h-4 w-4 text-rose-400" />
+                    ) : (
+                      <div className="h-4 w-4 rounded-full border border-zinc-600" />
+                    )}
+                    <span>{g.name}</span>
+                  </button>
+                </li>
+              );
+            })
+          )}
+        </ul>
+        <footer className="flex items-center justify-between border-t border-zinc-800 p-3">
+          <span className="text-xs text-zinc-500">{selected.size} selecionado(s)</span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={busy}
+              className="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => onSave(Array.from(selected))}
+              disabled={busy}
+              className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-60"
+            >
+              {busy ? "Salvando..." : "Salvar"}
+            </button>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function FieldInput({
+  name,
+  label,
+  defaultValue,
+  required,
+  maxLength,
+  type = "text",
+}: {
+  name: string;
+  label: string;
+  defaultValue?: string | null;
+  required?: boolean;
+  maxLength?: number;
+  type?: string;
+}) {
+  return (
+    <label className="block space-y-1">
+      <span className="text-xs font-medium text-zinc-400">{label}</span>
+      <input
+        type={type}
+        name={name}
+        defaultValue={defaultValue ?? ""}
+        required={required}
+        maxLength={maxLength}
+        className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-rose-500 focus:outline-none"
+      />
+    </label>
+  );
+}
+
+function FieldTextarea({
+  name,
+  label,
+  defaultValue,
+  rows = 3,
+  maxLength,
+}: {
+  name: string;
+  label: string;
+  defaultValue?: string | null;
+  rows?: number;
+  maxLength?: number;
+}) {
+  return (
+    <label className="block space-y-1">
+      <span className="text-xs font-medium text-zinc-400">{label}</span>
+      <textarea
+        name={name}
+        rows={rows}
+        defaultValue={defaultValue ?? ""}
+        maxLength={maxLength}
+        className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-rose-500 focus:outline-none"
+      />
+    </label>
+  );
+}

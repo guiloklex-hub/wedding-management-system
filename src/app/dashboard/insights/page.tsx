@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getEventConfig, daysUntil } from "@/lib/event-config";
 import { resolveCategoryColor, resolveCategoryLabel } from "@/lib/categories";
+import { requireFinanceAccess } from "@/lib/finance-access";
 import {
   buildMonthlyCashflow,
   buildPaymentHeatmap,
@@ -13,6 +14,8 @@ import InsightsClient from "./insights-client";
 export const dynamic = "force-dynamic";
 
 export default async function InsightsPage() {
+  await requireFinanceAccess();
+
   const cfg = await getEventConfig();
   if (!cfg.eventDate) redirect("/dashboard/onboarding");
 

@@ -22,6 +22,14 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+vi.mock("@/lib/finance-access", () => ({
+  requireFinanceAccess: vi.fn().mockResolvedValue({
+    user: { id: "test-user", role: "ADMIN" },
+  }),
+  hasFinanceAccess: vi.fn().mockResolvedValue(true),
+  denyIfNoFinance: vi.fn().mockResolvedValue(null),
+}));
+
 afterEach(async () => {
   cleanup();
   const { prisma } = await import("@/lib/prisma");

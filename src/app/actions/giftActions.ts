@@ -5,6 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/types";
 
+type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
 const optStr = (max: number) =>
   z
     .string()
@@ -20,6 +22,10 @@ const GiftBaseSchema = z.object({
   amount: z.coerce.number().min(0).optional().transform((v) => (Number.isFinite(v) ? v : null)),
   description: optStr(500),
   notes: optStr(500),
+  isHoneymoonShare: z.preprocess(
+    (v) => v === "on" || v === true || v === "true",
+    z.boolean().default(false),
+  ),
   receivedAt: z
     .string()
     .optional()
@@ -47,6 +53,7 @@ export async function createGift(
         amount: parsed.data.type === "CASH" ? parsed.data.amount ?? 0 : parsed.data.amount,
         description: parsed.data.description,
         notes: parsed.data.notes,
+        isHoneymoonShare: parsed.data.isHoneymoonShare,
         receivedAt: parsed.data.receivedAt,
       },
     });
@@ -77,6 +84,7 @@ export async function updateGift(
         amount: parsed.data.type === "CASH" ? parsed.data.amount ?? 0 : parsed.data.amount,
         description: parsed.data.description,
         notes: parsed.data.notes,
+        isHoneymoonShare: parsed.data.isHoneymoonShare,
         receivedAt: parsed.data.receivedAt,
       },
     });
@@ -119,5 +127,47 @@ export async function deleteGift(giftId: string): Promise<ActionResult> {
   } catch (err) {
     console.error("[deleteGift]", err);
     return { success: false, error: "Erro ao excluir presente" };
+  }
+}
+
+export async function markGiftAsPixReceived(
+  giftId: string,
+  alsoCreateAsset = false,
+): Promise<ActionResult> {
+  try {
+    const gift = await prisma.gift.findFirst({
+      where: { id: giftId, deletedAt: null },
+    });
+    if (!gift) return { success: false, error: "Presente não encontrado" };
+    if (gift.pixPaidAt) return { success: false, error: "Pix já marcado como recebido" };
+
+    const now = new Date();
+    await prisma.$transaction(async (tx: TxClient) => {
+      await tx.gift.update({
+        where: { id: giftId },
+        data: {
+          pixPaidAt: now,
+          status: "RECEIVED",
+        },
+      });
+
+      if (alsoCreateAsset && gift.amount && gift.amount > 0) {
+        await tx.asset.create({
+          data: {
+            title: `Pix de ${gift.giverName ?? "convidado"}${gift.isHoneymoonShare ? " (cota lua de mel)" : ""}`,
+            amount: gift.amount,
+            date: now,
+            notes: `Gerado a partir do presente #${gift.id}`,
+          },
+        });
+      }
+    });
+
+    revalidatePath("/dashboard/gifts");
+    if (alsoCreateAsset) revalidatePath("/dashboard/assets");
+    return { success: true };
+  } catch (err) {
+    console.error("[markGiftAsPixReceived]", err);
+    return { success: false, error: "Erro ao marcar Pix recebido" };
   }
 }

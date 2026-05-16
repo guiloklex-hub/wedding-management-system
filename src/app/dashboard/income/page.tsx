@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { requireFinanceAccess } from "@/lib/finance-access";
 import IncomeClient from "./income-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function IncomePage() {
+  await requireFinanceAccess();
+
   const incomes = await prisma.income.findMany({
     where: { deletedAt: null },
     orderBy: [{ expectedDate: "asc" }, { createdAt: "desc" }],

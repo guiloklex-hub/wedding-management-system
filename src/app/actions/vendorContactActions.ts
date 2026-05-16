@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { denyIfNoEdit } from "@/lib/finance-access";
 import type { ActionResult } from "@/types";
 
 const PhoneSchema = z
@@ -48,6 +49,8 @@ export async function createVendorContact(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = ContactCreateSchema.safeParse(data);
   if (!parsed.success) {
@@ -82,6 +85,8 @@ export async function updateVendorContact(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = ContactUpdateSchema.safeParse(data);
   if (!parsed.success) {
@@ -112,6 +117,8 @@ export async function updateVendorContact(
 }
 
 export async function deleteVendorContact(contactId: string, vendorId: string): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const result = await prisma.vendorContact.updateMany({
       where: { id: contactId, vendorId, deletedAt: null },

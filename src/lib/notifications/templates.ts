@@ -5,7 +5,14 @@ export type NotificationKind =
   | "PAYMENT_DUE"
   | "PAYMENT_OVERDUE"
   | "TASK_DUE"
-  | "TASK_OVERDUE";
+  | "TASK_OVERDUE"
+  | "SYSTEM_WHATSAPP_DOWN"
+  | "SYSTEM_WHATSAPP_RECOVERED";
+
+export type WhatsAppDownReason =
+  | "CONNECTION_LOST"
+  | "LOGGED_OUT"
+  | "WAITING_QR_AGAIN";
 
 export type RenderInput =
   | {
@@ -55,6 +62,20 @@ export type RenderInput =
       taskTitle: string;
       deadline: Date;
       daysOverdue: number;
+    }
+  | {
+      kind: "SYSTEM_WHATSAPP_DOWN";
+      userName: string;
+      reason: WhatsAppDownReason;
+      attempts: number;
+      lastError: string | null;
+      settingsUrl: string;
+    }
+  | {
+      kind: "SYSTEM_WHATSAPP_RECOVERED";
+      userName: string;
+      settingsUrl: string;
+      downtimeMinutes: number;
     };
 
 export type RenderedTemplate = {
@@ -347,6 +368,90 @@ Atrasada há ${input.daysOverdue} dia(s).
 
 ${escapeWaMarkdown(input.taskTitle)}
 Prazo era: ${date}`;
+      return { subject, html, text, waText };
+    }
+
+    case "SYSTEM_WHATSAPP_DOWN": {
+      const name = escapeHtml(input.userName);
+      const url = escapeHtml(input.settingsUrl);
+      const errorLine = input.lastError
+        ? `<p style="color:#a1a1aa;font-size:12px;">Último erro: <code>${escapeHtml(input.lastError)}</code></p>`
+        : "";
+      const errorPlain = input.lastError ? `\nÚltimo erro: ${input.lastError}` : "";
+
+      let subject: string;
+      let bodyHtml: string;
+      let bodyText: string;
+
+      if (input.reason === "LOGGED_OUT") {
+        subject = "⚠ Ação necessária: WhatsApp desconectado";
+        bodyHtml = `<p>Olá, <strong>${name}</strong>!</p>
+<p style="color:#fda4af;"><strong>⚠️ A sessão do WhatsApp foi encerrada.</strong></p>
+<p>Isso costuma acontecer quando alguém desvincula o aparelho pelo app oficial do WhatsApp. O sistema <strong>não consegue reconectar sozinho</strong> nesse caso — é preciso escanear um novo QR Code.</p>
+<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">Abrir configurações</a></p>
+${errorLine}`;
+        bodyText = `⚠ Ação necessária: WhatsApp desconectado
+
+A sessão do WhatsApp foi encerrada. O sistema não consegue reconectar sozinho — é preciso escanear um novo QR Code.
+
+Acesse: ${input.settingsUrl}${errorPlain}`;
+      } else if (input.reason === "WAITING_QR_AGAIN") {
+        subject = "⚠ Ação necessária: WhatsApp pediu novo QR Code";
+        bodyHtml = `<p>Olá, <strong>${name}</strong>!</p>
+<p style="color:#fda4af;"><strong>⚠️ O WhatsApp solicitou um novo QR Code.</strong></p>
+<p>A sessão expirou ou foi invalidada. Para retomar os envios, abra as configurações e escaneie o QR.</p>
+<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">Abrir configurações</a></p>
+${errorLine}`;
+        bodyText = `⚠ Ação necessária: WhatsApp pediu novo QR Code
+
+A sessão expirou ou foi invalidada. Abra as configurações e escaneie o QR para retomar os envios.
+
+Acesse: ${input.settingsUrl}${errorPlain}`;
+      } else {
+        subject = "🔌 WhatsApp instável — tentando reconectar";
+        bodyHtml = `<p>Olá, <strong>${name}</strong>!</p>
+<p>A conexão com o WhatsApp caiu e o sistema está tentando reconectar automaticamente.</p>
+<p style="background:#27272a;border-radius:8px;padding:16px;">
+<strong>Tentativas até agora:</strong> ${input.attempts}<br>
+<small>Se não voltar em alguns minutos, vale abrir o painel para verificar.</small>
+</p>
+<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">Abrir configurações</a></p>
+${errorLine}`;
+        bodyText = `🔌 WhatsApp instável
+
+A conexão caiu e o sistema está tentando reconectar automaticamente.
+Tentativas: ${input.attempts}
+
+Se não voltar em alguns minutos, abra: ${input.settingsUrl}${errorPlain}`;
+      }
+
+      const html = wrapHtml(subject, bodyHtml);
+      const waText = `*Wedding Finance*\n\n${bodyText}`;
+      return { subject, html, text: bodyText, waText };
+    }
+
+    case "SYSTEM_WHATSAPP_RECOVERED": {
+      const name = escapeHtml(input.userName);
+      const url = escapeHtml(input.settingsUrl);
+      const subject = "✅ WhatsApp voltou";
+      const minutesLabel =
+        input.downtimeMinutes <= 1
+          ? "menos de 1 minuto"
+          : `${input.downtimeMinutes} minuto(s)`;
+      const html = wrapHtml(
+        subject,
+        `<p>Olá, <strong>${name}</strong>!</p>
+<p style="color:#86efac;"><strong>✅ A conexão com o WhatsApp foi restabelecida.</strong></p>
+<p style="color:#a1a1aa;">Tempo fora do ar: ${minutesLabel}.</p>
+<p><a href="${url}" style="display:inline-block;background:#27272a;color:#e4e4e7;padding:12px 24px;border-radius:8px;text-decoration:none;border:1px solid #3f3f46;">Abrir configurações</a></p>`,
+      );
+      const text = `✅ WhatsApp voltou
+
+A conexão foi restabelecida.
+Tempo fora do ar: ${minutesLabel}.
+
+${input.settingsUrl}`;
+      const waText = `*Wedding Finance*\n\n${text}`;
       return { subject, html, text, waText };
     }
   }

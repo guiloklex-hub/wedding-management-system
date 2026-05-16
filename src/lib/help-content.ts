@@ -515,6 +515,37 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
   },
   {
+    id: "whatsapp-auto-recovery",
+    title: "Auto-ressurect do WhatsApp e alertas por email",
+    category: "communications",
+    keywords: ["whatsapp", "queda", "alerta", "email", "reconexão", "watchdog"],
+    icon: MessageSquare,
+    summary:
+      "Se o WhatsApp cair, o sistema tenta voltar sozinho e te avisa por email quando precisa de ação.",
+    steps: [
+      {
+        title: "Boot automático",
+        body: "O socket sobe junto com o servidor (via instrumentation.ts). Não precisa abrir o painel pra começar a enviar.",
+      },
+      {
+        title: "Reconexão com back-off",
+        body: "Em caso de queda, tenta de novo em 3s, 6s, 12s, 24s, 48s e teto de 60s. Um watchdog cuida pra cadeia não travar.",
+      },
+      {
+        title: "Email para admins",
+        body: "Após ~1 min sem reconectar (3 tentativas falhas) ou quando o WhatsApp pede QR novo, todos os usuários com role ADMIN ativos recebem um email com o motivo e o link para abrir as configurações.",
+      },
+      {
+        title: "Email de recuperação",
+        body: "Quando a conexão volta após uma queda já alertada, sai um email '✅ WhatsApp voltou' com o tempo de downtime.",
+      },
+    ],
+    tips: [
+      "Para desativar o autostart em dev, defina `WHATSAPP_AUTOSTART=\"false\"` no .env.",
+      "Anti-spam: no máximo 1 email DOWN por dia + 1 RECOVERED por dia para o mesmo incidente.",
+    ],
+  },
+  {
     id: "cron-reminders",
     title: "Cron de lembretes automáticos",
     category: "communications",
@@ -630,6 +661,38 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "**Templates de tarefas dão erro:** configure a data do evento em Ajustes › Casamento.",
     ],
     externalDoc: "/docs/troubleshooting.md",
+  },
+  // ============ novos artigos (0.3.2) ============
+  {
+    id: "mobile-nav",
+    title: "Como navegar no celular",
+    category: "getting-started",
+    keywords: ["menu", "mobile", "celular", "navegação", "barra inferior", "bottom"],
+    icon: Sparkles,
+    summary:
+      "No celular, todo o menu vive na barra inferior. Os 4 atalhos mais usados ficam à vista e o resto está em 'Mais'.",
+    steps: [
+      {
+        title: "Quatro atalhos sempre à mão",
+        body: "Dashboard, Tarefas, Fornecedores e Convidados ficam fixos no rodapé, em qualquer tela.",
+      },
+      {
+        title: "Botão 'Mais' abre o menu completo",
+        body: "Toque no quinto ícone (grade) para abrir uma gaveta com todos os módulos agrupados em Financeiro, Casamento, Pessoas & Negócios e Sistema.",
+      },
+      {
+        title: "Atalho por gesto",
+        body: "Também dá pra arrastar para cima na barrinha do topo do rodapé para abrir a gaveta — e arrastar para baixo (ou tocar fora) para fechar.",
+      },
+      {
+        title: "Mapa de assentos",
+        body: "Saiu do menu principal — entre em 'Dia D' e o atalho para o mapa aparece lá dentro.",
+      },
+    ],
+    tips: [
+      "Cerimonialistas (role PLANNER) não veem o grupo 'Financeiro' na gaveta.",
+      "No desktop nada mudou: a barra lateral à esquerda continua igual.",
+    ],
   },
   // ============ novos artigos (0.3.0) ============
   {

@@ -1,6 +1,16 @@
 type Bucket = { count: number; resetAt: number };
 
 const buckets = new Map<string, Bucket>();
+let lastSweep = 0;
+const SWEEP_INTERVAL_MS = 60_000;
+
+function sweep(now: number): void {
+  if (now - lastSweep <= SWEEP_INTERVAL_MS) return;
+  for (const [k, b] of buckets) {
+    if (b.resetAt <= now) buckets.delete(k);
+  }
+  lastSweep = now;
+}
 
 export function rateLimit(
   key: string,
@@ -8,6 +18,7 @@ export function rateLimit(
   windowMs: number,
 ): { ok: boolean; remaining: number; resetAt: number } {
   const now = Date.now();
+  sweep(now);
   const b = buckets.get(key);
 
   if (!b || b.resetAt <= now) {
@@ -32,7 +43,5 @@ export function getClientIp(headers: Headers): string {
     const parts = xff.split(",").map((s) => s.trim()).filter(Boolean);
     if (parts.length > 0) return parts[parts.length - 1];
   }
-  const real = headers.get("x-real-ip");
-  if (real) return real.trim();
   return "unknown";
 }

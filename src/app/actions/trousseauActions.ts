@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { denyIfNoEdit } from "@/lib/finance-access";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -36,6 +37,8 @@ export async function createTrousseauItem(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const parsed = CreateSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
@@ -66,6 +69,8 @@ export async function updateTrousseauItem(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   const parsed = UpdateSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
@@ -98,6 +103,8 @@ export async function setTrousseauStatus(
   id: string,
   status: "TO_BUY" | "BOUGHT" | "GIFTED",
 ): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const result = await prisma.trousseauItem.updateMany({
       where: { id, deletedAt: null },
@@ -113,6 +120,8 @@ export async function setTrousseauStatus(
 }
 
 export async function deleteTrousseauItem(id: string): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   try {
     const result = await prisma.trousseauItem.updateMany({
       where: { id, deletedAt: null },

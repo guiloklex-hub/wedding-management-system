@@ -20,7 +20,8 @@ export type AuditAction =
   | "ASSIGN_TABLE"
   | "UNASSIGN_TABLE"
   | "RSVP_GROUP_RESPOND"
-  | "MARK_PIX_RECEIVED";
+  | "MARK_PIX_RECEIVED"
+  | "BACKUP_EXPORT";
 
 export type AuditEntity =
   | "Vendor"

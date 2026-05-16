@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { canViewSensitiveFinance } from "./permissions";
+import { canEdit, canManageUsers, canViewSensitiveFinance } from "./permissions";
 
 function getRole(user: unknown): string | undefined {
   return (user as { role?: string } | undefined)?.role;
@@ -36,6 +36,38 @@ export async function denyIfNoFinance(): Promise<
   const session = await auth();
   if (!session?.user) return { success: false, error: "Não autorizado" };
   if (!canViewSensitiveFinance(getRole(session.user))) {
+    return { success: false, error: "Sem permissão para esta área" };
+  }
+  return null;
+}
+
+/**
+ * Returns null if user can edit (ADMIN/GROOM/BRIDE/PLANNER), or an ActionResult error otherwise.
+ * Use inside Server Actions that mutate non-financial content.
+ */
+export async function denyIfNoEdit(): Promise<
+  | { success: false; error: string }
+  | null
+> {
+  const session = await auth();
+  if (!session?.user) return { success: false, error: "Não autorizado" };
+  if (!canEdit(getRole(session.user))) {
+    return { success: false, error: "Sem permissão para editar" };
+  }
+  return null;
+}
+
+/**
+ * Returns null if user can manage the event setup (ADMIN/GROOM/BRIDE), or an ActionResult error otherwise.
+ * Use inside Server Actions that change event-wide configuration.
+ */
+export async function denyIfNoManage(): Promise<
+  | { success: false; error: string }
+  | null
+> {
+  const session = await auth();
+  if (!session?.user) return { success: false, error: "Não autorizado" };
+  if (!canManageUsers(getRole(session.user))) {
     return { success: false, error: "Sem permissão para esta área" };
   }
   return null;

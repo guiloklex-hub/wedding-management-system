@@ -1,6 +1,6 @@
 "use client";
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { formatCurrency } from "@/lib/format";
 
 export type ChartDatum = {
@@ -31,28 +31,41 @@ export default function DashboardCharts({ data }: { data: ChartDatum[] }) {
   }
 
   return (
-    <div className="h-[300px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie data={data} innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value" stroke="none">
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip
-            formatter={(value) => formatCurrency(Number(value ?? 0))}
-            contentStyle={{
-              backgroundColor: "#18181b",
-              border: "1px solid #27272a",
-              borderRadius: "12px",
-              color: "#fff",
-              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
-            }}
-            itemStyle={{ color: "#fff" }}
-          />
-          <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: "12px", color: "#a1a1aa", paddingTop: "20px" }} />
-        </PieChart>
-      </ResponsiveContainer>
+    <div className="w-full">
+      <div className="h-[260px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={data} innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value" stroke="none">
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(value) => formatCurrency(Number(value ?? 0))}
+              contentStyle={{
+                backgroundColor: "#18181b",
+                border: "1px solid #27272a",
+                borderRadius: "12px",
+                color: "#fff",
+                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
+              }}
+              itemStyle={{ color: "#fff" }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <ul className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-2 text-xs text-zinc-400">
+        {data.map((entry, index) => (
+          <li key={entry.name} className="flex items-center gap-1.5">
+            <span
+              aria-hidden
+              className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
+              style={{ background: entry.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length] }}
+            />
+            <span className="break-words">{entry.name}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

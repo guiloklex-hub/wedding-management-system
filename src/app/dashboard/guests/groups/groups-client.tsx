@@ -281,10 +281,10 @@ function GroupForm({
   onSubmit: (fd: FormData) => void;
 }) {
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:items-center">
       <form
         action={onSubmit}
-        className="w-full max-w-md space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-5"
+        className="my-4 w-full max-w-md space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl"
       >
         <h2 className="text-base font-semibold text-zinc-100">{title}</h2>
         <FieldInput name="name" label="Nome do grupo" defaultValue={initial?.name} required maxLength={120} />
@@ -374,7 +374,7 @@ function MembersDialog({
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl border border-zinc-800 bg-zinc-900">
+      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
         <header className="flex items-center justify-between border-b border-zinc-800 p-4">
           <div>
             <h2 className="text-base font-semibold text-zinc-100">Membros de {group.name}</h2>

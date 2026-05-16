@@ -360,8 +360,8 @@ function ContactsSection({
       )}
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
+          <div className="my-4 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
             <h2 className="text-lg font-semibold text-white">Novo contato</h2>
             <form action={handleSubmit} className="mt-4 space-y-3">
               <input type="hidden" name="vendorId" value={vendor.id} />
@@ -631,8 +631,8 @@ function ContractForm({
   onSubmit: (formData: FormData) => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="my-8 w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
+      <div className="my-4 w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
         <h2 className="text-lg font-semibold text-white">Novo contrato</h2>
         <form action={onSubmit} className="mt-4 space-y-3">
           <input type="hidden" name="vendorId" value={vendorId} />
@@ -1074,12 +1074,24 @@ function ContractFileBlock({
 
       {current ? (
         <div className="mt-3 space-y-3">
-          <iframe
-            src={`/api/files/${current.id}`}
-            title={current.filename}
+          <object
+            data={`/api/files/${current.id}#toolbar=1&navpanes=0`}
+            type="application/pdf"
             className="h-[500px] w-full rounded-lg border border-zinc-800 bg-zinc-900"
-            sandbox="allow-same-origin"
-          />
+            aria-label={current.filename}
+          >
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-4 text-center text-xs text-zinc-400">
+              <p>O navegador não conseguiu exibir o PDF inline.</p>
+              <a
+                href={`/api/files/${current.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-rose-300 hover:text-rose-200"
+              >
+                Abrir o contrato em nova aba
+              </a>
+            </div>
+          </object>
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
             <span>
               {current.filename} ·{" "}

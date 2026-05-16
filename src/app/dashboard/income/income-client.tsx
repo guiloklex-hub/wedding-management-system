@@ -271,8 +271,8 @@ function IncomeFormModal({
   formAction: (formData: FormData) => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm">
-      <div className="my-8 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
+      <div className="my-4 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
         <h2 className="text-lg font-semibold text-white">
           {mode === "create" ? "Nova receita" : "Editar receita"}
         </h2>

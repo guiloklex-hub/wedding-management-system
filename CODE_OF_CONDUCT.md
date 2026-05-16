@@ -54,7 +54,7 @@ projeto em espaços públicos.
 
 Casos de comportamento abusivo, assediante ou inaceitável podem ser
 reportados de forma privada para os mantenedores em
-**platform-tools@madeiramadeira.com.br**. Todas as reclamações serão
+**guilherme.sp95@gmail.com**. Todas as reclamações serão
 revisadas e investigadas, resultando em uma resposta apropriada às
 circunstâncias.
 

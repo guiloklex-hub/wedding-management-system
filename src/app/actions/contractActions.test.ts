@@ -1,5 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prismaMock } from "@/test-utils/prisma";
+
+const authMock = vi.fn();
+vi.mock("@/auth", () => ({
+  auth: () => authMock(),
+}));
+
+const saveUploadMock = vi.fn();
+vi.mock("@/lib/storage", () => ({
+  saveUpload: (...args: unknown[]) => saveUploadMock(...args),
+}));
+
 import {
   createContract,
   deleteContract,
@@ -7,6 +18,8 @@ import {
 } from "./contractActions";
 
 beforeEach(() => {
+  authMock.mockReset();
+  saveUploadMock.mockReset();
   vi.spyOn(console, "error").mockImplementation(() => {});
   prismaMock.auditLog.create.mockResolvedValue({} as never);
 });

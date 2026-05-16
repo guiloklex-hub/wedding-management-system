@@ -6,6 +6,21 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.4.0",
+    date: "2026-05-16",
+    highlights: [
+      "📊 Dashboard reformulado: KPIs com sparkline, Risk Strip de alertas consolidados, mini-cards de RSVP e presentes, próximas tarefas e funil de fornecedores no overview.",
+      "🪞 Versão sanitizada do dashboard para FAMILY/VIEWER — sem expor valores em R$.",
+      "📈 Novo hub /dashboard/reports com Funil de Fornecedores, Risk Radar, RSVP/Convidados, Presentes, Lua de Mel, Enxoval e Timeline de Atividade.",
+      "📉 Insights ganhou três novas seções: Curva S (previsto vs realizado), Burndown de Tarefas e Waterfall de Variação por Categoria.",
+      "🔐 Upload seguro de contratos: validação por magic bytes (PDF/PNG/JPEG/WEBP/HEIC), MIME por kind, hash SHA-256 completo e quem fez upload registrado.",
+      "🧾 Versionamento de contrato: cada substituição cria v2, v3… A versão antiga fica arquivada (soft-delete) e o ciclo de assinatura digital/física pode ser registrado.",
+      "🛡️ Endurecimento da rota /api/files: ownership granular por kind de anexo, rate-limit, CSP sandbox + nosniff, audit DOWNLOAD.",
+      "🧹 Cron diário /api/cron/cleanup-files remove anexos soft-deletados após 30 dias e órfãos no FS.",
+      "👀 Roles que veem contrato: ADMIN, GROOM, BRIDE e PLANNER. FAMILY/VIEWER continuam sem acesso a contratos.",
+    ],
+  },
+  {
     version: "0.3.2",
     date: "2026-05-16",
     highlights: [

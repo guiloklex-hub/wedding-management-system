@@ -66,3 +66,33 @@ Estas roles **também** são bloqueadas das áreas financeiras (`canViewSensitiv
 ## Convidar planner / família
 
 Ajustes › Time › "Convidar membro". Defina a role na criação. Comportamento de finanças aplica imediatamente.
+
+## Anexos e contratos (v0.4.0)
+
+Funções específicas em `src/lib/permissions.ts`:
+
+| Função | Quem retorna `true` |
+|--------|--------------------|
+| `canUploadContract(role)` | ADMIN, GROOM, BRIDE, PLANNER |
+| `canViewContract(role)` | ADMIN, GROOM, BRIDE, PLANNER |
+| `canManageContract(role)` | ADMIN, GROOM, BRIDE |
+| `canSignContract(role)` | ADMIN, GROOM, BRIDE |
+| `canViewAttachmentKind(role, kind)` | varia por kind |
+| `canUploadAttachmentKind(role, kind)` | `CONTRACT` exige upload-contract; demais exigem `canEdit` |
+
+FAMILY e VIEWER **não acessam contratos** (kind `CONTRACT/INVOICE/RECEIPT`).
+Veja [anexos.md](anexos.md) para a matriz completa.
+
+## Relatórios de BI (v0.4.0)
+
+O hub `/dashboard/reports` filtra cards por permissão:
+
+- Itens financeiros (Lua de Mel) escondidos para roles sem
+  `canViewSensitiveFinance`.
+- Itens neutros (Funil, RSVP, Enxoval, Burndown) visíveis para todos.
+- Audit Timeline (`/dashboard/reports/activity`) só para `canManageUsers`.
+
+Dashboard principal (`/dashboard`) tem versão sanitizada para
+FAMILY/VIEWER (KPIs operacionais em vez de R$, esconde Pie e lista de
+pagamentos, mantém RSVP/Gifts mini cards). Detalhes em
+[relatorios.md](relatorios.md).

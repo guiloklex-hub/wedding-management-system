@@ -39,6 +39,8 @@ Se você é um casal querendo apenas usar o sistema, comece pelo
 | Mapa de assentos (seating chart) | [seating-chart.md](seating-chart.md) |
 | RSVP individual e em grupo | [rsvp.md](rsvp.md) |
 | Pix nos presentes (cota lua de mel) | [pix.md](pix.md) |
+| Relatórios de BI (hub /dashboard/reports + Insights) | [relatorios.md](relatorios.md) |
+| Anexos e contratos (upload seguro, versionamento) | [anexos.md](anexos.md) |
 
 ## Para quem vai contribuir
 

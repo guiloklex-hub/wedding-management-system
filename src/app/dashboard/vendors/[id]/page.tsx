@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import VendorDetailClient from "./vendor-detail-client";
 
@@ -8,6 +9,8 @@ export const dynamic = "force-dynamic";
 
 export default async function VendorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const session = await auth();
+  const role = (session?.user as { role?: string } | undefined)?.role;
 
   const vendor = await prisma.vendor.findFirst({
     where: { id, deletedAt: null },
@@ -16,7 +19,19 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
       payments: { where: { deletedAt: null }, orderBy: { dueDate: "asc" } },
       contacts: { where: { deletedAt: null }, orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
       vendorNotes: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } },
-      contracts: { where: { deletedAt: null }, orderBy: { version: "desc" } },
+      contracts: {
+        where: { deletedAt: null },
+        orderBy: { version: "desc" },
+        include: {
+          attachments: {
+            where: { kind: "CONTRACT" },
+            orderBy: { version: "desc" },
+            include: {
+              uploadedBy: { select: { id: true, name: true, email: true } },
+            },
+          },
+        },
+      },
       attachments: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } },
     },
   });
@@ -34,7 +49,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
           <span>Voltar para fornecedores</span>
         </Link>
       </div>
-      <VendorDetailClient vendor={vendor} />
+      <VendorDetailClient vendor={vendor} role={role ?? null} />
     </div>
   );
 }

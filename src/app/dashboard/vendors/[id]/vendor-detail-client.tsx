@@ -32,7 +32,14 @@ import {
 import {
   createContract,
   deleteContract,
+  replaceContractFile,
+  signContract,
 } from "@/app/actions/contractActions";
+import {
+  canSignContract,
+  canUploadContract,
+  canViewContract,
+} from "@/lib/permissions";
 import {
   deleteAttachment,
   uploadAttachment,
@@ -48,6 +55,17 @@ type Contact = {
   isPrimary: boolean;
 };
 type Note = { id: string; body: string; kind: string; createdAt: string | Date };
+type ContractAttachment = {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  version: number;
+  sha256Full: string | null;
+  createdAt: Date | string;
+  deletedAt: Date | string | null;
+  uploadedBy: { id: string; name: string | null; email: string } | null;
+};
 type Contract = {
   id: string;
   title: string;
@@ -61,6 +79,7 @@ type Contract = {
   includedItems: string | null;
   excludedItems: string | null;
   notes: string | null;
+  attachments?: ContractAttachment[];
 };
 type Attachment = {
   id: string;
@@ -114,7 +133,13 @@ const NOTE_KIND_LABEL: Record<string, string> = {
   DECISION: "Decisão",
 };
 
-export default function VendorDetailClient({ vendor }: { vendor: VendorFull }) {
+export default function VendorDetailClient({
+  vendor,
+  role,
+}: {
+  vendor: VendorFull;
+  role?: string | null;
+}) {
   const toast = useToast();
   const [, startTransition] = useTransition();
 
@@ -136,7 +161,7 @@ export default function VendorDetailClient({ vendor }: { vendor: VendorFull }) {
         <NotesSection vendor={vendor} startTransition={startTransition} toast={toast} />
       </div>
 
-      <ContractsSection vendor={vendor} startTransition={startTransition} toast={toast} />
+      <ContractsSection vendor={vendor} role={role ?? null} startTransition={startTransition} toast={toast} />
       <AttachmentsSection vendor={vendor} startTransition={startTransition} toast={toast} />
       <PaymentsSection vendor={vendor} />
     </div>
@@ -483,16 +508,21 @@ function NotesSection({
 
 function ContractsSection({
   vendor,
+  role,
   startTransition,
   toast,
 }: {
   vendor: VendorFull;
+  role: string | null;
   startTransition: React.TransitionStartFunction;
   toast: ReturnType<typeof useToast>;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const canView = canViewContract(role);
+  const canUpload = canUploadContract(role);
+  const canSign = canSignContract(role);
 
   function handleSubmit(formData: FormData) {
     setBusy(true);
@@ -560,6 +590,15 @@ function ContractsSection({
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
+              <ContractFileBlock
+                contract={c}
+                vendorId={vendor.id}
+                canView={canView}
+                canUpload={canUpload}
+                canSign={canSign}
+                startTransition={startTransition}
+                toast={toast}
+              />
             </li>
           ))}
         </ul>
@@ -945,6 +984,222 @@ function ModalActions({
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : confirmLabel}
       </button>
+    </div>
+  );
+}
+
+function ContractFileBlock({
+  contract,
+  vendorId,
+  canView,
+  canUpload,
+  canSign,
+  startTransition,
+  toast,
+}: {
+  contract: Contract;
+  vendorId: string;
+  canView: boolean;
+  canUpload: boolean;
+  canSign: boolean;
+  startTransition: React.TransitionStartFunction;
+  toast: ReturnType<typeof useToast>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [confirmReplace, setConfirmReplace] = useState<FormData | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [signing, setSigning] = useState(false);
+
+  const all = contract.attachments ?? [];
+  const current = all.find((a) => !a.deletedAt) ?? null;
+  const history = all.filter((a) => a.id !== current?.id);
+  const isSigned = contract.status === "SIGNED_DIGITAL" || contract.status === "SIGNED_PHYSICAL";
+
+  if (!canView) {
+    return (
+      <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/30 p-3 text-xs text-zinc-500">
+        Documento do contrato disponível, mas seu perfil não tem permissão para visualizá-lo.
+      </div>
+    );
+  }
+
+  function submitReplace(formData: FormData) {
+    setConfirmReplace(formData);
+  }
+
+  function confirmDoReplace() {
+    const fd = confirmReplace;
+    if (!fd) return;
+    setBusy(true);
+    startTransition(async () => {
+      try {
+        const r = await replaceContractFile(undefined, fd);
+        if (r.success) {
+          toast.success("Contrato atualizado", `Nova versão v${contract.version + 1}`);
+        } else toast.error("Falha", r.error);
+      } finally {
+        setBusy(false);
+        setConfirmReplace(null);
+      }
+    });
+  }
+
+  function handleSign(method: "DIGITAL" | "PHYSICAL") {
+    setSigning(true);
+    const fd = new FormData();
+    fd.set("contractId", contract.id);
+    fd.set("vendorId", vendorId);
+    fd.set("method", method);
+    startTransition(async () => {
+      try {
+        const r = await signContract(undefined, fd);
+        if (r.success) toast.success("Contrato assinado");
+        else toast.error("Falha", r.error);
+      } finally {
+        setSigning(false);
+      }
+    });
+  }
+
+  return (
+    <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <h5 className="text-sm font-semibold text-zinc-200">Arquivo do contrato</h5>
+        {current ? (
+          <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">
+            v{current.version}
+          </span>
+        ) : null}
+      </div>
+
+      {current ? (
+        <div className="mt-3 space-y-3">
+          <iframe
+            src={`/api/files/${current.id}`}
+            title={current.filename}
+            className="h-[500px] w-full rounded-lg border border-zinc-800 bg-zinc-900"
+            sandbox="allow-same-origin"
+          />
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
+            <span>
+              {current.filename} ·{" "}
+              {(current.size / 1024).toFixed(1)} KB
+              {current.sha256Full ? ` · ${current.sha256Full.slice(0, 10)}…` : ""}
+            </span>
+            <span>
+              enviado em {formatDateBR(new Date(current.createdAt))}{" "}
+              {current.uploadedBy ? `por ${current.uploadedBy.name ?? current.uploadedBy.email}` : ""}
+            </span>
+          </div>
+          <a
+            href={`/api/files/${current.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-medium text-rose-300 hover:text-rose-200"
+          >
+            Baixar PDF
+          </a>
+        </div>
+      ) : (
+        <p className="mt-3 text-xs text-zinc-500">Nenhum PDF anexado a este contrato ainda.</p>
+      )}
+
+      {canUpload ? (
+        <form
+          action={submitReplace}
+          className="mt-4 grid gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3 sm:grid-cols-[1fr_auto] sm:items-end"
+        >
+          <input type="hidden" name="contractId" value={contract.id} />
+          <input type="hidden" name="vendorId" value={vendorId} />
+          <div>
+            <label className="mb-1 block text-xs text-zinc-400">
+              {current ? "Substituir contrato (vira v" + (contract.version + 1) + ")" : "Enviar PDF do contrato"}
+            </label>
+            <input
+              type="file"
+              name="file"
+              accept="application/pdf"
+              required
+              className="block w-full text-xs text-zinc-300 file:mr-3 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-3 file:py-1.5 file:text-xs file:text-zinc-200 hover:file:bg-zinc-700"
+            />
+            <p className="mt-1 text-[10px] text-zinc-500">Apenas PDF, até 8 MB.</p>
+          </div>
+          <button
+            type="submit"
+            disabled={busy}
+            className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-medium text-white hover:bg-rose-500 disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar"}
+          </button>
+        </form>
+      ) : null}
+
+      {canSign && !isSigned ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+          <span className="text-xs text-zinc-400">Marcar como assinado:</span>
+          <button
+            type="button"
+            disabled={signing}
+            onClick={() => handleSign("DIGITAL")}
+            className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-50"
+          >
+            Assinatura digital
+          </button>
+          <button
+            type="button"
+            disabled={signing}
+            onClick={() => handleSign("PHYSICAL")}
+            className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs text-violet-300 hover:bg-violet-500/20 disabled:opacity-50"
+          >
+            Assinatura física
+          </button>
+        </div>
+      ) : null}
+
+      {history.length > 0 ? (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => setShowHistory((v) => !v)}
+            className="text-xs text-zinc-400 hover:text-zinc-200"
+          >
+            {showHistory ? "Esconder" : "Ver"} histórico ({history.length} versão{history.length > 1 ? "ões" : ""})
+          </button>
+          {showHistory ? (
+            <ul className="mt-2 space-y-1">
+              {history.map((h) => (
+                <li
+                  key={h.id}
+                  className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/30 p-2 text-xs text-zinc-400"
+                >
+                  <span>
+                    v{h.version} · {h.filename} · {(h.size / 1024).toFixed(1)} KB ·{" "}
+                    {formatDateBR(new Date(h.createdAt))}
+                  </span>
+                  <a
+                    href={`/api/files/${h.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-rose-300 hover:text-rose-200"
+                  >
+                    Baixar
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+
+      <ConfirmDialog
+        open={!!confirmReplace}
+        title={`Criar nova versão v${contract.version + 1}?`}
+        description="A versão atual será arquivada (mantida no histórico por 30 dias). Tem certeza?"
+        confirmLabel="Sim, substituir"
+        tone="danger"
+        onConfirm={confirmDoReplace}
+        onCancel={() => setConfirmReplace(null)}
+      />
     </div>
   );
 }

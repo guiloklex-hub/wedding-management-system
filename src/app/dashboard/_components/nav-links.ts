@@ -32,6 +32,7 @@ export type NavLink = {
 export const LINKS: NavLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: Home, exact: true },
   { href: "/dashboard/insights", label: "Insights", icon: BarChart3, finance: true },
+  { href: "/dashboard/reports", label: "Relatórios", icon: BarChart3 },
   { href: "/dashboard/vendors", label: "Fornecedores", icon: Users },
   { href: "/dashboard/venues", label: "Locais", icon: Building2 },
   { href: "/dashboard/tasks", label: "Tarefas", icon: CheckSquare },
@@ -69,6 +70,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
     finance: true,
     hrefs: [
       "/dashboard/insights",
+      "/dashboard/reports",
       "/dashboard/payments",
       "/dashboard/income",
       "/dashboard/assets",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { authenticate } from "@/app/actions/authActions";
 import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -15,19 +15,44 @@ const FRIENDLY_ERROR: Record<string, string> = {
   [ACCOUNT_DISABLED]: "Conta desativada. Procure um administrador.",
 };
 
+function resolveRedirectTo(): string {
+  if (typeof window === "undefined") return "/dashboard";
+  try {
+    const raw = new URLSearchParams(window.location.search).get("callbackUrl");
+    if (!raw) return "/dashboard";
+    const url = new URL(raw, window.location.origin);
+    if (url.origin !== window.location.origin) return "/dashboard";
+    const path = `${url.pathname}${url.search}`;
+    if (!path.startsWith("/") || path === "/login" || path.startsWith("/login?") || path.startsWith("/login/")) {
+      return "/dashboard";
+    }
+    return path;
+  } catch {
+    return "/dashboard";
+  }
+}
+
 export default function LoginForm() {
   const [errorMessage, formAction, isPending] = useActionState(authenticate, undefined);
+  const redirectRef = useRef<HTMLInputElement>(null);
   const needs2fa = errorMessage === TWO_FACTOR_REQUIRED;
   const friendly =
     errorMessage && errorMessage !== TWO_FACTOR_REQUIRED
       ? FRIENDLY_ERROR[errorMessage] ?? errorMessage
       : null;
 
+  useEffect(() => {
+    if (redirectRef.current) {
+      redirectRef.current.value = resolveRedirectTo();
+    }
+  }, []);
+
   return (
     <form
       action={formAction}
       className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-xl backdrop-blur-sm"
     >
+      <input ref={redirectRef} type="hidden" name="redirectTo" defaultValue="/dashboard" />
       <div className="space-y-4">
         <div>
           <label className="mb-2 block text-sm font-medium text-zinc-300" htmlFor="email">

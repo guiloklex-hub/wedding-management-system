@@ -11,16 +11,18 @@ const PRIORITY_STYLES: Record<string, string> = {
 
 export function UpcomingTasks({
   tasks,
+  compact,
 }: {
   tasks: Array<{ id: string; title: string; priority: string; deadline: Date | null }>;
+  compact?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-zinc-100">Próximas Tarefas</h2>
-        <ListTodo className="h-5 w-5 text-zinc-400" />
+    <div className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm${compact ? " flex flex-col lg:max-h-[380px]" : ""}`}>
+      <div className="mb-3 flex shrink-0 items-center justify-between">
+        <h2 className="text-sm font-semibold text-zinc-200">Próximas Tarefas</h2>
+        <ListTodo className="h-4 w-4 text-zinc-500" />
       </div>
-      <div className="custom-scrollbar max-h-[300px] space-y-3 overflow-y-auto pr-2">
+      <div className={`custom-scrollbar space-y-3 overflow-y-auto pr-2${compact ? " min-h-0 flex-1" : " max-h-[300px]"}`}>
         {tasks.length === 0 ? (
           <p className="text-sm text-zinc-500">Nenhuma tarefa pendente.</p>
         ) : (

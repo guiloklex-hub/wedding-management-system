@@ -32,10 +32,10 @@ export default function DashboardCharts({ data }: { data: ChartDatum[] }) {
 
   return (
     <div className="w-full">
-      <div className="h-[260px] w-full">
+      <div className="h-[180px] sm:h-[220px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={data} innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value" stroke="none">
+            <Pie data={data} innerRadius="55%" outerRadius="75%" paddingAngle={5} dataKey="value" stroke="none">
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]} />
               ))}
@@ -54,7 +54,7 @@ export default function DashboardCharts({ data }: { data: ChartDatum[] }) {
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <ul className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-2 text-xs text-zinc-400">
+      <ul className="custom-scrollbar mt-4 flex flex-wrap justify-center gap-x-3 gap-y-2 overflow-y-auto pr-1 text-xs text-zinc-400 max-h-[80px] sm:max-h-[100px]">
         {data.map((entry, index) => (
           <li key={entry.name} className="flex items-center gap-1.5">
             <span

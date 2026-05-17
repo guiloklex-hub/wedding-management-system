@@ -6,6 +6,14 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.4.4",
+    date: "2026-05-17",
+    highlights: [
+      "📱 Reforço contra scroll horizontal no mobile: `<html>` e `<body>` agora têm `overflow-x-clip` (defesa em profundidade) — mesmo se algum descendente futuro renderizar mais largo que a viewport, o document não rola.",
+      "🥧 Gráfico de pizza 'Distribuição do Orçamento' agora aparece também no mobile. O container do chart tinha apenas `flex-1` sem altura definida em mobile (`lg:max-h-[380px]` só aplicava em desktop), o que resolvia em 0px de altura e o Recharts loga 'width(-1) and height(-1) of chart should be greater than 0' no console. Agora o wrapper recebe `h-[260px]` em mobile e mantém o comportamento `flex-1` em `lg+`.",
+    ],
+  },
+  {
     version: "0.4.3",
     date: "2026-05-17",
     highlights: [

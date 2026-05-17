@@ -30,9 +30,9 @@ export function UpcomingTasks({
             <Link
               key={t.id}
               href="/dashboard/tasks"
-              className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-800/50 p-3 transition-colors hover:bg-zinc-700/40"
+              className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800/80 bg-zinc-800/50 p-3 transition-colors hover:bg-zinc-700/40"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-zinc-200">{t.title}</p>
                 {t.deadline ? (
                   <p className="mt-1 flex items-center gap-1 text-xs text-zinc-500">

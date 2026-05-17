@@ -56,13 +56,13 @@ export default function DashboardCharts({ data }: { data: ChartDatum[] }) {
       </div>
       <ul className="custom-scrollbar mt-3 flex shrink-0 flex-wrap justify-center gap-x-3 gap-y-1.5 overflow-y-auto pr-1 text-xs text-zinc-400 max-h-[72px]">
         {data.map((entry, index) => (
-          <li key={entry.name} className="flex items-center gap-1.5">
+          <li key={entry.name} className="flex min-w-0 max-w-full items-center gap-1.5">
             <span
               aria-hidden
               className="inline-block h-2 w-2 shrink-0 rounded-sm"
               style={{ background: entry.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length] }}
             />
-            <span className="break-words leading-tight">{entry.name}</span>
+            <span className="min-w-0 break-words leading-tight">{entry.name}</span>
           </li>
         ))}
       </ul>

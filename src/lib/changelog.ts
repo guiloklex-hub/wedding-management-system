@@ -6,6 +6,13 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.4.5",
+    date: "2026-05-17",
+    highlights: [
+      "📱 Varredura completa de responsividade no dashboard mobile. Componentes que tinham `min-w-0` mas faltavam `flex-1` (UpcomingTasks, RiskAlertStrip) e mini-cards (RsvpMini, GiftsMini) que não tinham nenhum dos dois ganharam ambos — agora o conteúdo encolhe corretamente em vez de empurrar o card além da viewport. Subtítulo do header e a legenda do gráfico de pizza também receberam `break-words` + `min-w-0 max-w-full` para nomes de categoria longos.",
+    ],
+  },
+  {
     version: "0.4.4",
     date: "2026-05-17",
     highlights: [

@@ -36,13 +36,13 @@ export function GiftsMini({
         <Gift className="h-4 w-4 text-zinc-500" />
       </div>
       <div className="flex items-end justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-3xl font-bold text-zinc-100">{totalCount}</p>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 break-words text-xs text-zinc-500">
             {cashCount} em dinheiro · {totalCount - cashCount} em itens
           </p>
         </div>
-        <div className="text-right">
+        <div className="shrink-0 text-right">
           {cashTotal !== null ? (
             <p className="text-sm font-semibold text-emerald-300">{formatCurrency(cashTotal)}</p>
           ) : null}

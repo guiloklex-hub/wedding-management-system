@@ -189,7 +189,7 @@ export default async function DashboardPage() {
                 <h2 className="text-sm font-semibold text-zinc-200">Distribuição do Orçamento</h2>
                 <PieChartIcon className="h-4 w-4 text-zinc-500" />
               </div>
-              <div className="min-h-0 flex-1">
+              <div className="h-[260px] lg:h-auto lg:min-h-0 lg:flex-1">
                 <DashboardCharts data={categoryData} />
               </div>
             </div>

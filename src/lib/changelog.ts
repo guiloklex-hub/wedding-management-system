@@ -6,6 +6,16 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.4.3",
+    date: "2026-05-17",
+    highlights: [
+      "📱 Dashboard no mobile não rola mais lateralmente: cards do KPI ('Resumo do Orçamento', 'Total Já Pago' etc.) e o conteúdo principal ficavam mais largos que a viewport por causa do espaço inquebrável que o `R$` recebe no `Intl.NumberFormat` pt-BR — corrigido com `min-w-0` + `break-words` no valor e `overflow-x-hidden` no container principal.",
+      "🔐 Tela de login não acusa mais 'Hydration mismatch' quando o navegador tem Keeper/1Password/LastPass instalado — os inputs e seus wrappers ganharam `suppressHydrationWarning`, ignorando os elementos que a extensão injeta antes do React rehydratar.",
+      "🎯 Fim do loop de redirect no onboarding: quando o JWT estava com `onboardingCompleted: false` mas o banco já tinha o onboarding finalizado, a página fazia `redirect('/dashboard')` e o middleware mandava de volta para `/dashboard/onboarding`, derrubando o RSC com 'An unexpected response was received from the server'. Agora a página renderiza uma tela de transição que força o refresh do JWT via `window.location.assign` para o dashboard.",
+      "🚀 Conclusão do onboarding usa `window.location.assign('/dashboard')` em vez de `router.push` + `router.refresh` — garante que o cookie da sessão seja reemitido antes da navegação, mesmo se o `useSession().update()` falhar no NextAuth v5 beta.",
+    ],
+  },
+  {
     version: "0.4.2",
     date: "2026-05-16",
     highlights: [

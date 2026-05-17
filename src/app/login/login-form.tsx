@@ -56,7 +56,7 @@ export default function LoginForm() {
     >
       <input ref={redirectRef} type="hidden" name="redirectTo" defaultValue="/dashboard" />
       <div className="space-y-4">
-        <div>
+        <div suppressHydrationWarning>
           <label className="mb-2 block text-sm font-medium text-zinc-300" htmlFor="email">
             Email
           </label>
@@ -70,9 +70,10 @@ export default function LoginForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            suppressHydrationWarning
           />
         </div>
-        <div>
+        <div suppressHydrationWarning>
           <label className="mb-2 block text-sm font-medium text-zinc-300" htmlFor="password">
             Senha
           </label>
@@ -87,6 +88,7 @@ export default function LoginForm() {
             minLength={1}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            suppressHydrationWarning
           />
         </div>
         {needs2fa ? (

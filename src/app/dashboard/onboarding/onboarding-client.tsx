@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useSession } from "next-auth/react";
 import {
@@ -38,7 +37,6 @@ const STEPS: Array<{ id: Step; title: string; subtitle: string; icon: React.Comp
 ];
 
 export default function OnboardingClient({ initial }: { initial: Initial }) {
-  const router = useRouter();
   const { update } = useSession();
   const toast = useToast();
 
@@ -87,11 +85,16 @@ export default function OnboardingClient({ initial }: { initial: Initial }) {
       try {
         const r = await finishOnboarding();
         if (r.success) {
-          await update({ onboardingCompleted: true });
+          try {
+            await update({ onboardingCompleted: true });
+          } catch {
+            // Silenciar: o hard reload abaixo força o JWT a ser reemitido pelo cookie.
+          }
           toast.success("Tudo pronto! Bom planejamento ✨");
-          router.push("/dashboard");
-          router.refresh();
-        } else toast.error("Falha", r.error);
+          window.location.assign("/dashboard");
+          return;
+        }
+        toast.error("Falha", r.error);
       } finally {
         setBusy(false);
       }

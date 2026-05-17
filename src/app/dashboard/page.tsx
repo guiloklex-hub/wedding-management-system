@@ -63,6 +63,7 @@ export default async function DashboardPage() {
       {!data.eventDate ? (
         <Link
           href="/dashboard/onboarding"
+          prefetch={false}
           className="flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-gradient-to-br from-rose-500/15 via-rose-500/5 to-zinc-900/30 p-5 shadow-sm transition-colors hover:from-rose-500/25"
         >
           <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-rose-300" />

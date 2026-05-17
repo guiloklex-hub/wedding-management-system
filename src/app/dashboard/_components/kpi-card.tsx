@@ -45,14 +45,16 @@ export function KpiCard({
         </div>
       </div>
       <div className="mt-4 flex items-end justify-between gap-3">
-        <span className="text-3xl font-bold tracking-tight text-zinc-100">{value}</span>
+        <span className="min-w-0 flex-1 break-words text-3xl font-bold tracking-tight text-zinc-100">
+          {value}
+        </span>
         {trend && trend.length > 1 ? (
-          <div className="w-24">
+          <div className="w-24 shrink-0">
             <Sparkline data={trend} stroke={ACCENT_LINE[accent]} />
           </div>
         ) : null}
       </div>
-      {hint ? <p className="mt-2 text-xs text-zinc-500">{hint}</p> : null}
+      {hint ? <p className="mt-2 break-words text-xs text-zinc-500">{hint}</p> : null}
     </div>
   );
 

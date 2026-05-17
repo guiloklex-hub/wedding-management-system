@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   CreditCard,
   ListTodo,
+  PieChart as PieChartIcon,
   Sparkles,
   TrendingDown,
   Users,
@@ -182,17 +183,22 @@ export default async function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {finance ? (
           <>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-              <h2 className="mb-4 text-lg font-semibold text-zinc-100">Distribuição do Orçamento</h2>
-              <DashboardCharts data={categoryData} />
+            <div className="flex flex-col rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm lg:max-h-[380px]">
+              <div className="mb-3 flex shrink-0 items-center justify-between">
+                <h2 className="text-sm font-semibold text-zinc-200">Distribuição do Orçamento</h2>
+                <PieChartIcon className="h-4 w-4 text-zinc-500" />
+              </div>
+              <div className="min-h-0 flex-1">
+                <DashboardCharts data={categoryData} />
+              </div>
             </div>
 
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-zinc-100">Próximos Vencimentos</h2>
-                <CalendarClock className="h-5 w-5 text-zinc-400" />
+            <div className="flex flex-col rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm lg:max-h-[380px]">
+              <div className="mb-3 flex shrink-0 items-center justify-between">
+                <h2 className="text-sm font-semibold text-zinc-200">Próximos Vencimentos</h2>
+                <CalendarClock className="h-4 w-4 text-zinc-500" />
               </div>
-              <div className="custom-scrollbar max-h-[300px] space-y-3 overflow-y-auto pr-2">
+              <div className="custom-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
                 {data.upcomingPayments.length === 0 ? (
                   <p className="text-sm text-zinc-500">Nenhum pagamento para os próximos 30 dias.</p>
                 ) : (
@@ -201,20 +207,20 @@ export default async function DashboardPage() {
                       key={p.id}
                       className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-800/50 p-3"
                     >
-                      <div>
-                        <p className="font-medium text-zinc-200">{p.vendorName}</p>
-                        <p className="mt-1 text-xs text-zinc-500">
-                          Vencimento: {formatDateBR(p.dueDate)}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-zinc-200">{p.vendorName}</p>
+                        <p className="mt-0.5 text-xs text-zinc-500">
+                          Venc.: {formatDateBR(p.dueDate)}
                         </p>
                       </div>
-                      <span className="font-semibold text-rose-400">{formatCurrency(p.amount)}</span>
+                      <span className="shrink-0 pl-3 font-semibold text-rose-400">{formatCurrency(p.amount)}</span>
                     </div>
                   ))
                 )}
               </div>
             </div>
 
-            <UpcomingTasks tasks={data.upcomingTasks} />
+            <UpcomingTasks tasks={data.upcomingTasks} compact />
           </>
         ) : (
           <>
@@ -226,13 +232,7 @@ export default async function DashboardPage() {
               thankedCount={data.giftsProgress.thankedCount}
               thankedPct={data.giftsProgress.thankedPct}
             />
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-zinc-200">Próximas Tarefas</h2>
-                <ListTodo className="h-4 w-4 text-zinc-500" />
-              </div>
-              <UpcomingTasks tasks={data.upcomingTasks} />
-            </div>
+            <UpcomingTasks tasks={data.upcomingTasks} />
           </>
         )}
       </div>

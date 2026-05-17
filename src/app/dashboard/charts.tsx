@@ -24,15 +24,15 @@ const FALLBACK_COLORS = [
 export default function DashboardCharts({ data }: { data: ChartDatum[] }) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex h-[300px] items-center justify-center text-sm text-zinc-500">
+      <div className="flex h-full items-center justify-center text-sm text-zinc-500">
         Sem dados suficientes para o gráfico
       </div>
     );
   }
 
   return (
-    <div className="w-full">
-      <div className="h-[180px] sm:h-[220px] w-full">
+    <div className="flex h-full flex-col">
+      <div className="min-h-0 flex-1 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie data={data} innerRadius="55%" outerRadius="75%" paddingAngle={5} dataKey="value" stroke="none">
@@ -54,15 +54,15 @@ export default function DashboardCharts({ data }: { data: ChartDatum[] }) {
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <ul className="custom-scrollbar mt-4 flex flex-wrap justify-center gap-x-3 gap-y-2 overflow-y-auto pr-1 text-xs text-zinc-400 max-h-[80px] sm:max-h-[100px]">
+      <ul className="custom-scrollbar mt-3 flex shrink-0 flex-wrap justify-center gap-x-3 gap-y-1.5 overflow-y-auto pr-1 text-xs text-zinc-400 max-h-[72px]">
         {data.map((entry, index) => (
           <li key={entry.name} className="flex items-center gap-1.5">
             <span
               aria-hidden
-              className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
+              className="inline-block h-2 w-2 shrink-0 rounded-sm"
               style={{ background: entry.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length] }}
             />
-            <span className="break-words">{entry.name}</span>
+            <span className="break-words leading-tight">{entry.name}</span>
           </li>
         ))}
       </ul>

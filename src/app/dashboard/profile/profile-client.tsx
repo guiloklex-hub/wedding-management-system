@@ -16,7 +16,7 @@ type Initial = {
 
 export default function ProfileClient({ initial }: { initial: Initial }) {
   const t = useTranslations("common");
-  const tn = useTranslations("nav");
+  const tn = useTranslations("common.nav");
   const toast = useToast();
   const [locale, setLocaleState] = useState<Locale>(initial.locale);
   const [state, formAction, pending] = useActionState(updateLocale, undefined);

@@ -8,7 +8,7 @@ import { logout } from "@/app/actions/authActions";
 import { isActive, useVisibleLinks } from "./nav-links";
 
 export function Sidebar() {
-  const t = useTranslations("nav");
+  const t = useTranslations("common.nav");
   const pathname = usePathname();
   const visibleLinks = useVisibleLinks();
   return (

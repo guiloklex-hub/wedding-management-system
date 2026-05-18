@@ -18,7 +18,7 @@ export default async function ProfilePage() {
   });
   if (!user) redirect("/login");
 
-  const t = await getTranslations("nav");
+  const t = await getTranslations("common.nav");
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">

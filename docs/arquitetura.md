@@ -153,6 +153,14 @@ Helpers e regras de domínio:
 - Logs de aplicação atualmente saem via `console.error` em pontos críticos —
   para produção, considere encaminhar para um agregador (Loki, Sentry, etc.).
 
+## Internacionalização (i18n)
+
+Desde a v0.5.0 o sistema suporta `pt-BR`, `en` e `es` via
+[next-intl](https://next-intl.dev/) 4.x. O locale do usuário fica em
+`User.locale` e é propagado pelo JWT do Auth.js. Para detalhes (resolução
+do locale, padrões de chave, cobertura atual, como adicionar idioma),
+veja [i18n.md](i18n.md).
+
 ## PWA
 
 - Manifest: `public/manifest.json`.

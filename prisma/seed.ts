@@ -36,6 +36,7 @@ async function main() {
         isActive: true,
         mustChangePassword: true,
         passwordUpdatedAt: new Date(),
+        locale: 'pt-BR',
       },
     })
     console.log('✅ Usuário administrador criado com sucesso!')

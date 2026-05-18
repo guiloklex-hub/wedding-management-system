@@ -2,10 +2,12 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { consumePasswordReset } from "@/app/actions/passwordResetActions";
 
 export default function ResetPasswordForm({ token }: { token: string }) {
+  const t = useTranslations("auth.reset");
   const [state, formAction, isPending] = useActionState(
     consumePasswordReset,
     undefined,
@@ -14,15 +16,13 @@ export default function ResetPasswordForm({ token }: { token: string }) {
   if (state?.success) {
     return (
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-xl backdrop-blur-sm">
-        <p className="text-sm text-zinc-300">
-          Senha redefinida com sucesso. Use a nova senha para entrar.
-        </p>
+        <p className="text-sm text-zinc-300">{t("success")}</p>
         <div className="mt-6 text-center">
           <Link
             href="/login"
             className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-3 text-sm font-medium text-white hover:bg-rose-500"
           >
-            Ir para o login
+            {t("goToLogin")}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -42,7 +42,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           className="mb-2 block text-sm font-medium text-zinc-300"
           htmlFor="newPassword"
         >
-          Nova senha
+          {t("newPassword")}
         </label>
         <input
           className="block w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
@@ -61,7 +61,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           className="mb-2 block text-sm font-medium text-zinc-300"
           htmlFor="confirmPassword"
         >
-          Confirmar nova senha
+          {t("confirmPassword")}
         </label>
         <input
           className="block w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
@@ -90,7 +90,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           <Loader2 className="h-5 w-5 animate-spin" />
         ) : (
           <>
-            Redefinir senha
+            {t("submit")}
             <ArrowRight className="h-4 w-4" />
           </>
         )}

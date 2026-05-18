@@ -24,6 +24,7 @@ export default async function OnboardingPage() {
         eventDate: toIsoDate(cfg.eventDate),
         currency: cfg.currency,
         contingencyPercent: cfg.contingencyPercent,
+        locale: cfg.defaultLocale,
       }}
     />
   );

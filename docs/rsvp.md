@@ -2,6 +2,21 @@
 
 O sistema oferece **dois caminhos públicos** de confirmação de presença. Ambos coexistem; cada convidado pode ter ou não estar em um grupo.
 
+## Idioma do RSVP (v0.5.0+)
+
+Ambas as rotas resolvem o idioma na ordem:
+
+1. `?lang=` na URL (`?lang=en`, `?lang=es`, `?lang=pt-BR`).
+2. `Guest.language` (campo opcional no banco, salvo via UI ou seed).
+3. `EventSettings.defaultLocale` (configurado no onboarding).
+4. `pt-BR` (default).
+
+Cabeçalho, opções, placeholders e mensagens de retorno são renderizados no
+idioma resolvido. A página é Server Component; o formulário client
+recebe os labels prontos (RSVP individual) ou um `NextIntlClientProvider`
+aninhado com as mensagens do locale (RSVP grupo). Veja
+[i18n.md](i18n.md).
+
 ## 1. RSVP individual (clássico)
 
 Rota: `/rsvp/[token]` onde `token = Guest.rsvpToken` (cuid gerado na criação).

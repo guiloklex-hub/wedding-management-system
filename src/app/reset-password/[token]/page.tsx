@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Heart } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { validateResetToken } from "@/app/actions/passwordResetActions";
 import ResetPasswordForm from "./reset-password-form";
 
@@ -10,6 +11,7 @@ export default async function ResetPasswordPage({
 }) {
   const { token } = await params;
   const valid = await validateResetToken(token);
+  const t = await getTranslations("auth.reset");
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-950 p-4">
@@ -20,26 +22,22 @@ export default async function ResetPasswordPage({
             <Heart className="h-6 w-6 text-rose-500" />
           </div>
           <h1 className="text-3xl font-semibold tracking-tight text-white">
-            Redefinir senha
+            {t("title")}
           </h1>
-          <p className="text-sm text-zinc-400">
-            Escolha uma nova senha para sua conta.
-          </p>
+          <p className="text-sm text-zinc-400">{t("subtitle")}</p>
         </div>
 
         {valid ? (
           <ResetPasswordForm token={token} />
         ) : (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 text-center shadow-xl backdrop-blur-sm">
-            <p className="text-sm text-zinc-300">
-              Este link é inválido ou já expirou. Solicite um novo.
-            </p>
+            <p className="text-sm text-zinc-300">{t("invalidToken")}</p>
             <div className="mt-6">
               <Link
                 href="/forgot-password"
                 className="text-sm font-medium text-rose-500 hover:text-rose-400"
               >
-                Solicitar novo link
+                {t("requestNew")}
               </Link>
             </div>
           </div>

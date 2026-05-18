@@ -1,0 +1,117 @@
+{
+  "common": {
+    "header": "Wedding Finance",
+    "automaticFooter": "Este es un mensaje automático del sistema. No respondas a este correo.",
+    "greeting": "¡Hola, <strong>{name}</strong>!",
+    "greetingText": "¡Hola, {name}!"
+  },
+  "ACCOUNT_CREATED": {
+    "subject": "Tu cuenta de Wedding Finance fue creada",
+    "intro": "Un administrador creó una cuenta para ti en Wedding Finance.",
+    "tempPasswordLabel": "Contraseña temporal:",
+    "tempPasswordHint": "Deberás cambiarla en el primer inicio de sesión.",
+    "cta": "Abrir la app",
+    "textIntro": "Un administrador creó una cuenta para ti en Wedding Finance.",
+    "textPassword": "Contraseña temporal: {password}",
+    "textHint": "(Tendrás que cambiarla en el primer inicio de sesión.)",
+    "textAccess": "Abrir: {url}",
+    "waPassword": "🔑 *Contraseña temporal:* {password}",
+    "waHint": "_(se cambiará en el primer inicio de sesión)_"
+  },
+  "PASSWORD_RESET": {
+    "subject": "Restablecimiento de contraseña — Wedding Finance",
+    "intro": "Recibimos una solicitud para restablecer tu contraseña.",
+    "cta": "Restablecer mi contraseña",
+    "expiresIn": "El enlace expira en <strong>{minutes, plural, one {# minuto} other {# minutos}}</strong>. Si no lo solicitaste, ignora este correo.",
+    "textIntro": "Recibimos una solicitud para restablecer tu contraseña de Wedding Finance.",
+    "textExpires": "Abre el enlace de abajo (expira en {minutes, plural, one {# minuto} other {# minutos}}):",
+    "textIgnore": "Si no lo solicitaste, ignora este correo.",
+    "waIntro": "Recibimos una solicitud para restablecer tu contraseña.",
+    "waExpires": "_El enlace expira en {minutes, plural, one {# minuto} other {# minutos}}._",
+    "waIgnore": "_Si no lo solicitaste, ignora este mensaje._"
+  },
+  "PASSWORD_RESET_BY_ADMIN": {
+    "subject": "Tu contraseña fue restablecida — Wedding Finance",
+    "intro": "Un administrador restableció tu contraseña.",
+    "tempPasswordLabel": "Contraseña temporal:",
+    "tempPasswordHint": "Deberás cambiarla en el próximo inicio de sesión.",
+    "cta": "Abrir la app",
+    "textPassword": "Contraseña temporal: {password}",
+    "textHint": "(se cambiará en el próximo inicio de sesión)",
+    "waHint": "_(se cambiará en el próximo inicio de sesión)_"
+  },
+  "PAYMENT_DUE": {
+    "subjectTomorrow": "El pago a {vendor} vence mañana",
+    "subjectInDays": "El pago a {vendor} vence en {days, plural, one {# día} other {# días}}",
+    "reminderTomorrow": "Recordatorio: el pago vence <strong>mañana</strong>.",
+    "reminderInDays": "Recordatorio: el pago vence <strong>en {days, plural, one {# día} other {# días}}</strong>.",
+    "vendorLabel": "Proveedor",
+    "amountLabel": "Importe",
+    "dueLabel": "Vencimiento",
+    "textTitle": "Recordatorio de pago",
+    "textVendor": "Proveedor: {vendor}",
+    "textAmount": "Importe: {value}",
+    "textDueTomorrow": "Vencimiento: {date} (mañana)",
+    "textDueInDays": "Vencimiento: {date} (en {days, plural, one {# día} other {# días}})",
+    "waTitle": "💸 *Recordatorio de pago*",
+    "waWhenTomorrow": "Vence mañana.",
+    "waWhenInDays": "Vence en {days, plural, one {# día} other {# días}}."
+  },
+  "PAYMENT_OVERDUE": {
+    "subject": "El pago a {vendor} está atrasado",
+    "overdueBanner": "⚠️ Pago atrasado por {days, plural, one {# día} other {# días}}.",
+    "vendorLabel": "Proveedor",
+    "amountLabel": "Importe",
+    "dueLabel": "Vencimiento",
+    "textTitle": "⚠ Pago atrasado por {days, plural, one {# día} other {# días}}",
+    "waTitle": "⚠️ *Pago atrasado*",
+    "waSubtitle": "Atrasado por {days, plural, one {# día} other {# días}}."
+  },
+  "TASK_DUE": {
+    "subjectTomorrow": "Tarea vence mañana: {title}",
+    "subjectInDays": "Tarea vence en {days, plural, one {# día} other {# días}}: {title}",
+    "reminderTomorrow": "Recordatorio: la tarea de abajo vence <strong>mañana</strong>.",
+    "reminderInDays": "Recordatorio: la tarea de abajo vence <strong>en {days, plural, one {# día} other {# días}}</strong>.",
+    "deadlineLabel": "Plazo: {date}",
+    "textTitleTomorrow": "Tarea vence mañana",
+    "textTitleInDays": "Tarea vence en {days, plural, one {# día} other {# días}}",
+    "waTitle": "📋 *Recordatorio de tarea*",
+    "waWhenTomorrow": "Vence mañana.",
+    "waWhenInDays": "Vence en {days, plural, one {# día} other {# días}}.",
+    "waDeadline": "Plazo: {date}"
+  },
+  "TASK_OVERDUE": {
+    "subject": "Tarea atrasada: {title}",
+    "overdueBanner": "⚠️ Tarea atrasada por {days, plural, one {# día} other {# días}}.",
+    "deadlineWasLabel": "Plazo era: {date}",
+    "textTitle": "⚠ Tarea atrasada por {days, plural, one {# día} other {# días}}",
+    "waTitle": "⚠️ *Tarea atrasada*",
+    "waSubtitle": "Atrasada por {days, plural, one {# día} other {# días}}.",
+    "waDeadlineWas": "Plazo era: {date}"
+  },
+  "SYSTEM_WHATSAPP_DOWN": {
+    "subjectLoggedOut": "⚠ Acción requerida: WhatsApp desconectado",
+    "subjectWaitingQr": "⚠ Acción requerida: WhatsApp pidió un nuevo código QR",
+    "subjectConnectionLost": "🔌 WhatsApp inestable — reconectando",
+    "loggedOutBanner": "⚠️ La sesión de WhatsApp se cerró.",
+    "loggedOutBody": "Esto suele suceder cuando alguien desvincula el dispositivo desde la app oficial de WhatsApp. El sistema <strong>no puede reconectarse solo</strong> en este caso — hay que escanear un nuevo código QR.",
+    "waitingQrBanner": "⚠️ WhatsApp solicitó un nuevo código QR.",
+    "waitingQrBody": "La sesión expiró o se invalidó. Para reanudar los envíos, abre la configuración y escanea el QR.",
+    "connectionLostBody": "La conexión con WhatsApp cayó y el sistema está intentando reconectarse automáticamente.",
+    "attemptsLabel": "Intentos hasta ahora: {attempts}",
+    "attemptsHint": "Si no vuelve en unos minutos, abre el panel para verificar.",
+    "openSettings": "Abrir configuración",
+    "lastErrorLabel": "Último error: {error}",
+    "textLoggedOut": "⚠ Acción requerida: WhatsApp desconectado\n\nLa sesión de WhatsApp se cerró. El sistema no puede reconectarse solo — hay que escanear un nuevo código QR.",
+    "textWaitingQr": "⚠ Acción requerida: WhatsApp pidió un nuevo código QR\n\nLa sesión expiró o se invalidó. Abre la configuración y escanea el QR para reanudar los envíos.",
+    "textConnectionLost": "🔌 WhatsApp inestable\n\nLa conexión cayó y el sistema está intentando reconectarse automáticamente.\nIntentos: {attempts}\n\nSi no vuelve en unos minutos, abre: {url}"
+  },
+  "SYSTEM_WHATSAPP_RECOVERED": {
+    "subject": "✅ WhatsApp volvió",
+    "banner": "✅ La conexión con WhatsApp fue restablecida.",
+    "downtimeLessThanMinute": "Tiempo fuera: menos de 1 minuto.",
+    "downtimeMinutes": "Tiempo fuera: {minutes, plural, one {# minuto} other {# minutos}}.",
+    "openSettings": "Abrir configuración",
+    "text": "✅ WhatsApp volvió\n\nLa conexión fue restablecida."
+  }
+}

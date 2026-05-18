@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Drawer } from "vaul";
 import { Heart, LayoutGrid, LogOut } from "lucide-react";
 import { logout } from "@/app/actions/authActions";
@@ -17,17 +18,19 @@ import {
 const SWIPE_OPEN_THRESHOLD_PX = 50;
 
 export function MobileTopBar() {
+  const t = useTranslations("nav");
   return (
     <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-zinc-800 bg-zinc-950/80 px-4 py-3 backdrop-blur md:hidden">
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-500/10 ring-1 ring-rose-500/20">
         <Heart className="h-4 w-4 text-rose-500" />
       </div>
-      <span className="font-semibold tracking-tight text-zinc-100">Wedding Finance</span>
+      <span className="font-semibold tracking-tight text-zinc-100">{t("appTitle")}</span>
     </div>
   );
 }
 
 export function MobileNav() {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const canFinance = useCanViewFinance();
   const [open, setOpen] = useState(false);
@@ -67,12 +70,12 @@ export function MobileNav() {
   return (
     <Drawer.Root open={open} onOpenChange={setOpen}>
       <nav
-        aria-label="Navegação principal"
+        aria-label={t("primaryAria")}
         className="safe-pb fixed bottom-0 left-0 right-0 z-30 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur md:hidden"
       >
         <button
           type="button"
-          aria-label="Arraste para cima para abrir o menu"
+          aria-label={t("swipeOpen")}
           onClick={() => setOpen(true)}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
@@ -98,7 +101,7 @@ export function MobileNav() {
                 }`}
               >
                 <Icon className="mb-0.5 h-5 w-5" />
-                <span>{link.label}</span>
+                <span>{t(link.labelKey.replace(/^nav\./, ""))}</span>
               </Link>
             );
           })}
@@ -106,7 +109,7 @@ export function MobileNav() {
           <Drawer.Trigger asChild>
             <button
               type="button"
-              aria-label="Abrir menu completo"
+              aria-label={t("openMenu")}
               aria-expanded={open}
               aria-controls="mobile-menu-sheet"
               className={`flex flex-col items-center justify-center py-2.5 text-[11px] transition-colors ${
@@ -114,7 +117,7 @@ export function MobileNav() {
               }`}
             >
               <LayoutGrid className="mb-0.5 h-5 w-5" />
-              <span>Mais</span>
+              <span>{t("more")}</span>
             </button>
           </Drawer.Trigger>
         </div>
@@ -128,10 +131,8 @@ export function MobileNav() {
         >
           <div className="mx-auto mt-3 h-1.5 w-12 flex-shrink-0 rounded-full bg-zinc-700" />
           <div className="flex items-center justify-between border-b border-zinc-800 px-5 pb-3 pt-2">
-            <Drawer.Title className="text-base font-semibold text-zinc-100">Menu</Drawer.Title>
-            <Drawer.Description className="sr-only">
-              Navegação completa do dashboard. Toque em qualquer item para abrir, ou deslize para baixo para fechar.
-            </Drawer.Description>
+            <Drawer.Title className="text-base font-semibold text-zinc-100">{t("menu")}</Drawer.Title>
+            <Drawer.Description className="sr-only">{t("drawerHelp")}</Drawer.Description>
           </div>
 
           <div
@@ -147,7 +148,7 @@ export function MobileNav() {
               return (
                 <div key={category.id} className="pt-4">
                   <h3 className="px-3 pb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
-                    {category.label}
+                    {t(category.labelKey.replace(/^nav\./, ""))}
                   </h3>
                   <ul className="space-y-1">
                     {links.map((link) => {
@@ -166,7 +167,7 @@ export function MobileNav() {
                             }`}
                           >
                             <Icon className={`h-5 w-5 ${active ? "text-rose-400" : ""}`} />
-                            <span>{link.label}</span>
+                            <span>{t(link.labelKey.replace(/^nav\./, ""))}</span>
                           </Link>
                         </li>
                       );
@@ -183,7 +184,7 @@ export function MobileNav() {
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-rose-400 transition-colors hover:bg-rose-500/10"
                 >
                   <LogOut className="h-5 w-5" />
-                  <span>Sair</span>
+                  <span>{t("logout")}</span>
                 </button>
               </form>
             </div>

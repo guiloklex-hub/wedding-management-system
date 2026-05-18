@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Heart, LogOut } from "lucide-react";
 import { logout } from "@/app/actions/authActions";
 import { isActive, useVisibleLinks } from "./nav-links";
 
 export function Sidebar() {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const visibleLinks = useVisibleLinks();
   return (
@@ -15,7 +17,7 @@ export function Sidebar() {
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500/10 ring-1 ring-rose-500/20">
           <Heart className="h-5 w-5 text-rose-500" />
         </div>
-        <span className="font-semibold tracking-tight text-zinc-100">Wedding Finance</span>
+        <span className="font-semibold tracking-tight text-zinc-100">{t("appTitle")}</span>
       </div>
       <nav className="flex-1 space-y-1 p-4">
         {visibleLinks.map((l) => {
@@ -32,7 +34,7 @@ export function Sidebar() {
               }`}
             >
               <Icon className={`h-5 w-5 ${active ? "text-rose-400" : ""}`} />
-              <span>{l.label}</span>
+              <span>{t(l.labelKey.replace(/^nav\./, ""))}</span>
             </Link>
           );
         })}
@@ -44,7 +46,7 @@ export function Sidebar() {
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-400 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
           >
             <LogOut className="h-5 w-5" />
-            <span>Sair</span>
+            <span>{t("logout")}</span>
           </button>
         </form>
       </div>

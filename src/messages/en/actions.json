@@ -1,0 +1,34 @@
+{
+  "common": {
+    "unauthorized": "Not authorized",
+    "forbidden": "Access denied",
+    "invalid": "Invalid data",
+    "notFound": "Not found",
+    "generic": "Something went wrong. Please try again."
+  },
+  "auth": {
+    "invalidCredentials": "Invalid credentials.",
+    "loginGenericError": "Something went wrong while signing in."
+  },
+  "passwordReset": {
+    "invalidEmail": "Invalid email",
+    "passwordsDontMatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least {min} characters",
+    "invalidOrExpired": "Invalid or expired link. Request a new one.",
+    "tokenNotFound": "Token not found",
+    "userNotFoundOrInactive": "User not found or inactive",
+    "errorResetting": "Error resetting password"
+  },
+  "onboarding": {
+    "coupleNameRequired": "Enter the couple's name",
+    "invalidDate": "Invalid date",
+    "errorCouple": "Error saving couple data",
+    "errorBudget": "Error saving budget",
+    "errorFinish": "Error finishing onboarding"
+  },
+  "profile": {
+    "invalidLocale": "Invalid language",
+    "errorSaving": "Error saving profile",
+    "saved": "Profile updated"
+  }
+}

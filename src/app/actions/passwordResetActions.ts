@@ -3,11 +3,13 @@
 import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { getSecuritySettings } from "@/lib/security-settings";
 import { rateLimit } from "@/lib/rate-limit";
 import { notify } from "@/lib/notifications";
+import { coerceLocale } from "@/i18n/config";
 import type { ActionResult } from "@/types";
 
 const RESET_TOKEN_TTL_MIN = 60;
@@ -23,19 +25,17 @@ function buildResetUrl(token: string): string {
 }
 
 const RequestSchema = z.object({
-  email: z.string().trim().toLowerCase().email("Email inválido").max(160),
+  email: z.string().trim().toLowerCase().email().max(160),
 });
 
 export async function requestPasswordReset(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.passwordReset");
   const parsed = RequestSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Email inválido",
-    };
+    return { success: false, error: t("invalidEmail") };
   }
 
   const { email } = parsed.data;
@@ -59,7 +59,7 @@ export async function requestPasswordReset(
       });
 
       await notify(
-        { userId: user.id, email: user.email, phone: user.phone },
+        { userId: user.id, email: user.email, phone: user.phone, locale: coerceLocale(user.locale) },
         {
           kind: "PASSWORD_RESET",
           userName: user.name ?? user.email,
@@ -88,22 +88,21 @@ export async function consumePasswordReset(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.passwordReset");
+  const tc = await getTranslations("actions.common");
   const parsed = ConsumeSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Dados inválidos",
-    };
+    return { success: false, error: tc("invalid") };
   }
   if (parsed.data.newPassword !== parsed.data.confirmPassword) {
-    return { success: false, error: "As senhas não conferem" };
+    return { success: false, error: t("passwordsDontMatch") };
   }
 
   const settings = await getSecuritySettings();
   if (parsed.data.newPassword.length < settings.passwordMinLength) {
     return {
       success: false,
-      error: `Senha deve ter ao menos ${settings.passwordMinLength} caracteres`,
+      error: t("passwordTooShort", { min: settings.passwordMinLength }),
     };
   }
 
@@ -121,22 +120,19 @@ export async function consumePasswordReset(
     });
 
     if (updated.count === 0) {
-      return {
-        success: false,
-        error: "Link inválido ou expirado. Solicite um novo.",
-      };
+      return { success: false, error: t("invalidOrExpired") };
     }
 
     const tokenRow = await prisma.passwordResetToken.findUnique({
       where: { tokenHash },
     });
     if (!tokenRow) {
-      return { success: false, error: "Token não encontrado" };
+      return { success: false, error: t("tokenNotFound") };
     }
 
     const user = await prisma.user.findUnique({ where: { id: tokenRow.userId } });
     if (!user || !user.isActive || user.archivedAt) {
-      return { success: false, error: "Usuário não encontrado ou inativo" };
+      return { success: false, error: t("userNotFoundOrInactive") };
     }
 
     const hashed = await bcrypt.hash(parsed.data.newPassword, 10);
@@ -154,7 +150,7 @@ export async function consumePasswordReset(
     return { success: true };
   } catch (err) {
     console.error("[consumePasswordReset]", err);
-    return { success: false, error: "Erro ao redefinir senha" };
+    return { success: false, error: t("errorResetting") };
   }
 }
 

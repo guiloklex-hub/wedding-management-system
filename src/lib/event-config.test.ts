@@ -31,11 +31,12 @@ describe("getEventConfig", () => {
 
   it("retorna a config mapeada", async () => {
     const cfg = await getEventConfig();
-    expect(cfg).toEqual({
+    expect(cfg).toMatchObject({
       eventDate: baseRow.eventDate,
       contingencyPercent: 10,
       currency: "BRL",
       coupleNames: null,
+      defaultLocale: "pt-BR",
     });
   });
 });

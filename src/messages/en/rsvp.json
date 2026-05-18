@@ -1,0 +1,47 @@
+{
+  "individual": {
+    "officialInvite": "Official invitation",
+    "greeting": "Hi {name}!",
+    "intro": "You are invited to our wedding",
+    "intoDate": "on <strong>{date}</strong>",
+    "question": "Are you coming to our wedding?",
+    "choices": {
+      "yes": "Yes, I'll be there!",
+      "maybe": "Maybe (I'll confirm later)",
+      "no": "Sadly I can't make it"
+    },
+    "plusOnes": "Will you bring a plus-one?",
+    "plusOnesAllowed": "Up to {max} allowed.",
+    "dietary": "Dietary restrictions",
+    "dietaryPlaceholder": "e.g. vegetarian, gluten-free…",
+    "notes": "Message to the couple",
+    "submit": "Send response",
+    "result": {
+      "confirmed": "Got it! 🎉 We can't wait to see you!",
+      "declined": "We'll miss you. Thanks for letting us know.",
+      "maybe": "Saved as maybe. Let us know as soon as you decide!"
+    },
+    "footer": "Questions? Contact whoever sent you the link."
+  },
+  "group": {
+    "greeting": "Hi, {name}!",
+    "intro": "You are all invited to our wedding",
+    "introWithDate": "You are all invited to our wedding on <strong>{date}</strong>. Reply for each family member below.",
+    "introWithoutDate": "You are all invited to our wedding. Reply for each family member below.",
+    "child": "child",
+    "choices": {
+      "yes": "Going",
+      "maybe": "Maybe",
+      "no": "Not going"
+    },
+    "plusOnesLabel": "Plus-ones (up to {max})",
+    "dietary": "Dietary restrictions (optional)",
+    "dietaryPlaceholder": "e.g. vegetarian, lactose intolerant",
+    "notes": "Message to the couple (optional)",
+    "submit": "Send responses",
+    "errors": {
+      "missingAnswers": "Please reply for all {count} guests."
+    },
+    "success": "Responses saved for {count} guest(s). Thank you!"
+  }
+}

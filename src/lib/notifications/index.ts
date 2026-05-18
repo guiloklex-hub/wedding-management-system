@@ -2,11 +2,13 @@ import { sendEmail, isEmailConfigured } from "./email";
 import { sendWhatsApp, isValidPhone, getWhatsAppStatus } from "./whatsapp";
 import { logNotification } from "./log";
 import { render, type RenderInput } from "./templates";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 
 export type NotifyTarget = {
   userId?: string | null;
   email?: string | null;
   phone?: string | null;
+  locale?: Locale | null;
 };
 
 export type NotifyOptions = {
@@ -24,7 +26,8 @@ export async function notify(
   input: RenderInput,
   options: NotifyOptions = {},
 ): Promise<NotifyResult> {
-  const rendered = render(input);
+  const locale: Locale = (input as { locale?: Locale }).locale ?? target.locale ?? DEFAULT_LOCALE;
+  const rendered = await render({ ...input, locale } as RenderInput);
   const result: NotifyResult = {
     email: { attempted: false, ok: false },
     whatsapp: { attempted: false, ok: false },

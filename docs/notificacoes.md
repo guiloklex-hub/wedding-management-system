@@ -4,6 +4,20 @@ O Wedding Finance Planner envia lembretes e avisos por **dois canais**
 independentes que funcionam em paralelo: **email (SMTP via Nodemailer)** e
 **WhatsApp (Baileys embutido)**.
 
+## Locale do destinatário (i18n)
+
+Cada notificação é renderizada no idioma do destinatário (`User.locale`)
+desde a v0.5.0. Os templates em
+[src/lib/notifications/templates.ts](../src/lib/notifications/templates.ts)
+são **async** e recebem `locale: Locale` em cada variante de
+`RenderInput`. O orquestrador `notify()` aceita `target.locale` opcional;
+quando não passado, usa `EventSettings.defaultLocale`.
+
+**Importante:** dentro do template **nunca** chame `getLocale()` do
+next-intl. Em cron jobs e webhooks, ele retorna o default porque não há
+request lifecycle do destinatário. Sempre propague o locale lido do
+banco. Veja [i18n.md](i18n.md) para o padrão completo.
+
 ## Eventos notificados
 
 | Evento | Quando dispara | Email | WhatsApp |

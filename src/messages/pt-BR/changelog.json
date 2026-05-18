@@ -1,0 +1,6 @@
+{
+  "title": "Histórico de versões",
+  "subtitle": "Cada bump documenta o que mudou e por quê.",
+  "translationNotice": "Notas de versão detalhadas estão em português. Versões resumidas em inglês e espanhol disponíveis para as releases mais recentes.",
+  "latestHighlight": "i18n inicial: pt-BR, inglês e espanhol. Cada usuário escolhe seu idioma no onboarding ou em /dashboard/profile."
+}

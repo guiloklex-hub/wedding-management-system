@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { authenticate } from "@/app/actions/authActions";
 import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -8,12 +9,6 @@ import Link from "next/link";
 const TWO_FACTOR_REQUIRED = "2FA_REQUIRED";
 const TWO_FACTOR_SETUP_REQUIRED = "2FA_SETUP_REQUIRED";
 const ACCOUNT_DISABLED = "ACCOUNT_DISABLED";
-
-const FRIENDLY_ERROR: Record<string, string> = {
-  [TWO_FACTOR_SETUP_REQUIRED]:
-    "Sua função exige 2FA. Peça para um administrador resetar sua senha e configure 2FA na primeira entrada — ou peça para ele afrouxar a política.",
-  [ACCOUNT_DISABLED]: "Conta desativada. Procure um administrador.",
-};
 
 function resolveRedirectTo(): string {
   if (typeof window === "undefined") return "/dashboard";
@@ -33,11 +28,18 @@ function resolveRedirectTo(): string {
 }
 
 export default function LoginForm() {
+  const t = useTranslations("auth.login");
   const [errorMessage, formAction, isPending] = useActionState(authenticate, undefined);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const redirectRef = useRef<HTMLInputElement>(null);
   const needs2fa = errorMessage === TWO_FACTOR_REQUIRED;
+
+  const FRIENDLY_ERROR: Record<string, string> = {
+    [TWO_FACTOR_SETUP_REQUIRED]: t("errors.twoFactorSetupRequired"),
+    [ACCOUNT_DISABLED]: t("errors.accountDisabled"),
+  };
+
   const friendly =
     errorMessage && errorMessage !== TWO_FACTOR_REQUIRED
       ? FRIENDLY_ERROR[errorMessage] ?? errorMessage
@@ -58,14 +60,14 @@ export default function LoginForm() {
       <div className="space-y-4">
         <div suppressHydrationWarning>
           <label className="mb-2 block text-sm font-medium text-zinc-300" htmlFor="email">
-            Email
+            {t("email")}
           </label>
           <input
             className="block w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
             id="email"
             type="email"
             name="email"
-            placeholder="seu@email.com"
+            placeholder={t("emailPlaceholder")}
             autoComplete="email"
             required
             value={email}
@@ -75,14 +77,14 @@ export default function LoginForm() {
         </div>
         <div suppressHydrationWarning>
           <label className="mb-2 block text-sm font-medium text-zinc-300" htmlFor="password">
-            Senha
+            {t("password")}
           </label>
           <input
             className="block w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
             id="password"
             type="password"
             name="password"
-            placeholder="••••••••"
+            placeholder={t("passwordPlaceholder")}
             autoComplete="current-password"
             required
             minLength={1}
@@ -94,7 +96,7 @@ export default function LoginForm() {
         {needs2fa ? (
           <div>
             <label className="mb-2 flex items-center gap-1.5 text-sm font-medium text-zinc-300" htmlFor="totp">
-              <ShieldCheck className="h-4 w-4 text-rose-400" /> Código 2FA
+              <ShieldCheck className="h-4 w-4 text-rose-400" /> {t("twoFactor.label")}
             </label>
             <input
               className="block w-full rounded-xl border border-rose-500/30 bg-zinc-950 px-4 py-3 text-center text-lg tracking-widest text-zinc-200 outline-none focus:border-rose-500/50"
@@ -102,13 +104,13 @@ export default function LoginForm() {
               name="totp"
               inputMode="numeric"
               autoComplete="one-time-code"
-              placeholder="123456"
+              placeholder={t("twoFactor.placeholder")}
               required
               autoFocus
               maxLength={11}
             />
             <p className="mt-1 text-[11px] text-zinc-500">
-              Digite o código de 6 dígitos do seu app autenticador (ou um código de backup).
+              {t("twoFactor.help")}
             </p>
           </div>
         ) : null}
@@ -128,9 +130,9 @@ export default function LoginForm() {
         {isPending ? (
           <Loader2 className="h-5 w-5 animate-spin" />
         ) : needs2fa ? (
-          "Verificar e entrar"
+          t("verifyAndEnter")
         ) : (
-          "Entrar"
+          t("submit")
         )}
         {!isPending ? <ArrowRight className="h-4 w-4" /> : null}
       </button>
@@ -140,7 +142,7 @@ export default function LoginForm() {
           href="/forgot-password"
           className="text-sm text-zinc-400 hover:text-rose-400"
         >
-          Esqueci minha senha
+          {t("forgotPassword")}
         </Link>
       </div>
     </form>

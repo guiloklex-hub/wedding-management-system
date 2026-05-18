@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { coerceLocale, type Locale } from "@/i18n/config";
 
 export type EventConfig = {
   eventDate: Date | null;
@@ -6,6 +7,7 @@ export type EventConfig = {
   currency: string;
   coupleNames: string | null;
   onboardingCompletedAt: Date | null;
+  defaultLocale: Locale;
   pixKey: string | null;
   pixKeyType: string | null;
   pixHolderName: string | null;
@@ -29,6 +31,7 @@ export async function getEventConfig(): Promise<EventConfig> {
     currency: settings.currency,
     coupleNames: settings.coupleNames,
     onboardingCompletedAt: settings.onboardingCompletedAt,
+    defaultLocale: coerceLocale(settings.defaultLocale),
     pixKey: settings.pixKey,
     pixKeyType: settings.pixKeyType,
     pixHolderName: settings.pixHolderName,
@@ -55,6 +58,7 @@ export async function updateEventConfig(
       coupleNames: input.coupleNames ?? undefined,
       onboardingCompletedAt:
         input.onboardingCompletedAt === undefined ? undefined : input.onboardingCompletedAt,
+      defaultLocale: input.defaultLocale ?? undefined,
       pixKey: input.pixKey === undefined ? undefined : input.pixKey,
       pixKeyType: input.pixKeyType === undefined ? undefined : input.pixKeyType,
       pixHolderName: input.pixHolderName === undefined ? undefined : input.pixHolderName,
@@ -68,6 +72,7 @@ export async function updateEventConfig(
     currency: updated.currency,
     coupleNames: updated.coupleNames,
     onboardingCompletedAt: updated.onboardingCompletedAt,
+    defaultLocale: coerceLocale(updated.defaultLocale),
     pixKey: updated.pixKey,
     pixKeyType: updated.pixKeyType,
     pixHolderName: updated.pixHolderName,

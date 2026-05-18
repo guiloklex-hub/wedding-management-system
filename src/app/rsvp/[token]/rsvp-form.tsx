@@ -15,7 +15,23 @@ type Guest = {
   notes: string | null;
 };
 
-export default function RsvpForm({ guest }: { guest: Guest }) {
+export type RsvpFormLabels = {
+  question: string;
+  choiceYes: string;
+  choiceMaybe: string;
+  choiceNo: string;
+  plusOnes: string;
+  plusOnesAllowed: string;
+  dietary: string;
+  dietaryPlaceholder: string;
+  notes: string;
+  submit: string;
+  resultConfirmed: string;
+  resultDeclined: string;
+  resultMaybe: string;
+};
+
+export default function RsvpForm({ guest, labels }: { guest: Guest; labels: RsvpFormLabels }) {
   const [choice, setChoice] = useState<"CONFIRMED" | "DECLINED" | "MAYBE" | null>(
     guest.rsvpStatus === "CONFIRMED" || guest.rsvpStatus === "DECLINED" || guest.rsvpStatus === "MAYBE"
       ? guest.rsvpStatus
@@ -32,15 +48,13 @@ export default function RsvpForm({ guest }: { guest: Guest }) {
       try {
         const r = await publicRsvpRespond(undefined, formData);
         if (r.success && r.data) {
-          setResult({
-            tone: "ok",
-            text:
-              r.data.status === "CONFIRMED"
-                ? "Confirmação recebida! 🎉 Te esperamos!"
-                : r.data.status === "DECLINED"
-                  ? "Vamos sentir sua falta. Obrigado por avisar."
-                  : "Resposta registrada como talvez. Avisa logo que decidir!",
-          });
+          const text =
+            r.data.status === "CONFIRMED"
+              ? labels.resultConfirmed
+              : r.data.status === "DECLINED"
+                ? labels.resultDeclined
+                : labels.resultMaybe;
+          setResult({ tone: "ok", text });
         } else if (!r.success) {
           setResult({ tone: "bad", text: r.error });
         }
@@ -55,13 +69,13 @@ export default function RsvpForm({ guest }: { guest: Guest }) {
       <input type="hidden" name="token" value={guest.rsvpToken} />
 
       <fieldset className="space-y-2">
-        <legend className="mb-2 text-sm font-medium text-zinc-200">Você vem ao nosso casamento?</legend>
+        <legend className="mb-2 text-sm font-medium text-zinc-200">{labels.question}</legend>
         <Choice
           name="status"
           value="CONFIRMED"
           checked={choice === "CONFIRMED"}
           onChange={() => setChoice("CONFIRMED")}
-          label="Sim, vou estar lá!"
+          label={labels.choiceYes}
           color="emerald"
         />
         <Choice
@@ -69,7 +83,7 @@ export default function RsvpForm({ guest }: { guest: Guest }) {
           value="MAYBE"
           checked={choice === "MAYBE"}
           onChange={() => setChoice("MAYBE")}
-          label="Talvez (vou avisar depois)"
+          label={labels.choiceMaybe}
           color="amber"
         />
         <Choice
@@ -77,16 +91,14 @@ export default function RsvpForm({ guest }: { guest: Guest }) {
           value="DECLINED"
           checked={choice === "DECLINED"}
           onChange={() => setChoice("DECLINED")}
-          label="Infelizmente não consigo"
+          label={labels.choiceNo}
           color="rose"
         />
       </fieldset>
 
       {choice === "CONFIRMED" && guest.plusOnesAllowed > 0 ? (
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-200">
-            Vai levar acompanhante(s)?
-          </label>
+          <label className="mb-1 block text-sm font-medium text-zinc-200">{labels.plusOnes}</label>
           <input
             type="number"
             name="plusOnesConfirmed"
@@ -95,7 +107,7 @@ export default function RsvpForm({ guest }: { guest: Guest }) {
             defaultValue={guest.plusOnesConfirmed}
             className="w-full rounded-xl border border-rose-500/20 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-400"
           />
-          <p className="mt-1 text-[11px] text-zinc-500">Permitidos até {guest.plusOnesAllowed}.</p>
+          <p className="mt-1 text-[11px] text-zinc-500">{labels.plusOnesAllowed}</p>
         </div>
       ) : (
         <input type="hidden" name="plusOnesConfirmed" value="0" />
@@ -103,22 +115,20 @@ export default function RsvpForm({ guest }: { guest: Guest }) {
 
       {choice === "CONFIRMED" ? (
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-200">
-            Restrições alimentares
-          </label>
+          <label className="mb-1 block text-sm font-medium text-zinc-200">{labels.dietary}</label>
           <input
             type="text"
             name="dietary"
             maxLength={200}
             defaultValue={guest.dietary ?? ""}
-            placeholder="Ex: vegetariano, sem glúten..."
+            placeholder={labels.dietaryPlaceholder}
             className="w-full rounded-xl border border-rose-500/20 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-400"
           />
         </div>
       ) : null}
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-200">Recado para os noivos</label>
+        <label className="mb-1 block text-sm font-medium text-zinc-200">{labels.notes}</label>
         <textarea
           name="notes"
           rows={2}
@@ -133,7 +143,7 @@ export default function RsvpForm({ guest }: { guest: Guest }) {
         disabled={!choice || busy}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-500 py-3 text-sm font-semibold text-white hover:bg-rose-400 disabled:opacity-50"
       >
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar resposta"}
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : labels.submit}
       </button>
 
       {result ? (

@@ -50,7 +50,7 @@ export async function createGoal(
         isActive: parsed.data.isActive,
       },
     });
-    await audit("Asset", created.id, "CREATE", { type: "SavingsGoal" });
+    await audit("SavingsGoal", created.id, "CREATE", { name: created.name, targetAmount: created.targetAmount });
     revalidatePath("/dashboard/goals");
     revalidatePath("/dashboard");
     return { success: true };
@@ -83,6 +83,7 @@ export async function updateGoal(
       },
     });
     if (result.count === 0) return { success: false, error: "Meta não encontrada" };
+    await audit("SavingsGoal", parsed.data.id, "UPDATE", { name: parsed.data.name });
     revalidatePath("/dashboard/goals");
     revalidatePath("/dashboard");
     return { success: true };
@@ -105,6 +106,7 @@ export async function deleteGoal(goalId: string): Promise<ActionResult> {
       where: { goalId, deletedAt: null },
       data: { goalId: null },
     });
+    await audit("SavingsGoal", goalId, "DELETE");
     revalidatePath("/dashboard/goals");
     revalidatePath("/dashboard");
     return { success: true };

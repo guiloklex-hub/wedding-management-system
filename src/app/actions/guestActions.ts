@@ -69,7 +69,7 @@ export async function createGuest(
         notes: parsed.data.notes,
       },
     });
-    await audit("Asset", created.id, "CREATE", { entity: "Guest" });
+    await audit("Guest", created.id, "CREATE", { name: created.name });
     revalidatePath("/dashboard/guests");
     return { success: true };
   } catch (err) {
@@ -110,6 +110,7 @@ export async function updateGuest(
       },
     });
     if (result.count === 0) return { success: false, error: "Convidado não encontrado" };
+    await audit("Guest", parsed.data.id, "UPDATE", { name: parsed.data.name });
     revalidatePath("/dashboard/guests");
     return { success: true };
   } catch (err) {
@@ -127,6 +128,7 @@ export async function deleteGuest(guestId: string): Promise<ActionResult> {
       data: { deletedAt: new Date() },
     });
     if (result.count === 0) return { success: false, error: "Convidado não encontrado" };
+    await audit("Guest", guestId, "DELETE");
     revalidatePath("/dashboard/guests");
     return { success: true };
   } catch (err) {
@@ -144,6 +146,7 @@ export async function toggleCheckin(guestId: string, present: boolean): Promise<
       data: { checkedInAt: present ? new Date() : null },
     });
     if (result.count === 0) return { success: false, error: "Convidado não encontrado" };
+    await audit("Guest", guestId, "STATUS_CHANGE", { checkedIn: present });
     revalidatePath("/dashboard/guests");
     revalidatePath("/dashboard/wedding-day");
     return { success: true };
@@ -215,6 +218,9 @@ export async function bulkImportGuests(
       });
       created++;
     }
+    if (created > 0) {
+      await audit("Guest", "bulk-import", "BULK_CREATE", { created, skipped });
+    }
     revalidatePath("/dashboard/guests");
     return { success: true, data: { created, skipped } };
   } catch (err) {
@@ -250,6 +256,9 @@ export async function publicRsvpRespond(
       where: { rsvpToken: parsed.data.token, deletedAt: null },
     });
     if (!guest) return { success: false, error: "Convite não encontrado" };
+    if (guest.rsvpTokenExpiresAt && guest.rsvpTokenExpiresAt.getTime() < Date.now()) {
+      return { success: false, error: "Link expirado. Solicite um novo convite." };
+    }
 
     const plus = Math.min(parsed.data.plusOnesConfirmed, guest.plusOnesAllowed);
     const updated = await prisma.guest.update({

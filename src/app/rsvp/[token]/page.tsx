@@ -17,8 +17,13 @@ export default async function PublicRsvpPage({
 }) {
   const { token } = await params;
   const sp = await searchParams;
+  const now = new Date();
   const guest = await prisma.guest.findFirst({
-    where: { rsvpToken: token, deletedAt: null },
+    where: {
+      rsvpToken: token,
+      deletedAt: null,
+      OR: [{ rsvpTokenExpiresAt: null }, { rsvpTokenExpiresAt: { gt: now } }],
+    },
   });
   if (!guest) return notFound();
 

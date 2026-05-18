@@ -7,7 +7,7 @@ import {
   signOut,
   TWO_FACTOR_REQUIRED,
   TWO_FACTOR_SETUP_REQUIRED,
-  ACCOUNT_DISABLED,
+  TOO_MANY_ATTEMPTS,
 } from "@/auth";
 
 function safeRedirect(input: FormDataEntryValue | null | undefined): string {
@@ -32,7 +32,7 @@ export async function authenticate(
       const cause = (error.cause as { err?: { message?: string } } | undefined)?.err?.message;
       if (cause === TWO_FACTOR_REQUIRED) return TWO_FACTOR_REQUIRED;
       if (cause === TWO_FACTOR_SETUP_REQUIRED) return TWO_FACTOR_SETUP_REQUIRED;
-      if (cause === ACCOUNT_DISABLED) return ACCOUNT_DISABLED;
+      if (cause === TOO_MANY_ATTEMPTS) return TOO_MANY_ATTEMPTS;
       const t = await getTranslations("actions.auth");
       switch (error.type) {
         case "CredentialsSignin":

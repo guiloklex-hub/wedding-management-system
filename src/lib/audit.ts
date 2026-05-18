@@ -25,13 +25,21 @@ export type AuditAction =
   | "UPLOAD"
   | "DOWNLOAD"
   | "REPLACE"
-  | "SIGN";
+  | "SIGN"
+  | "CONNECT"
+  | "DISCONNECT"
+  | "ENABLE_2FA"
+  | "DISABLE_2FA";
 
 export type AuditEntity =
   | "Vendor"
+  | "VendorContact"
+  | "VendorNote"
   | "BudgetItem"
   | "Payment"
   | "Asset"
+  | "Income"
+  | "SavingsGoal"
   | "EventSettings"
   | "User"
   | "SecuritySettings"
@@ -40,7 +48,12 @@ export type AuditEntity =
   | "GuestGroup"
   | "Gift"
   | "Contract"
-  | "Attachment";
+  | "Attachment"
+  | "Task"
+  | "Venue"
+  | "Honeymoon"
+  | "HoneymoonItem"
+  | "TrousseauItem";
 
 export async function audit(
   entity: AuditEntity,
@@ -49,6 +62,20 @@ export async function audit(
   payload?: Record<string, unknown>,
   userId?: string,
 ): Promise<void> {
+  let actorId = userId ?? null;
+  if (!actorId) {
+    try {
+      // Import dinâmico para evitar carregar `@/auth` em contextos onde ele
+      // não está disponível (e.g. testes que importam o módulo isolado).
+      const { auth } = await import("@/auth");
+      const session = await auth();
+      const id = (session?.user as { id?: string } | undefined)?.id;
+      if (id) actorId = id;
+    } catch {
+      // auth() may fail outside request lifecycle (cron, scripts); leave userId null
+    }
+  }
+
   try {
     await prisma.auditLog.create({
       data: {
@@ -56,7 +83,7 @@ export async function audit(
         entityId,
         action,
         payload: payload ? JSON.stringify(payload) : null,
-        userId: userId ?? null,
+        userId: actorId,
       },
     });
   } catch (err) {

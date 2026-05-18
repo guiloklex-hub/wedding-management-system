@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { canViewSensitiveFinance } from "@/lib/permissions";
 import VendorDetailClient from "./vendor-detail-client";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
   const { id } = await params;
   const session = await auth();
   const role = (session?.user as { role?: string } | undefined)?.role;
+  const showFinance = canViewSensitiveFinance(role);
 
   const vendor = await prisma.vendor.findFirst({
     where: { id, deletedAt: null },
@@ -38,6 +40,15 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
 
   if (!vendor) return notFound();
 
+  const sanitized = showFinance
+    ? vendor
+    : {
+        ...vendor,
+        budgetItems: [],
+        payments: [],
+        contracts: vendor.contracts.map((c) => ({ ...c, totalValue: null })),
+      };
+
   return (
     <div className="space-y-6">
       <div>
@@ -49,7 +60,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
           <span>Voltar para fornecedores</span>
         </Link>
       </div>
-      <VendorDetailClient vendor={vendor} role={role ?? null} />
+      <VendorDetailClient vendor={sanitized} role={role ?? null} />
     </div>
   );
 }

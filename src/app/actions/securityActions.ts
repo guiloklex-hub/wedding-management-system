@@ -9,6 +9,7 @@ import {
   checkBackupCode,
   createTotpSetup,
   generateBackupCodes,
+  hashBackupCodes,
   verifyTotpToken,
 } from "@/lib/totp";
 import type { ActionResult } from "@/types";
@@ -37,8 +38,8 @@ export async function confirmTwoFactor(
   formData: FormData,
 ): Promise<ActionResult<{ backupCodes: string[] }>> {
   const session = await auth();
-  const userEmail = session?.user?.email;
-  if (!userEmail) return { success: false, error: "Não autorizado" };
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) return { success: false, error: "Não autorizado" };
 
   const parsed = ConfirmSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -50,15 +51,16 @@ export async function confirmTwoFactor(
 
   try {
     const backupCodes = generateBackupCodes(8);
+    const hashedCodes = await hashBackupCodes(backupCodes);
     await prisma.user.update({
-      where: { email: userEmail },
+      where: { id: userId },
       data: {
         twoFactorEnabled: true,
         twoFactorSecret: parsed.data.secret,
-        twoFactorBackupCodes: JSON.stringify(backupCodes),
+        twoFactorBackupCodes: JSON.stringify(hashedCodes),
       },
     });
-    await audit("EventSettings", userEmail, "UPDATE", { enabled2FA: true });
+    await audit("User", userId, "ENABLE_2FA");
     revalidatePath("/dashboard/settings");
     return { success: true, data: { backupCodes } };
   } catch (err) {
@@ -76,14 +78,14 @@ export async function disableTwoFactor(
   formData: FormData,
 ): Promise<ActionResult> {
   const session = await auth();
-  const userEmail = session?.user?.email;
-  if (!userEmail) return { success: false, error: "Não autorizado" };
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) return { success: false, error: "Não autorizado" };
 
   const parsed = DisableSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { success: false, error: "Código obrigatório" };
 
   try {
-    const user = await prisma.user.findUnique({ where: { email: userEmail } });
+    const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
       return { success: false, error: "2FA não está ativo" };
     }
@@ -92,21 +94,21 @@ export async function disableTwoFactor(
     let isBackup = false;
     let remaining: string[] = [];
     if (!isTotp) {
-      const check = checkBackupCode(parsed.data.token, user.twoFactorBackupCodes);
+      const check = await checkBackupCode(parsed.data.token, user.twoFactorBackupCodes);
       isBackup = check.valid;
       remaining = check.remaining;
     }
     if (!isTotp && !isBackup) return { success: false, error: "Código inválido" };
 
     await prisma.user.update({
-      where: { email: userEmail },
+      where: { id: userId },
       data: {
         twoFactorEnabled: false,
         twoFactorSecret: null,
         twoFactorBackupCodes: isBackup ? JSON.stringify(remaining) : null,
       },
     });
-    await audit("EventSettings", userEmail, "UPDATE", { enabled2FA: false });
+    await audit("User", userId, "DISABLE_2FA");
     revalidatePath("/dashboard/settings");
     return { success: true };
   } catch (err) {

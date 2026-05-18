@@ -1,13 +1,14 @@
 "use server";
 
 import { createHash, randomBytes } from "node:crypto";
+import { headers } from "next/headers";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { getSecuritySettings } from "@/lib/security-settings";
-import { rateLimit } from "@/lib/rate-limit";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { notify } from "@/lib/notifications";
 import { coerceLocale } from "@/i18n/config";
 import type { ActionResult } from "@/types";
@@ -39,11 +40,18 @@ export async function requestPasswordReset(
   }
 
   const { email } = parsed.data;
-  const rl = rateLimit(`forgot:${email}`, 1, 60_000);
-  if (!rl.ok) {
-    return {
-      success: true,
-    };
+  let ip = "unknown";
+  try {
+    ip = getClientIp(await headers());
+  } catch {
+    // headers() pode falhar fora do request lifecycle; manter "unknown"
+  }
+  // Rate-limit por e-mail e por IP — protege contra enumeração e flood.
+  if (!rateLimit(`forgot:email:${email}`, 1, 60_000).ok) {
+    return { success: true };
+  }
+  if (!rateLimit(`forgot:ip:${ip}`, 5, 60_000).ok) {
+    return { success: true };
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
@@ -72,6 +80,15 @@ export async function requestPasswordReset(
       await audit("User", user.id, "RESET_PASSWORD", { via: "LINK_REQUEST" });
     } catch (err) {
       console.error("[requestPasswordReset]", err);
+    }
+  } else {
+    // Caminho "usuário inexistente" — simula custo de bcrypt + token gen para
+    // que o atacante não consiga inferir existência via timing.
+    try {
+      const dummyHash = createHash("sha256").update(randomBytes(32)).digest("hex");
+      await bcrypt.hash(dummyHash, 10);
+    } catch {
+      // best-effort
     }
   }
 

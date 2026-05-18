@@ -63,32 +63,42 @@ describe("verifyTotpToken", () => {
 });
 
 describe("checkBackupCode", () => {
-  it("aceita código presente e remove ele da lista", () => {
+  it("aceita código legado em texto plano e remove ele da lista", async () => {
     const codes = ["AAAAA-1111", "BBBBB-2222"];
-    const result = checkBackupCode("AAAAA-1111", JSON.stringify(codes));
+    const result = await checkBackupCode("AAAAA-1111", JSON.stringify(codes));
     expect(result.valid).toBe(true);
     expect(result.remaining).toEqual(["BBBBB-2222"]);
   });
 
-  it("normaliza case (uppercase)", () => {
+  it("aceita código hasheado com bcrypt e remove ele da lista", async () => {
+    const { hashBackupCodes } = await import("./totp");
+    const plain = ["AAAAA-1111", "BBBBB-2222"];
+    const hashed = await hashBackupCodes(plain);
+    const result = await checkBackupCode("AAAAA-1111", JSON.stringify(hashed));
+    expect(result.valid).toBe(true);
+    expect(result.remaining).toHaveLength(1);
+    expect(result.remaining[0]).toMatch(/^\$2[aby]\$/);
+  });
+
+  it("normaliza case (uppercase)", async () => {
     const codes = ["AAAAA-1111"];
-    const result = checkBackupCode("aaaaa-1111", JSON.stringify(codes));
+    const result = await checkBackupCode("aaaaa-1111", JSON.stringify(codes));
     expect(result.valid).toBe(true);
   });
 
-  it("rejeita código inexistente sem alterar a lista", () => {
+  it("rejeita código inexistente sem alterar a lista", async () => {
     const codes = ["AAAAA-1111"];
-    const result = checkBackupCode("XXXXX-9999", JSON.stringify(codes));
+    const result = await checkBackupCode("XXXXX-9999", JSON.stringify(codes));
     expect(result.valid).toBe(false);
     expect(result.remaining).toEqual(codes);
   });
 
-  it("rejeita quando storedJson é null", () => {
-    expect(checkBackupCode("ABC", null)).toEqual({ valid: false, remaining: [] });
+  it("rejeita quando storedJson é null", async () => {
+    expect(await checkBackupCode("ABC", null)).toEqual({ valid: false, remaining: [] });
   });
 
-  it("rejeita JSON inválido", () => {
-    expect(checkBackupCode("ABC", "{not-json")).toEqual({ valid: false, remaining: [] });
+  it("rejeita JSON inválido", async () => {
+    expect(await checkBackupCode("ABC", "{not-json")).toEqual({ valid: false, remaining: [] });
   });
 });
 

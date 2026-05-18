@@ -17,8 +17,12 @@ export default async function PublicGroupRsvpPage({
 }) {
   const { token } = await params;
   const sp = await searchParams;
+  const now = new Date();
   const group = await prisma.guestGroup.findFirst({
-    where: { rsvpToken: token },
+    where: {
+      rsvpToken: token,
+      OR: [{ rsvpTokenExpiresAt: null }, { rsvpTokenExpiresAt: { gt: now } }],
+    },
     include: {
       guests: {
         orderBy: { name: "asc" },
@@ -61,11 +65,14 @@ export default async function PublicGroupRsvpPage({
           {t("greeting", { name: group.name })}
         </h1>
         <p className="mt-3 text-center text-sm text-zinc-300">
-          {dateLong ? (
-            <span dangerouslySetInnerHTML={{ __html: t.raw("introWithDate").replace("{date}", dateLong) }} />
-          ) : (
-            t("introWithoutDate")
-          )}
+          {dateLong
+            ? t.rich("introWithDate", {
+                date: dateLong,
+                strong: (chunks) => (
+                  <span className="font-semibold text-white">{chunks}</span>
+                ),
+              })
+            : t("introWithoutDate")}
         </p>
         <GroupRsvpForm group={group} locale={locale} messages={messages} />
       </div>

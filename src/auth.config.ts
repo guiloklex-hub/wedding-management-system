@@ -18,8 +18,20 @@ export const authConfig = {
         if (!isLoggedIn) return false;
 
         const u = auth?.user as
-          | { role?: string; mustChangePassword?: boolean; onboardingCompleted?: boolean }
+          | {
+              role?: string;
+              mustChangePassword?: boolean;
+              onboardingCompleted?: boolean;
+              isActive?: boolean;
+              archived?: boolean;
+            }
           | undefined;
+
+        // Sessão revogada: usuário arquivado/desativado deve ser deslogado.
+        // O JWT é populado dinamicamente pelo callback `jwt` que consulta o DB.
+        if (u && (u.isActive === false || u.archived === true)) {
+          return Response.redirect(new URL("/login?revoked=1", nextUrl));
+        }
 
         const mustChange = u?.mustChangePassword;
         const forcePath = "/dashboard/profile/change-password";
@@ -84,12 +96,16 @@ export const authConfig = {
           role?: string;
           mustChangePassword?: boolean;
           onboardingCompleted?: boolean;
+          isActive?: boolean;
+          archived?: boolean;
           locale?: Locale;
         };
         if (typeof token.sub === "string") ext.id = token.sub;
         ext.role = token.role as string | undefined;
         ext.mustChangePassword = (token.mustChangePassword as boolean | undefined) ?? false;
         ext.onboardingCompleted = (token.onboardingCompleted as boolean | undefined) ?? true;
+        ext.isActive = (token as { isActive?: boolean }).isActive ?? true;
+        ext.archived = (token as { archived?: boolean }).archived ?? false;
         const tokenLocale = (token as { locale?: unknown }).locale;
         ext.locale = isLocale(tokenLocale) ? tokenLocale : undefined;
       }

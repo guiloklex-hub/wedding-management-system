@@ -57,6 +57,7 @@ model NotificationLog {
 
   @@index([kind, refType, refId])
   @@index([createdAt])
+  @@index([kind, status, createdAt])
 }
 
 model SecuritySettings {
@@ -106,6 +107,10 @@ model Vendor {
   contracts    Contract[]
   attachments  Attachment[]
   tasks        Task[]
+
+  @@index([status, deletedAt])
+  @@index([categoryKey])
+  @@index([deletedAt])
 }
 
 model VendorContact {
@@ -160,6 +165,7 @@ model Contract {
   attachments        Attachment[]
 
   @@index([vendorId])
+  @@index([vendorId, status])
 }
 
 model Attachment {
@@ -241,6 +247,8 @@ model BudgetItem {
   deletedAt      DateTime?
 
   vendor         Vendor?  @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId, deletedAt])
 }
 
 model Payment {
@@ -261,6 +269,10 @@ model Payment {
   deletedAt                DateTime?
 
   vendor                   Vendor   @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId])
+  @@index([status, dueDate])
+  @@index([deletedAt, status, dueDate])
 }
 
 model Asset {
@@ -277,6 +289,8 @@ model Asset {
   goal      SavingsGoal? @relation(fields: [goalId], references: [id], onDelete: SetNull)
 
   @@index([goalId])
+  @@index([date])
+  @@index([deletedAt])
 }
 
 model Income {
@@ -295,6 +309,7 @@ model Income {
   deletedAt    DateTime?
 
   @@index([status, expectedDate])
+  @@index([deletedAt])
 }
 
 model SavingsGoal {
@@ -366,31 +381,32 @@ model TrousseauItem {
 }
 
 model Guest {
-  id                String   @id @default(cuid())
-  name              String
-  phone             String?
-  email             String?
-  side              String?
-  groupName         String?
-  groupId           String?
-  rsvpStatus        String   @default("INVITED")
-  rsvpToken         String   @unique @default(cuid())
-  rsvpRespondedAt   DateTime?
-  plusOnesAllowed   Int      @default(0)
-  plusOnesConfirmed Int      @default(0)
-  isChild           Boolean  @default(false)
-  isVIP             Boolean  @default(false)
-  isPadrinho        Boolean  @default(false)
-  dietary           String?
-  language          String?
-  tableNumber       String?
-  tableId           String?
-  city              String?
-  checkedInAt       DateTime?
-  notes             String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  deletedAt         DateTime?
+  id                  String    @id @default(cuid())
+  name                String
+  phone               String?
+  email               String?
+  side                String?
+  groupName           String?
+  groupId             String?
+  rsvpStatus          String    @default("INVITED")
+  rsvpToken           String    @unique @default(cuid())
+  rsvpTokenExpiresAt  DateTime?
+  rsvpRespondedAt     DateTime?
+  plusOnesAllowed     Int       @default(0)
+  plusOnesConfirmed   Int       @default(0)
+  isChild             Boolean   @default(false)
+  isVIP               Boolean   @default(false)
+  isPadrinho          Boolean   @default(false)
+  dietary             String?
+  language            String?
+  tableNumber         String?
+  tableId             String?
+  city                String?
+  checkedInAt         DateTime?
+  notes               String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
 
   gifts             Gift[]
   group             GuestGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
@@ -403,16 +419,17 @@ model Guest {
 }
 
 model GuestGroup {
-  id            String   @id @default(cuid())
-  name          String
-  rsvpToken     String   @unique @default(cuid())
-  contactName   String?
-  contactEmail  String?
-  contactPhone  String?
-  notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  deletedAt     DateTime?
+  id                  String    @id @default(cuid())
+  name                String
+  rsvpToken           String    @unique @default(cuid())
+  rsvpTokenExpiresAt  DateTime?
+  contactName         String?
+  contactEmail        String?
+  contactPhone        String?
+  notes               String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
 
   guests        Guest[]
 
@@ -457,6 +474,7 @@ model Gift {
 
   @@index([status])
   @@index([guestId])
+  @@index([deletedAt])
 }
 
 model Task {
@@ -481,6 +499,9 @@ model Task {
 
   @@index([status, deadline])
   @@index([deadline])
+  @@index([vendorId])
+  @@index([venueId])
+  @@index([deletedAt])
 }
 
 model AuditLog {
@@ -494,4 +515,5 @@ model AuditLog {
 
   @@index([entity, entityId])
   @@index([createdAt])
+  @@index([userId, createdAt])
 }

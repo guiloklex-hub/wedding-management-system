@@ -27,7 +27,7 @@ describe("startTwoFactorSetup", () => {
   });
 
   it("gera setup com secret + qrCode quando logado", async () => {
-    authMock.mockResolvedValue({ user: { email: "u@example.com" } });
+    authMock.mockResolvedValue({ user: { id: "u1", email: "u@example.com" } });
     const r = await startTwoFactorSetup();
     expect(r.success).toBe(true);
     if (r.success) {
@@ -49,7 +49,7 @@ describe("confirmTwoFactor", () => {
   });
 
   it("rejeita token fora do formato 6 dígitos", async () => {
-    authMock.mockResolvedValue({ user: { email: "u@example.com" } });
+    authMock.mockResolvedValue({ user: { id: "u1", email: "u@example.com" } });
     const fd = new FormData();
     fd.set("secret", "ABCDEFGH");
     fd.set("token", "abc123");
@@ -58,7 +58,7 @@ describe("confirmTwoFactor", () => {
   });
 
   it("rejeita quando TOTP é inválido para o secret", async () => {
-    authMock.mockResolvedValue({ user: { email: "u@example.com" } });
+    authMock.mockResolvedValue({ user: { id: "u1", email: "u@example.com" } });
     const fd = new FormData();
     fd.set("secret", generateSecret());
     fd.set("token", "000000");
@@ -68,7 +68,7 @@ describe("confirmTwoFactor", () => {
   });
 
   it("ativa 2FA e devolve 8 backup codes com token válido", async () => {
-    authMock.mockResolvedValue({ user: { email: "u@example.com" } });
+    authMock.mockResolvedValue({ user: { id: "u1", email: "u@example.com" } });
     const secret = generateSecret();
     const token = generateSync({ secret });
 
@@ -83,7 +83,7 @@ describe("confirmTwoFactor", () => {
     if (r.success) expect(r.data?.backupCodes).toHaveLength(8);
     expect(prismaMock.user.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { email: "u@example.com" },
+        where: { id: "u1" },
         data: expect.objectContaining({
           twoFactorEnabled: true,
           twoFactorSecret: secret,
@@ -103,7 +103,7 @@ describe("disableTwoFactor", () => {
   });
 
   it("erro quando 2FA não está ativo", async () => {
-    authMock.mockResolvedValue({ user: { email: "u@example.com" } });
+    authMock.mockResolvedValue({ user: { id: "u1", email: "u@example.com" } });
     prismaMock.user.findUnique.mockResolvedValue({
       id: "u1",
       twoFactorEnabled: false,
@@ -118,7 +118,7 @@ describe("disableTwoFactor", () => {
   });
 
   it("desativa com TOTP válido", async () => {
-    authMock.mockResolvedValue({ user: { email: "u@example.com" } });
+    authMock.mockResolvedValue({ user: { id: "u1", email: "u@example.com" } });
     const secret = generateSecret();
     prismaMock.user.findUnique.mockResolvedValue({
       id: "u1",
@@ -143,7 +143,7 @@ describe("disableTwoFactor", () => {
   });
 
   it("aceita backup code e remove ele da lista", async () => {
-    authMock.mockResolvedValue({ user: { email: "u@example.com" } });
+    authMock.mockResolvedValue({ user: { id: "u1", email: "u@example.com" } });
     prismaMock.user.findUnique.mockResolvedValue({
       id: "u1",
       twoFactorEnabled: true,
@@ -162,7 +162,7 @@ describe("disableTwoFactor", () => {
   });
 
   it("rejeita código inválido", async () => {
-    authMock.mockResolvedValue({ user: { email: "u@example.com" } });
+    authMock.mockResolvedValue({ user: { id: "u1", email: "u@example.com" } });
     prismaMock.user.findUnique.mockResolvedValue({
       id: "u1",
       twoFactorEnabled: true,

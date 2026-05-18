@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getTranslations } from "next-intl/server";
@@ -7,7 +8,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { updateEventConfig } from "@/lib/event-config";
 import { audit } from "@/lib/audit";
-import { LOCALES } from "@/i18n/config";
+import { LOCALES, LOCALE_COOKIE } from "@/i18n/config";
 import type { ActionResult } from "@/types";
 
 const CoupleSchema = z.object({
@@ -63,6 +64,12 @@ export async function saveCoupleStep(
         data: { locale: parsed.data.locale },
       });
     }
+    const cookieStore = await cookies();
+    cookieStore.set(LOCALE_COOKIE, parsed.data.locale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
     await audit("EventSettings", "singleton", "ONBOARDING_COUPLE", parsed.data);
     return { success: true };
   } catch (err) {

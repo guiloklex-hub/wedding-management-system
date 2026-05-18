@@ -220,7 +220,7 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Lista" value={stats.total} sub="convidados" />
         <StatTile label="Confirmados" value={stats.confirmed} sub={`${stats.seats} cabeças`} accent="emerald" />
         <StatTile label="Pendentes" value={stats.pending} accent="amber" />

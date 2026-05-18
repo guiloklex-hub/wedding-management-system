@@ -206,9 +206,9 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
             </div>
           </div>
         ) : (
-          <form action={handleInfoSubmit} className="grid gap-3 sm:grid-cols-2">
+          <form action={handleInfoSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field name="destination" label="Destino" defaultValue={honeymoon.destination ?? ""} />
-            <div className="grid gap-3 sm:grid-cols-2 sm:col-span-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:col-span-2">
               <Field name="startDate" label="Saída" type="date" defaultValue={honeymoon.startDate ? toIsoDate(new Date(honeymoon.startDate)) : ""} />
               <Field name="endDate" label="Volta" type="date" defaultValue={honeymoon.endDate ? toIsoDate(new Date(honeymoon.endDate)) : ""} />
             </div>

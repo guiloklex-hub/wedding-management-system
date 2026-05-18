@@ -33,7 +33,7 @@ export function GiftsReportClient({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <Tile label="Presentes" value={result.totalCount} />
         {showFinance ? (
           <Tile label="Total em dinheiro" value={formatCurrency(result.totalCash)} color="text-emerald-400" />
@@ -63,7 +63,7 @@ export function GiftsReportClient({
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-zinc-100">Distribuição (CASH × ITEM)</h2>
           <Donut data={typeDonut} valueFormatter={(n) => `${n} presente(s)`} />

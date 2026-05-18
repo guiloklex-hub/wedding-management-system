@@ -102,7 +102,7 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard label="Total em dinheiro" value={formatCurrency(totals.cash)} accent="emerald" />
         <StatCard label="Itens recebidos" value={String(totals.items)} />
         <StatCard label="Aguardando agradecer" value={String(totals.pending)} accent="amber" />

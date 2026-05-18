@@ -127,7 +127,7 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
         <Stat label="Estimado" value={formatCurrency(totals.estTotal)} />
         <Stat label="Comprado" value={formatCurrency(totals.actualTotal)} accent="emerald" />
         <Stat label="A comprar" value={String(totals.toBuy)} accent="amber" />
@@ -159,7 +159,7 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
           Nada por aqui ainda.
         </p>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {filtered.map((it) => {
             const prio = PRIORITY_LABEL[it.priority] ?? PRIORITY_LABEL.NICE_TO_HAVE;
             return (
@@ -321,7 +321,7 @@ function ItemModal({
         <form action={formAction} className="mt-4 space-y-3">
           {item ? <input type="hidden" name="id" value={item.id} /> : null}
           <Field name="title" label="Item" required defaultValue={item?.title ?? ""} />
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-400">Cômodo</label>
               <select
@@ -351,7 +351,7 @@ function ItemModal({
               </select>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field name="estimatedPrice" label="Preço estimado" type="number" step="0.01" defaultValue={item?.estimatedPrice?.toString() ?? ""} />
             <Field name="actualPrice" label="Preço pago" type="number" step="0.01" defaultValue={item?.actualPrice?.toString() ?? ""} />
           </div>

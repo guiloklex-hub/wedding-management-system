@@ -22,7 +22,7 @@ export function FunnelClient({ result }: { result: VendorFunnelResult }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Tile label="Em negociação" value={totals.NEGOTIATION} color="text-amber-400" />
         <Tile label="Contratados" value={totals.CONTRACTED} color="text-violet-400" />
         <Tile label="Finalizados" value={totals.FINALIZED} color="text-emerald-400" />
@@ -36,7 +36,7 @@ export function FunnelClient({ result }: { result: VendorFunnelResult }) {
         <StackedBar data={barData} series={SERIES} horizontal height={Math.max(260, barData.length * 36 + 80)} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Tile
           label="Tempo médio de negociação → contrato"
           value={result.avgDaysNegToContract ?? null}

@@ -42,7 +42,7 @@ export function RiskAlertStrip({
           {visible.length}
         </span>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {visible.slice(0, 9).map((alert) => {
           const style = SEVERITY_STYLES[alert.severity];
           const Icon = style.icon;

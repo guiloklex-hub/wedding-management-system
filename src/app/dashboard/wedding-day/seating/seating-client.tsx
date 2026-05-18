@@ -205,7 +205,7 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
           </button>
         </header>
 
-        <div className="grid gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3 sm:grid-cols-3">
           <Stat label="Mesas" value={tables.length} />
           <Stat label="Assentos totais" value={totalSeats} />
           <Stat label="Convidados alocados" value={totalAllocated} suffix={`/${guests.reduce((s, g) => s + 1 + g.plusOnesConfirmed, 0)}`} />
@@ -221,7 +221,7 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
                 ? "Crie a primeira mesa para começar."
                 : "Solte um convidado em cima de uma mesa para alocar."}
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {tables.map((t) => {
                 const tableGuests = guests.filter((g) => g.tableId === t.id);
                 const seatsUsed = computeSeatsUsed(guests, t.id);

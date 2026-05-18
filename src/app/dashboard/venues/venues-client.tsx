@@ -73,7 +73,7 @@ export default function VenuesClient({ venues }: { venues: VenueRow[] }) {
           Nenhum local cadastrado ainda. Adicione candidatos para comparar lado a lado.
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {venues.map((v) => (
             <article key={v.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
               <div className="flex items-start justify-between gap-2">
@@ -133,15 +133,15 @@ export default function VenuesClient({ venues }: { venues: VenueRow[] }) {
             <form action={handleSubmit} className="mt-4 space-y-3">
               <Input name="name" label="Nome" required placeholder="Ex: Vila dos Lagos" />
               <Input name="address" label="Endereço" />
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Input name="mapsUrl" label="Link Google Maps / Waze" type="url" />
                 <Input name="baseRate" label="Valor locação (R$)" type="number" step="0.01" />
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Input name="capacitySeated" label="Capacidade sentados" type="number" />
                 <Input name="capacityStanding" label="Capacidade em pé" type="number" />
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Input name="contactName" label="Contato (nome)" />
                 <Input name="contactPhone" label="Contato (telefone)" />
               </div>

@@ -90,7 +90,7 @@ export default async function DashboardPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {finance ? (
           <>
             <KpiCard
@@ -166,7 +166,7 @@ export default async function DashboardPage() {
 
       <RiskAlertStrip risks={data.risks} canSeeFinance={finance} />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <FunnelCard funnel={data.vendorFunnel} />
         {finance ? (
           <KpiCard
@@ -181,7 +181,7 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {finance ? (
           <>
             <div className="flex flex-col rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm lg:max-h-[380px]">
@@ -239,7 +239,7 @@ export default async function DashboardPage() {
       </div>
 
       {finance ? (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <RsvpMini rsvp={data.rsvp} guestsTotal={data.guestsTotal} />
           <GiftsMini
             totalCount={data.giftsProgress.totalCount}

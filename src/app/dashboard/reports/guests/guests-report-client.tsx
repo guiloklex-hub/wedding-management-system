@@ -36,14 +36,14 @@ export function GuestsReportClient({ result }: { result: GuestsAnalytics }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <Tile label="Convidados" value={result.totalInvited} />
         <Tile label="Confirmados" value={result.totalConfirmed} color="text-emerald-400" />
         <Tile label="+ Acompanhantes" value={result.plusOnesConfirmed} color="text-violet-400" />
         <Tile label="Crianças" value={result.children} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-zinc-100">Status do RSVP</h2>
           <Donut data={donutData} valueFormatter={(n) => `${n} pessoa(s)`} />
@@ -67,7 +67,7 @@ export function GuestsReportClient({ result }: { result: GuestsAnalytics }) {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-zinc-100">VIPs & Padrinhos</h2>
           <div className="grid grid-cols-2 gap-4">

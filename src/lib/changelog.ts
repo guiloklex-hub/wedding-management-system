@@ -9,7 +9,8 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "0.4.5",
     date: "2026-05-17",
     highlights: [
-      "📱 Varredura completa de responsividade no dashboard mobile. Componentes que tinham `min-w-0` mas faltavam `flex-1` (UpcomingTasks, RiskAlertStrip) e mini-cards (RsvpMini, GiftsMini) que não tinham nenhum dos dois ganharam ambos — agora o conteúdo encolhe corretamente em vez de empurrar o card além da viewport. Subtítulo do header e a legenda do gráfico de pizza também receberam `break-words` + `min-w-0 max-w-full` para nomes de categoria longos.",
+      "🔍 Causa raiz do scroll horizontal encontrada: grids como `grid gap-6 md:grid-cols-2 lg:grid-cols-3` não tinham `grid-cols-1` como base. Em mobile (< md), sem `grid-template-columns` explícito, o CSS Grid usa colunas implícitas auto-sized (`grid-auto-columns: auto`) que se ajustam ao maior conteúdo — então o SVG do Recharts ou um nome de categoria longo esticava o grid além da viewport. Adicionado `grid-cols-1` como base em todos os 64 grids do dashboard.",
+      "📱 Varredura complementar: componentes que tinham `min-w-0` mas faltavam `flex-1` (UpcomingTasks, RiskAlertStrip) e mini-cards (RsvpMini, GiftsMini) que não tinham nenhum dos dois ganharam ambos. Subtítulo do header e legenda do pie chart também receberam `break-words` + `min-w-0 max-w-full` para nomes longos.",
     ],
   },
   {

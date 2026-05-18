@@ -86,7 +86,7 @@ export default function GoalsClient({ goals }: { goals: GoalRow[] }) {
           Nenhuma meta. Crie uma para acompanhar o progresso da poupança até a data alvo.
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {goals.map((g) => {
             const pct = g.targetAmount > 0 ? Math.min((g.current / g.targetAmount) * 100, 100) : 0;
             const remaining = Math.max(g.targetAmount - g.current, 0);
@@ -225,7 +225,7 @@ function GoalFormModal({
         <form action={formAction} className="mt-4 space-y-3">
           {goal ? <input type="hidden" name="id" value={goal.id} /> : null}
           <Field name="name" label="Nome" required defaultValue={goal?.name ?? ""} />
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field
               name="targetAmount"
               label="Valor alvo (R$)"

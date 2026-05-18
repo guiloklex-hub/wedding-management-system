@@ -18,7 +18,7 @@ import {
 const SWIPE_OPEN_THRESHOLD_PX = 50;
 
 export function MobileTopBar() {
-  const t = useTranslations("nav");
+  const t = useTranslations("common.nav");
   return (
     <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-zinc-800 bg-zinc-950/80 px-4 py-3 backdrop-blur md:hidden">
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-500/10 ring-1 ring-rose-500/20">
@@ -30,7 +30,7 @@ export function MobileTopBar() {
 }
 
 export function MobileNav() {
-  const t = useTranslations("nav");
+  const t = useTranslations("common.nav");
   const pathname = usePathname();
   const canFinance = useCanViewFinance();
   const [open, setOpen] = useState(false);

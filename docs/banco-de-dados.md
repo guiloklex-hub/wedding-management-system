@@ -75,7 +75,9 @@ Arquivo: [prisma/schema.prisma](../prisma/schema.prisma).
 | `Honeymoon` | Singleton: lua de mel. |
 | `HoneymoonItem` | Itens da lua de mel (atividade, vôo, hospedagem). |
 | `TrousseauItem` | Enxoval (cômodo, prioridade, status compra). |
-| `Guest` | Convidados (RSVP, +1s, dietary, padrinho, checkin, `language` opcional para RSVP localizado). |
+| `Guest` | Convidados (RSVP, +1s, dietary, padrinho, checkin, `language` opcional para RSVP localizado, `rsvpTokenExpiresAt` opcional). |
+| `GuestGroup` | Convite de família com `rsvpToken` único e `rsvpTokenExpiresAt` opcional. |
+| `SeatingTable` | Mesa do evento (capacidade, forma, posição x/y). |
 | `Gift` | Presentes (cash/item, status recebimento). |
 | `Task` | Tarefas (status, prioridade, responsável, deadline). |
 | `AuditLog` | Auditoria (entity, action, payload, userId). |
@@ -89,6 +91,29 @@ Arquivo: [prisma/schema.prisma](../prisma/schema.prisma).
   sempre presentes.
 - **Singletons:** `EventSettings`, `Honeymoon`, `SecuritySettings` usam
   `id: String @id @default("singleton")`. Sempre via `upsert`.
+
+### Índices
+
+Adicionados em [prisma/schema.prisma](../prisma/schema.prisma) para cobrir
+queries de listagem e do cron de lembretes:
+
+| Modelo | Índices |
+|---|---|
+| `Vendor` | `[status, deletedAt]`, `[categoryKey]`, `[deletedAt]` |
+| `Payment` | `[vendorId]`, `[status, dueDate]`, `[deletedAt, status, dueDate]` |
+| `Asset` | `[goalId]`, `[date]`, `[deletedAt]` |
+| `Income` | `[status, expectedDate]`, `[deletedAt]` |
+| `BudgetItem` | `[vendorId, deletedAt]` |
+| `Gift` | `[status]`, `[guestId]`, `[deletedAt]` |
+| `Task` | `[status, deadline]`, `[deadline]`, `[vendorId]`, `[venueId]`, `[deletedAt]` |
+| `Contract` | `[vendorId]`, `[vendorId, status]` |
+| `NotificationLog` | `[kind, refType, refId]`, `[createdAt]`, `[kind, status, createdAt]` |
+| `AuditLog` | `[entity, entityId]`, `[createdAt]`, `[userId, createdAt]` |
+
+Em SQLite o ganho concreto é menor que em Postgres, mas mantém o plano de
+queries estável (eviota table scans nas listagens autenticadas e no
+agregado `groupBy` que faz a idempotência do cron — veja
+[notificacoes.md](notificacoes.md)).
 
 ## Inspeção rápida
 

@@ -9,6 +9,7 @@ import { audit } from "@/lib/audit";
 import { ROLES, canManageUsers, type Role } from "@/lib/permissions";
 import { getSecuritySettings, setSecuritySettings } from "@/lib/security-settings";
 import { notify } from "@/lib/notifications";
+import { coerceLocale } from "@/i18n/config";
 import type { ActionResult } from "@/types";
 
 function buildLoginUrl(): string {
@@ -138,7 +139,7 @@ export async function createUser(
         mustChangePassword: true,
         passwordUpdatedAt: new Date(),
       },
-      select: { id: true, email: true, phone: true, name: true },
+      select: { id: true, email: true, phone: true, name: true, locale: true },
     });
 
     await audit("User", created.id, "CREATE", {
@@ -148,7 +149,7 @@ export async function createUser(
     });
 
     notify(
-      { userId: created.id, email: created.email, phone: created.phone },
+      { userId: created.id, email: created.email, phone: created.phone, locale: coerceLocale(created.locale) },
       {
         kind: "ACCOUNT_CREATED",
         userName: created.name ?? created.email,
@@ -273,7 +274,7 @@ export async function resetUserPassword(
     await audit("User", target.id, "RESET_PASSWORD", { by: guard.me.id });
 
     notify(
-      { userId: target.id, email: target.email, phone: target.phone },
+      { userId: target.id, email: target.email, phone: target.phone, locale: coerceLocale(target.locale) },
       {
         kind: "PASSWORD_RESET_BY_ADMIN",
         userName: target.name ?? target.email,

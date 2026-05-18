@@ -1,7 +1,9 @@
 import { Heart } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import ForgotPasswordForm from "./forgot-password-form";
 
-export default function ForgotPasswordPage() {
+export default async function ForgotPasswordPage() {
+  const t = await getTranslations("auth.forgot");
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-950 p-4">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-rose-900/20 via-zinc-950 to-zinc-950 pointer-events-none"></div>
@@ -11,12 +13,9 @@ export default function ForgotPasswordPage() {
             <Heart className="h-6 w-6 text-rose-500" />
           </div>
           <h1 className="text-3xl font-semibold tracking-tight text-white">
-            Esqueceu sua senha?
+            {t("title")}
           </h1>
-          <p className="text-sm text-zinc-400">
-            Informe seu email e enviaremos um link para redefini-la por
-            email e WhatsApp (se cadastrado).
-          </p>
+          <p className="text-sm text-zinc-400">{t("subtitle")}</p>
         </div>
         <ForgotPasswordForm />
       </div>

@@ -1,0 +1,6 @@
+{
+  "title": "Version history",
+  "subtitle": "Each bump documents what changed and why.",
+  "translationNotice": "Detailed release notes are in Portuguese. Summaries in English and Spanish are provided for the most recent releases.",
+  "latestHighlight": "Initial i18n: pt-BR, English and Spanish. Each user picks their language during onboarding or in /dashboard/profile."
+}

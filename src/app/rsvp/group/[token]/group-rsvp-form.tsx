@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { NextIntlClientProvider, useTranslations } from "next-intl";
 import { publicRsvpRespondForGroup } from "@/app/actions/guestGroupActions";
+import type { Locale } from "@/i18n/config";
 
 type GroupMember = {
   id: string;
@@ -41,7 +43,24 @@ function defaultAnswer(member: GroupMember): MemberAnswer {
   };
 }
 
-export default function GroupRsvpForm({ group }: { group: GroupData }) {
+export default function GroupRsvpForm({
+  group,
+  locale,
+  messages,
+}: {
+  group: GroupData;
+  locale: Locale;
+  messages: Record<string, unknown>;
+}) {
+  return (
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      <InnerForm group={group} />
+    </NextIntlClientProvider>
+  );
+}
+
+function InnerForm({ group }: { group: GroupData }) {
+  const t = useTranslations("rsvp.group");
   const [answers, setAnswers] = useState<Record<string, MemberAnswer>>(() => {
     const map: Record<string, MemberAnswer> = {};
     for (const g of group.guests) map[g.id] = defaultAnswer(g);
@@ -69,7 +88,10 @@ export default function GroupRsvpForm({ group }: { group: GroupData }) {
 
     const unanswered = Object.values(answers).filter((a) => a.status === null).length;
     if (unanswered > 0) {
-      setResult({ tone: "bad", text: `Responda por todos os ${group.guests.length} convidados.` });
+      setResult({
+        tone: "bad",
+        text: t("errors.missingAnswers", { count: group.guests.length }),
+      });
       return;
     }
 
@@ -82,10 +104,7 @@ export default function GroupRsvpForm({ group }: { group: GroupData }) {
           notes: notes.trim() || null,
         });
         if (r.success && r.data) {
-          setResult({
-            tone: "ok",
-            text: `Respostas registradas para ${r.data.count} convidado(s). Obrigado!`,
-          });
+          setResult({ tone: "ok", text: t("success", { count: r.data.count }) });
         } else if (!r.success) {
           setResult({ tone: "bad", text: r.error });
         }
@@ -116,26 +135,26 @@ export default function GroupRsvpForm({ group }: { group: GroupData }) {
                   {m.name}
                   {m.isChild ? (
                     <span className="ml-2 rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] text-amber-300">
-                      criança
+                      {t("child")}
                     </span>
                   ) : null}
                 </span>
               </header>
               <div className="grid grid-cols-3 gap-1.5">
                 <StatusBtn
-                  label="Vou"
+                  label={t("choices.yes")}
                   active={a.status === "CONFIRMED"}
                   tone="emerald"
                   onClick={() => updateAnswer(m.id, { status: "CONFIRMED" })}
                 />
                 <StatusBtn
-                  label="Talvez"
+                  label={t("choices.maybe")}
                   active={a.status === "MAYBE"}
                   tone="amber"
                   onClick={() => updateAnswer(m.id, { status: "MAYBE", plusOnesConfirmed: 0 })}
                 />
                 <StatusBtn
-                  label="Não vou"
+                  label={t("choices.no")}
                   active={a.status === "DECLINED"}
                   tone="rose"
                   onClick={() => updateAnswer(m.id, { status: "DECLINED", plusOnesConfirmed: 0 })}
@@ -144,7 +163,7 @@ export default function GroupRsvpForm({ group }: { group: GroupData }) {
               {a.status === "CONFIRMED" && m.plusOnesAllowed > 0 ? (
                 <div className="mt-3">
                   <label className="text-xs font-medium text-zinc-400">
-                    Acompanhantes (até {m.plusOnesAllowed})
+                    {t("plusOnesLabel", { max: m.plusOnesAllowed })}
                   </label>
                   <input
                     type="number"
@@ -165,15 +184,13 @@ export default function GroupRsvpForm({ group }: { group: GroupData }) {
               ) : null}
               {a.status === "CONFIRMED" ? (
                 <div className="mt-3">
-                  <label className="text-xs font-medium text-zinc-400">
-                    Restrições alimentares (opcional)
-                  </label>
+                  <label className="text-xs font-medium text-zinc-400">{t("dietary")}</label>
                   <input
                     type="text"
                     maxLength={200}
                     value={a.dietary}
                     onChange={(e) => updateAnswer(m.id, { dietary: e.target.value })}
-                    placeholder="Ex.: vegetariano, intolerância à lactose"
+                    placeholder={t("dietaryPlaceholder")}
                     className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-rose-400"
                   />
                 </div>
@@ -184,7 +201,7 @@ export default function GroupRsvpForm({ group }: { group: GroupData }) {
       </ul>
 
       <div>
-        <label className="text-xs font-medium text-zinc-400">Recado para os noivos (opcional)</label>
+        <label className="text-xs font-medium text-zinc-400">{t("notes")}</label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -207,7 +224,7 @@ export default function GroupRsvpForm({ group }: { group: GroupData }) {
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-3 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-60"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-        Enviar respostas
+        {t("submit")}
       </button>
     </form>
   );

@@ -1,3 +1,7 @@
+import { getTranslations } from "next-intl/server";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
+import { formatCurrency, formatDate } from "@/i18n/format";
+
 export type NotificationKind =
   | "ACCOUNT_CREATED"
   | "PASSWORD_RESET"
@@ -14,69 +18,73 @@ export type WhatsAppDownReason =
   | "LOGGED_OUT"
   | "WAITING_QR_AGAIN";
 
+type WithLocale = { locale?: Locale };
+
 export type RenderInput =
-  | {
+  | ({
       kind: "ACCOUNT_CREATED";
       userName: string;
       tempPassword: string;
       loginUrl: string;
-    }
-  | {
+    } & WithLocale)
+  | ({
       kind: "PASSWORD_RESET";
       userName: string;
       resetUrl: string;
       expiresInMinutes: number;
-    }
-  | {
+    } & WithLocale)
+  | ({
       kind: "PASSWORD_RESET_BY_ADMIN";
       userName: string;
       tempPassword: string;
       loginUrl: string;
-    }
-  | {
+    } & WithLocale)
+  | ({
       kind: "PAYMENT_DUE";
       userName: string;
       vendorName: string;
       amount: number;
+      currency?: string;
       dueDate: Date;
       daysUntilDue: number;
-    }
-  | {
+    } & WithLocale)
+  | ({
       kind: "PAYMENT_OVERDUE";
       userName: string;
       vendorName: string;
       amount: number;
+      currency?: string;
       dueDate: Date;
       daysOverdue: number;
-    }
-  | {
+    } & WithLocale)
+  | ({
       kind: "TASK_DUE";
       userName: string;
       taskTitle: string;
       deadline: Date;
       daysUntilDeadline: number;
-    }
-  | {
+    } & WithLocale)
+  | ({
       kind: "TASK_OVERDUE";
       userName: string;
       taskTitle: string;
       deadline: Date;
       daysOverdue: number;
-    }
-  | {
+    } & WithLocale)
+  | ({
       kind: "SYSTEM_WHATSAPP_DOWN";
       userName: string;
       reason: WhatsAppDownReason;
       attempts: number;
       lastError: string | null;
       settingsUrl: string;
-    }
-  | {
+    } & WithLocale)
+  | ({
       kind: "SYSTEM_WHATSAPP_RECOVERED";
       userName: string;
       settingsUrl: string;
       downtimeMinutes: number;
-    };
+    } & WithLocale);
 
 export type RenderedTemplate = {
   subject: string;
@@ -101,25 +109,9 @@ export function escapeWaMarkdown(value: string): string {
   return value.replace(/([*_~`])/g, "\\$1");
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(amount);
-}
-
-function formatDate(d: Date): string {
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    timeZone: "America/Sao_Paulo",
-  }).format(d);
-}
-
-function wrapHtml(title: string, body: string): string {
+function wrapHtml(title: string, body: string, locale: Locale, footer: string, header: string): string {
   return `<!doctype html>
-<html lang="pt-BR">
+<html lang="${locale}">
 <head>
 <meta charset="utf-8">
 <title>${escapeHtml(title)}</title>
@@ -129,9 +121,9 @@ function wrapHtml(title: string, body: string): string {
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#18181b;border:1px solid #27272a;border-radius:16px;padding:32px;">
 <tr><td>
-<h1 style="margin:0 0 16px;font-size:20px;color:#f4f4f5;">Wedding Finance</h1>
+<h1 style="margin:0 0 16px;font-size:20px;color:#f4f4f5;">${escapeHtml(header)}</h1>
 ${body}
-<p style="margin-top:32px;font-size:12px;color:#71717a;">Esta é uma mensagem automática do sistema. Não responda este email.</p>
+<p style="margin-top:32px;font-size:12px;color:#71717a;">${escapeHtml(footer)}</p>
 </td></tr>
 </table>
 </td></tr>
@@ -140,318 +132,391 @@ ${body}
 </html>`;
 }
 
-export function render(input: RenderInput): RenderedTemplate {
+export async function render(input: RenderInput): Promise<RenderedTemplate> {
+  const locale: Locale = input.locale ?? DEFAULT_LOCALE;
+  const t = await getTranslations({ locale, namespace: "notifications" });
+  const moneyCurrency = "currency" in input && input.currency ? input.currency : "BRL";
+
+  const header = t("common.header");
+  const footer = t("common.automaticFooter");
+  const safeName = escapeHtml(input.userName);
+  const greetingHtml = t.markup("common.greeting", {
+    name: safeName,
+    strong: (chunks: string) => `<strong>${chunks}</strong>`,
+  });
+  const greetingText = t("common.greetingText", { name: input.userName });
+
   switch (input.kind) {
     case "ACCOUNT_CREATED": {
-      const name = escapeHtml(input.userName);
+      const tk = (key: string, values?: Record<string, string | number | Date>) => t(`ACCOUNT_CREATED.${key}`, values);
       const pwd = escapeHtml(input.tempPassword);
       const url = escapeHtml(input.loginUrl);
-      const subject = "Sua conta no Wedding Finance foi criada";
+      const subject = tk("subject");
       const html = wrapHtml(
         subject,
-        `<p>Olá, <strong>${name}</strong>!</p>
-<p>Um administrador criou uma conta para você no Wedding Finance.</p>
+        `<p>${greetingHtml}</p>
+<p>${escapeHtml(tk("intro"))}</p>
 <p style="background:#27272a;border-radius:8px;padding:16px;">
-<strong>Senha temporária:</strong> <code style="font-size:16px;color:#fda4af;">${pwd}</code><br>
-<small>Você será obrigado a trocar esta senha no primeiro acesso.</small>
+<strong>${escapeHtml(tk("tempPasswordLabel"))}</strong> <code style="font-size:16px;color:#fda4af;">${pwd}</code><br>
+<small>${escapeHtml(tk("tempPasswordHint"))}</small>
 </p>
-<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">Acessar o sistema</a></p>`,
+<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">${escapeHtml(tk("cta"))}</a></p>`,
+        locale,
+        footer,
+        header,
       );
-      const text = `Olá, ${input.userName}!
+      const text = `${greetingText}
 
-Um administrador criou uma conta para você no Wedding Finance.
+${tk("textIntro")}
 
-Senha temporária: ${input.tempPassword}
-(Você precisará trocar no primeiro acesso.)
+${tk("textPassword", { password: input.tempPassword })}
+${tk("textHint")}
 
-Acesse: ${input.loginUrl}`;
-      const waText = `*Wedding Finance*
+${tk("textAccess", { url: input.loginUrl })}`;
+      const waText = `*${header}*
 
-Olá, ${escapeWaMarkdown(input.userName)}!
+${greetingText}
 
-Um administrador criou uma conta para você.
+${tk("textIntro")}
 
-🔑 *Senha temporária:* ${escapeWaMarkdown(input.tempPassword)}
-_(será trocada no primeiro acesso)_
+${tk("waPassword", { password: escapeWaMarkdown(input.tempPassword) })}
+${tk("waHint")}
 
-Acesse: ${input.loginUrl}`;
+${tk("textAccess", { url: input.loginUrl })}`;
       return { subject, html, text, waText };
     }
 
     case "PASSWORD_RESET": {
-      const name = escapeHtml(input.userName);
+      const tk = (key: string, values?: Record<string, string | number | Date>) => t(`PASSWORD_RESET.${key}`, values);
       const url = escapeHtml(input.resetUrl);
       const min = input.expiresInMinutes;
-      const subject = "Redefinição de senha — Wedding Finance";
+      const subject = tk("subject");
+      const expiresHtml = t.markup("PASSWORD_RESET.expiresIn", {
+        minutes: min,
+        strong: (chunks: string) => `<strong>${chunks}</strong>`,
+      });
       const html = wrapHtml(
         subject,
-        `<p>Olá, <strong>${name}</strong>!</p>
-<p>Recebemos um pedido para redefinir sua senha.</p>
-<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">Redefinir minha senha</a></p>
-<p>O link expira em <strong>${min} minutos</strong>. Se você não solicitou, ignore este email.</p>`,
+        `<p>${greetingHtml}</p>
+<p>${escapeHtml(tk("intro"))}</p>
+<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">${escapeHtml(tk("cta"))}</a></p>
+<p>${expiresHtml}</p>`,
+        locale,
+        footer,
+        header,
       );
-      const text = `Olá, ${input.userName}!
+      const text = `${greetingText}
 
-Recebemos um pedido para redefinir sua senha no Wedding Finance.
+${tk("textIntro")}
 
-Acesse o link abaixo (expira em ${min} minutos):
+${tk("textExpires", { minutes: min })}
 ${input.resetUrl}
 
-Se você não solicitou, ignore este email.`;
-      const waText = `*Wedding Finance*
+${tk("textIgnore")}`;
+      const waText = `*${header}*
 
-Olá, ${escapeWaMarkdown(input.userName)}!
+${greetingText}
 
-Recebemos um pedido para redefinir sua senha.
+${tk("waIntro")}
 
 🔗 ${input.resetUrl}
 
-_O link expira em ${min} minutos._
-_Se você não solicitou, ignore esta mensagem._`;
+${tk("waExpires", { minutes: min })}
+${tk("waIgnore")}`;
       return { subject, html, text, waText };
     }
 
     case "PASSWORD_RESET_BY_ADMIN": {
-      const name = escapeHtml(input.userName);
+      const tk = (key: string, values?: Record<string, string | number | Date>) => t(`PASSWORD_RESET_BY_ADMIN.${key}`, values);
       const pwd = escapeHtml(input.tempPassword);
       const url = escapeHtml(input.loginUrl);
-      const subject = "Sua senha foi redefinida — Wedding Finance";
+      const subject = tk("subject");
       const html = wrapHtml(
         subject,
-        `<p>Olá, <strong>${name}</strong>!</p>
-<p>Um administrador redefiniu sua senha.</p>
+        `<p>${greetingHtml}</p>
+<p>${escapeHtml(tk("intro"))}</p>
 <p style="background:#27272a;border-radius:8px;padding:16px;">
-<strong>Senha temporária:</strong> <code style="font-size:16px;color:#fda4af;">${pwd}</code><br>
-<small>Você será obrigado a trocá-la no próximo acesso.</small>
+<strong>${escapeHtml(tk("tempPasswordLabel"))}</strong> <code style="font-size:16px;color:#fda4af;">${pwd}</code><br>
+<small>${escapeHtml(tk("tempPasswordHint"))}</small>
 </p>
-<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">Acessar o sistema</a></p>`,
+<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">${escapeHtml(tk("cta"))}</a></p>`,
+        locale,
+        footer,
+        header,
       );
-      const text = `Olá, ${input.userName}!
+      const text = `${greetingText}
 
-Um administrador redefiniu sua senha.
+${tk("intro")}
 
-Senha temporária: ${input.tempPassword}
-(será trocada no próximo acesso)
+${tk("textPassword", { password: input.tempPassword })}
+${tk("textHint")}
 
-Acesse: ${input.loginUrl}`;
-      const waText = `*Wedding Finance*
+${input.loginUrl}`;
+      const waText = `*${header}*
 
-Olá, ${escapeWaMarkdown(input.userName)}!
+${greetingText}
 
-Um administrador redefiniu sua senha.
+${tk("intro")}
 
-🔑 *Senha temporária:* ${escapeWaMarkdown(input.tempPassword)}
-_(será trocada no próximo acesso)_
+🔑 *${tk("tempPasswordLabel")}* ${escapeWaMarkdown(input.tempPassword)}
+${tk("waHint")}
 
-Acesse: ${input.loginUrl}`;
+${input.loginUrl}`;
       return { subject, html, text, waText };
     }
 
     case "PAYMENT_DUE": {
+      const tk = (key: string, values?: Record<string, string | number | Date>) => t(`PAYMENT_DUE.${key}`, values);
       const vendor = escapeHtml(input.vendorName);
-      const value = formatCurrency(input.amount);
-      const date = formatDate(input.dueDate);
-      const when =
-        input.daysUntilDue <= 1
-          ? "amanhã"
-          : `em ${input.daysUntilDue} dias`;
-      const subject = `Pagamento de ${vendor} vence ${when}`;
+      const value = formatCurrency(input.amount, moneyCurrency, locale);
+      const date = formatDate(input.dueDate, locale, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+      const tomorrow = input.daysUntilDue <= 1;
+      const subject = tomorrow
+        ? tk("subjectTomorrow", { vendor: input.vendorName })
+        : tk("subjectInDays", { vendor: input.vendorName, days: input.daysUntilDue });
+      const reminder = tomorrow
+        ? t.markup("PAYMENT_DUE.reminderTomorrow", { strong: (c: string) => `<strong>${c}</strong>` })
+        : t.markup("PAYMENT_DUE.reminderInDays", {
+            days: input.daysUntilDue,
+            strong: (c: string) => `<strong>${c}</strong>`,
+          });
       const html = wrapHtml(
         subject,
-        `<p>Olá, <strong>${escapeHtml(input.userName)}</strong>!</p>
-<p>Lembrete: pagamento vence <strong>${when}</strong>.</p>
+        `<p>${greetingHtml}</p>
+<p>${reminder}</p>
 <table style="width:100%;border-collapse:collapse;margin-top:16px;">
-<tr><td style="padding:8px 0;color:#a1a1aa;">Fornecedor</td><td style="padding:8px 0;text-align:right;">${vendor}</td></tr>
-<tr><td style="padding:8px 0;color:#a1a1aa;">Valor</td><td style="padding:8px 0;text-align:right;font-weight:600;">${value}</td></tr>
-<tr><td style="padding:8px 0;color:#a1a1aa;">Vencimento</td><td style="padding:8px 0;text-align:right;">${date}</td></tr>
+<tr><td style="padding:8px 0;color:#a1a1aa;">${escapeHtml(tk("vendorLabel"))}</td><td style="padding:8px 0;text-align:right;">${vendor}</td></tr>
+<tr><td style="padding:8px 0;color:#a1a1aa;">${escapeHtml(tk("amountLabel"))}</td><td style="padding:8px 0;text-align:right;font-weight:600;">${value}</td></tr>
+<tr><td style="padding:8px 0;color:#a1a1aa;">${escapeHtml(tk("dueLabel"))}</td><td style="padding:8px 0;text-align:right;">${date}</td></tr>
 </table>`,
+        locale,
+        footer,
+        header,
       );
-      const text = `Lembrete de pagamento
+      const dueLine = tomorrow
+        ? tk("textDueTomorrow", { date })
+        : tk("textDueInDays", { date, days: input.daysUntilDue });
+      const text = `${tk("textTitle")}
 
-Fornecedor: ${input.vendorName}
-Valor: ${value}
-Vencimento: ${date} (${when})`;
-      const waText = `*Wedding Finance*
+${tk("textVendor", { vendor: input.vendorName })}
+${tk("textAmount", { value })}
+${dueLine}`;
+      const whenWa = tomorrow ? tk("waWhenTomorrow") : tk("waWhenInDays", { days: input.daysUntilDue });
+      const waText = `*${header}*
 
-💸 *Lembrete de pagamento*
+${tk("waTitle")}
 
-Vence ${when}.
+${whenWa}
 
-• Fornecedor: ${escapeWaMarkdown(input.vendorName)}
-• Valor: ${value}
-• Vencimento: ${date}`;
+• ${tk("vendorLabel")}: ${escapeWaMarkdown(input.vendorName)}
+• ${tk("amountLabel")}: ${value}
+• ${tk("dueLabel")}: ${date}`;
       return { subject, html, text, waText };
     }
 
     case "PAYMENT_OVERDUE": {
+      const tk = (key: string, values?: Record<string, string | number | Date>) => t(`PAYMENT_OVERDUE.${key}`, values);
       const vendor = escapeHtml(input.vendorName);
-      const value = formatCurrency(input.amount);
-      const date = formatDate(input.dueDate);
-      const subject = `Pagamento de ${vendor} está atrasado`;
+      const value = formatCurrency(input.amount, moneyCurrency, locale);
+      const date = formatDate(input.dueDate, locale, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+      const subject = tk("subject", { vendor: input.vendorName });
+      const banner = tk("overdueBanner", { days: input.daysOverdue });
       const html = wrapHtml(
         subject,
-        `<p>Olá, <strong>${escapeHtml(input.userName)}</strong>!</p>
-<p style="color:#fda4af;"><strong>⚠️ Pagamento atrasado há ${input.daysOverdue} dia(s).</strong></p>
+        `<p>${greetingHtml}</p>
+<p style="color:#fda4af;"><strong>${escapeHtml(banner)}</strong></p>
 <table style="width:100%;border-collapse:collapse;margin-top:16px;">
-<tr><td style="padding:8px 0;color:#a1a1aa;">Fornecedor</td><td style="padding:8px 0;text-align:right;">${vendor}</td></tr>
-<tr><td style="padding:8px 0;color:#a1a1aa;">Valor</td><td style="padding:8px 0;text-align:right;font-weight:600;">${value}</td></tr>
-<tr><td style="padding:8px 0;color:#a1a1aa;">Vencimento</td><td style="padding:8px 0;text-align:right;">${date}</td></tr>
+<tr><td style="padding:8px 0;color:#a1a1aa;">${escapeHtml(tk("vendorLabel"))}</td><td style="padding:8px 0;text-align:right;">${vendor}</td></tr>
+<tr><td style="padding:8px 0;color:#a1a1aa;">${escapeHtml(tk("amountLabel"))}</td><td style="padding:8px 0;text-align:right;font-weight:600;">${value}</td></tr>
+<tr><td style="padding:8px 0;color:#a1a1aa;">${escapeHtml(tk("dueLabel"))}</td><td style="padding:8px 0;text-align:right;">${date}</td></tr>
 </table>`,
+        locale,
+        footer,
+        header,
       );
-      const text = `⚠ Pagamento atrasado há ${input.daysOverdue} dia(s)
+      const text = `${tk("textTitle", { days: input.daysOverdue })}
 
-Fornecedor: ${input.vendorName}
-Valor: ${value}
-Vencimento: ${date}`;
-      const waText = `*Wedding Finance*
+${t("PAYMENT_DUE.textVendor", { vendor: input.vendorName })}
+${t("PAYMENT_DUE.textAmount", { value })}
+${t("PAYMENT_DUE.dueLabel")}: ${date}`;
+      const waText = `*${header}*
 
-⚠️ *Pagamento atrasado*
+${tk("waTitle")}
 
-Atrasado há ${input.daysOverdue} dia(s).
+${tk("waSubtitle", { days: input.daysOverdue })}
 
-• Fornecedor: ${escapeWaMarkdown(input.vendorName)}
-• Valor: ${value}
-• Vencimento: ${date}`;
+• ${tk("vendorLabel")}: ${escapeWaMarkdown(input.vendorName)}
+• ${tk("amountLabel")}: ${value}
+• ${tk("dueLabel")}: ${date}`;
       return { subject, html, text, waText };
     }
 
     case "TASK_DUE": {
+      const tk = (key: string, values?: Record<string, string | number | Date>) => t(`TASK_DUE.${key}`, values);
       const title = escapeHtml(input.taskTitle);
-      const date = formatDate(input.deadline);
-      const when =
-        input.daysUntilDeadline <= 1
-          ? "amanhã"
-          : `em ${input.daysUntilDeadline} dias`;
-      const subject = `Tarefa vence ${when}: ${input.taskTitle}`;
+      const date = formatDate(input.deadline, locale, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+      const tomorrow = input.daysUntilDeadline <= 1;
+      const subject = tomorrow
+        ? tk("subjectTomorrow", { title: input.taskTitle })
+        : tk("subjectInDays", { days: input.daysUntilDeadline, title: input.taskTitle });
+      const reminder = tomorrow
+        ? t.markup("TASK_DUE.reminderTomorrow", { strong: (c: string) => `<strong>${c}</strong>` })
+        : t.markup("TASK_DUE.reminderInDays", {
+            days: input.daysUntilDeadline,
+            strong: (c: string) => `<strong>${c}</strong>`,
+          });
       const html = wrapHtml(
         subject,
-        `<p>Olá, <strong>${escapeHtml(input.userName)}</strong>!</p>
-<p>Lembrete: a tarefa abaixo vence <strong>${when}</strong>.</p>
+        `<p>${greetingHtml}</p>
+<p>${reminder}</p>
 <p style="background:#27272a;border-radius:8px;padding:16px;font-weight:600;">${title}</p>
-<p style="color:#a1a1aa;">Prazo: ${date}</p>`,
+<p style="color:#a1a1aa;">${escapeHtml(tk("deadlineLabel", { date }))}</p>`,
+        locale,
+        footer,
+        header,
       );
-      const text = `Tarefa vence ${when}
+      const text = `${
+        tomorrow
+          ? tk("textTitleTomorrow")
+          : tk("textTitleInDays", { days: input.daysUntilDeadline })
+      }
 
 ${input.taskTitle}
-Prazo: ${date}`;
-      const waText = `*Wedding Finance*
+${tk("deadlineLabel", { date })}`;
+      const whenWa = tomorrow ? tk("waWhenTomorrow") : tk("waWhenInDays", { days: input.daysUntilDeadline });
+      const waText = `*${header}*
 
-📋 *Lembrete de tarefa*
+${tk("waTitle")}
 
-Vence ${when}.
+${whenWa}
 
 ${escapeWaMarkdown(input.taskTitle)}
-Prazo: ${date}`;
+${tk("waDeadline", { date })}`;
       return { subject, html, text, waText };
     }
 
     case "TASK_OVERDUE": {
+      const tk = (key: string, values?: Record<string, string | number | Date>) => t(`TASK_OVERDUE.${key}`, values);
       const title = escapeHtml(input.taskTitle);
-      const date = formatDate(input.deadline);
-      const subject = `Tarefa atrasada: ${input.taskTitle}`;
+      const date = formatDate(input.deadline, locale, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+      const subject = tk("subject", { title: input.taskTitle });
+      const banner = tk("overdueBanner", { days: input.daysOverdue });
       const html = wrapHtml(
         subject,
-        `<p>Olá, <strong>${escapeHtml(input.userName)}</strong>!</p>
-<p style="color:#fda4af;"><strong>⚠️ Tarefa atrasada há ${input.daysOverdue} dia(s).</strong></p>
+        `<p>${greetingHtml}</p>
+<p style="color:#fda4af;"><strong>${escapeHtml(banner)}</strong></p>
 <p style="background:#27272a;border-radius:8px;padding:16px;font-weight:600;">${title}</p>
-<p style="color:#a1a1aa;">Prazo era: ${date}</p>`,
+<p style="color:#a1a1aa;">${escapeHtml(tk("deadlineWasLabel", { date }))}</p>`,
+        locale,
+        footer,
+        header,
       );
-      const text = `⚠ Tarefa atrasada há ${input.daysOverdue} dia(s)
+      const text = `${tk("textTitle", { days: input.daysOverdue })}
 
 ${input.taskTitle}
-Prazo era: ${date}`;
-      const waText = `*Wedding Finance*
+${tk("deadlineWasLabel", { date })}`;
+      const waText = `*${header}*
 
-⚠️ *Tarefa atrasada*
+${tk("waTitle")}
 
-Atrasada há ${input.daysOverdue} dia(s).
+${tk("waSubtitle", { days: input.daysOverdue })}
 
 ${escapeWaMarkdown(input.taskTitle)}
-Prazo era: ${date}`;
+${tk("waDeadlineWas", { date })}`;
       return { subject, html, text, waText };
     }
 
     case "SYSTEM_WHATSAPP_DOWN": {
-      const name = escapeHtml(input.userName);
+      const tk = (key: string, values?: Record<string, string | number | Date>) =>
+        t(`SYSTEM_WHATSAPP_DOWN.${key}`, values);
       const url = escapeHtml(input.settingsUrl);
       const errorLine = input.lastError
-        ? `<p style="color:#a1a1aa;font-size:12px;">Último erro: <code>${escapeHtml(input.lastError)}</code></p>`
+        ? `<p style="color:#a1a1aa;font-size:12px;">${escapeHtml(
+            tk("lastErrorLabel", { error: input.lastError }),
+          )}</p>`
         : "";
-      const errorPlain = input.lastError ? `\nÚltimo erro: ${input.lastError}` : "";
+      const errorPlain = input.lastError
+        ? `\n${tk("lastErrorLabel", { error: input.lastError })}`
+        : "";
 
       let subject: string;
       let bodyHtml: string;
       let bodyText: string;
 
       if (input.reason === "LOGGED_OUT") {
-        subject = "⚠ Ação necessária: WhatsApp desconectado";
-        bodyHtml = `<p>Olá, <strong>${name}</strong>!</p>
-<p style="color:#fda4af;"><strong>⚠️ A sessão do WhatsApp foi encerrada.</strong></p>
-<p>Isso costuma acontecer quando alguém desvincula o aparelho pelo app oficial do WhatsApp. O sistema <strong>não consegue reconectar sozinho</strong> nesse caso — é preciso escanear um novo QR Code.</p>
-<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">Abrir configurações</a></p>
+        subject = tk("subjectLoggedOut");
+        bodyHtml = `<p>${greetingHtml}</p>
+<p style="color:#fda4af;"><strong>${escapeHtml(tk("loggedOutBanner"))}</strong></p>
+<p>${tk("loggedOutBody")}</p>
+<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">${escapeHtml(tk("openSettings"))}</a></p>
 ${errorLine}`;
-        bodyText = `⚠ Ação necessária: WhatsApp desconectado
-
-A sessão do WhatsApp foi encerrada. O sistema não consegue reconectar sozinho — é preciso escanear um novo QR Code.
-
-Acesse: ${input.settingsUrl}${errorPlain}`;
+        bodyText = `${tk("textLoggedOut")}\n\n${tk("openSettings")}: ${input.settingsUrl}${errorPlain}`;
       } else if (input.reason === "WAITING_QR_AGAIN") {
-        subject = "⚠ Ação necessária: WhatsApp pediu novo QR Code";
-        bodyHtml = `<p>Olá, <strong>${name}</strong>!</p>
-<p style="color:#fda4af;"><strong>⚠️ O WhatsApp solicitou um novo QR Code.</strong></p>
-<p>A sessão expirou ou foi invalidada. Para retomar os envios, abra as configurações e escaneie o QR.</p>
-<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">Abrir configurações</a></p>
+        subject = tk("subjectWaitingQr");
+        bodyHtml = `<p>${greetingHtml}</p>
+<p style="color:#fda4af;"><strong>${escapeHtml(tk("waitingQrBanner"))}</strong></p>
+<p>${escapeHtml(tk("waitingQrBody"))}</p>
+<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">${escapeHtml(tk("openSettings"))}</a></p>
 ${errorLine}`;
-        bodyText = `⚠ Ação necessária: WhatsApp pediu novo QR Code
-
-A sessão expirou ou foi invalidada. Abra as configurações e escaneie o QR para retomar os envios.
-
-Acesse: ${input.settingsUrl}${errorPlain}`;
+        bodyText = `${tk("textWaitingQr")}\n\n${tk("openSettings")}: ${input.settingsUrl}${errorPlain}`;
       } else {
-        subject = "🔌 WhatsApp instável — tentando reconectar";
-        bodyHtml = `<p>Olá, <strong>${name}</strong>!</p>
-<p>A conexão com o WhatsApp caiu e o sistema está tentando reconectar automaticamente.</p>
+        subject = tk("subjectConnectionLost");
+        bodyHtml = `<p>${greetingHtml}</p>
+<p>${escapeHtml(tk("connectionLostBody"))}</p>
 <p style="background:#27272a;border-radius:8px;padding:16px;">
-<strong>Tentativas até agora:</strong> ${input.attempts}<br>
-<small>Se não voltar em alguns minutos, vale abrir o painel para verificar.</small>
+<strong>${escapeHtml(tk("attemptsLabel", { attempts: input.attempts }))}</strong><br>
+<small>${escapeHtml(tk("attemptsHint"))}</small>
 </p>
-<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">Abrir configurações</a></p>
+<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">${escapeHtml(tk("openSettings"))}</a></p>
 ${errorLine}`;
-        bodyText = `🔌 WhatsApp instável
-
-A conexão caiu e o sistema está tentando reconectar automaticamente.
-Tentativas: ${input.attempts}
-
-Se não voltar em alguns minutos, abra: ${input.settingsUrl}${errorPlain}`;
+        bodyText = `${tk("textConnectionLost", {
+          attempts: input.attempts,
+          url: input.settingsUrl,
+        })}${errorPlain}`;
       }
 
-      const html = wrapHtml(subject, bodyHtml);
-      const waText = `*Wedding Finance*\n\n${bodyText}`;
+      const html = wrapHtml(subject, bodyHtml, locale, footer, header);
+      const waText = `*${header}*\n\n${bodyText}`;
       return { subject, html, text: bodyText, waText };
     }
 
     case "SYSTEM_WHATSAPP_RECOVERED": {
-      const name = escapeHtml(input.userName);
+      const tk = (key: string, values?: Record<string, string | number | Date>) =>
+        t(`SYSTEM_WHATSAPP_RECOVERED.${key}`, values);
       const url = escapeHtml(input.settingsUrl);
-      const subject = "✅ WhatsApp voltou";
-      const minutesLabel =
+      const subject = tk("subject");
+      const downtime =
         input.downtimeMinutes <= 1
-          ? "menos de 1 minuto"
-          : `${input.downtimeMinutes} minuto(s)`;
+          ? tk("downtimeLessThanMinute")
+          : tk("downtimeMinutes", { minutes: input.downtimeMinutes });
       const html = wrapHtml(
         subject,
-        `<p>Olá, <strong>${name}</strong>!</p>
-<p style="color:#86efac;"><strong>✅ A conexão com o WhatsApp foi restabelecida.</strong></p>
-<p style="color:#a1a1aa;">Tempo fora do ar: ${minutesLabel}.</p>
-<p><a href="${url}" style="display:inline-block;background:#27272a;color:#e4e4e7;padding:12px 24px;border-radius:8px;text-decoration:none;border:1px solid #3f3f46;">Abrir configurações</a></p>`,
+        `<p>${greetingHtml}</p>
+<p style="color:#86efac;"><strong>${escapeHtml(tk("banner"))}</strong></p>
+<p style="color:#a1a1aa;">${escapeHtml(downtime)}</p>
+<p><a href="${url}" style="display:inline-block;background:#27272a;color:#e4e4e7;padding:12px 24px;border-radius:8px;text-decoration:none;border:1px solid #3f3f46;">${escapeHtml(tk("openSettings"))}</a></p>`,
+        locale,
+        footer,
+        header,
       );
-      const text = `✅ WhatsApp voltou
-
-A conexão foi restabelecida.
-Tempo fora do ar: ${minutesLabel}.
-
-${input.settingsUrl}`;
-      const waText = `*Wedding Finance*\n\n${text}`;
+      const text = `${tk("text")}\n${downtime}\n\n${input.settingsUrl}`;
+      const waText = `*${header}*\n\n${text}`;
       return { subject, html, text, waText };
     }
   }

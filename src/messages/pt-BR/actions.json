@@ -1,0 +1,34 @@
+{
+  "common": {
+    "unauthorized": "Não autorizado",
+    "forbidden": "Acesso negado",
+    "invalid": "Dados inválidos",
+    "notFound": "Não encontrado",
+    "generic": "Algo deu errado. Tente novamente."
+  },
+  "auth": {
+    "invalidCredentials": "Credenciais inválidas.",
+    "loginGenericError": "Algo deu errado ao fazer o login."
+  },
+  "passwordReset": {
+    "invalidEmail": "Email inválido",
+    "passwordsDontMatch": "As senhas não conferem",
+    "passwordTooShort": "Senha deve ter ao menos {min} caracteres",
+    "invalidOrExpired": "Link inválido ou expirado. Solicite um novo.",
+    "tokenNotFound": "Token não encontrado",
+    "userNotFoundOrInactive": "Usuário não encontrado ou inativo",
+    "errorResetting": "Erro ao redefinir senha"
+  },
+  "onboarding": {
+    "coupleNameRequired": "Informe o nome do casal",
+    "invalidDate": "Data inválida",
+    "errorCouple": "Erro ao salvar dados do casal",
+    "errorBudget": "Erro ao salvar orçamento",
+    "errorFinish": "Erro ao concluir onboarding"
+  },
+  "profile": {
+    "invalidLocale": "Idioma inválido",
+    "errorSaving": "Erro ao salvar perfil",
+    "saved": "Perfil atualizado"
+  }
+}

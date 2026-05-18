@@ -115,6 +115,7 @@ describe("auth.ts authorize callback", () => {
       role: "OWNER",
       mustChangePassword: undefined,
       onboardingCompleted: false,
+      locale: "pt-BR",
     });
     expect(r.password).toBeUndefined();
   });

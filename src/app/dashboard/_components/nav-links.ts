@@ -23,30 +23,30 @@ import {
 
 export type NavLink = {
   href: string;
-  label: string;
+  labelKey: string;
   icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
   finance?: boolean;
 };
 
 export const LINKS: NavLink[] = [
-  { href: "/dashboard", label: "Dashboard", icon: Home, exact: true },
-  { href: "/dashboard/insights", label: "Insights", icon: BarChart3, finance: true },
-  { href: "/dashboard/reports", label: "Relatórios", icon: BarChart3 },
-  { href: "/dashboard/vendors", label: "Fornecedores", icon: Users },
-  { href: "/dashboard/venues", label: "Locais", icon: Building2 },
-  { href: "/dashboard/tasks", label: "Tarefas", icon: CheckSquare },
-  { href: "/dashboard/payments", label: "Pagamentos", icon: CreditCard, finance: true },
-  { href: "/dashboard/income", label: "Receitas", icon: PiggyBank, finance: true },
-  { href: "/dashboard/assets", label: "Caixa", icon: Wallet, finance: true },
-  { href: "/dashboard/goals", label: "Metas", icon: Target, finance: true },
-  { href: "/dashboard/guests", label: "Convidados", icon: UserPlus },
-  { href: "/dashboard/gifts", label: "Presentes", icon: Gift },
-  { href: "/dashboard/wedding-day", label: "Dia D", icon: CalendarHeart },
-  { href: "/dashboard/honeymoon", label: "Lua de mel", icon: Plane },
-  { href: "/dashboard/trousseau", label: "Enxoval", icon: ShoppingBasket },
-  { href: "/dashboard/settings", label: "Ajustes", icon: SettingsIcon },
-  { href: "/dashboard/help", label: "Ajuda", icon: HelpCircle },
+  { href: "/dashboard", labelKey: "nav.dashboard", icon: Home, exact: true },
+  { href: "/dashboard/insights", labelKey: "nav.insights", icon: BarChart3, finance: true },
+  { href: "/dashboard/reports", labelKey: "nav.reports", icon: BarChart3 },
+  { href: "/dashboard/vendors", labelKey: "nav.vendors", icon: Users },
+  { href: "/dashboard/venues", labelKey: "nav.venues", icon: Building2 },
+  { href: "/dashboard/tasks", labelKey: "nav.tasks", icon: CheckSquare },
+  { href: "/dashboard/payments", labelKey: "nav.payments", icon: CreditCard, finance: true },
+  { href: "/dashboard/income", labelKey: "nav.income", icon: PiggyBank, finance: true },
+  { href: "/dashboard/assets", labelKey: "nav.assets", icon: Wallet, finance: true },
+  { href: "/dashboard/goals", labelKey: "nav.goals", icon: Target, finance: true },
+  { href: "/dashboard/guests", labelKey: "nav.guests", icon: UserPlus },
+  { href: "/dashboard/gifts", labelKey: "nav.gifts", icon: Gift },
+  { href: "/dashboard/wedding-day", labelKey: "nav.weddingDay", icon: CalendarHeart },
+  { href: "/dashboard/honeymoon", labelKey: "nav.honeymoon", icon: Plane },
+  { href: "/dashboard/trousseau", labelKey: "nav.trousseau", icon: ShoppingBasket },
+  { href: "/dashboard/settings", labelKey: "nav.settings", icon: SettingsIcon },
+  { href: "/dashboard/help", labelKey: "nav.help", icon: HelpCircle },
 ];
 
 export const PRIMARY_HREFS = [
@@ -58,7 +58,7 @@ export const PRIMARY_HREFS = [
 
 export type NavCategory = {
   id: "financial" | "wedding" | "people" | "system";
-  label: string;
+  labelKey: string;
   finance?: boolean;
   hrefs: string[];
 };
@@ -66,7 +66,7 @@ export type NavCategory = {
 export const NAV_CATEGORIES: NavCategory[] = [
   {
     id: "financial",
-    label: "Financeiro",
+    labelKey: "nav.cat.financial",
     finance: true,
     hrefs: [
       "/dashboard/insights",
@@ -79,12 +79,12 @@ export const NAV_CATEGORIES: NavCategory[] = [
   },
   {
     id: "wedding",
-    label: "Casamento",
+    labelKey: "nav.cat.wedding",
     hrefs: ["/dashboard/wedding-day", "/dashboard/honeymoon", "/dashboard/trousseau"],
   },
   {
     id: "people",
-    label: "Pessoas & Negócios",
+    labelKey: "nav.cat.people",
     hrefs: [
       "/dashboard/vendors",
       "/dashboard/venues",
@@ -94,7 +94,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
   },
   {
     id: "system",
-    label: "Sistema",
+    labelKey: "nav.cat.system",
     hrefs: ["/dashboard/settings", "/dashboard/help"],
   },
 ];

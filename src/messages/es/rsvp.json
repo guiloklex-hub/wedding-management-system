@@ -1,0 +1,47 @@
+{
+  "individual": {
+    "officialInvite": "Invitación oficial",
+    "greeting": "¡Hola {name}!",
+    "intro": "Estás invitado(a) a nuestra boda",
+    "intoDate": "el <strong>{date}</strong>",
+    "question": "¿Vienes a nuestra boda?",
+    "choices": {
+      "yes": "¡Sí, allí estaré!",
+      "maybe": "Tal vez (avisaré después)",
+      "no": "Lamentablemente no puedo"
+    },
+    "plusOnes": "¿Llevarás acompañante(s)?",
+    "plusOnesAllowed": "Hasta {max} permitidos.",
+    "dietary": "Restricciones alimentarias",
+    "dietaryPlaceholder": "Ej.: vegetariano, sin gluten…",
+    "notes": "Mensaje a los novios",
+    "submit": "Enviar respuesta",
+    "result": {
+      "confirmed": "¡Confirmación recibida! 🎉 ¡Te esperamos!",
+      "declined": "Te extrañaremos. Gracias por avisar.",
+      "maybe": "Respuesta guardada como tal vez. ¡Avísanos cuando decidas!"
+    },
+    "footer": "Para dudas, contacta a quien te envió el enlace."
+  },
+  "group": {
+    "greeting": "¡Hola, {name}!",
+    "intro": "Están invitados a nuestra boda",
+    "introWithDate": "Están invitados a nuestra boda el <strong>{date}</strong>. Responde por cada miembro de la familia abajo.",
+    "introWithoutDate": "Están invitados a nuestra boda. Responde por cada miembro de la familia abajo.",
+    "child": "niño/a",
+    "choices": {
+      "yes": "Voy",
+      "maybe": "Tal vez",
+      "no": "No voy"
+    },
+    "plusOnesLabel": "Acompañantes (hasta {max})",
+    "dietary": "Restricciones alimentarias (opcional)",
+    "dietaryPlaceholder": "Ej.: vegetariano, intolerancia a la lactosa",
+    "notes": "Mensaje a los novios (opcional)",
+    "submit": "Enviar respuestas",
+    "errors": {
+      "missingAnswers": "Responde por todos los {count} invitados."
+    },
+    "success": "Respuestas guardadas para {count} invitado(s). ¡Gracias!"
+  }
+}

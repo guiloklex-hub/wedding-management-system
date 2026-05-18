@@ -20,11 +20,14 @@ import {
 } from "@/app/actions/onboardingActions";
 import { useToast } from "@/components/toast";
 
+import { LOCALES, LOCALE_NATIVE_LABELS, type Locale } from "@/i18n/config";
+
 type Initial = {
   coupleNames: string;
   eventDate: string;
   currency: string;
   contingencyPercent: number;
+  locale: Locale;
 };
 
 type Step = 1 | 2 | 3 | 4;
@@ -48,6 +51,7 @@ export default function OnboardingClient({ initial }: { initial: Initial }) {
   const [eventDate, setEventDate] = useState(initial.eventDate);
   const [currency, setCurrency] = useState(initial.currency);
   const [contingency, setContingency] = useState(initial.contingencyPercent);
+  const [locale, setLocale] = useState<Locale>(initial.locale);
 
   function submitCouple(formData: FormData) {
     setBusy(true);
@@ -56,6 +60,10 @@ export default function OnboardingClient({ initial }: { initial: Initial }) {
         const r = await saveCoupleStep(undefined, formData);
         if (r.success) {
           toast.success("Dados do casal salvos");
+          if (locale !== initial.locale) {
+            window.location.reload();
+            return;
+          }
           setStep(2);
         } else toast.error("Falha", r.error);
       } finally {
@@ -148,6 +156,13 @@ export default function OnboardingClient({ initial }: { initial: Initial }) {
                 { value: "USD", label: "Dólar (USD)" },
                 { value: "EUR", label: "Euro (EUR)" },
               ]}
+            />
+            <SelectField
+              label="Idioma do sistema"
+              name="locale"
+              defaultValue={locale}
+              onChange={(v) => setLocale(v as Locale)}
+              options={LOCALES.map((l) => ({ value: l, label: LOCALE_NATIVE_LABELS[l] }))}
             />
             <Actions busy={busy} primary="Continuar" />
           </form>

@@ -6,6 +6,16 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.5.0",
+    date: "2026-05-17",
+    highlights: [
+      "🌐 i18n: suporte a português (Brasil), inglês e espanhol. Cada usuário escolhe seu idioma no wizard de onboarding ou em /dashboard/profile.",
+      "📨 Emails e WhatsApp são enviados no idioma do destinatário (User.locale propagado pelos crons e Server Actions).",
+      "🤝 RSVP público respeita Guest.language e aceita override via ?lang=en (ou es). Páginas de login, esqueci-senha e reset também respondem ao idioma do navegador.",
+      "🏗️ Toda a infraestrutura (next-intl 4 + catálogos em src/messages/) foi padronizada para que contribuições futuras adicionem chaves nos três idiomas no mesmo PR.",
+    ],
+  },
+  {
     version: "0.4.5",
     date: "2026-05-17",
     highlights: [

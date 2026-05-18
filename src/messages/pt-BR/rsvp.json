@@ -1,0 +1,47 @@
+{
+  "individual": {
+    "officialInvite": "Convite oficial",
+    "greeting": "Oi {name}!",
+    "intro": "Você está sendo convidado(a) para o nosso casamento",
+    "intoDate": "em <strong>{date}</strong>",
+    "question": "Você vem ao nosso casamento?",
+    "choices": {
+      "yes": "Sim, vou estar lá!",
+      "maybe": "Talvez (vou avisar depois)",
+      "no": "Infelizmente não consigo"
+    },
+    "plusOnes": "Vai levar acompanhante(s)?",
+    "plusOnesAllowed": "Permitidos até {max}.",
+    "dietary": "Restrições alimentares",
+    "dietaryPlaceholder": "Ex: vegetariano, sem glúten…",
+    "notes": "Recado para os noivos",
+    "submit": "Enviar resposta",
+    "result": {
+      "confirmed": "Confirmação recebida! 🎉 Te esperamos!",
+      "declined": "Vamos sentir sua falta. Obrigado por avisar.",
+      "maybe": "Resposta registrada como talvez. Avisa logo que decidir!"
+    },
+    "footer": "Em caso de dúvidas, contate quem te enviou o link."
+  },
+  "group": {
+    "greeting": "Olá, {name}!",
+    "intro": "Vocês estão convidados para o nosso casamento",
+    "introWithDate": "Vocês estão convidados para o nosso casamento em <strong>{date}</strong>. Responda por cada membro da família abaixo.",
+    "introWithoutDate": "Vocês estão convidados para o nosso casamento. Responda por cada membro da família abaixo.",
+    "child": "criança",
+    "choices": {
+      "yes": "Vou",
+      "maybe": "Talvez",
+      "no": "Não vou"
+    },
+    "plusOnesLabel": "Acompanhantes (até {max})",
+    "dietary": "Restrições alimentares (opcional)",
+    "dietaryPlaceholder": "Ex.: vegetariano, intolerância à lactose",
+    "notes": "Recado para os noivos (opcional)",
+    "submit": "Enviar respostas",
+    "errors": {
+      "missingAnswers": "Responda por todos os {count} convidados."
+    },
+    "success": "Respostas registradas para {count} convidado(s). Obrigado!"
+  }
+}

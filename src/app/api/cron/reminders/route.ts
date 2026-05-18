@@ -5,6 +5,7 @@ import { wasNotifiedToday } from "@/lib/notifications/log";
 import { timingSafeEquals } from "@/lib/timing-safe";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { computeAdjustedAmount } from "@/lib/payment-adjustment";
+import { coerceLocale } from "@/i18n/config";
 
 export const dynamic = "force-dynamic";
 
@@ -69,7 +70,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       archivedAt: null,
       role: { in: NOTIFY_ROLES },
     },
-    select: { id: true, name: true, email: true, phone: true },
+    select: { id: true, name: true, email: true, phone: true, locale: true },
   });
 
   if (recipients.length === 0) {
@@ -93,7 +94,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     const daysUntilDue = Math.max(1, daysBetween(today, p.dueDate));
     for (const u of recipients) {
       await notify(
-        { userId: u.id, email: u.email, phone: u.phone },
+        { userId: u.id, email: u.email, phone: u.phone, locale: coerceLocale(u.locale) },
         {
           kind: "PAYMENT_DUE",
           userName: u.name ?? u.email,
@@ -126,7 +127,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     const adj = computeAdjustedAmount(p, today);
     for (const u of recipients) {
       await notify(
-        { userId: u.id, email: u.email, phone: u.phone },
+        { userId: u.id, email: u.email, phone: u.phone, locale: coerceLocale(u.locale) },
         {
           kind: "PAYMENT_OVERDUE",
           userName: u.name ?? u.email,
@@ -159,7 +160,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     const daysUntilDeadline = Math.max(1, daysBetween(today, t.deadline));
     for (const u of recipients) {
       await notify(
-        { userId: u.id, email: u.email, phone: u.phone },
+        { userId: u.id, email: u.email, phone: u.phone, locale: coerceLocale(u.locale) },
         {
           kind: "TASK_DUE",
           userName: u.name ?? u.email,
@@ -190,7 +191,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     const daysOverdue = Math.max(1, daysBetween(t.deadline, today));
     for (const u of recipients) {
       await notify(
-        { userId: u.id, email: u.email, phone: u.phone },
+        { userId: u.id, email: u.email, phone: u.phone, locale: coerceLocale(u.locale) },
         {
           kind: "TASK_OVERDUE",
           userName: u.name ?? u.email,

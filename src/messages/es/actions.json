@@ -1,0 +1,34 @@
+{
+  "common": {
+    "unauthorized": "No autorizado",
+    "forbidden": "Acceso denegado",
+    "invalid": "Datos inválidos",
+    "notFound": "No encontrado",
+    "generic": "Algo salió mal. Inténtalo de nuevo."
+  },
+  "auth": {
+    "invalidCredentials": "Credenciales inválidas.",
+    "loginGenericError": "Algo salió mal al iniciar sesión."
+  },
+  "passwordReset": {
+    "invalidEmail": "Correo inválido",
+    "passwordsDontMatch": "Las contraseñas no coinciden",
+    "passwordTooShort": "La contraseña debe tener al menos {min} caracteres",
+    "invalidOrExpired": "Enlace inválido o expirado. Solicita uno nuevo.",
+    "tokenNotFound": "Token no encontrado",
+    "userNotFoundOrInactive": "Usuario no encontrado o inactivo",
+    "errorResetting": "Error al restablecer la contraseña"
+  },
+  "onboarding": {
+    "coupleNameRequired": "Ingresa el nombre de la pareja",
+    "invalidDate": "Fecha inválida",
+    "errorCouple": "Error al guardar datos de la pareja",
+    "errorBudget": "Error al guardar el presupuesto",
+    "errorFinish": "Error al finalizar la incorporación"
+  },
+  "profile": {
+    "invalidLocale": "Idioma inválido",
+    "errorSaving": "Error al guardar el perfil",
+    "saved": "Perfil actualizado"
+  }
+}

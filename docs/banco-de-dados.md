@@ -55,11 +55,11 @@ Arquivo: [prisma/schema.prisma](../prisma/schema.prisma).
 
 | Modelo | Propósito |
 |---|---|
-| `User` | Usuário do sistema (admins do casamento). Suporta 2FA, mustChangePassword, archivedAt. |
+| `User` | Usuário do sistema (admins do casamento). Suporta 2FA, mustChangePassword, archivedAt, `locale` (pt-BR/en/es). |
 | `PasswordResetToken` | Tokens de reset (hash sha256, expira em 60min). |
 | `NotificationLog` | Histórico de envios (email + WhatsApp), idempotência por dia. |
 | `SecuritySettings` | Singleton: lista de roles que exigem 2FA, tamanho mínimo de senha. |
-| `EventSettings` | Singleton: dados do casamento (data, contingência, moeda, nomes, plano B). |
+| `EventSettings` | Singleton: dados do casamento (data, contingência, moeda, nomes, plano B, `defaultLocale`). |
 | `Vendor` | Fornecedores com status, categoria, notas, contratos, anexos. |
 | `VendorContact` | Múltiplos contatos por fornecedor (com isPrimary). |
 | `VendorNote` | Histórico de notas livre por fornecedor. |
@@ -75,7 +75,7 @@ Arquivo: [prisma/schema.prisma](../prisma/schema.prisma).
 | `Honeymoon` | Singleton: lua de mel. |
 | `HoneymoonItem` | Itens da lua de mel (atividade, vôo, hospedagem). |
 | `TrousseauItem` | Enxoval (cômodo, prioridade, status compra). |
-| `Guest` | Convidados (RSVP, +1s, dietary, padrinho, checkin). |
+| `Guest` | Convidados (RSVP, +1s, dietary, padrinho, checkin, `language` opcional para RSVP localizado). |
 | `Gift` | Presentes (cash/item, status recebimento). |
 | `Task` | Tarefas (status, prioridade, responsável, deadline). |
 | `AuditLog` | Auditoria (entity, action, payload, userId). |

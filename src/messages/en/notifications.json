@@ -1,0 +1,117 @@
+{
+  "common": {
+    "header": "Wedding Finance",
+    "automaticFooter": "This is an automated system message. Please do not reply to this email.",
+    "greeting": "Hi, <strong>{name}</strong>!",
+    "greetingText": "Hi, {name}!"
+  },
+  "ACCOUNT_CREATED": {
+    "subject": "Your Wedding Finance account has been created",
+    "intro": "An admin created an account for you in Wedding Finance.",
+    "tempPasswordLabel": "Temporary password:",
+    "tempPasswordHint": "You'll be required to change it on first sign-in.",
+    "cta": "Open the app",
+    "textIntro": "An admin created an account for you in Wedding Finance.",
+    "textPassword": "Temporary password: {password}",
+    "textHint": "(You will have to change it on first sign-in.)",
+    "textAccess": "Open: {url}",
+    "waPassword": "🔑 *Temporary password:* {password}",
+    "waHint": "_(will be changed on first sign-in)_"
+  },
+  "PASSWORD_RESET": {
+    "subject": "Password reset — Wedding Finance",
+    "intro": "We received a request to reset your password.",
+    "cta": "Reset my password",
+    "expiresIn": "The link expires in <strong>{minutes, plural, one {# minute} other {# minutes}}</strong>. If you didn't request it, ignore this email.",
+    "textIntro": "We received a request to reset your Wedding Finance password.",
+    "textExpires": "Open the link below (expires in {minutes, plural, one {# minute} other {# minutes}}):",
+    "textIgnore": "If you didn't request it, ignore this email.",
+    "waIntro": "We received a request to reset your password.",
+    "waExpires": "_The link expires in {minutes, plural, one {# minute} other {# minutes}}._",
+    "waIgnore": "_If you didn't request it, ignore this message._"
+  },
+  "PASSWORD_RESET_BY_ADMIN": {
+    "subject": "Your password was reset — Wedding Finance",
+    "intro": "An admin reset your password.",
+    "tempPasswordLabel": "Temporary password:",
+    "tempPasswordHint": "You'll be required to change it on next sign-in.",
+    "cta": "Open the app",
+    "textPassword": "Temporary password: {password}",
+    "textHint": "(will be changed on next sign-in)",
+    "waHint": "_(will be changed on next sign-in)_"
+  },
+  "PAYMENT_DUE": {
+    "subjectTomorrow": "Payment to {vendor} is due tomorrow",
+    "subjectInDays": "Payment to {vendor} is due in {days, plural, one {# day} other {# days}}",
+    "reminderTomorrow": "Reminder: payment is due <strong>tomorrow</strong>.",
+    "reminderInDays": "Reminder: payment is due <strong>in {days, plural, one {# day} other {# days}}</strong>.",
+    "vendorLabel": "Vendor",
+    "amountLabel": "Amount",
+    "dueLabel": "Due date",
+    "textTitle": "Payment reminder",
+    "textVendor": "Vendor: {vendor}",
+    "textAmount": "Amount: {value}",
+    "textDueTomorrow": "Due date: {date} (tomorrow)",
+    "textDueInDays": "Due date: {date} (in {days, plural, one {# day} other {# days}})",
+    "waTitle": "💸 *Payment reminder*",
+    "waWhenTomorrow": "Due tomorrow.",
+    "waWhenInDays": "Due in {days, plural, one {# day} other {# days}}."
+  },
+  "PAYMENT_OVERDUE": {
+    "subject": "Payment to {vendor} is overdue",
+    "overdueBanner": "⚠️ Payment overdue by {days, plural, one {# day} other {# days}}.",
+    "vendorLabel": "Vendor",
+    "amountLabel": "Amount",
+    "dueLabel": "Due date",
+    "textTitle": "⚠ Payment overdue by {days, plural, one {# day} other {# days}}",
+    "waTitle": "⚠️ *Payment overdue*",
+    "waSubtitle": "Overdue by {days, plural, one {# day} other {# days}}."
+  },
+  "TASK_DUE": {
+    "subjectTomorrow": "Task due tomorrow: {title}",
+    "subjectInDays": "Task due in {days, plural, one {# day} other {# days}}: {title}",
+    "reminderTomorrow": "Reminder: the task below is due <strong>tomorrow</strong>.",
+    "reminderInDays": "Reminder: the task below is due <strong>in {days, plural, one {# day} other {# days}}</strong>.",
+    "deadlineLabel": "Deadline: {date}",
+    "textTitleTomorrow": "Task due tomorrow",
+    "textTitleInDays": "Task due in {days, plural, one {# day} other {# days}}",
+    "waTitle": "📋 *Task reminder*",
+    "waWhenTomorrow": "Due tomorrow.",
+    "waWhenInDays": "Due in {days, plural, one {# day} other {# days}}.",
+    "waDeadline": "Deadline: {date}"
+  },
+  "TASK_OVERDUE": {
+    "subject": "Task overdue: {title}",
+    "overdueBanner": "⚠️ Task overdue by {days, plural, one {# day} other {# days}}.",
+    "deadlineWasLabel": "Was due: {date}",
+    "textTitle": "⚠ Task overdue by {days, plural, one {# day} other {# days}}",
+    "waTitle": "⚠️ *Task overdue*",
+    "waSubtitle": "Overdue by {days, plural, one {# day} other {# days}}.",
+    "waDeadlineWas": "Was due: {date}"
+  },
+  "SYSTEM_WHATSAPP_DOWN": {
+    "subjectLoggedOut": "⚠ Action required: WhatsApp disconnected",
+    "subjectWaitingQr": "⚠ Action required: WhatsApp requested a new QR code",
+    "subjectConnectionLost": "🔌 WhatsApp unstable — reconnecting",
+    "loggedOutBanner": "⚠️ The WhatsApp session was closed.",
+    "loggedOutBody": "This usually happens when someone unlinks the device from the official WhatsApp app. The system <strong>cannot reconnect on its own</strong> in this case — you need to scan a new QR code.",
+    "waitingQrBanner": "⚠️ WhatsApp requested a new QR code.",
+    "waitingQrBody": "The session expired or was invalidated. To resume sending, open settings and scan the QR.",
+    "connectionLostBody": "The WhatsApp connection dropped and the system is trying to reconnect automatically.",
+    "attemptsLabel": "Attempts so far: {attempts}",
+    "attemptsHint": "If it doesn't come back in a few minutes, open the panel to check.",
+    "openSettings": "Open settings",
+    "lastErrorLabel": "Last error: {error}",
+    "textLoggedOut": "⚠ Action required: WhatsApp disconnected\n\nThe WhatsApp session was closed. The system cannot reconnect on its own — you need to scan a new QR code.",
+    "textWaitingQr": "⚠ Action required: WhatsApp requested a new QR code\n\nThe session expired or was invalidated. Open settings and scan the QR to resume sending.",
+    "textConnectionLost": "🔌 WhatsApp unstable\n\nThe connection dropped and the system is trying to reconnect automatically.\nAttempts: {attempts}\n\nIf it doesn't come back in a few minutes, open: {url}"
+  },
+  "SYSTEM_WHATSAPP_RECOVERED": {
+    "subject": "✅ WhatsApp is back",
+    "banner": "✅ The WhatsApp connection has been restored.",
+    "downtimeLessThanMinute": "Downtime: less than 1 minute.",
+    "downtimeMinutes": "Downtime: {minutes, plural, one {# minute} other {# minutes}}.",
+    "openSettings": "Open settings",
+    "text": "✅ WhatsApp is back\n\nThe connection has been restored."
+  }
+}

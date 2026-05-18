@@ -36,7 +36,8 @@ confirmou a presença.
 - 🛏️ **Enxoval** por cômodo
 - 💍 **Painel do Dia D** (cronograma, plano B chuva, contatos críticos, check-in)
 - 📊 **Insights** financeiros (health score, heatmap, detector de creep)
-- 📨 **Notificações por email + WhatsApp** (Baileys)
+- 📨 **Notificações por email + WhatsApp** (Baileys) — no idioma do destinatário
+- 🌐 **Multi-idioma** (pt-BR, inglês, espanhol) — escolhido por usuário e respeitado em emails/WhatsApp/RSVP
 - 🔐 **2FA TOTP**, reset por email/WhatsApp, audit log
 - 📅 **iCalendar (.ics)** para sincronizar com Google/Apple Calendar
 - 💾 **Backup JSON** completo de todos os dados
@@ -76,7 +77,8 @@ Abra <http://localhost:3005> no navegador.
 
 > 🪄 No primeiro acesso você é guiado(a) por um **wizard de configuração**
 > que personaliza o sistema para o seu casamento (nomes, data, moeda,
-> contingência). Em ~2 minutos está tudo pronto.
+> **idioma**, contingência). Em ~2 minutos está tudo pronto. Você pode
+> trocar o idioma depois em `/dashboard/profile`.
 
 ### Pré-requisitos
 
@@ -98,6 +100,7 @@ Abra <http://localhost:3005> no navegador.
 | Validação | [Zod 4](https://zod.dev/) |
 | Gráficos | [Recharts](https://recharts.org/) |
 | Testes | [Vitest 4](https://vitest.dev/) + Testing Library |
+| i18n | [next-intl 4](https://next-intl.dev/) (pt-BR, en, es) |
 
 ---
 
@@ -113,6 +116,7 @@ Abra <http://localhost:3005> no navegador.
 | Modelo de dados (Prisma) | [docs/banco-de-dados.md](docs/banco-de-dados.md) |
 | Endpoints da API | [docs/api.md](docs/api.md) |
 | Notificações (email + WhatsApp) | [docs/notificacoes.md](docs/notificacoes.md) |
+| Internacionalização (i18n) | [docs/i18n.md](docs/i18n.md) |
 | Segurança e 2FA | [docs/seguranca.md](docs/seguranca.md) |
 | Backup e restauração | [docs/backup-restore.md](docs/backup-restore.md) |
 | **Deploy em produção** | [docs/deploy.md](docs/deploy.md) |

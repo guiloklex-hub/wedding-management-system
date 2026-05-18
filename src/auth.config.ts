@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { isLocale, type Locale } from "@/i18n/config";
 
 export const authConfig = {
   pages: {
@@ -53,22 +54,26 @@ export const authConfig = {
           role?: string;
           mustChangePassword?: boolean;
           onboardingCompleted?: boolean;
+          locale?: string;
         };
         if (u.role !== undefined) token.role = u.role;
         if (u.mustChangePassword !== undefined) token.mustChangePassword = u.mustChangePassword;
         if (u.onboardingCompleted !== undefined)
           token.onboardingCompleted = u.onboardingCompleted;
+        if (isLocale(u.locale)) token.locale = u.locale;
       }
       if (trigger === "update" && session) {
         const s = session as {
           mustChangePassword?: boolean;
           role?: string;
           onboardingCompleted?: boolean;
+          locale?: string;
         };
         if (typeof s.mustChangePassword === "boolean") token.mustChangePassword = s.mustChangePassword;
         if (s.role) token.role = s.role;
         if (typeof s.onboardingCompleted === "boolean")
           token.onboardingCompleted = s.onboardingCompleted;
+        if (isLocale(s.locale)) token.locale = s.locale;
       }
       return token;
     },
@@ -79,11 +84,14 @@ export const authConfig = {
           role?: string;
           mustChangePassword?: boolean;
           onboardingCompleted?: boolean;
+          locale?: Locale;
         };
         if (typeof token.sub === "string") ext.id = token.sub;
         ext.role = token.role as string | undefined;
         ext.mustChangePassword = (token.mustChangePassword as boolean | undefined) ?? false;
         ext.onboardingCompleted = (token.onboardingCompleted as boolean | undefined) ?? true;
+        const tokenLocale = (token as { locale?: unknown }).locale;
+        ext.locale = isLocale(tokenLocale) ? tokenLocale : undefined;
       }
       return session;
     },

@@ -302,8 +302,13 @@ Todo body/form **deve** ser validado com Zod com limites explícitos:
 ### 6.3 Datas
 
 - **Salve em UTC.** `new Date()` no Node já é UTC interno.
-- **Exiba** em pt-BR via [src/lib/format.ts](src/lib/format.ts)
-  (`formatDateBR`, `formatDateTimeBR`).
+- **Exiba** via `formatDate(date, locale, options?)` de
+  [src/i18n/format.ts](src/i18n/format.ts) (re-exportado por
+  [src/lib/format.ts](src/lib/format.ts)). Em RSC obtenha o locale com
+  `await getLocale()` do next-intl; em client components use `useLocale()`.
+- `formatDateBR` / `formatDateTimeBR` continuam disponíveis como atalhos
+  para casos onde o output **precisa** estar em pt-BR (legados, recibos
+  PDF de teste). Em código novo prefira a versão parametrizada.
 - Para cálculos baseados em fuso (cron, vencimentos), considere
   `America/Sao_Paulo`. SQLite armazena DateTime como ISO string UTC.
 - **`eventDate` agora é nullable** (`Date | null`). Páginas que dependem
@@ -313,8 +318,73 @@ Todo body/form **deve** ser validado com Zod com limites explícitos:
 ### 6.4 Dinheiro
 
 - Cálculos com percentuais ou splits → centavos (inteiros).
-- Exibição → `formatCurrency()` em [src/lib/format.ts](src/lib/format.ts).
+- Exibição → `formatCurrency(value, currency, locale)` em
+  [src/i18n/format.ts](src/i18n/format.ts). O locale vem do usuário
+  autenticado (`User.locale`) via `getLocale()` em RSC ou `useLocale()`
+  no client. Quando o locale não é passado, default = `pt-BR`.
 - Moeda configurável (BRL/USD/EUR) em `EventSettings.currency`.
+
+### 6.7 i18n (Internacionalização)
+
+- **Biblioteca:** [next-intl](https://next-intl.dev/) 4.x. Configurado em
+  [next.config.ts](next.config.ts) (`withNextIntl`) e
+  [src/i18n/request.ts](src/i18n/request.ts).
+- **Idiomas suportados:** `pt-BR` (default/fallback), `en`, `es`. Constante
+  em [src/i18n/config.ts](src/i18n/config.ts).
+- **Sem prefixo de URL.** Locale resolvido na ordem: (1) `?lang=` em rotas
+  públicas (RSVP, login) → (2) cookie `NEXT_LOCALE` → (3) JWT `user.locale`
+  → (4) header `Accept-Language` → (5) default `pt-BR`.
+- **Onde está a preferência:**
+  - `User.locale` (`String @default("pt-BR")`) — propagado pelo JWT do
+    Auth.js. Pode ser alterado em `/dashboard/profile`.
+  - `Guest.language` (`String?`) — locale do convidado para RSVP. Null = usa
+    `EventSettings.defaultLocale`.
+  - `EventSettings.defaultLocale` — fallback para envios sistêmicos sem
+    destinatário identificado (ex.: RSVP de Guest sem `language`).
+- **Catálogos:** `src/messages/{pt-BR,en,es}/*.json`. Um arquivo por
+  domínio: `common`, `auth`, `dashboard`, `actions`, `notifications`,
+  `help`, `changelog`, `rsvp`.
+- **Padrão de chaves:** `namespace.area.entity.token` — ex.
+  `dashboard.vendors.list.empty`, `actions.passwordReset.invalidEmail`,
+  `notifications.PAYMENT_DUE.subject`.
+- **Plurais (ICU MessageFormat):** obrigatório em EN/ES.
+  `{count, plural, one {# day} other {# days}}`. Funciona com `t("key", { count: 3 })`.
+- **Como usar:**
+  - **Server Component:** `const t = await getTranslations("dashboard.vendors"); <h1>{t("title")}</h1>`.
+  - **Client Component:** `const t = useTranslations("dashboard.vendors"); …`.
+  - **Server Action:** `const t = await getTranslations("actions.vendor"); return { success: false, error: t("errors.notFound") };`.
+  - **Fora de request lifecycle (cron, scripts):** `getTranslations({ locale, namespace })` — passe `locale` explicitamente vindo do destinatário (`User.locale`). Não use `getLocale()` aqui — retorna o default.
+- **Zod messages:** não use `z.setErrorMap` global. Capture os erros e
+  traduza via helper [src/lib/zod-i18n.ts](src/lib/zod-i18n.ts):
+  ```ts
+  const tc = await getTranslations("common");
+  const parsed = Schema.safeParse(...);
+  if (!parsed.success) return { success: false, error: zodErrorMessage(parsed.error, tc) };
+  ```
+- **Proibido:**
+  - Strings literais em JSX, `return { error: "..." }`, `toast.error("Falha")`, `placeholder="Email"`, etc. Toda string visível ao usuário vem de catálogos.
+  - Hardcoded `<html lang="pt-BR">` — use o locale resolvido em
+    [src/app/layout.tsx](src/app/layout.tsx).
+  - Templates de notificação chamando `getLocale()` — eles recebem locale do destinatário via input.
+- **Onboarding:** o admin escolhe o idioma no Step 1 (junto da moeda).
+  Salvar grava `User.locale` (admin) e `EventSettings.defaultLocale`.
+- **Troca de idioma:** `/dashboard/profile` atualiza `User.locale` + cookie
+  `NEXT_LOCALE` + faz hard reload (`window.location.reload()`) para
+  reemitir o JWT.
+- **Adicionar nova chave:** adicione nos **3** catálogos no mesmo PR. Não
+  deixe `en`/`es` com placeholders — traduza ou peça revisão.
+- **Status atual da cobertura:**
+  - 100%: login, forgot-password, reset-password, RSVP individual e
+    grupo, sidebar/mobile-nav, onboarding wizard, profile, templates de
+    notificação (9 kinds × 3 idiomas), Server Actions críticas (auth,
+    passwordReset, onboarding, profile).
+  - **Pendente** (rotam pt-BR via shim de `formatCurrency`/`formatDate`,
+    sem tradução de UI nesta entrega): páginas internas do dashboard
+    (`vendors`, `venues`, `tasks`, `payments`, `income`, `assets`,
+    `goals`, `guests`, `gifts`, `wedding-day`, `honeymoon`, `trousseau`,
+    `insights`, `reports`, `settings`) e demais Server Actions. Conteúdo
+    detalhado do help center continua em pt-BR até traduções de
+    comunidade.
 
 ### 6.5 Logs
 
@@ -340,6 +410,16 @@ Todo body/form **deve** ser validado com Zod com limites explícitos:
   `status`). Idempotência por dia: `kind + refId` + `DATE(createdAt) = today`.
 - Templates HTML de email precisam **escapar** dados do usuário antes de
   interpolar (XSS em email é vetor real).
+- **Locale do destinatário é obrigatório** em qualquer chamada de
+  `notify()` que rode fora do request lifecycle do usuário (crons,
+  webhooks, scripts). Leia `User.locale` do banco e propague em
+  `NotifyTarget.locale`. Nunca use `getLocale()` dentro de
+  [src/lib/notifications/templates.ts](src/lib/notifications/templates.ts).
+- A função `render()` é **async** e recebe `locale: Locale` em cada
+  variante de `RenderInput`. ICU plurals usam a chave do JSON; o
+  interpolador do next-intl já escapa interpolações simples, então
+  aplique `escapeHtml`/`escapeWaMarkdown` apenas em valores recebidos
+  crus (não duplicar escape).
 
 ---
 
@@ -405,6 +485,10 @@ npm run db:studio          # prisma studio (http://localhost:5555)
    atualize [src/lib/changelog.ts](src/lib/changelog.ts).
 3. **`README.md`** — apenas se for marco de produto ou mudança de
    variáveis de ambiente.
+4. **`src/messages/{pt-BR,en,es}/*.json`** — toda string visível ao
+   usuário precisa estar **nos três catálogos**. Adicionar chave em só
+   um idioma quebra o app para os demais. Veja
+   [docs/i18n.md](docs/i18n.md) para o fluxo.
 
 Não tratar isso como opcional. Doc desatualizada vira armadilha — alguém
 confia em algo antigo e perde horas.
@@ -441,13 +525,16 @@ Ao revisar PR que toque endpoints ou Server Actions:
 - [ ] Dados de usuário em HTML passam por escape
 - [ ] Ação relevante grava em `AuditLog`
 - [ ] Sem `console.log` de informação sensível
-- [ ] Datas no fuso correto (`America/Sao_Paulo` para display, UTC para storage)
+- [ ] Datas no fuso correto (`America/Sao_Paulo` para display em pt-BR, UTC para storage)
+- [ ] `formatDate`/`formatCurrency` chamados com `locale` quando o output for visível ao usuário
 - [ ] `eventDate` tratado como `Date | null` (não assuma populado)
 - [ ] Sem `any` em contratos
+- [ ] **Toda string visível** existe em `src/messages/{pt-BR,en,es}/*.json`
+- [ ] Templates de notificação propagam `locale` do destinatário
 - [ ] `npm run lint` passa
 - [ ] `npm run test:run` passa
 - [ ] `npm run build` passa
-- [ ] `docs/`, `/help` e `README.md` atualizados se a mudança for visível
+- [ ] `docs/`, `/help`, `README.md` e os 3 catálogos atualizados se a mudança for visível
 
 ---
 
@@ -459,6 +546,9 @@ Ao revisar PR que toque endpoints ou Server Actions:
 - Mudanças no fluxo de auth (callbacks, sessão, tokens).
 - Mudanças que afetam o RSVP público (rota sem auth — alta superfície de
   ataque).
+- Adicionar um novo idioma ao i18n (impacto em 8 novos arquivos JSON +
+  ajustes em `src/i18n/config.ts`, `src/i18n/request.ts` e seletor do
+  onboarding/profile).
 
 Em todos esses casos: abra issue de discussão antes do PR.
 

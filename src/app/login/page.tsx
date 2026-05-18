@@ -1,7 +1,9 @@
 import LoginForm from './login-form';
 import { Heart } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const t = await getTranslations('auth.login');
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-950 p-4">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-rose-900/20 via-zinc-950 to-zinc-950 pointer-events-none"></div>
@@ -11,10 +13,10 @@ export default function LoginPage() {
             <Heart className="h-6 w-6 text-rose-500" />
           </div>
           <h1 className="text-3xl font-semibold tracking-tight text-white">
-            Bem-vindo de volta
+            {t('title')}
           </h1>
           <p className="text-sm text-zinc-400">
-            Entre na sua conta para gerenciar o seu grande dia.
+            {t('subtitle')}
           </p>
         </div>
         <LoginForm />

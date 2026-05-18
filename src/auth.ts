@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { checkBackupCode, verifyTotpToken } from "@/lib/totp";
 import { getSecuritySettings, role2FARequired } from "@/lib/security-settings";
 import { getEventConfig, isOnboardingComplete } from "@/lib/event-config";
+import { coerceLocale } from "@/i18n/config";
 
 export const TWO_FACTOR_REQUIRED = "2FA_REQUIRED";
 export const TWO_FACTOR_SETUP_REQUIRED = "2FA_SETUP_REQUIRED";
@@ -81,6 +82,7 @@ export const {
           role: user.role,
           mustChangePassword: user.mustChangePassword,
           onboardingCompleted: isOnboardingComplete(cfg),
+          locale: coerceLocale(user.locale),
         };
       },
     }),

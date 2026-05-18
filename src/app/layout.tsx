@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { ToastProvider } from "@/components/toast";
 import { ServiceWorkerRegister } from "@/components/sw-register";
@@ -37,20 +39,28 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
   return (
     <html
-      lang="pt-BR"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full overflow-x-clip antialiased dark`}
     >
       <body className="min-h-full flex flex-col overflow-x-clip bg-zinc-950 text-zinc-100">
-        <SessionProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </SessionProvider>
+        <NextIntlClientProvider
+          locale={locale}
+          messages={messages}
+          timeZone={locale === "pt-BR" ? "America/Sao_Paulo" : "UTC"}
+        >
+          <SessionProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </SessionProvider>
+        </NextIntlClientProvider>
         <ServiceWorkerRegister />
       </body>
     </html>

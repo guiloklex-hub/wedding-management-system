@@ -1,6 +1,7 @@
 "use server";
 
 import { AuthError } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import {
   signIn,
   signOut,
@@ -32,11 +33,12 @@ export async function authenticate(
       if (cause === TWO_FACTOR_REQUIRED) return TWO_FACTOR_REQUIRED;
       if (cause === TWO_FACTOR_SETUP_REQUIRED) return TWO_FACTOR_SETUP_REQUIRED;
       if (cause === ACCOUNT_DISABLED) return ACCOUNT_DISABLED;
+      const t = await getTranslations("actions.auth");
       switch (error.type) {
         case "CredentialsSignin":
-          return "Credenciais inválidas.";
+          return t("invalidCredentials");
         default:
-          return "Algo deu errado ao fazer o login.";
+          return t("loginGenericError");
       }
     }
     throw error;

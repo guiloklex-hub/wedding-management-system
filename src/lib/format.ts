@@ -1,38 +1,54 @@
-export function formatCurrency(value: number, currency: string = "BRL"): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
+import {
+  formatCompactCurrency as formatCompactCurrencyImpl,
+  formatCurrency as formatCurrencyImpl,
+  formatDate as formatDateImpl,
+  formatDateTime as formatDateTimeImpl,
+  toIsoDate as toIsoDateImpl,
+} from "@/i18n/format";
+
+export type { Locale };
+
+export function formatCurrency(
+  value: number,
+  currency: string = "BRL",
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  return formatCurrencyImpl(value, currency, locale);
 }
 
-export function formatCompactCurrency(value: number, currency: string = "BRL"): string {
-  if (Math.abs(value) >= 1000) {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency,
-      notation: "compact",
-      maximumFractionDigits: 1,
-    }).format(value);
-  }
-  return formatCurrency(value, currency);
+export function formatCompactCurrency(
+  value: number,
+  currency: string = "BRL",
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  return formatCompactCurrencyImpl(value, currency, locale);
+}
+
+export function formatDate(
+  date: Date | string,
+  locale: Locale = DEFAULT_LOCALE,
+  options?: Intl.DateTimeFormatOptions,
+): string {
+  return formatDateImpl(date, locale, options);
+}
+
+export function formatDateTime(
+  date: Date | string,
+  locale: Locale = DEFAULT_LOCALE,
+  options?: Intl.DateTimeFormatOptions,
+): string {
+  return formatDateTimeImpl(date, locale, options);
 }
 
 export function formatDateBR(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(d);
+  return formatDateImpl(date, "pt-BR", { timeZone: "UTC" });
 }
 
 export function formatDateTimeBR(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(d);
+  return formatDateTimeImpl(date, "pt-BR");
 }
 
 export function toIsoDate(date: Date | null): string {
-  if (!date) return "";
-  return date.toISOString().split("T")[0];
+  return toIsoDateImpl(date);
 }

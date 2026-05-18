@@ -1,5 +1,6 @@
 import type { Vendor, BudgetItem, Payment, Asset } from "@prisma/client";
 import type { Role } from "@/lib/permissions";
+import type { Locale } from "@/i18n/config";
 
 export type VendorStatus = "NEGOTIATION" | "CONTRACTED" | "FINALIZED";
 export type PaymentStatus = "PENDING" | "PAID";
@@ -20,3 +21,25 @@ export type ActionResult<T = unknown> =
 
 export type { Vendor, BudgetItem, Payment, Asset };
 export type { Role };
+export type { Locale };
+
+declare module "next-auth" {
+  interface User {
+    id: string;
+    role?: string;
+    mustChangePassword?: boolean;
+    onboardingCompleted?: boolean;
+    locale?: Locale;
+  }
+  interface Session {
+    user: {
+      id: string;
+      email?: string | null;
+      name?: string | null;
+      role?: Role;
+      mustChangePassword?: boolean;
+      onboardingCompleted?: boolean;
+      locale?: Locale;
+    };
+  }
+}

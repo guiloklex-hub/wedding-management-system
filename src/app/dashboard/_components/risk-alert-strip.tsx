@@ -53,8 +53,8 @@ export function RiskAlertStrip({
               className={`flex items-start gap-2 rounded-xl border ${style.border} ${style.bg} p-3 transition-colors hover:bg-opacity-20`}
             >
               <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${style.text}`} />
-              <div className="min-w-0">
-                <p className={`text-sm font-semibold ${style.text}`}>{alert.title}</p>
+              <div className="min-w-0 flex-1">
+                <p className={`break-words text-sm font-semibold ${style.text}`}>{alert.title}</p>
                 <p className="mt-1 truncate text-xs text-zinc-400">{alert.body}</p>
               </div>
             </Link>

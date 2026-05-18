@@ -30,14 +30,14 @@ export function RsvpMini({
         <h2 className="text-sm font-semibold text-zinc-200">Confirmações (RSVP)</h2>
         <UserCheck className="h-4 w-4 text-zinc-500" />
       </div>
-      <div className="flex items-end justify-between">
-        <div>
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <p className="text-3xl font-bold text-zinc-100">{confirmedPct}%</p>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 break-words text-xs text-zinc-500">
             {rsvp.confirmed} de {total} responderam confirmando
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-1 text-right text-xs">
+        <div className="grid shrink-0 grid-cols-1 gap-1 text-right text-xs">
           <span className="text-emerald-400">{rsvp.confirmed} confirmados</span>
           <span className="text-amber-400">{rsvp.maybe} talvez</span>
           <span className="text-rose-400">{rsvp.declined} recusas</span>

@@ -51,11 +51,11 @@ export default async function DashboardPage() {
     data.daysToEvent !== null && data.daysToEvent <= 20 && data.remainingBalance > 0;
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">Visão Geral</h1>
-          <p className="text-sm text-zinc-500">{subtitle}</p>
+          <p className="break-words text-sm text-zinc-500">{subtitle}</p>
         </div>
         {data.daysToEvent !== null ? <CountdownPill days={data.daysToEvent} /> : null}
       </div>

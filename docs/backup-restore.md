@@ -9,15 +9,31 @@ Há um endpoint protegido:
 
 ```
 GET /api/backup
-Authorization: cookie de sessão (precisa estar logado como ADMIN)
+Authorization: cookie de sessão (role com canViewSensitiveFinance — ADMIN/GROOM/BRIDE)
 ```
 
-Retorna um **JSON** com todos os dados do banco (vendors, payments, guests,
-tasks, etc.) — estruturado por entidade. Útil para:
+Retorna um **JSON** com `version: 2` e todas as coleções do banco —
+estruturado por entidade. Útil para:
 
 - backup periódico (você baixa e guarda em local seguro);
 - portabilidade (levar o estado para outra instância);
 - atender pedidos de **LGPD** (portabilidade de dados).
+
+### Coleções exportadas (v2)
+
+`eventSettings`, `securitySettings`, `vendors`, `vendorContacts`,
+`vendorNotes`, `contracts`, `attachments`, `venues`, `venueChecklistItems`,
+`budgetItems`, `payments`, `incomes`, `assets`, `savingsGoals`,
+`honeymoon`, `honeymoonItems`, `trousseauItems`, `guestGroups`, `guests`,
+`seatingTables`, `gifts`, `tasks` — 22 ao todo.
+
+> 🔄 **v1 vs v2:** a versão `1` legada continha apenas 5 coleções
+> (`eventSettings`, `vendors`, `budgetItems`, `payments`, `assets`) e
+> deixava o restante do banco sem snapshot. A v2 cobre tudo. Importadores
+> futuros devem inspecionar `payload.version` para distinguir.
+
+Cada download grava entrada `BACKUP_EXPORT` em `AuditLog` com a contagem
+de registros por coleção.
 
 ### Como baixar pelo navegador
 

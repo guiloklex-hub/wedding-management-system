@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { denyIfNoEdit } from "@/lib/finance-access";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -31,8 +31,8 @@ export async function createGuestGroup(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Não autorizado" };
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
 
   const data = Object.fromEntries(formData.entries());
   const parsed = GroupCreateSchema.safeParse(data);
@@ -55,8 +55,8 @@ export async function updateGuestGroup(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Não autorizado" };
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
 
   const data = Object.fromEntries(formData.entries());
   const parsed = GroupUpdateSchema.safeParse(data);
@@ -81,8 +81,8 @@ export async function updateGuestGroup(
 }
 
 export async function deleteGuestGroup(groupId: string): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Não autorizado" };
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
   if (typeof groupId !== "string" || groupId.length === 0 || groupId.length > 64) {
     return { success: false, error: "ID inválido" };
   }
@@ -110,8 +110,8 @@ export async function setGroupMembers(input: {
   groupId: string;
   guestIds: string[];
 }): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Não autorizado" };
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
 
   const parsed = GroupMembershipSchema.safeParse(input);
   if (!parsed.success) {
@@ -195,6 +195,9 @@ export async function publicRsvpRespondForGroup(input: {
       },
     });
     if (!group) return { success: false, error: "Convite de grupo não encontrado" };
+    if (group.rsvpTokenExpiresAt && group.rsvpTokenExpiresAt.getTime() < Date.now()) {
+      return { success: false, error: "Link expirado. Solicite um novo convite." };
+    }
 
     const groupGuestIds = new Set(group.guests.map((g: { id: string }) => g.id));
     const plusAllowedById = new Map<string, number>(

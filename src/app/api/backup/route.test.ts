@@ -13,6 +13,31 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
+function mockEmptyTables() {
+  prismaMock.eventSettings.findUnique.mockResolvedValue({ id: "singleton" } as never);
+  prismaMock.securitySettings.findUnique.mockResolvedValue({ id: "singleton" } as never);
+  prismaMock.vendor.findMany.mockResolvedValue([] as never);
+  prismaMock.vendorContact.findMany.mockResolvedValue([] as never);
+  prismaMock.vendorNote.findMany.mockResolvedValue([] as never);
+  prismaMock.contract.findMany.mockResolvedValue([] as never);
+  prismaMock.attachment.findMany.mockResolvedValue([] as never);
+  prismaMock.venue.findMany.mockResolvedValue([] as never);
+  prismaMock.venueChecklistItem.findMany.mockResolvedValue([] as never);
+  prismaMock.budgetItem.findMany.mockResolvedValue([] as never);
+  prismaMock.payment.findMany.mockResolvedValue([] as never);
+  prismaMock.income.findMany.mockResolvedValue([] as never);
+  prismaMock.asset.findMany.mockResolvedValue([] as never);
+  prismaMock.savingsGoal.findMany.mockResolvedValue([] as never);
+  prismaMock.honeymoon.findUnique.mockResolvedValue(null as never);
+  prismaMock.honeymoonItem.findMany.mockResolvedValue([] as never);
+  prismaMock.trousseauItem.findMany.mockResolvedValue([] as never);
+  prismaMock.guestGroup.findMany.mockResolvedValue([] as never);
+  prismaMock.guest.findMany.mockResolvedValue([] as never);
+  prismaMock.seatingTable.findMany.mockResolvedValue([] as never);
+  prismaMock.gift.findMany.mockResolvedValue([] as never);
+  prismaMock.task.findMany.mockResolvedValue([] as never);
+}
+
 describe("GET /api/backup", () => {
   it("retorna 401 sem sessão", async () => {
     authMock.mockResolvedValue(null);
@@ -22,11 +47,7 @@ describe("GET /api/backup", () => {
 
   it("retorna 200 JSON com headers de download", async () => {
     authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
-    prismaMock.eventSettings.findUnique.mockResolvedValue({ id: "singleton" } as never);
-    prismaMock.vendor.findMany.mockResolvedValue([] as never);
-    prismaMock.budgetItem.findMany.mockResolvedValue([] as never);
-    prismaMock.payment.findMany.mockResolvedValue([] as never);
-    prismaMock.asset.findMany.mockResolvedValue([] as never);
+    mockEmptyTables();
 
     const res = await GET();
     expect(res.status).toBe(200);
@@ -37,10 +58,10 @@ describe("GET /api/backup", () => {
     expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 
-  it("payload contém exportedAt, version e todas as 5 coleções", async () => {
+  it("payload contém exportedAt, version e todas as coleções esperadas", async () => {
     authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
     const sample = { id: "v1" };
-    prismaMock.eventSettings.findUnique.mockResolvedValue({ id: "singleton" } as never);
+    mockEmptyTables();
     prismaMock.vendor.findMany.mockResolvedValue([sample] as never);
     prismaMock.budgetItem.findMany.mockResolvedValue([sample] as never);
     prismaMock.payment.findMany.mockResolvedValue([sample] as never);
@@ -55,24 +76,26 @@ describe("GET /api/backup", () => {
       budgetItems: unknown[];
       payments: unknown[];
       assets: unknown[];
+      incomes: unknown[];
+      guests: unknown[];
+      tasks: unknown[];
     };
 
-    expect(body.version).toBe(1);
+    expect(body.version).toBe(2);
     expect(new Date(body.exportedAt).getTime()).toBeGreaterThan(0);
     expect(body.eventSettings).toEqual({ id: "singleton" });
     expect(body.vendors).toEqual([sample]);
     expect(body.budgetItems).toEqual([sample]);
     expect(body.payments).toEqual([sample]);
     expect(body.assets).toEqual([sample]);
+    expect(body.incomes).toEqual([]);
+    expect(body.guests).toEqual([]);
+    expect(body.tasks).toEqual([]);
   });
 
   it("ordenação asc por createdAt nas coleções de auditoria", async () => {
     authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
-    prismaMock.eventSettings.findUnique.mockResolvedValue({} as never);
-    prismaMock.vendor.findMany.mockResolvedValue([] as never);
-    prismaMock.budgetItem.findMany.mockResolvedValue([] as never);
-    prismaMock.payment.findMany.mockResolvedValue([] as never);
-    prismaMock.asset.findMany.mockResolvedValue([] as never);
+    mockEmptyTables();
 
     await GET();
     expect(prismaMock.vendor.findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });

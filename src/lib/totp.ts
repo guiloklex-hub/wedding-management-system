@@ -1,5 +1,6 @@
 import { generateSecret, generateURI, verifySync } from "otplib";
 import { randomBytes } from "node:crypto";
+import bcrypt from "bcryptjs";
 import QRCode from "qrcode";
 
 export type TotpSetup = {
@@ -7,6 +8,9 @@ export type TotpSetup = {
   otpauthUrl: string;
   qrCodeSvg: string;
 };
+
+const BCRYPT_ROUNDS = 10;
+const BCRYPT_PREFIX = /^\$2[aby]\$/;
 
 export function generateBackupCodes(count = 8): string[] {
   return Array.from({ length: count }, () =>
@@ -16,6 +20,12 @@ export function generateBackupCodes(count = 8): string[] {
       .toUpperCase()
       .replace(/(.{5})/, "$1-")
       .slice(0, 11),
+  );
+}
+
+export async function hashBackupCodes(codes: string[]): Promise<string[]> {
+  return Promise.all(
+    codes.map((c) => bcrypt.hash(c.trim().toUpperCase(), BCRYPT_ROUNDS)),
   );
 }
 
@@ -43,17 +53,37 @@ export function verifyTotpToken(token: string, secret: string): boolean {
   }
 }
 
-export function checkBackupCode(code: string, storedJson: string | null): { valid: boolean; remaining: string[] } {
+export async function checkBackupCode(
+  code: string,
+  storedJson: string | null,
+): Promise<{ valid: boolean; remaining: string[] }> {
   const trimmed = code.trim().toUpperCase();
   if (!storedJson) return { valid: false, remaining: [] };
-  let codes: string[] = [];
+  let codes: string[];
   try {
-    codes = JSON.parse(storedJson) as string[];
+    const parsed = JSON.parse(storedJson);
+    if (!Array.isArray(parsed)) return { valid: false, remaining: [] };
+    codes = parsed.filter((c): c is string => typeof c === "string");
   } catch {
     return { valid: false, remaining: [] };
   }
-  const idx = codes.indexOf(trimmed);
-  if (idx === -1) return { valid: false, remaining: codes };
-  const next = [...codes.slice(0, idx), ...codes.slice(idx + 1)];
-  return { valid: true, remaining: next };
+
+  for (let i = 0; i < codes.length; i++) {
+    const stored = codes[i];
+    let isMatch = false;
+    if (BCRYPT_PREFIX.test(stored)) {
+      try {
+        isMatch = await bcrypt.compare(trimmed, stored);
+      } catch {
+        isMatch = false;
+      }
+    } else {
+      isMatch = stored === trimmed;
+    }
+    if (isMatch) {
+      const remaining = [...codes.slice(0, i), ...codes.slice(i + 1)];
+      return { valid: true, remaining };
+    }
+  }
+  return { valid: false, remaining: codes };
 }

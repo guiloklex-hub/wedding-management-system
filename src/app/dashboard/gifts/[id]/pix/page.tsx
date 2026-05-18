@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getEventConfig } from "@/lib/event-config";
+import { canEdit } from "@/lib/permissions";
 import { generateBrCode } from "@/lib/pix";
 import { formatCurrency } from "@/lib/format";
 import PixPanel from "./pix-panel";
@@ -18,6 +19,8 @@ export default async function GiftPixPage({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  const role = (session.user as { role?: string }).role;
+  if (!canEdit(role)) redirect("/dashboard");
 
   const { id } = await params;
   const gift = await prisma.gift.findFirst({

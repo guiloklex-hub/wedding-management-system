@@ -200,6 +200,8 @@ function EventTab({
   const [, startTransition] = useTransition();
   const [isPending, setPending] = useState(false);
   const [pixPending, setPixPending] = useState(false);
+  const [currency, setCurrency] = useState(initial.currency);
+  const [pixKeyType, setPixKeyType] = useState(pixSettings.pixKeyType);
 
   function handleSubmit(formData: FormData) {
     setPending(true);
@@ -238,7 +240,8 @@ function EventTab({
             <label className="mb-1 block text-sm font-medium text-zinc-400">Moeda</label>
             <select
               name="currency"
-              defaultValue={initial.currency}
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
             >
               <option value="BRL">Real (BRL)</option>
@@ -277,7 +280,8 @@ function EventTab({
             <label className="mb-1 block text-sm font-medium text-zinc-400">Tipo de chave</label>
             <select
               name="pixKeyType"
-              defaultValue={pixSettings.pixKeyType}
+              value={pixKeyType}
+              onChange={(e) => setPixKeyType(e.target.value)}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
             >
               <option value="">—</option>

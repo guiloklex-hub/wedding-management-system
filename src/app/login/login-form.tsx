@@ -8,7 +8,7 @@ import Link from "next/link";
 
 const TWO_FACTOR_REQUIRED = "2FA_REQUIRED";
 const TWO_FACTOR_SETUP_REQUIRED = "2FA_SETUP_REQUIRED";
-const ACCOUNT_DISABLED = "ACCOUNT_DISABLED";
+const TOO_MANY_ATTEMPTS = "TOO_MANY_ATTEMPTS";
 
 function resolveRedirectTo(): string {
   if (typeof window === "undefined") return "/dashboard";
@@ -37,7 +37,7 @@ export default function LoginForm() {
 
   const FRIENDLY_ERROR: Record<string, string> = {
     [TWO_FACTOR_SETUP_REQUIRED]: t("errors.twoFactorSetupRequired"),
-    [ACCOUNT_DISABLED]: t("errors.accountDisabled"),
+    [TOO_MANY_ATTEMPTS]: t("errors.tooManyAttempts"),
   };
 
   const friendly =

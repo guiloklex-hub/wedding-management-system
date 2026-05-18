@@ -32,14 +32,17 @@ await signIn("credentials", {
 });
 ```
 
+**Rate limit:** 5 tentativas/min por email + 30/min por IP. Estourar
+qualquer um derruba para `TOO_MANY_ATTEMPTS`.
+
 **Erros conhecidos retornados:**
 
 | Mensagem | Significado |
 |---|---|
 | `2FA_REQUIRED` | Usuário tem 2FA ativo; reenvie com `totp`. |
 | `2FA_SETUP_REQUIRED` | Política exige 2FA mas usuário não configurou. |
-| `ACCOUNT_DISABLED` | Usuário está `isActive=false` ou arquivado. |
-| `null` (callback retorna falha) | Credenciais inválidas (sem distinguir email ou senha). |
+| `TOO_MANY_ATTEMPTS` | Rate limit estourado — aguarde 1 minuto. |
+| `null` (callback retorna falha) | Credenciais inválidas. Inclui email inexistente, senha errada **e conta arquivada/desativada** (indistinto, anti-enumeração). |
 
 ---
 
@@ -74,12 +77,48 @@ GET /api/calendar.ics
 GET /api/backup
 ```
 
-**Requer:** sessão válida, role `ADMIN`.
+**Requer:** sessão válida, role com `canViewSensitiveFinance` (ADMIN, GROOM
+ou BRIDE). Outras roles recebem `403`.
 
-**Retorna:** JSON com todos os dados do banco, estruturado por entidade.
+**Retorna:** JSON com todos os dados do banco. Formato:
+
+```json
+{
+  "exportedAt": "2026-05-18T10:30:00.000Z",
+  "version": 2,
+  "eventSettings": { ... },
+  "securitySettings": { ... },
+  "vendors": [...],
+  "vendorContacts": [...],
+  "vendorNotes": [...],
+  "contracts": [...],
+  "attachments": [...],
+  "venues": [...],
+  "venueChecklistItems": [...],
+  "budgetItems": [...],
+  "payments": [...],
+  "incomes": [...],
+  "assets": [...],
+  "savingsGoals": [...],
+  "honeymoon": { ... } | null,
+  "honeymoonItems": [...],
+  "trousseauItems": [...],
+  "guestGroups": [...],
+  "guests": [...],
+  "seatingTables": [...],
+  "gifts": [...],
+  "tasks": [...]
+}
+```
 
 **Headers:**
-- `Content-Disposition: attachment; filename="wedding-finance-backup-YYYY-MM-DD.json"`
+- `Content-Type: application/json; charset=utf-8`
+- `Content-Disposition: attachment; filename="wfv-backup-YYYY-MM-DD.json"`
+- `Cache-Control: no-store`
+
+Cada chamada grava `AuditLog` com action `BACKUP_EXPORT` e contagem por
+coleção. Importadores devem inspecionar `payload.version` — `2` inclui as
+22 coleções acima; `1` (legado) trazia apenas 5.
 
 Veja [backup-restore.md](backup-restore.md).
 

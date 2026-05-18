@@ -62,6 +62,7 @@ export async function createTask(
         completedAt: parsed.data.status === "DONE" ? new Date() : null,
       },
     });
+    await audit("Task", created.id, "CREATE", { title: created.title, status: created.status });
     revalidatePath("/dashboard/tasks");
     return { success: true, data: { id: created.id } } as ActionResult<{ id: string }>;
   } catch (err) {
@@ -104,6 +105,7 @@ export async function updateTask(
         completedAt,
       },
     });
+    await audit("Task", parsed.data.id, "UPDATE", { status: parsed.data.status });
     revalidatePath("/dashboard/tasks");
     return { success: true };
   } catch (err) {
@@ -127,6 +129,7 @@ export async function setTaskStatus(
       },
     });
     if (result.count === 0) return { success: false, error: "Tarefa não encontrada" };
+    await audit("Task", taskId, "STATUS_CHANGE", { status });
     revalidatePath("/dashboard/tasks");
     return { success: true };
   } catch (err) {
@@ -144,6 +147,7 @@ export async function deleteTask(taskId: string): Promise<ActionResult> {
       data: { deletedAt: new Date() },
     });
     if (result.count === 0) return { success: false, error: "Tarefa não encontrada" };
+    await audit("Task", taskId, "DELETE");
     revalidatePath("/dashboard/tasks");
     return { success: true };
   } catch (err) {
@@ -190,7 +194,7 @@ export async function loadTaskTemplates(skipExisting = true): Promise<ActionResu
     if (data.length === 0) return { success: true, data: { created: 0 } };
 
     const result = await prisma.task.createMany({ data });
-    await audit("Vendor", "system", "CREATE", { templates: result.count });
+    await audit("Task", "templates", "BULK_CREATE", { templates: result.count });
     revalidatePath("/dashboard/tasks");
     return { success: true, data: { created: result.count } };
   } catch (err) {

@@ -141,6 +141,33 @@ Authorization: Bearer <CRON_SECRET>
 Não há scheduler embutido — você precisa configurar **um cron externo** que
 chame esse endpoint periodicamente (sugestão: a cada 30 minutos).
 
+### Como o endpoint executa
+
+Para evitar serializar dezenas de queries em loop, o handler:
+
+1. Dispara **uma única `Promise.all`** com seis queries paralelas: lista de
+   destinatários (`users` ativos com role notificável), idempotência
+   batched (`loadNotifiedTodaySet` agrega um `findMany` por kind+refId+refType
+   no `NotificationLog` do dia) e os quatro recortes de pagamentos/tarefas
+   (vencendo, vencidos × payments, tasks).
+2. Para cada item, consulta o `Set` de já-notificados — **sem ida ao banco
+   por iteração**.
+3. Envios para cada destinatário rodam em **`Promise.all`** dentro do mesmo
+   evento. Antes era serial (`for ... await`), o que multiplicava latência
+   por número de destinatários.
+
+### Fuso horário consistente
+
+A janela de "hoje" usa o helper `startOfTodayBRT()` em
+[src/lib/notifications/log.ts](../src/lib/notifications/log.ts) — UTC-3,
+sem depender do timezone do processo Node. O cron e a função
+`wasNotifiedToday` usam **a mesma origem de "início do dia"**, então a
+idempotência não vaza entre dias mesmo se o servidor estiver em UTC.
+
+> Antes do hardening, `wasNotifiedToday` usava `new Date().setHours(0,…)`
+> (timezone local do processo) enquanto o cron já operava em BRT — janelas
+> deslocadas podiam disparar lembrete duplicado ao virar dia em UTC.
+
 ### Linux/macOS — crontab
 
 ```cron

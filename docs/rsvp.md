@@ -27,6 +27,23 @@ Rota: `/rsvp/[token]` onde `token = Guest.rsvpToken` (cuid gerado na criação).
 
 Action: `publicRsvpRespond` em [src/app/actions/guestActions.ts](../src/app/actions/guestActions.ts).
 
+## Expiração de tokens RSVP
+
+Modelos `Guest` e `GuestGroup` têm o campo opcional `rsvpTokenExpiresAt:
+DateTime?`. Quando preenchido, o link deixa de funcionar após esse instante.
+
+- A query Prisma já filtra na origem com
+  `OR: [{ rsvpTokenExpiresAt: null }, { rsvpTokenExpiresAt: { gt: now } }]`,
+  então a página pública retorna **404** para tokens expirados.
+- O server action (`publicRsvpRespond`, `publicRsvpRespondForGroup`) também
+  rejeita com `"Link expirado"` caso o convidado tente um POST direto.
+- `rsvpTokenExpiresAt = null` (default) significa **sem expiração** —
+  registros legados continuam funcionando.
+
+Recomendação operacional: rodar um script após o casamento setando
+`rsvpTokenExpiresAt = eventDate + 7 dias` para todos os tokens, fechando a
+janela de respostas retroativas.
+
 ## 2. RSVP de grupo (família)
 
 Rota: `/rsvp/group/[token]` onde `token = GuestGroup.rsvpToken`.

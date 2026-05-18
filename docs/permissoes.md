@@ -17,12 +17,15 @@ Os checks abaixo são aplicados via `requireFinanceAccess()` nas pages e `denyIf
 
 | Área | ADMIN / GROOM / BRIDE | PLANNER | FAMILY / VIEWER |
 |------|-----------------------|---------|------------------|
-| Fornecedores | ✅ | ✅ | leitura |
+| Fornecedores | ✅ | ✅ | leitura¹ |
 | Locais | ✅ | ✅ | leitura |
 | Tarefas | ✅ | ✅ | leitura |
 | Convidados | ✅ | ✅ | leitura |
+| Grupos de convidados | ✅ | ✅ | 🚫 (`denyIfNoEdit`) |
 | Presentes | ✅ | ✅ | leitura |
+| QR Code PIX do gift | ✅ | ✅ (`canEdit`) | 🚫 redirect |
 | Dia D + Seating | ✅ | ✅ | leitura |
+| Mesas (criar/editar/posicionar) | ✅ | ✅ | 🚫 (`denyIfNoEdit`) |
 | Lua de mel | ✅ | ✅ | leitura |
 | Enxoval | ✅ | ✅ | leitura |
 | **Pagamentos** | ✅ | 🚫 redirect | 🚫 redirect |
@@ -30,9 +33,16 @@ Os checks abaixo são aplicados via `requireFinanceAccess()` nas pages e `denyIf
 | **Caixa (Assets)** | ✅ | 🚫 redirect | 🚫 redirect |
 | **Metas** | 🚫 | 🚫 redirect | 🚫 redirect |
 | **Insights / DRE** | ✅ | 🚫 redirect | 🚫 redirect |
+| **Backup (`/api/backup`)** | ✅ | 🚫 403 | 🚫 403 |
 | Ajustes | ✅ | ✅ (perfil) | perfil |
 
-Roles com 🚫 são **redirecionadas para `/dashboard`** se tentarem acessar a página diretamente, e os links ficam **escondidos no menu** (Sidebar / MobileHeader / BottomNav usam `useVisibleLinks()`).
+¹ A página de detalhe do fornecedor (`/dashboard/vendors/[id]`) sanitiza
+no servidor os campos financeiros (`payments`, `budgetItems`,
+`contracts[].totalValue`) para roles sem `canViewSensitiveFinance` — eles
+nem chegam ao client, então DevTools não revela. Veja
+[seguranca.md](seguranca.md).
+
+Roles com 🚫 são **redirecionadas para `/dashboard`** se tentarem acessar a página diretamente (`/api/backup` retorna `403 JSON`), e os links ficam **escondidos no menu** (Sidebar / MobileHeader / BottomNav usam `useVisibleLinks()`).
 
 ## API
 

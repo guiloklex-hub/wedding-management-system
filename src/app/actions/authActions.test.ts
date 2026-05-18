@@ -22,7 +22,7 @@ vi.mock("@/auth", () => ({
   signOut: () => signOutMock(),
   TWO_FACTOR_REQUIRED: "2FA_REQUIRED",
   TWO_FACTOR_SETUP_REQUIRED: "2FA_SETUP_REQUIRED",
-  ACCOUNT_DISABLED: "ACCOUNT_DISABLED",
+  TOO_MANY_ATTEMPTS: "TOO_MANY_ATTEMPTS",
 }));
 
 import { AuthError } from "next-auth";

@@ -9,8 +9,29 @@ Visão geral das proteções implementadas e práticas recomendadas para deploy.
 - **Senhas:** hash com `bcryptjs` (10 rounds).
 - **Sessão:** JWT no cookie `next-auth.session-token` (HttpOnly,
   SameSite=Lax).
-- **Mensagens de login** não distinguem "usuário não existe" de "senha
-  incorreta" — ambos retornam `null` (sem detalhes). Evita enumeração.
+- **Mensagens de login** não distinguem "usuário não existe", "senha
+  incorreta" nem "conta arquivada/desativada" — todos retornam `null` (sem
+  detalhes). Evita enumeração.
+- **Rate limit no login** ([src/auth.ts](../src/auth.ts)) — 5 tentativas
+  por minuto por email + 30 por minuto por IP. Ao estourar, o cliente
+  recebe `TOO_MANY_ATTEMPTS` (mensagem amigável traduzida nos 3 idiomas).
+
+### Revalidação periódica de sessão JWT
+
+O JWT é revalidado contra o banco a cada **60 segundos** no callback `jwt`
+em [src/auth.ts](../src/auth.ts). A cada hit que passa pela função `auth()`
+em server-side, se a última checagem foi há mais de 1 min, o callback
+consulta o banco e atualiza no token:
+
+- `isActive` e `archived` (a partir de `User.isActive` e `archivedAt`).
+- `role`, `mustChangePassword`, `locale` — para refletir mudanças feitas
+  por um admin em outro device.
+
+O middleware ([src/auth.config.ts](../src/auth.config.ts)) lê
+`session.user.isActive` e `session.user.archived` e **deslogará** (redirect
+para `/login?revoked=1`) qualquer usuário desativado/arquivado em até 1 min
+após a alteração. Sem isso, JWTs em curso continuariam válidos até a
+expiração natural.
 
 ### Senha provisória + troca obrigatória
 
@@ -27,13 +48,23 @@ Visão geral das proteções implementadas e práticas recomendadas para deploy.
 - Expira em **60 minutos**.
 - Consumo atômico: `updateMany` filtrado por `tokenHash`, `expiresAt > now`,
   `usedAt = null`. Se `count = 0`, token inválido ou já usado.
+- **Anti-enumeração:** o endpoint `requestPasswordReset` retorna sempre
+  `success: true`, independente do email existir. Para nivelar timing,
+  o ramo "usuário inexistente" simula custo de `bcrypt.hash()` antes de
+  retornar. Rate limit duplo: 1/min por email + 5/min por IP.
 
 ## 2FA (TOTP)
 
 - Implementado em [src/lib/totp.ts](../src/lib/totp.ts) com `otplib` v13.
 - Algoritmo: TOTP SHA-1, 30 s, 6 dígitos (compatível Google Authenticator,
   1Password, Authy, etc.).
-- **Backup codes:** 10 códigos one-time-use, gerados no setup.
+- **Backup codes:** 8 códigos one-time-use, gerados no setup. Armazenados
+  **hasheados com bcrypt** em `User.twoFactorBackupCodes` (JSON de hashes).
+  O usuário recebe os códigos em texto plano apenas uma vez, no momento da
+  ativação — após isso só o hash sobrevive no banco.
+- **Compatibilidade retroativa:** `checkBackupCode` aceita tanto entries
+  hasheadas (prefixo `$2[aby]$`) quanto texto plano legado. Usuários
+  pré-hardening não precisam regenerar, mas é recomendado.
 - **Forçar 2FA por role:** em `SecuritySettings.require2FARoles` (JSON
   array). Roles listados aqui não conseguem logar sem 2FA configurado —
   retorna `2FA_SETUP_REQUIRED` no fluxo de login.
@@ -134,7 +165,30 @@ await audit("Payment", payment.id, "MARK_PAID", { method: "PIX" });
 Campos: `entity`, `entityId`, `action`, `payload` (JSON serializado),
 `userId`, `createdAt`.
 
-Veja [src/lib/audit.ts](../src/lib/audit.ts) para os tipos disponíveis.
+### Auto-captura do `userId`
+
+O 5º argumento (`userId`) é **opcional**. Quando omitido, `audit()` faz um
+import dinâmico de `@/auth`, chama `auth()` e extrai
+`session.user.id`. Falhas (cron sem request lifecycle, scripts standalone)
+são silenciadas e o registro fica com `userId = null`. Isso elimina o
+boilerplate antigo em que cada call-site precisava propagar `session.user.id`
+manualmente — e o esquecimento gerava trilha cega.
+
+### Entities cobertas
+
+`AuditEntity` em [src/lib/audit.ts](../src/lib/audit.ts) cobre Vendor,
+VendorContact, VendorNote, BudgetItem, Payment, Asset, Income, SavingsGoal,
+EventSettings, User, SecuritySettings, SeatingTable, Guest, GuestGroup,
+Gift, Contract, Attachment, Task, Venue, Honeymoon, HoneymoonItem,
+TrousseauItem. Ao adicionar um novo modelo Prisma com mutação auditada,
+estenda essa union antes de chamar `audit()` — TypeScript pega o erro.
+
+### Actions auditadas
+
+Mutações em **todos** os modelos passam por `audit()`: create, update,
+delete, status change, bulk import, assign/unassign de mesa, RSVP em grupo,
+2FA enable/disable, backup export, upload/download/replace/sign de anexo,
+reset de senha e mudança de própria senha.
 
 ## Validação de entrada
 

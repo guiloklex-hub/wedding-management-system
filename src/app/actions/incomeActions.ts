@@ -62,7 +62,7 @@ export async function createIncome(
         receivedAt: parsed.data.status === "RECEIVED" ? now : null,
       },
     });
-    await audit("Asset", created.id, "CREATE", { type: "Income", amount: created.amount });
+    await audit("Income", created.id, "CREATE", { amount: created.amount, source: created.source });
     revalidatePath("/dashboard/income");
     revalidatePath("/dashboard");
     return { success: true };
@@ -106,6 +106,7 @@ export async function updateIncome(
         receivedAt,
       },
     });
+    await audit("Income", parsed.data.id, "UPDATE", { amount: parsed.data.amount, status: parsed.data.status });
     revalidatePath("/dashboard/income");
     revalidatePath("/dashboard");
     return { success: true };
@@ -124,6 +125,7 @@ export async function markIncomeReceived(incomeId: string): Promise<ActionResult
       data: { status: "RECEIVED", receivedAt: new Date() },
     });
     if (result.count === 0) return { success: false, error: "Receita não encontrada" };
+    await audit("Income", incomeId, "STATUS_CHANGE", { status: "RECEIVED" });
     revalidatePath("/dashboard/income");
     revalidatePath("/dashboard");
     return { success: true };
@@ -142,6 +144,7 @@ export async function deleteIncome(incomeId: string): Promise<ActionResult> {
       data: { deletedAt: new Date() },
     });
     if (result.count === 0) return { success: false, error: "Receita não encontrada" };
+    await audit("Income", incomeId, "DELETE");
     revalidatePath("/dashboard/income");
     revalidatePath("/dashboard");
     return { success: true };

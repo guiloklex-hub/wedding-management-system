@@ -253,7 +253,7 @@ export default function VenueDetailClient({ venue }: { venue: VenueFull }) {
           </form>
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <ProsConsBlock title="Prós" body={venue.pros} accent="emerald" />
           <ProsConsBlock title="Contras" body={venue.cons} accent="rose" />
           {venue.restrictions ? (
@@ -504,7 +504,7 @@ function AttachmentsCard({
       {venue.attachments.length === 0 ? (
         <p className="text-sm text-zinc-500">Sem anexos ainda.</p>
       ) : (
-        <ul className="grid gap-2 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {venue.attachments.map((a) => (
             <li
               key={a.id}

@@ -56,7 +56,7 @@ export default async function RiskRadarPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Tile label="Críticos" count={visible.filter((r) => r.severity === "red").length} color="text-rose-400" />
         <Tile label="Atenção" count={visible.filter((r) => r.severity === "amber").length} color="text-amber-400" />
         <Tile label="Ok" count={visible.filter((r) => r.severity === "green").length} color="text-emerald-400" />

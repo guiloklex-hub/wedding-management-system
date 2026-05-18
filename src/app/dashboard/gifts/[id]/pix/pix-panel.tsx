@@ -83,7 +83,7 @@ export default function PixPanel({
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[auto,1fr]">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[auto,1fr]">
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
         {qrDataUrl ? (
           <Image

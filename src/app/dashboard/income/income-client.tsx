@@ -107,7 +107,7 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <SummaryCard label="Total estimado" value={totals.total} accent="zinc" />
         <SummaryCard label="A receber" value={totals.expected} accent="amber" />
         <SummaryCard label="Recebido" value={totals.received} accent="emerald" />
@@ -279,7 +279,7 @@ function IncomeFormModal({
         <form action={formAction} className="mt-4 space-y-3">
           {income ? <input type="hidden" name="id" value={income.id} /> : null}
           <Field name="title" label="Título" required defaultValue={income?.title ?? ""} />
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-400">Origem</label>
               <select
@@ -303,7 +303,7 @@ function IncomeFormModal({
               defaultValue={income?.amount.toString() ?? ""}
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field
               name="expectedDate"
               label="Data prevista"
@@ -324,7 +324,7 @@ function IncomeFormModal({
               </select>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-400">Status</label>
               <select

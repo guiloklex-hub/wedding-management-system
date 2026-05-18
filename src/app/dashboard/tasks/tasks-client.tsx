@@ -396,7 +396,7 @@ function KanbanView({
   onDelete: (t: TaskRow) => void;
 }) {
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
       {STATUS_COLUMNS.map((col) => {
         const items = tasks.filter((t) => t.status === col.key);
         return (
@@ -508,7 +508,7 @@ function TaskFormModal({
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field
               name="deadline"
               label="Prazo"
@@ -522,7 +522,7 @@ function TaskFormModal({
               defaultValue={task?.responsible ?? ""}
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-400">Status</label>
               <select
@@ -550,7 +550,7 @@ function TaskFormModal({
               </select>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-400">Fornecedor (opcional)</label>
               <select

@@ -379,7 +379,7 @@ export default function PaymentsClient({ payments, vendors }: Props) {
 
                 {!isSplit ? (
                   <>
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-sm font-medium text-zinc-400">Valor (R$)</label>
                         <input
@@ -400,7 +400,7 @@ export default function PaymentsClient({ payments, vendors }: Props) {
                         />
                       </div>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-sm font-medium text-zinc-400">Método</label>
                         <select
@@ -493,7 +493,7 @@ export default function PaymentsClient({ payments, vendors }: Props) {
                       <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
                         1. Entrada (paga hoje)
                       </h3>
-                      <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
                           <label className="mb-1 block text-sm font-medium text-zinc-400">Valor (R$)</label>
                           <input
@@ -525,7 +525,7 @@ export default function PaymentsClient({ payments, vendors }: Props) {
                       <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
                         2. Saldo final (pendente)
                       </h3>
-                      <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
                           <label className="mb-1 block text-sm font-medium text-zinc-400">Valor (R$)</label>
                           <input
@@ -896,7 +896,7 @@ function EditPaymentModal({
             </select>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-400">Valor (R$)</label>
               <input
@@ -920,7 +920,7 @@ function EditPaymentModal({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-400">Método</label>
               <select

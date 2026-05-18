@@ -35,7 +35,7 @@ export function HoneymoonReportClient({ result }: { result: HoneymoonProgress })
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <Tile label="Itens" value={String(result.itemsCount)} />
         <Tile label="Reservado" value={formatCurrency(result.bookedBRL)} color="text-violet-400" />
         <Tile label="Pago" value={formatCurrency(result.paidBRL)} color="text-emerald-400" />
@@ -46,7 +46,7 @@ export function HoneymoonReportClient({ result }: { result: HoneymoonProgress })
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold text-zinc-200">Cobertura por cota</h2>
           {result.budgetBRL !== null && result.budgetBRL > 0 ? (

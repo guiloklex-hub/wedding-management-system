@@ -144,14 +144,14 @@ export default function WeddingDayClient({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Confirmados" value={`${confirmed}/${total}`} accent="emerald" />
         <Stat label="Total de cabeças" value={String(totalSeats)} />
         <Stat label="Chegaram" value={`${checkedIn}/${totalSeats}`} accent={checkedIn > 0 ? "emerald" : "amber"} />
         <Stat label="Tarefas do dia" value={String(tasksToday.length)} accent="amber" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Cronograma do dia" icon={<CalendarHeart className="h-5 w-5" />}>
           <pre className="whitespace-pre-wrap font-sans text-sm text-zinc-200">
             {settings?.daySchedule || "Nenhum cronograma adicionado. Use o botão abaixo para registrar (ex.: 07:00 cabeleireiro, 14:00 chegada do buffet...)."}
@@ -215,7 +215,7 @@ export default function WeddingDayClient({
         {criticalVendors.length === 0 ? (
           <p className="text-sm text-zinc-500">Sem fornecedores contratados.</p>
         ) : (
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {criticalVendors.map((v) => (
               <li key={v.id} className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
                 <Link
@@ -307,7 +307,7 @@ export default function WeddingDayClient({
         {filteredGuests.length === 0 ? (
           <p className="text-sm text-zinc-500">Nenhum convidado.</p>
         ) : (
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {filteredGuests.map((g) => (
               <li key={g.id} className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2">
                 <div>

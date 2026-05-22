@@ -113,7 +113,7 @@ ou BRIDE). Outras roles recebem `403`.
 
 **Headers:**
 - `Content-Type: application/json; charset=utf-8`
-- `Content-Disposition: attachment; filename="wfv-backup-YYYY-MM-DD.json"`
+- `Content-Disposition: attachment; filename="wedding-backup-YYYY-MM-DD.json"`
 - `Cache-Control: no-store`
 
 Cada chamada grava `AuditLog` com action `BACKUP_EXPORT` e contagem por
@@ -263,5 +263,5 @@ exemplo), configure `next.config.ts` cuidadosamente.
 Não há `v1`/`v2` na URL. Mudanças de contrato são feitas conforme necessário
 — o frontend é o único cliente atualmente.
 
-Se isto mudar (clientes terceiros), adote `Accept: application/vnd.wfv.v1+json`
+Se isto mudar (clientes terceiros), adote `Accept: application/vnd.wedding.v1+json`
 ou prefixo `/api/v1/...`.

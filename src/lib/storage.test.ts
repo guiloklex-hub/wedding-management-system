@@ -8,7 +8,7 @@ const realCwd = process.cwd();
 let tmpRoot: string;
 
 beforeAll(async () => {
-  tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), "wfv-uploads-"));
+  tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), "wedding-uploads-"));
   process.chdir(tmpRoot);
   await fs.mkdir(path.join(tmpRoot, "uploads"), { recursive: true });
 });

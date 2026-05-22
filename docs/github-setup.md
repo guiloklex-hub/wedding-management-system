@@ -3,7 +3,7 @@
 Lista completa de configurações para fazer **uma vez** no repositório
 público no GitHub. Cada item linka para a tela exata.
 
-Substitua `guiloklex-hub/wfv-management-system` pelo caminho real do repo.
+Substitua `guiloklex-hub/wedding-management-system` pelo caminho real do repo.
 
 ---
 
@@ -247,8 +247,8 @@ Após ativar Discussions (passo 2), crie estas categorias:
 No README, atualize para apontar para o seu user real:
 
 ```markdown
-[![CI](https://github.com/guiloklex-hub/wfv-management-system/actions/workflows/ci.yml/badge.svg)](https://github.com/guiloklex-hub/wfv-management-system/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/guiloklex-hub/wfv-management-system/actions/workflows/codeql.yml/badge.svg)](https://github.com/guiloklex-hub/wfv-management-system/actions/workflows/codeql.yml)
+[![CI](https://github.com/guiloklex-hub/wedding-management-system/actions/workflows/ci.yml/badge.svg)](https://github.com/guiloklex-hub/wedding-management-system/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/guiloklex-hub/wedding-management-system/actions/workflows/codeql.yml/badge.svg)](https://github.com/guiloklex-hub/wedding-management-system/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ```
 

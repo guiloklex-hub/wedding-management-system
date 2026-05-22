@@ -55,7 +55,7 @@ cp prisma/dev.db backups/dev-$(date +%F).db
 Em **produção**, recomendo um cron diário:
 
 ```cron
-0 3 * * * /usr/bin/cp /var/lib/wfv/prisma/dev.db /var/backups/wfv-$(date +\%F).db && find /var/backups -name "wfv-*.db" -mtime +30 -delete
+0 3 * * * /usr/bin/cp /var/lib/wedding/prisma/dev.db /var/backups/wedding-$(date +\%F).db && find /var/backups -name "wedding-*.db" -mtime +30 -delete
 ```
 
 Isso mantém 30 dias de retenção.
@@ -75,12 +75,12 @@ Por enquanto, o JSON serve principalmente como **referência humana** e
 
 ```bash
 # parar o servidor antes!
-cp /var/backups/wfv-2025-10-12.db prisma/dev.db
+cp /var/backups/wedding-2025-10-12.db prisma/dev.db
 # reaplicar o schema (caso tenha mudado depois do backup):
 npx prisma db push --skip-generate
 npx prisma generate
 # reiniciar o servidor
-pm2 reload wfv-management-system
+pm2 reload wedding-management-system
 ```
 
 ## Onde fica o banco?
@@ -89,10 +89,10 @@ pm2 reload wfv-management-system
 |---|---|
 | Dev (Linux/macOS/WSL) | `./prisma/dev.db` |
 | Dev (Windows nativo) | `.\prisma\dev.db` |
-| Prod | recomenda-se setar `DATABASE_URL="file:/var/lib/wfv/dev.db"` |
+| Prod | recomenda-se setar `DATABASE_URL="file:/var/lib/wedding/dev.db"` |
 
 Em produção, configure `DATABASE_URL` para um diretório persistente fora do
-deploy (não dentro de `/var/www/wfv/...` se você costuma fazer
+deploy (não dentro de `/var/www/wedding/...` se você costuma fazer
 `git pull && npm run build`).
 
 ## Backup do `.whatsapp-auth/`
@@ -109,7 +109,7 @@ Restaurar:
 
 ```bash
 tar xzf backups/whatsapp-auth-2025-10-12.tar.gz
-pm2 restart wfv-management-system
+pm2 restart wedding-management-system
 ```
 
 > ⚠️ Trate esse diretório como **secret** — quem tem o arquivo pode se passar
@@ -138,7 +138,7 @@ tar czf migration.tar.gz prisma/dev.db .env .whatsapp-auth/
 
 # máquina nova
 git clone ...
-cd wfv-management-system
+cd wedding-management-system
 tar xzf ../migration.tar.gz
 ./setup.sh --skip-seed
 npm run dev   # ou: ./setup.sh --prod --skip-seed

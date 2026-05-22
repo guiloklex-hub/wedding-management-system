@@ -1,7 +1,7 @@
 // Service worker básico — instala sem cache pré-carregado.
 // Lança um network-first com fallback offline simples para a navegação.
 
-const CACHE_NAME = "wfv-cache-v1";
+const CACHE_NAME = "wedding-cache-v1";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {

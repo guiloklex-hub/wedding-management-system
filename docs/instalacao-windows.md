@@ -53,8 +53,8 @@ projeto (ex.: `C:\Projetos`):
 
 ```powershell
 cd C:\Projetos
-git clone https://github.com/guiloklex-hub/wfv-management-system.git
-cd wfv-management-system
+git clone https://github.com/guiloklex-hub/wedding-management-system.git
+cd wedding-management-system
 ```
 
 ---
@@ -162,7 +162,7 @@ pm2 save
 3. Configure:
    - **Path:** `C:\Program Files\nodejs\npm.cmd`
    - **Arguments:** `start`
-   - **Startup directory:** `C:\Projetos\wfv-management-system`
+   - **Startup directory:** `C:\Projetos\wedding-management-system`
 4. Inicie: `nssm start WeddingFinance`.
 
 ---

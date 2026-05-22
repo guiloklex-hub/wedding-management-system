@@ -69,8 +69,8 @@ git --version
 ```bash
 mkdir -p ~/projetos
 cd ~/projetos
-git clone https://github.com/guiloklex-hub/wfv-management-system.git
-cd wfv-management-system
+git clone https://github.com/guiloklex-hub/wedding-management-system.git
+cd wedding-management-system
 ```
 
 ---

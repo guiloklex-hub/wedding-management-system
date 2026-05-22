@@ -2,11 +2,11 @@ blank_issues_enabled: false
 
 contact_links:
   - name: 💬 Discussão / dúvida de uso
-    url: https://github.com/guiloklex-hub/wfv-management-system/discussions
+    url: https://github.com/guiloklex-hub/wedding-management-system/discussions
     about: Para perguntas sobre como usar o sistema, ideias ainda não maduras ou desabafos, prefira Discussions.
   - name: 🔐 Vulnerabilidade de segurança (privado)
-    url: https://github.com/guiloklex-hub/wfv-management-system/security/advisories/new
+    url: https://github.com/guiloklex-hub/wedding-management-system/security/advisories/new
     about: NÃO abra issue pública. Use o canal privado de Security Advisory.
   - name: 📚 Documentação completa
-    url: https://github.com/guiloklex-hub/wfv-management-system/tree/main/docs
+    url: https://github.com/guiloklex-hub/wedding-management-system/tree/main/docs
     about: Antes de abrir issue, dê uma olhada na pasta docs/ — pode já estar coberto.

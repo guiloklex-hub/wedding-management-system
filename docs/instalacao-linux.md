@@ -41,8 +41,8 @@ node -v   # esperado: v20.x.x
 ## 2. Clone o projeto
 
 ```bash
-git clone https://github.com/guiloklex-hub/wfv-management-system.git
-cd wfv-management-system
+git clone https://github.com/guiloklex-hub/wedding-management-system.git
+cd wedding-management-system
 ```
 
 > ⚠️ Substitua `guiloklex-hub` pela conta dona do repositório no GitHub.
@@ -118,7 +118,7 @@ Para que lembretes automáticos sejam enviados, adicione ao seu crontab
 
 ```cron
 */30 * * * * curl -fsS -H "Authorization: Bearer SEU_CRON_SECRET" \
-  http://localhost:3005/api/cron/reminders >> /var/log/wfv-cron.log 2>&1
+  http://localhost:3005/api/cron/reminders >> /var/log/wedding-cron.log 2>&1
 ```
 
 Substitua `SEU_CRON_SECRET` pelo valor de `CRON_SECRET` no `.env`.

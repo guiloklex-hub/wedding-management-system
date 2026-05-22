@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-APP_NAME="wfv-management-system"
+APP_NAME="wedding-management-system"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 

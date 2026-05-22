@@ -31,9 +31,9 @@ npm install -g pm2
 
 ```bash
 cd /var/www
-sudo git clone https://github.com/guiloklex-hub/wfv-management-system.git wfv
-sudo chown -R $USER:$USER wfv
-cd wfv
+sudo git clone https://github.com/guiloklex-hub/wedding-management-system.git wedding
+sudo chown -R $USER:$USER wedding
+cd wedding
 ```
 
 ## 3. Configurar `.env` para produção
@@ -46,7 +46,7 @@ nano .env
 Edite:
 
 ```env
-DATABASE_URL="file:/var/lib/wfv/dev.db"   # fora do diretório do código
+DATABASE_URL="file:/var/lib/wedding/dev.db"   # fora do diretório do código
 NEXTAUTH_URL="https://casamento.seudominio.com"
 APP_URL="https://casamento.seudominio.com"
 AUTH_TRUST_HOST="true"
@@ -58,8 +58,8 @@ CRON_SECRET="<gerado pelo setup>"
 Garanta o diretório persistente:
 
 ```bash
-sudo mkdir -p /var/lib/wfv
-sudo chown $USER:$USER /var/lib/wfv
+sudo mkdir -p /var/lib/wedding
+sudo chown $USER:$USER /var/lib/wedding
 ```
 
 ## 4. Build + PM2
@@ -72,7 +72,7 @@ Esse comando:
 1. roda `npm install` (caso não tenha rodado);
 2. aplica o schema (`prisma db push`);
 3. faz `npm run build`;
-4. inicia/reinicia via PM2 com nome `wfv-management-system`.
+4. inicia/reinicia via PM2 com nome `wedding-management-system`.
 
 Para fazer o PM2 subir junto com o boot do sistema:
 
@@ -148,19 +148,19 @@ crontab -e
 ```
 
 ```cron
-*/30 * * * * curl -fsS -H "Authorization: Bearer SEU_CRON_SECRET" http://localhost:3005/api/cron/reminders >> /var/log/wfv-cron.log 2>&1
+*/30 * * * * curl -fsS -H "Authorization: Bearer SEU_CRON_SECRET" http://localhost:3005/api/cron/reminders >> /var/log/wedding-cron.log 2>&1
 ```
 
 ## 7. Cron de backup
 
 ```bash
-sudo mkdir -p /var/backups/wfv
-sudo chown $USER:$USER /var/backups/wfv
+sudo mkdir -p /var/backups/wedding
+sudo chown $USER:$USER /var/backups/wedding
 crontab -e
 ```
 
 ```cron
-0 3 * * * /usr/bin/cp /var/lib/wfv/dev.db /var/backups/wfv/wfv-$(date +\%F).db && find /var/backups/wfv -name "wfv-*.db" -mtime +30 -delete
+0 3 * * * /usr/bin/cp /var/lib/wedding/dev.db /var/backups/wedding/wedding-$(date +\%F).db && find /var/backups/wedding -name "wedding-*.db" -mtime +30 -delete
 ```
 
 ## 8. Conectar WhatsApp
@@ -175,10 +175,10 @@ do projeto.
 ## 9. Atualização (deploy de nova versão)
 
 ```bash
-cd /var/www/wfv
+cd /var/www/wedding
 git pull
 ./setup.sh --prod --skip-seed
-pm2 reload wfv-management-system
+pm2 reload wedding-management-system
 ```
 
 PM2 reinicia o processo Node com graceful reload — zero downtime na maioria
@@ -188,7 +188,7 @@ dos casos.
 
 ```bash
 pm2 status                          # estado geral
-pm2 logs wfv-management-system      # logs em tempo real
+pm2 logs wedding-management-system      # logs em tempo real
 pm2 monit                           # dashboard interativo no terminal
 ```
 

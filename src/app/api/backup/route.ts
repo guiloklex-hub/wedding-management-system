@@ -120,7 +120,7 @@ export async function GET() {
     (session.user as { id?: string }).id,
   );
 
-  const filename = `wfv-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const filename = `wedding-backup-${new Date().toISOString().slice(0, 10)}.json`;
 
   return new NextResponse(JSON.stringify(payload, null, 2), {
     status: 200,

@@ -219,7 +219,7 @@ Eventualmente Baileys reconecta sozinho. Se persistir:
 
 ```bash
 rm -rf .whatsapp-auth/
-pm2 restart wfv-management-system
+pm2 restart wedding-management-system
 # acessar Ajustes › WhatsApp e escanear de novo
 ```
 

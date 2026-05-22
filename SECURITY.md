@@ -9,7 +9,7 @@ Este documento explica como reportar vulnerabilidades de forma responsável.
 
 Use o canal privado do GitHub:
 
-➡️ <https://github.com/guiloklex-hub/wfv-management-system/security/advisories/new>
+➡️ <https://github.com/guiloklex-hub/wedding-management-system/security/advisories/new>
 
 Ao reportar, inclua:
 

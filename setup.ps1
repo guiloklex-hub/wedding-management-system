@@ -33,7 +33,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$AppName = "wfv-management-system"
+$AppName = "wedding-management-system"
 $RootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $RootDir
 

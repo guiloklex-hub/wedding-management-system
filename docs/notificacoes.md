@@ -172,7 +172,7 @@ idempotência não vaza entre dias mesmo se o servidor estiver em UTC.
 
 ```cron
 */30 * * * * curl -fsS -H "Authorization: Bearer SEU_CRON_SECRET" \
-  http://localhost:3005/api/cron/reminders >> /var/log/wfv-cron.log 2>&1
+  http://localhost:3005/api/cron/reminders >> /var/log/wedding-cron.log 2>&1
 ```
 
 ### Windows — Agendador de Tarefas

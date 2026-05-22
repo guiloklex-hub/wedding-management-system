@@ -53,7 +53,7 @@ describe("GET /api/backup", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toMatch(/application\/json/);
     expect(res.headers.get("Content-Disposition")).toMatch(
-      /attachment; filename="wfv-backup-\d{4}-\d{2}-\d{2}\.json"/,
+      /attachment; filename="wedding-backup-\d{4}-\d{2}-\d{2}\.json"/,
     );
     expect(res.headers.get("Cache-Control")).toBe("no-store");
   });

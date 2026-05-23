@@ -22,6 +22,7 @@ export type AuditAction =
   | "RSVP_GROUP_RESPOND"
   | "MARK_PIX_RECEIVED"
   | "BACKUP_EXPORT"
+  | "BACKUP_RESTORE"
   | "UPLOAD"
   | "DOWNLOAD"
   | "REPLACE"

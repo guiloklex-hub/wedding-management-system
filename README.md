@@ -40,7 +40,7 @@ confirmou a presença.
 - 🌐 **Multi-idioma** (pt-BR, inglês, espanhol) — escolhido por usuário e respeitado em emails/WhatsApp/RSVP
 - 🔐 **2FA TOTP**, reset por email/WhatsApp, audit log
 - 📅 **iCalendar (.ics)** para sincronizar com Google/Apple Calendar
-- 💾 **Backup JSON** completo de todos os dados
+- 💾 **Backup e restore JSON** com checksum SHA-256, validação Zod e restauração transacional
 - 📱 **PWA** — instalável no celular, funciona offline básico
 - ❓ **Central de Ajuda interna** com busca, filtros, passo-a-passo e FAQ
 

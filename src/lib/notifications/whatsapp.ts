@@ -2,7 +2,9 @@ import path from "node:path";
 import { rm } from "node:fs/promises";
 import { maybeSendDownAlert, sendRecoveredAlert } from "./whatsapp-alerts";
 
-const AUTH_DIR = path.join(process.cwd(), ".whatsapp-auth");
+function getAuthDir(): string {
+  return path.join(process.cwd(), ".whatsapp-auth");
+}
 
 const ALERT_AFTER_ATTEMPTS = 3;
 const ALERT_COOLDOWN_MS = 30 * 60_000;
@@ -137,7 +139,7 @@ async function startSocket(): Promise<void> {
       throw new Error("Baileys: makeWASocket não pôde ser resolvido");
     }
 
-    const { state, saveCreds } = await loadAuthState(AUTH_DIR);
+    const { state, saveCreds } = await loadAuthState(getAuthDir());
 
     const version = await resolveWaVersion(baileys);
 
@@ -222,7 +224,7 @@ async function startSocket(): Promise<void> {
         g._waStarting = null;
 
         if (loggedOut) {
-          rm(AUTH_DIR, { recursive: true, force: true }).catch(() => {});
+          rm(getAuthDir(), { recursive: true, force: true }).catch(() => {});
           if (shouldSendDownAlert(ref)) {
             ref.downAlertSentAt = new Date();
             void maybeSendDownAlert({
@@ -299,7 +301,7 @@ export async function disconnectWhatsApp(): Promise<void> {
   ref.downAlertSentAt = null;
 
   try {
-    await rm(AUTH_DIR, { recursive: true, force: true });
+    await rm(getAuthDir(), { recursive: true, force: true });
   } catch {}
 }
 

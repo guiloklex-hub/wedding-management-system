@@ -28,8 +28,11 @@ type WaGlobals = {
   _waState?: WhatsAppStatus;
   _waStarting?: Promise<void> | null;
   _waWatchdog?: ReturnType<typeof setInterval> | null;
+  _waVersion?: { value: [number, number, number]; fetchedAt: number } | null;
 };
 const g = globalThis as unknown as WaGlobals;
+
+const WA_VERSION_TTL_MS = 6 * 60 * 60_000;
 
 function getStateRef(): WhatsAppStatus {
   if (!g._waState) {
@@ -67,6 +70,44 @@ async function importBaileys() {
   return mod;
 }
 
+async function resolveWaVersion(
+  baileys: Awaited<ReturnType<typeof importBaileys>>,
+): Promise<[number, number, number] | undefined> {
+  const cached = g._waVersion;
+  if (cached && Date.now() - cached.fetchedAt < WA_VERSION_TTL_MS) {
+    return cached.value;
+  }
+
+  const fetcher = (
+    baileys as {
+      fetchLatestWaWebVersion?: (
+        options?: RequestInit,
+      ) => Promise<{ version: [number, number, number]; isLatest?: boolean; error?: unknown }>;
+      fetchLatestBaileysVersion?: (
+        options?: RequestInit,
+      ) => Promise<{ version: [number, number, number]; isLatest?: boolean; error?: unknown }>;
+    }
+  ).fetchLatestWaWebVersion ??
+    (baileys as {
+      fetchLatestBaileysVersion?: (
+        options?: RequestInit,
+      ) => Promise<{ version: [number, number, number]; isLatest?: boolean; error?: unknown }>;
+    }).fetchLatestBaileysVersion;
+
+  if (typeof fetcher !== "function") return undefined;
+
+  try {
+    const result = await fetcher();
+    if (result?.version) {
+      g._waVersion = { value: result.version, fetchedAt: Date.now() };
+      return result.version;
+    }
+  } catch (err) {
+    console.error("[whatsapp] falha ao obter versão WA Web:", err);
+  }
+  return cached?.value;
+}
+
 async function startSocket(): Promise<void> {
   const ref = getStateRef();
   if (ref.state === "CONNECTED" || ref.state === "CONNECTING" || ref.state === "WAITING_QR") {
@@ -98,12 +139,15 @@ async function startSocket(): Promise<void> {
 
     const { state, saveCreds } = await loadAuthState(AUTH_DIR);
 
+    const version = await resolveWaVersion(baileys);
+
     const sock = (makeWASocket as (opts: unknown) => unknown)({
       auth: state,
       printQRInTerminal: false,
       browser: Browsers.ubuntu("Wedding Finance"),
       syncFullHistory: false,
       markOnlineOnConnect: false,
+      ...(version ? { version } : {}),
     });
     g._waSock = sock;
 
@@ -178,6 +222,7 @@ async function startSocket(): Promise<void> {
         g._waStarting = null;
 
         if (loggedOut) {
+          rm(AUTH_DIR, { recursive: true, force: true }).catch(() => {});
           if (shouldSendDownAlert(ref)) {
             ref.downAlertSentAt = new Date();
             void maybeSendDownAlert({

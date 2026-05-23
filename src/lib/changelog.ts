@@ -6,6 +6,16 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.6.0",
+    date: "2026-05-23",
+    highlights: [
+      "💾 Backup JSON v3 com envelope `{ checksum, payload }` (SHA-256), metadata do host/app/exporter e nome de arquivo padronizado (`wedding-finance-backup-YYYY-MM-DD.json`). ADMIN exporta também `users` (com bcrypt + 2FA secrets), `notificationLogs` e `auditLogs`. GROOM/BRIDE continuam exportando só os 22 modelos de negócio.",
+      "🛡️ Endpoint `POST /api/backup/validate` faz dry-run do arquivo (Zod schema + checksum) sem tocar no banco. Retorna versão, contagens, warnings e issues.",
+      "♻️ Endpoint `POST /api/backup/restore` apaga e recria todos os dados em uma única transação Prisma (timeout 120s). Exige role ADMIN, re-autenticação com senha bcrypt, confirmação explícita `WIPE_AND_RESTORE` e respeita rate-limit (3/h por usuário+IP). Preserva o admin logado quando ele não está no backup. Audit `BACKUP_RESTORE` ao final.",
+      "🖥️ Tela Ajustes → Backup ganhou seção 'Restaurar backup' com seletor de arquivo, botão 'Validar arquivo' (mostra versão, contagens, host, checksum) e fluxo de restauração com senha + checkbox de irreversibilidade + confirm dialog.",
+    ],
+  },
+  {
     version: "0.5.0",
     date: "2026-05-17",
     highlights: [

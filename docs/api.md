@@ -73,6 +73,8 @@ GET /api/calendar.ics
 
 ## Backup
 
+### Exportar
+
 ```
 GET /api/backup
 ```
@@ -80,47 +82,72 @@ GET /api/backup
 **Requer:** sessão válida, role com `canViewSensitiveFinance` (ADMIN, GROOM
 ou BRIDE). Outras roles recebem `403`.
 
-**Retorna:** JSON com todos os dados do banco. Formato:
+**Retorna:** JSON com envelope `{ checksum, payload }`. Formato:
 
 ```json
 {
-  "exportedAt": "2026-05-18T10:30:00.000Z",
-  "version": 2,
-  "eventSettings": { ... },
-  "securitySettings": { ... },
-  "vendors": [...],
-  "vendorContacts": [...],
-  "vendorNotes": [...],
-  "contracts": [...],
-  "attachments": [...],
-  "venues": [...],
-  "venueChecklistItems": [...],
-  "budgetItems": [...],
-  "payments": [...],
-  "incomes": [...],
-  "assets": [...],
-  "savingsGoals": [...],
-  "honeymoon": { ... } | null,
-  "honeymoonItems": [...],
-  "trousseauItems": [...],
-  "guestGroups": [...],
-  "guests": [...],
-  "seatingTables": [...],
-  "gifts": [...],
-  "tasks": [...]
+  "checksum": { "algorithm": "sha256", "value": "<64 hex>" },
+  "payload": {
+    "version": 3,
+    "exportedAt": "2026-05-23T12:00:00.000Z",
+    "meta": {
+      "appVersion": "0.1.0",
+      "hostname": "debian",
+      "nodeVersion": "v20.x",
+      "exportedBy": { "id": "...", "email": "..." }
+    },
+    "eventSettings": { ... },
+    "securitySettings": { ... },
+    "users": [...],
+    "vendors": [...],
+    "...": "demais 21 coleções",
+    "notificationLogs": [...],
+    "auditLogs": [...]
+  }
 }
 ```
 
 **Headers:**
 - `Content-Type: application/json; charset=utf-8`
-- `Content-Disposition: attachment; filename="wedding-backup-YYYY-MM-DD.json"`
+- `Content-Disposition: attachment; filename="wedding-finance-backup-YYYY-MM-DD.json"`
 - `Cache-Control: no-store`
+- `X-Backup-Version: 3`
+- `X-Backup-Checksum: <sha256 hex>`
 
-Cada chamada grava `AuditLog` com action `BACKUP_EXPORT` e contagem por
-coleção. Importadores devem inspecionar `payload.version` — `2` inclui as
-22 coleções acima; `1` (legado) trazia apenas 5.
+Apenas ADMIN exporta `users`, `notificationLogs` e `auditLogs`. GROOM/BRIDE
+recebem o payload sem essas três coleções. Cada chamada grava `AuditLog`
+com action `BACKUP_EXPORT`.
 
-Veja [backup-restore.md](backup-restore.md).
+### Validar
+
+```
+POST /api/backup/validate
+Content-Type: multipart/form-data
+Body: file=@backup.json
+```
+
+**Requer:** mesma permissão do export. Não toca no banco. Retorna 200 com
+`{ ok, version, systemVersion, exportedAt, meta, checksumValid, counts,
+warnings }` ou 422 com `issues`.
+
+### Restaurar
+
+```
+POST /api/backup/restore
+Content-Type: multipart/form-data
+Body:
+  file=@backup.json
+  password=<senha do admin logado>
+  confirm=WIPE_AND_RESTORE
+```
+
+**Requer:** ADMIN + senha bcrypt correta + flag de confirmação +
+rate-limit (3/h por usuário+IP). Wipe + insert em
+`prisma.$transaction({ timeout: 120s })`. Checksum inválido → 422 antes
+de qualquer escrita. Audit `BACKUP_RESTORE` ao final com contagens.
+
+Veja [backup-restore.md](backup-restore.md) para a ordem de wipe/restore
+e garantias.
 
 ---
 

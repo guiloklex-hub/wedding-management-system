@@ -29,6 +29,8 @@ self.addEventListener("activate", (event) => {
 // Listener para controle programático de skipWaiting vindo do frontend com validação de origem (CodeQL)
 self.addEventListener("message", (event) => {
   event.waitUntil((async () => {
+    if (event.origin && event.origin !== self.location.origin) return;
+
     if (!event.source || !event.source.id) return;
 
     const client = await self.clients.get(event.source.id);

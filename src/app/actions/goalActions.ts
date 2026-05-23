@@ -23,6 +23,7 @@ const GoalBaseSchema = z.object({
     .optional()
     .transform((v) => (v && v.length > 0 ? new Date(v) : null)),
   notes: optStr(500),
+  imageUrl: optStr(1000),
   isActive: z.preprocess((v) => v === "on" || v === true || v === "true", z.boolean().default(true)),
 });
 
@@ -47,6 +48,7 @@ export async function createGoal(
         targetAmount: parsed.data.targetAmount,
         targetDate: parsed.data.targetDate,
         notes: parsed.data.notes,
+        imageUrl: parsed.data.imageUrl,
         isActive: parsed.data.isActive,
       },
     });
@@ -79,6 +81,7 @@ export async function updateGoal(
         targetAmount: parsed.data.targetAmount,
         targetDate: parsed.data.targetDate,
         notes: parsed.data.notes,
+        imageUrl: parsed.data.imageUrl,
         isActive: parsed.data.isActive,
       },
     });

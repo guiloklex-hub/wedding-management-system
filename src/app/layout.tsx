@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display, Outfit } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { ToastProvider } from "@/components/toast";
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import { SessionProvider } from "@/components/session-provider";
+import { ServiceWorkerUpdater } from "@/components/sw-updater";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,6 +16,18 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const outfit = Outfit({
+  variable: "--font-outfit",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -54,7 +67,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} h-full overflow-x-clip antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${outfit.variable} h-full overflow-x-clip antialiased dark`}
     >
       <body className="min-h-full flex flex-col overflow-x-clip bg-zinc-950 text-zinc-100">
         <NextIntlClientProvider
@@ -63,7 +76,10 @@ export default async function RootLayout({
           timeZone={locale === "pt-BR" ? "America/Sao_Paulo" : "UTC"}
         >
           <SessionProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              {children}
+              <ServiceWorkerUpdater />
+            </ToastProvider>
           </SessionProvider>
         </NextIntlClientProvider>
         <ServiceWorkerRegister />

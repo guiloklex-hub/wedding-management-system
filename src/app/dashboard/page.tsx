@@ -5,7 +5,6 @@ import {
   CalendarHeart,
   CheckCircle2,
   CreditCard,
-  ListTodo,
   PieChart as PieChartIcon,
   Sparkles,
   TrendingDown,
@@ -23,6 +22,8 @@ import { RiskAlertStrip } from "./_components/risk-alert-strip";
 import { RsvpMini } from "./_components/rsvp-mini";
 import { GiftsMini } from "./_components/gifts-mini";
 import { UpcomingTasks } from "./_components/upcoming-tasks";
+import { PWABadge } from "@/components/pwa-badge";
+import { InstallPrompt } from "./_components/install-prompt";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-w-0 space-y-6">
+      <PWABadge count={data.tasksStats.overdue} />
+      <InstallPrompt />
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">Visão Geral</h1>

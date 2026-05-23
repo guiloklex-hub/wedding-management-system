@@ -13,6 +13,7 @@ type GoalRow = {
   targetAmount: number;
   targetDate: Date | null;
   notes: string | null;
+  imageUrl: string | null;
   isActive: boolean;
   current: number;
   assetCount: number;
@@ -102,64 +103,87 @@ export default function GoalsClient({ goals }: { goals: GoalRow[] }) {
             const monthlyNeed = monthsLeft && monthsLeft > 0 ? remaining / monthsLeft : null;
 
             return (
-              <article key={g.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <Target className="h-5 w-5 text-rose-400" />
-                      <h3 className="text-lg font-semibold text-zinc-100">{g.name}</h3>
-                      {!g.isActive ? (
-                        <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
-                          inativa
-                        </span>
+              <article
+                key={g.id}
+                className={`relative overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.01] shadow-lg flex flex-col justify-between group min-h-[220px] ${
+                  g.imageUrl
+                    ? "border border-zinc-800/80 bg-zinc-950"
+                    : "glass-premium glass-premium-hover"
+                }`}
+              >
+                {g.imageUrl ? (
+                  <>
+                    <div
+                      className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105 opacity-25 group-hover:opacity-35"
+                      style={{ backgroundImage: `url(${g.imageUrl})` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-900/40" />
+                  </>
+                ) : null}
+
+                <div className="relative z-10 flex-1 flex flex-col justify-between space-y-4 p-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <Target className={`h-5 w-5 ${pct >= 100 ? "text-champagne-400 animate-pulse" : "text-rose-400"}`} />
+                        <h3 className="text-lg font-semibold text-zinc-100 font-serif leading-snug truncate">{g.name}</h3>
+                        {!g.isActive ? (
+                          <span className="rounded-full bg-zinc-800/80 px-2 py-0.5 text-[10px] text-zinc-400">
+                            inativa
+                          </span>
+                        ) : null}
+                      </div>
+                      {g.targetDate ? (
+                        <p className="mt-0.5 text-xs text-zinc-400">Alvo: {formatDateBR(g.targetDate)}</p>
                       ) : null}
                     </div>
-                    {g.targetDate ? (
-                      <p className="mt-0.5 text-xs text-zinc-500">Alvo: {formatDateBR(g.targetDate)}</p>
-                    ) : null}
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(g)}
+                        aria-label="Editar"
+                        className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 transition-colors"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleting(g)}
+                        aria-label="Excluir"
+                        className="rounded-lg p-1.5 text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setEditing(g)}
-                      aria-label="Editar"
-                      className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleting(g)}
-                      aria-label="Excluir"
-                      className="rounded-lg p-1.5 text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
 
-                <div className="mt-4 space-y-3">
-                  <div>
-                    <div className="flex items-end justify-between text-xs text-zinc-400">
-                      <span>{formatCurrency(g.current)}</span>
-                      <span>{formatCurrency(g.targetAmount)}</span>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex items-end justify-between text-xs text-zinc-400 font-medium">
+                        <span className="font-display">{formatCurrency(g.current)}</span>
+                        <span className="font-display">{formatCurrency(g.targetAmount)}</span>
+                      </div>
+                      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-zinc-900/60 border border-zinc-800/30">
+                        <div
+                          className={`h-full transition-all duration-1000 ${
+                            pct >= 100
+                              ? "bg-gradient-to-r from-champagne-500 to-champagne-300"
+                              : "bg-gradient-to-r from-rose-500 to-rose-400"
+                          }`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-400">
+                        <span>{pct.toFixed(1)}% atingido</span>
+                        <span>{g.assetCount} aporte(s)</span>
+                      </div>
                     </div>
-                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-zinc-800">
-                      <div
-                        className="h-full bg-gradient-to-r from-rose-500 to-rose-400"
-                        style={{ width: `${pct}%` }}
-                      />
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <Mini label="Falta">{formatCurrency(remaining)}</Mini>
+                      <Mini label="Por mês">
+                        {monthlyNeed ? formatCurrency(monthlyNeed) : "—"}
+                      </Mini>
                     </div>
-                    <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500">
-                      <span>{pct.toFixed(1)}% atingido</span>
-                      <span>{g.assetCount} aporte(s) vinculado(s)</span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <Mini label="Falta">{formatCurrency(remaining)}</Mini>
-                    <Mini label="Por mês">
-                      {monthlyNeed ? formatCurrency(monthlyNeed) : "—"}
-                    </Mini>
                   </div>
                 </div>
               </article>
@@ -241,6 +265,13 @@ function GoalFormModal({
               defaultValue={goal?.targetDate ? toIsoDate(new Date(goal.targetDate)) : ""}
             />
           </div>
+          <Field
+            name="imageUrl"
+            label="URL da Imagem de Inspiração (Opcional)"
+            placeholder="https://exemplo.com/imagem.jpg"
+            defaultValue={goal?.imageUrl ?? ""}
+            type="url"
+          />
           <label className="flex items-center gap-2 text-sm text-zinc-300">
             <input
               type="checkbox"
@@ -257,7 +288,7 @@ function GoalFormModal({
               rows={2}
               maxLength={500}
               defaultValue={goal?.notes ?? ""}
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
             />
           </div>
           <div className="flex gap-2 pt-2">
@@ -289,6 +320,7 @@ function Field({
   required,
   step,
   defaultValue,
+  placeholder,
 }: {
   name: string;
   label: string;
@@ -296,6 +328,7 @@ function Field({
   required?: boolean;
   step?: string;
   defaultValue?: string;
+  placeholder?: string;
 }) {
   return (
     <div>
@@ -306,6 +339,7 @@ function Field({
         required={required}
         step={step}
         defaultValue={defaultValue}
+        placeholder={placeholder}
         className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
       />
     </div>

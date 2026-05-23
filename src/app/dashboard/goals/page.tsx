@@ -21,6 +21,7 @@ export default async function GoalsPage() {
       targetAmount: g.targetAmount,
       targetDate: g.targetDate,
       notes: g.notes,
+      imageUrl: g.imageUrl,
       isActive: g.isActive,
       current,
       assetCount: g.assets.length,

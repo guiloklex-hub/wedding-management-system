@@ -26,11 +26,21 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Listener para controle programático de skipWaiting vindo do frontend
+// Listener para controle programático de skipWaiting vindo do frontend com validação de origem (CodeQL)
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
+  event.waitUntil((async () => {
+    if (!event.source || !event.source.id) return;
+
+    const client = await self.clients.get(event.source.id);
+    if (!client || !client.url) return;
+
+    const clientOrigin = new URL(client.url).origin;
+    if (clientOrigin !== self.location.origin) return;
+
+    if (event.data && event.data.type === "SKIP_WAITING") {
+      self.skipWaiting();
+    }
+  })());
 });
 
 self.addEventListener("fetch", (event) => {

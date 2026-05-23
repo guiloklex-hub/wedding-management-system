@@ -44,7 +44,7 @@ export function WebShare({
       try {
         await navigator.clipboard.writeText(absoluteUrl);
         toast.success("Link copiado!", "O link foi copiado para a sua área de transferência.");
-      } catch (err) {
+      } catch {
         toast.error("Erro ao copiar", "Não foi possível copiar o link.");
       }
     }

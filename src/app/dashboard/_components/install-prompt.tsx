@@ -3,10 +3,23 @@
 import { useEffect, useState } from "react";
 import { Download, Sparkles, X, Share } from "lucide-react";
 
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: Array<string>;
+  readonly userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
+interface NavigatorStandalone {
+  standalone?: boolean;
+}
+
 export function InstallPrompt() {
   const [show, setShow] = useState(false);
   const [platform, setPlatform] = useState<"android" | "ios" | "other">("other");
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     // Detectar plataforma do usuário
@@ -17,26 +30,33 @@ export function InstallPrompt() {
     // Se já estiver rodando instalado, não exibe nada
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone;
+      (window.navigator as NavigatorStandalone).standalone === true;
       
     if (isStandalone) return;
 
+    // Envolve a atualização de estado em um timeout para evitar re-render imediato
+    const platformTimer = setTimeout(() => {
+      if (isIos) {
+        setPlatform("ios");
+      } else if (isAndroid) {
+        setPlatform("android");
+      }
+    }, 0);
+
+    let iosShowTimer: ReturnType<typeof setTimeout> | undefined;
+
     if (isIos) {
-      setPlatform("ios");
       const dismissed = localStorage.getItem("pwa-install-dismissed");
       if (!dismissed) {
         // Exibe de forma sutil após 4 segundos no iOS
-        const timer = setTimeout(() => setShow(true), 4000);
-        return () => clearTimeout(timer);
+        iosShowTimer = setTimeout(() => setShow(true), 4000);
       }
-    } else if (isAndroid) {
-      setPlatform("android");
     }
 
     // Escuta o evento de instalação padrão do Android/Chrome
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
 
       const dismissed = localStorage.getItem("pwa-install-dismissed");
       if (!dismissed) {
@@ -45,13 +65,17 @@ export function InstallPrompt() {
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
-    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+    return () => {
+      clearTimeout(platformTimer);
+      if (iosShowTimer) clearTimeout(iosShowTimer);
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+    };
   }, []);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
 
-    deferredPrompt.prompt();
+    await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
 
     if (outcome === "accepted") {

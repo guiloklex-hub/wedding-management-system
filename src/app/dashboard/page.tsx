@@ -5,7 +5,6 @@ import {
   CalendarHeart,
   CheckCircle2,
   CreditCard,
-  ListTodo,
   PieChart as PieChartIcon,
   Sparkles,
   TrendingDown,

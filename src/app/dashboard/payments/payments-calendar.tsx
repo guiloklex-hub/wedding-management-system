@@ -92,7 +92,7 @@ export default function PaymentsCalendar({
     return Array.from({ length: 12 }, (_, monthIndex) => {
       const monthPayments = payments.filter((p) => {
         const d = new Date(p.dueDate);
-        return d.getFullYear() === currentYear && d.getMonth() === monthIndex;
+        return d.getUTCFullYear() === currentYear && d.getUTCMonth() === monthIndex;
       });
 
       const total = monthPayments.reduce((sum, p) => sum + p.amount, 0);
@@ -147,9 +147,9 @@ export default function PaymentsCalendar({
       const dayPayments = payments.filter((p) => {
         const d = new Date(p.dueDate);
         return (
-          d.getFullYear() === currentYear &&
-          d.getMonth() === selectedMonth &&
-          d.getDate() === day
+          d.getUTCFullYear() === currentYear &&
+          d.getUTCMonth() === selectedMonth &&
+          d.getUTCDate() === day
         );
       });
 
@@ -184,9 +184,9 @@ export default function PaymentsCalendar({
     return payments
       .filter((p) => {
         const d = new Date(p.dueDate);
-        const matchesMonth = d.getFullYear() === currentYear && d.getMonth() === selectedMonth;
+        const matchesMonth = d.getUTCFullYear() === currentYear && d.getUTCMonth() === selectedMonth;
         if (!matchesMonth) return false;
-        if (selectedDay !== null && d.getDate() !== selectedDay) return false;
+        if (selectedDay !== null && d.getUTCDate() !== selectedDay) return false;
         return true;
       })
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());

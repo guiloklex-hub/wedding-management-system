@@ -25,6 +25,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { formatCurrency, formatDateBR, toIsoDate } from "@/lib/format";
 import { computeAdjustedAmount } from "@/lib/payment-adjustment";
 import type { Payment, PaymentMethod, PaymentStatus, Vendor } from "@/types";
+import PaymentsCalendar from "./payments-calendar";
 
 type PaymentWithVendor = Payment & { vendor: Vendor };
 
@@ -53,6 +54,7 @@ export default function PaymentsClient({ payments, vendors }: Props) {
   const [, startTransition] = useTransition();
   const [isCreating, setCreating] = useState(false);
   const [isUpdating, setUpdating] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
   function handleCreate(formData: FormData) {
     setCreating(true);
@@ -134,214 +136,257 @@ export default function PaymentsClient({ payments, vendors }: Props) {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por fornecedor..."
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
-            />
+          {viewMode === "list" ? (
+            <>
+              <div className="relative flex-1 max-w-sm">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar por fornecedor..."
+                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as "ALL" | PaymentStatus)}
+                className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+              >
+                <option value="ALL">Todos os status</option>
+                <option value="PENDING">Pendente</option>
+                <option value="PAID">Pago</option>
+              </select>
+            </>
+          ) : (
+            <div className="flex-1" />
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Alternador de visualização Lista vs Calendário */}
+          <div className="flex rounded-xl border border-zinc-800 bg-zinc-950 p-1 shrink-0">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all ${
+                viewMode === "list"
+                  ? "bg-zinc-800 text-white shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              Lista
+            </button>
+            <button
+              onClick={() => setViewMode("calendar")}
+              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all ${
+                viewMode === "calendar"
+                  ? "bg-rose-600 text-white shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              Calendário
+            </button>
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as "ALL" | PaymentStatus)}
-            className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+          <button
+            onClick={() => setInstallmentsOpen(true)}
+            className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 px-3.5 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800 transition-colors"
           >
-            <option value="ALL">Todos os status</option>
-            <option value="PENDING">Pendente</option>
-            <option value="PAID">Pago</option>
-          </select>
+            <Layers className="h-4 w-4" />
+            <span className="hidden md:inline">Gerar Parcelas</span>
+          </button>
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-rose-500"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden md:inline">Novo Pagamento</span>
+          </button>
         </div>
-        <button
-          onClick={() => setInstallmentsOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800"
-        >
-          <Layers className="h-4 w-4" />
-          <span>Gerar Parcelas</span>
-        </button>
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-rose-500"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Novo Pagamento</span>
-        </button>
       </div>
 
-      <div className="hidden overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm md:block">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-zinc-400">
-            <thead className="border-b border-zinc-800 bg-zinc-900/80 text-xs uppercase text-zinc-500">
-              <tr>
-                <th className="px-6 py-4 font-medium">Vencimento</th>
-                <th className="px-6 py-4 font-medium">Fornecedor</th>
-                <th className="px-6 py-4 font-medium">Valor</th>
-                <th className="px-6 py-4 font-medium">Método</th>
-                <th className="px-6 py-4 font-medium">Parcela</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 text-right font-medium">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-zinc-500">
-                    {payments.length === 0 ? "Nenhum pagamento cadastrado." : "Nenhum resultado para o filtro."}
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((payment) => (
-                  <tr key={payment.id} className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30">
-                    <td className="px-6 py-4 text-zinc-200">{formatDateBR(payment.dueDate)}</td>
-                    <td className="px-6 py-4">{payment.vendor.name}</td>
-                    <td className="px-6 py-4">
-                      <AmountCell payment={payment} />
-                    </td>
-                    <td className="px-6 py-4">{payment.method ?? "—"}</td>
-                    <td className="px-6 py-4 text-xs text-zinc-500">
-                      {payment.installmentNumber && payment.totalInstallments
-                        ? `${payment.installmentNumber}/${payment.totalInstallments}`
-                        : "—"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
-                          payment.status === "PAID"
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                        }`}
-                      >
-                        {payment.status === "PAID" ? "Pago" : "Pendente"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-1">
-                        {payment.status === "PENDING" ? (
-                          <button
-                            type="button"
-                            onClick={() => handleMarkPaid(payment)}
-                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-emerald-400 transition-colors hover:bg-emerald-500/10"
-                            aria-label="Quitar"
-                          >
-                            <CheckCircle2 className="h-4 w-4" />
-                            <span className="text-xs">Quitar</span>
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleUndo(payment)}
-                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-amber-400 transition-colors hover:bg-amber-500/10"
-                            aria-label="Estornar"
-                          >
-                            <RotateCcw className="h-4 w-4" />
-                            <span className="text-xs">Estornar</span>
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setEditing(payment)}
-                          className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
-                          aria-label="Editar"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleting(payment)}
-                          className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
-                          aria-label="Excluir"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
+      {viewMode === "list" ? (
+        <>
+          <div className="hidden overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-zinc-400">
+                <thead className="border-b border-zinc-800 bg-zinc-900/80 text-xs uppercase text-zinc-500">
+                  <tr>
+                    <th className="px-6 py-4 font-medium">Vencimento</th>
+                    <th className="px-6 py-4 font-medium">Fornecedor</th>
+                    <th className="px-6 py-4 font-medium">Valor</th>
+                    <th className="px-6 py-4 font-medium">Método</th>
+                    <th className="px-6 py-4 font-medium">Parcela</th>
+                    <th className="px-6 py-4 font-medium">Status</th>
+                    <th className="px-6 py-4 text-right font-medium">Ações</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="space-y-3 md:hidden">
-        {filtered.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 px-4 py-8 text-center text-sm text-zinc-500">
-            {payments.length === 0 ? "Nenhum pagamento cadastrado." : "Nenhum resultado para o filtro."}
-          </div>
-        ) : (
-          filtered.map((payment) => (
-            <div key={payment.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-zinc-100">{payment.vendor.name}</p>
-                  <p className="mt-1 text-xs text-zinc-500">Vence em {formatDateBR(payment.dueDate)}</p>
-                </div>
-                <span
-                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-                    payment.status === "PAID"
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                      : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                  }`}
-                >
-                  {payment.status === "PAID" ? "Pago" : "Pendente"}
-                </span>
-              </div>
-              <div className="mt-3 flex items-end justify-between">
-                <div>
-                  <div className="text-lg font-semibold text-rose-400">
-                    <AmountCell payment={payment} />
-                  </div>
-                  <p className="text-[11px] text-zinc-500">
-                    {payment.method ?? "—"}
-                    {payment.installmentNumber && payment.totalInstallments
-                      ? ` · ${payment.installmentNumber}/${payment.totalInstallments}`
-                      : ""}
-                  </p>
-                </div>
-                <div className="flex gap-1">
-                  {payment.status === "PENDING" ? (
-                    <button
-                      type="button"
-                      onClick={() => handleMarkPaid(payment)}
-                      className="rounded-lg bg-emerald-500/10 p-2 text-emerald-400"
-                      aria-label="Quitar"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                    </button>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-8 text-center text-zinc-500">
+                        {payments.length === 0 ? "Nenhum pagamento cadastrado." : "Nenhum resultado para o filtro."}
+                      </td>
+                    </tr>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleUndo(payment)}
-                      className="rounded-lg bg-amber-500/10 p-2 text-amber-400"
-                      aria-label="Estornar"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                    </button>
+                    filtered.map((payment) => (
+                      <tr key={payment.id} className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30">
+                        <td className="px-6 py-4 text-zinc-200">{formatDateBR(payment.dueDate)}</td>
+                        <td className="px-6 py-4">{payment.vendor.name}</td>
+                        <td className="px-6 py-4">
+                          <AmountCell payment={payment} />
+                        </td>
+                        <td className="px-6 py-4">{payment.method ?? "—"}</td>
+                        <td className="px-6 py-4 text-xs text-zinc-500">
+                          {payment.installmentNumber && payment.totalInstallments
+                            ? `${payment.installmentNumber}/${payment.totalInstallments}`
+                            : "—"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
+                              payment.status === "PAID"
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                            }`}
+                          >
+                            {payment.status === "PAID" ? "Pago" : "Pendente"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-1">
+                            {payment.status === "PENDING" ? (
+                              <button
+                                type="button"
+                                onClick={() => handleMarkPaid(payment)}
+                                className="flex items-center gap-1 rounded-lg px-2 py-1 text-emerald-400 transition-colors hover:bg-emerald-500/10"
+                                aria-label="Quitar"
+                              >
+                                <CheckCircle2 className="h-4 w-4" />
+                                <span className="text-xs">Quitar</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleUndo(payment)}
+                                className="flex items-center gap-1 rounded-lg px-2 py-1 text-amber-400 transition-colors hover:bg-amber-500/10"
+                                aria-label="Estornar"
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                                <span className="text-xs">Estornar</span>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setEditing(payment)}
+                              className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+                              aria-label="Editar"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleting(payment)}
+                              className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+                              aria-label="Excluir"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
                   )}
-                  <button
-                    type="button"
-                    onClick={() => setEditing(payment)}
-                    className="rounded-lg bg-zinc-800/60 p-2 text-zinc-300"
-                    aria-label="Editar"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleting(payment)}
-                    className="rounded-lg bg-zinc-800/60 p-2 text-rose-400"
-                    aria-label="Excluir"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
+                </tbody>
+              </table>
             </div>
-          ))
-        )}
-      </div>
+          </div>
+
+          <div className="space-y-3 md:hidden">
+            {filtered.length === 0 ? (
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 px-4 py-8 text-center text-sm text-zinc-500">
+                {payments.length === 0 ? "Nenhum pagamento cadastrado." : "Nenhum resultado para o filtro."}
+              </div>
+            ) : (
+              filtered.map((payment) => (
+                <div key={payment.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-zinc-100">{payment.vendor.name}</p>
+                      <p className="mt-1 text-xs text-zinc-500">Vence em {formatDateBR(payment.dueDate)}</p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                        payment.status === "PAID"
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                      }`}
+                    >
+                      {payment.status === "PAID" ? "Pago" : "Pendente"}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-end justify-between">
+                    <div>
+                      <div className="text-lg font-semibold text-rose-400">
+                        <AmountCell payment={payment} />
+                      </div>
+                      <p className="text-[11px] text-zinc-500">
+                        {payment.method ?? "—"}
+                        {payment.installmentNumber && payment.totalInstallments
+                          ? ` · ${payment.installmentNumber}/${payment.totalInstallments}`
+                          : ""}
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      {payment.status === "PENDING" ? (
+                        <button
+                          type="button"
+                          onClick={() => handleMarkPaid(payment)}
+                          className="rounded-lg bg-emerald-500/10 p-2 text-emerald-400"
+                          aria-label="Quitar"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleUndo(payment)}
+                          className="rounded-lg bg-amber-500/10 p-2 text-amber-400"
+                          aria-label="Estornar"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setEditing(payment)}
+                        className="rounded-lg bg-zinc-800/60 p-2 text-zinc-300"
+                        aria-label="Editar"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleting(payment)}
+                        className="rounded-lg bg-zinc-800/60 p-2 text-rose-400"
+                        aria-label="Excluir"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      ) : (
+        <PaymentsCalendar
+          payments={payments}
+          onMarkPaid={handleMarkPaid}
+          onUndoPaid={handleUndo}
+          onEdit={setEditing}
+          onDelete={setDeleting}
+        />
+      )}
 
       {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">

@@ -57,15 +57,15 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.2",
-    "@vitest/coverage-v8": "^4.1.6",
+    "@vitest/coverage-v8": "^4.1.7",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "happy-dom": "^20.9.0",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
-    "tsx": "^4.22.0",
+    "tsx": "^4.22.3",
     "typescript": "^5",
-    "vitest": "^4.1.6",
+    "vitest": "^4.1.7",
     "vitest-mock-extended": "^4.0.0"
   },
   "prisma": {

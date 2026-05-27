@@ -19,6 +19,7 @@ export type AuditAction =
   | "BULK_CREATE"
   | "ASSIGN_TABLE"
   | "UNASSIGN_TABLE"
+  | "REORDER"
   | "RSVP_GROUP_RESPOND"
   | "MARK_PIX_RECEIVED"
   | "BACKUP_EXPORT"

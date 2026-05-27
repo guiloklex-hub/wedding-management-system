@@ -35,6 +35,7 @@ confirmou a presença.
 - 🌴 **Lua de mel** (destino, atividades, hospedagens, vôos)
 - 🛏️ **Enxoval** por cômodo
 - 💍 **Painel do Dia D** (cronograma, plano B chuva, contatos críticos, check-in)
+- 🪑 **Mapa de assentos** — arraste convidados confirmados para as mesas e reordene as mesas pela alça; capacidade considera +1s
 - 📊 **Insights** financeiros (health score, heatmap, detector de creep)
 - 📨 **Notificações por email + WhatsApp** (Baileys) — no idioma do destinatário
 - 🌐 **Multi-idioma** (pt-BR, inglês, espanhol) — escolhido por usuário e respeitado em emails/WhatsApp/RSVP

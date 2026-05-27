@@ -11,7 +11,7 @@ export default async function SeatingPage() {
 
   const [tables, guests] = await Promise.all([
     prisma.seatingTable.findMany({
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),
     prisma.guest.findMany({
       where: { rsvpStatus: "CONFIRMED" },

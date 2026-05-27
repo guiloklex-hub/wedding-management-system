@@ -1,7 +1,9 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
-import { Circle, RectangleVertical, Square, Trash2, Edit3 } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Circle, GripVertical, RectangleVertical, Square, Trash2, Edit3 } from "lucide-react";
 import type { ReactNode } from "react";
 
 type Shape = "ROUND" | "RECT" | "SQUARE";
@@ -25,18 +27,38 @@ export function TableCard({
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({
+  const {
+    setNodeRef: setSortableRef,
+    setActivatorNodeRef,
+    attributes,
+    listeners,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, data: { type: "table-sort", tableId: id } });
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: `table:${id}`,
     data: { type: "table", tableId: id, capacity },
   });
+
+  const setRefs = (node: HTMLElement | null) => {
+    setSortableRef(node);
+    setDroppableRef(node);
+  };
 
   const full = seatsUsed >= capacity;
   const ShapeIcon = shape === "ROUND" ? Circle : shape === "RECT" ? RectangleVertical : Square;
 
   return (
     <div
-      ref={setNodeRef}
+      ref={setRefs}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
       className={`flex min-h-32 flex-col rounded-2xl border bg-zinc-900/60 p-3 transition ${
+        isDragging ? "opacity-40" : ""
+      } ${
         isOver
           ? full
             ? "border-rose-500 bg-rose-500/5"
@@ -45,7 +67,17 @@ export function TableCard({
       }`}
     >
       <header className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <button
+            type="button"
+            ref={setActivatorNodeRef}
+            {...attributes}
+            {...listeners}
+            aria-label="Reordenar mesa"
+            className="flex-none cursor-grab touch-none rounded p-0.5 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 active:cursor-grabbing"
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
           <ShapeIcon className="h-4 w-4 flex-none text-zinc-400" />
           <span className="truncate text-sm font-medium text-zinc-100">{name}</span>
         </div>

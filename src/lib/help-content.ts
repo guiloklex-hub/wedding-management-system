@@ -734,18 +734,21 @@ export const HELP_ARTICLES: HelpArticle[] = [
     id: "seating-chart",
     title: "Mapa visual de assentos",
     category: "wedding-day",
-    keywords: ["mesa", "assento", "lugar", "seating", "salão", "layout", "drag"],
+    keywords: ["mesa", "assento", "lugar", "seating", "salão", "layout", "drag", "reordenar"],
     icon: Users,
     summary:
-      "Arraste convidados confirmados para mesas com capacidade definida. Use no /dashboard/wedding-day/seating.",
+      "Arraste convidados confirmados para mesas com capacidade definida. Abra pelo menu 'Mapa de assentos' (grupo Casamento) ou pelo card no topo de 'Dia do casamento'.",
     steps: [
+      { title: "Abra o mapa", body: "Menu lateral → 'Mapa de assentos' (logo abaixo de 'Dia D'), ou card de atalho no topo da tela 'Dia do casamento'." },
       { title: "Crie mesas", body: "Botão 'Nova mesa' — defina nome, capacidade e formato (redonda/retangular/quadrada)." },
       { title: "Arraste convidados", body: "O pool lateral lista só quem está CONFIRMADO. Solte um chip em cima da mesa; a capacidade considera +1 confirmados." },
+      { title: "Reordene as mesas", body: "Arraste cada mesa pela alça (ícone de cabo no cabeçalho) para mudar a ordem no grid. A nova ordem fica salva." },
       { title: "Desaloque ou reorganize", body: "Solte de volta no pool para liberar o assento, ou em outra mesa para realocar." },
     ],
     tips: [
       "Capacidade leva em conta acompanhantes. Convidado com +2 ocupa 3 assentos.",
       "Mesa cheia recusa o drop e mostra toast.",
+      "Só a alça move a mesa — assim os chips de convidado dentro do card continuam clicáveis e arrastáveis.",
     ],
   },
   {

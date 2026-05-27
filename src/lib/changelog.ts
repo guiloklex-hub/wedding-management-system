@@ -6,6 +6,14 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.6.3",
+    date: "2026-05-27",
+    highlights: [
+      "🪑 'Mapa de assentos' voltou a ter porta de entrada na interface: item no menu lateral (grupo Casamento, abaixo de 'Dia D') e card de atalho no topo de 'Dia do casamento'. Antes só dava para chegar digitando a URL.",
+      "↕️ As mesas agora podem ser reordenadas: arraste cada mesa pela alça (ícone de cabo no cabeçalho) para mudar a ordem no grid — a nova ordem fica salva. Os convidados continuam sendo arrastados normalmente para dentro das mesas.",
+    ],
+  },
+  {
     version: "0.6.2",
     date: "2026-05-26",
     highlights: [

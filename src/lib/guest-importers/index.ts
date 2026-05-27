@@ -1,24 +1,33 @@
 import { wedyImporter } from "./wedy";
-import type { Importer, ImporterId } from "./types";
+import { internalCsvImporter } from "./internal-csv";
+import type { Importer, ImporterId, RecordRow } from "./types";
 
 export const IMPORTERS: Record<ImporterId, Importer> = {
   wedy: wedyImporter,
+  "internal-csv": internalCsvImporter,
 };
 
 export const IMPORTER_OPTIONS: Array<{ id: ImporterId; label: string }> = Object.values(
   IMPORTERS,
 ).map((imp) => ({ id: imp.id, label: imp.label }));
 
-export async function detectImporter(buf: Buffer): Promise<Importer | null> {
+export function detectImporter(records: RecordRow[], headers: string[]): Importer | null {
   for (const importer of Object.values(IMPORTERS)) {
     try {
-      const ok = await importer.detect(buf);
-      if (ok) return importer;
+      if (importer.detect(records, headers)) return importer;
     } catch {
-      // continua tentando os próximos
+      // ignora e tenta o próximo
     }
   }
   return null;
 }
 
-export type { Importer, ImporterId, ParsedRow, ImportedRsvpStatus } from "./types";
+export { extractXlsxRecords, extractCsvRecords } from "./extract";
+export type { ExtractedSheet } from "./extract";
+export type {
+  Importer,
+  ImporterId,
+  ParsedRow,
+  ImportedRsvpStatus,
+  RecordRow,
+} from "./types";

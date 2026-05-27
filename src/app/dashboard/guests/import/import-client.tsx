@@ -151,17 +151,18 @@ export function GuestImportClient() {
         >
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-400">
-              Arquivo (.xlsx)
+              Arquivo (.xlsx ou .csv)
             </label>
             <input
               type="file"
-              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
               required
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 file:mr-3 file:rounded-lg file:border-0 file:bg-rose-500/20 file:px-3 file:py-1.5 file:text-rose-200 hover:file:bg-rose-500/30"
             />
             <p className="mt-1 text-xs text-zinc-500">
-              Tamanho máximo: 5 MB. Até 2000 linhas por importação.
+              Tamanho máximo: 5 MB. Até 2000 linhas por importação. Wedy exporta em
+              .xlsx; o próprio sistema exporta em .csv (botão CSV em /dashboard/guests).
             </p>
           </div>
 

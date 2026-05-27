@@ -9,9 +9,10 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "0.6.2",
     date: "2026-05-26",
     highlights: [
-      "📥 Importação de convidados por arquivo XLSX em /dashboard/guests/import. Suporta planilhas do Wedy out-of-the-box, com preview de novos vs. duplicados, lista de grupos detectados, PINs preservados e modo configurável (pular existentes / atualizar / criar tudo).",
+      "📥 Importação de convidados por arquivo em /dashboard/guests/import. Suporta planilhas do Wedy (.xlsx) e o CSV exportado pelo próprio sistema (.csv) — fecha o ciclo de export/reimport. Preview de novos vs. duplicados, lista de grupos detectados, PINs preservados e modo configurável (pular existentes / atualizar / criar tudo).",
       "🏷️ Novo model GuestTag (M:N). Tags vindas do import viram tags reais; 'Padrinhos', 'Madrinha' etc. ativam também a flag isPadrinho.",
       "🔢 GuestGroup agora tem rsvpPin (4-8 chars, informativo, vindo do convite original) e Guest ganhou age (idade exata para crianças).",
+      "📞 No import do Wedy o telefone/email do responsável vai para GuestGroup.contactPhone/contactEmail (não para o Guest individual), refletindo que no Wedy o contato é por convite/família.",
     ],
   },
   {

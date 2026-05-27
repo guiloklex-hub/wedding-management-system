@@ -16,6 +16,9 @@ import {
 import {
   IMPORTERS,
   detectImporter,
+  extractCsvRecords,
+  extractXlsxRecords,
+  type ExtractedSheet,
   type Importer,
   type ImporterId,
   type ParsedRow,
@@ -436,25 +439,40 @@ export async function previewGuestImport(
   try {
     const bytes = Buffer.from(await file.arrayBuffer());
     assertGuestImportSize(bytes.length);
-    const detected = detectMagic(bytes);
-    if (detected !== "xlsx") {
-      throw new FileValidationError("Apenas arquivos .xlsx são suportados nesta versão.");
+
+    const filename = (file.name ?? "").toLowerCase();
+    const isCsvByName = filename.endsWith(".csv");
+    const isCsvByMime =
+      file.type === "text/csv" || file.type === "application/csv";
+    const detectedMagic = detectMagic(bytes);
+    const treatAsCsv = (isCsvByName || isCsvByMime) && detectedMagic !== "xlsx";
+
+    let sheet: ExtractedSheet;
+    if (treatAsCsv) {
+      sheet = extractCsvRecords(bytes.toString("utf8"));
+    } else if (detectedMagic === "xlsx") {
+      sheet = await extractXlsxRecords(bytes);
+    } else {
+      throw new FileValidationError(
+        "Formato não suportado. Use .xlsx (Wedy) ou .csv (exportação do próprio sistema).",
+      );
     }
 
     let importer: Importer | null = null;
     if (sourceParam.data === "AUTO") {
-      importer = await detectImporter(bytes);
+      importer = detectImporter(sheet.records, sheet.headers);
       if (!importer) {
         return {
           success: false,
-          error: "Não foi possível identificar a planilha. Suportados: Wedy.",
+          error:
+            "Não foi possível identificar o formato. Suportados: Wedy (.xlsx) ou CSV exportado pelo próprio sistema.",
         };
       }
     } else {
       importer = IMPORTERS[sourceParam.data];
     }
 
-    const rows = await importer.parse(bytes);
+    const rows = importer.parseRecords(sheet.records);
     if (rows.length === 0) {
       return { success: false, error: "Nenhuma linha válida encontrada na planilha." };
     }
@@ -614,42 +632,122 @@ export async function commitGuestImport(input: {
         }
 
         // 2) Grupos
+        const importer = IMPORTERS[entry.source];
+        const contactsToGroup = importer?.contactsBelongToGroup === true;
+
         const groupNames = Array.from(
           new Set(entry.rows.map((r) => r.groupName).filter((n): n is string => !!n)),
         );
         const pinByGroupName = new Map<string, string>();
+        type GroupContact = {
+          phone?: string;
+          email?: string;
+          contactName?: string;
+        };
+        const contactByGroupName = new Map<string, GroupContact>();
         for (const r of entry.rows) {
-          if (r.groupName && r.pin && !pinByGroupName.has(r.groupName)) {
+          if (!r.groupName) continue;
+          if (r.pin && !pinByGroupName.has(r.groupName)) {
             pinByGroupName.set(r.groupName, r.pin);
           }
+          if (contactsToGroup) {
+            const cur = contactByGroupName.get(r.groupName) ?? {};
+            if (!cur.phone && r.phone) {
+              cur.phone = r.phone;
+              cur.contactName ??= r.name;
+            }
+            if (!cur.email && r.email) {
+              cur.email = r.email;
+              cur.contactName ??= r.name;
+            }
+            contactByGroupName.set(r.groupName, cur);
+          }
         }
-        const groupByName = new Map<string, { id: string; rsvpPin: string | null }>();
+
+        const groupByName = new Map<
+          string,
+          {
+            id: string;
+            rsvpPin: string | null;
+            contactPhone: string | null;
+            contactEmail: string | null;
+            contactName: string | null;
+          }
+        >();
         if (groupNames.length > 0) {
           const existingGroups = await tx.guestGroup.findMany({
             where: { deletedAt: null, name: { in: groupNames } },
-            select: { id: true, name: true, rsvpPin: true },
+            select: {
+              id: true,
+              name: true,
+              rsvpPin: true,
+              contactPhone: true,
+              contactEmail: true,
+              contactName: true,
+            },
           });
           for (const g of existingGroups) {
-            groupByName.set(g.name, { id: g.id, rsvpPin: g.rsvpPin });
+            groupByName.set(g.name, {
+              id: g.id,
+              rsvpPin: g.rsvpPin,
+              contactPhone: g.contactPhone,
+              contactEmail: g.contactEmail,
+              contactName: g.contactName,
+            });
           }
         }
         let groupsCreated = 0;
         for (const name of groupNames) {
           if (!groupByName.has(name)) {
+            const contact = contactByGroupName.get(name);
             const created = await tx.guestGroup.create({
-              data: { name, rsvpPin: pinByGroupName.get(name) ?? null },
+              data: {
+                name,
+                rsvpPin: pinByGroupName.get(name) ?? null,
+                contactPhone: contact?.phone ?? null,
+                contactEmail: contact?.email ?? null,
+                contactName: contact?.contactName ?? null,
+              },
             });
-            groupByName.set(name, { id: created.id, rsvpPin: created.rsvpPin });
+            groupByName.set(name, {
+              id: created.id,
+              rsvpPin: created.rsvpPin,
+              contactPhone: created.contactPhone,
+              contactEmail: created.contactEmail,
+              contactName: created.contactName,
+            });
             groupsCreated++;
           } else {
             const existing = groupByName.get(name)!;
+            const contact = contactByGroupName.get(name);
+            const patch: {
+              rsvpPin?: string;
+              contactPhone?: string;
+              contactEmail?: string;
+              contactName?: string;
+            } = {};
             if (!existing.rsvpPin && pinByGroupName.has(name)) {
-              const newPin = pinByGroupName.get(name)!;
-              await tx.guestGroup.update({
+              patch.rsvpPin = pinByGroupName.get(name)!;
+            }
+            if (contactsToGroup && contact) {
+              if (!existing.contactPhone && contact.phone) patch.contactPhone = contact.phone;
+              if (!existing.contactEmail && contact.email) patch.contactEmail = contact.email;
+              if (!existing.contactName && contact.contactName) {
+                patch.contactName = contact.contactName;
+              }
+            }
+            if (Object.keys(patch).length > 0) {
+              const updated = await tx.guestGroup.update({
                 where: { id: existing.id },
-                data: { rsvpPin: newPin },
+                data: patch,
               });
-              existing.rsvpPin = newPin;
+              groupByName.set(name, {
+                id: updated.id,
+                rsvpPin: updated.rsvpPin,
+                contactPhone: updated.contactPhone,
+                contactEmail: updated.contactEmail,
+                contactName: updated.contactName,
+              });
             }
           }
         }
@@ -685,6 +783,11 @@ export async function commitGuestImport(input: {
             .map((t) => tagIdByLowerName.get(t.toLowerCase()))
             .filter((id): id is string => !!id);
 
+          // Quando contatos pertencem ao grupo (ex.: Wedy), o telefone/email
+          // não fica no Guest; foi para GuestGroup.contactPhone/contactEmail.
+          const guestPhone = contactsToGroup ? null : row.phone;
+          const guestEmail = contactsToGroup ? null : row.email;
+
           if (sameGroup && parsed.data.mode === "CREATE_NEW_ONLY") {
             skipped++;
             continue;
@@ -694,12 +797,18 @@ export async function commitGuestImport(input: {
             await tx.guest.update({
               where: { id: sameGroup.id },
               data: {
-                phone: row.phone ?? undefined,
-                email: row.email ?? undefined,
+                phone: guestPhone ?? undefined,
+                email: guestEmail ?? undefined,
                 rsvpStatus: row.rsvpStatus,
                 isChild: row.isChild,
                 age: row.age,
                 isPadrinho: padrinhoFlag ? true : undefined,
+                isVIP: row.isVIP === true ? true : undefined,
+                side: row.side ?? undefined,
+                plusOnesAllowed: row.plusOnesAllowed ?? undefined,
+                tableNumber: row.tableNumber ?? undefined,
+                dietary: row.dietary ?? undefined,
+                city: row.city ?? undefined,
                 groupId: groupId ?? undefined,
                 groupName: row.groupName ?? undefined,
               },
@@ -717,15 +826,20 @@ export async function commitGuestImport(input: {
           const newGuest = await tx.guest.create({
             data: {
               name: row.name,
-              phone: row.phone,
-              email: row.email,
-              side: null,
+              phone: guestPhone,
+              email: guestEmail,
+              side: row.side ?? null,
               groupName: row.groupName,
               groupId,
               rsvpStatus: row.rsvpStatus,
               isChild: row.isChild,
               age: row.age,
               isPadrinho: padrinhoFlag,
+              isVIP: row.isVIP === true ? true : false,
+              plusOnesAllowed: row.plusOnesAllowed ?? 0,
+              tableNumber: row.tableNumber ?? null,
+              dietary: row.dietary ?? null,
+              city: row.city ?? null,
             },
           });
           if (tagIds.length > 0) {

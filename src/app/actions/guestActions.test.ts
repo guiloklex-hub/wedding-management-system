@@ -628,4 +628,88 @@ describe("commitGuestImport", () => {
     expect(payload).toContain('"source":"wedy"');
     expect(payload).toContain('"mode":"CREATE_NEW_ONLY"');
   });
+
+  it("Wedy: phone/email vão para GuestGroup.contact* e Guest.phone fica null (contactsBelongToGroup)", async () => {
+    const token = await uploadFile([
+      ["Família X", "Ana", "Sem resposta", "+5511999990000", "ana@x.com", "", "Adulto", "", ""],
+      ["Família X", "Bia", "Sem resposta", "", "", "", "Adulto", "", ""],
+    ]);
+    await commitGuestImport({ importToken: token, mode: "CREATE_NEW_ONLY" });
+
+    const grpCall = prismaMock.guestGroup.create.mock.calls[0][0] as {
+      data: { name: string; contactPhone: string | null; contactEmail: string | null; contactName: string | null };
+    };
+    expect(grpCall.data).toMatchObject({
+      name: "Família X",
+      contactPhone: "+5511999990000",
+      contactEmail: "ana@x.com",
+      contactName: "Ana",
+    });
+
+    const guestCalls = prismaMock.guest.create.mock.calls.map(
+      (c) => (c[0] as { data: { name: string; phone: string | null; email: string | null } }).data,
+    );
+    for (const g of guestCalls) {
+      expect(g.phone).toBeNull();
+      expect(g.email).toBeNull();
+    }
+  });
+
+  it("Wedy: não sobrescreve contactPhone/contactEmail existente non-null do grupo", async () => {
+    prismaMock.guestGroup.findMany.mockResolvedValueOnce([
+      {
+        id: "g1",
+        name: "Família X",
+        rsvpPin: null,
+        contactPhone: "0000",
+        contactEmail: "old@x.com",
+        contactName: "Antigo",
+      },
+    ] as never);
+    const token = await uploadFile([
+      ["Família X", "Ana", "Sem resposta", "+5511999990000", "novo@x.com", "", "Adulto", "", ""],
+    ]);
+    await commitGuestImport({ importToken: token, mode: "CREATE_NEW_ONLY" });
+    expect(prismaMock.guestGroup.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("previewGuestImport (internal CSV)", () => {
+  beforeEach(() => {
+    prismaMock.guest.findMany.mockResolvedValue([] as never);
+  });
+
+  function csvFile(text: string, filename = "export.csv"): File {
+    return new File([text], filename, { type: "text/csv" });
+  }
+
+  function importForm(file: File, source = "AUTO"): FormData {
+    const fd = new FormData();
+    fd.set("file", file);
+    fd.set("source", source);
+    return fd;
+  }
+
+  it("detecta CSV interno pelo header e classifica linhas", async () => {
+    const csv = [
+      "Nome,Telefone,Email,Lado,Grupo,Status,+1 confirmados,Mesa,Restrições,Cidade,Padrinho,VIP,Criança",
+      `"Maria","11999","maria@x","NOIVA","Família A","Confirmado","2","5","","São Paulo","sim","","" `,
+      `"João","","","NOIVO","Família A","Convidado","0","","","","","",""`,
+    ].join("\n");
+
+    const r = await previewGuestImport(undefined, importForm(csvFile(csv)));
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data!.source).toBe("internal-csv");
+      expect(r.data!.totalRows).toBe(2);
+      expect(r.data!.breakdown.new).toBe(2);
+      expect(r.data!.tagsPreview).toContain("Padrinhos");
+    }
+  });
+
+  it("rejeita arquivo .csv sem nenhum header reconhecido", async () => {
+    const csv = "x,y,z\n1,2,3";
+    const r = await previewGuestImport(undefined, importForm(csvFile(csv)));
+    expect(r.success).toBe(false);
+  });
 });

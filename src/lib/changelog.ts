@@ -6,6 +6,14 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.6.5",
+    date: "2026-05-27",
+    highlights: [
+      "📄 Listas longas agora são paginadas (20 itens por página) com controle numerado + Anterior/Próxima e o indicador 'Mostrando X–Y de Z'. Vale para Convidados, Tarefas (visão Lista), Pagamentos (visão Lista), Presentes, Enxoval, Fornecedores, Receitas, Caixa e o histórico de envios em Ajustes › Notificações.",
+      "🔎 A busca e os filtros continuam instantâneos: a paginação recai sobre o resultado já filtrado e volta para a primeira página sempre que você muda o filtro.",
+    ],
+  },
+  {
     version: "0.6.4",
     date: "2026-05-27",
     highlights: [

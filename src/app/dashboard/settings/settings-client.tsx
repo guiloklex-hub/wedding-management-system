@@ -51,6 +51,7 @@ import {
 } from "@/app/actions/userActions";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Pagination, usePagination } from "@/components/pagination";
 import { formatDateBR, formatDateTimeBR } from "@/lib/format";
 import { ROLES, ROLE_LABEL, ROLE_DESCRIPTION, type Role, canManageUsers } from "@/lib/permissions";
 import type { SecuritySettings } from "@/lib/security-settings";
@@ -186,6 +187,7 @@ export default function SettingsClient({
 }
 
 function NotificationsTab({ logs }: { logs: NotificationLogEntry[] }) {
+  const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(logs, 20);
   return (
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-xl">
       <div className="flex items-center gap-2">
@@ -193,7 +195,7 @@ function NotificationsTab({ logs }: { logs: NotificationLogEntry[] }) {
         <h2 className="text-lg font-semibold text-white">Envios recentes</h2>
       </div>
       <p className="mt-1 text-sm text-zinc-500">
-        Últimos 50 envios de e-mail/WhatsApp. Use esta lista para diagnosticar falhas de SMTP ou
+        Últimos envios de e-mail/WhatsApp. Use esta lista para diagnosticar falhas de SMTP ou
         destinatário inválido (ex.: o admin@admin.com padrão do seed).
       </p>
       {logs.length === 0 ? (
@@ -214,7 +216,7 @@ function NotificationsTab({ logs }: { logs: NotificationLogEntry[] }) {
               </tr>
             </thead>
             <tbody>
-              {logs.map((l) => {
+              {pageItems.map((l) => {
                 const failed = l.status === "FAILED";
                 return (
                   <tr key={l.id} className="border-b border-zinc-900 align-top">
@@ -245,6 +247,16 @@ function NotificationsTab({ logs }: { logs: NotificationLogEntry[] }) {
               })}
             </tbody>
           </table>
+          <div className="mt-3">
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              from={from}
+              to={to}
+              onPageChange={setPage}
+            />
+          </div>
         </div>
       )}
     </section>

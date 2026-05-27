@@ -22,6 +22,7 @@ import {
 } from "@/app/actions/taskActions";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Pagination, usePagination } from "@/components/pagination";
 import { formatDateBR, toIsoDate } from "@/lib/format";
 
 type TaskRow = {
@@ -89,6 +90,8 @@ export default function TasksClient({
       return true;
     });
   }, [tasks, filter]);
+
+  const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(filtered, 20);
 
   function handleCreate(formData: FormData) {
     setBusy(true);
@@ -160,7 +163,10 @@ export default function TasksClient({
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as typeof filter)}
+            onChange={(e) => {
+              setFilter(e.target.value as typeof filter);
+              setPage(1);
+            }}
             className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
           >
             <option value="all">Todas</option>
@@ -215,12 +221,22 @@ export default function TasksClient({
       </div>
 
       {view === "list" ? (
-        <ListView
-          tasks={filtered}
-          onStatus={handleStatus}
-          onEdit={setEditing}
-          onDelete={setDeleting}
-        />
+        <>
+          <ListView
+            tasks={pageItems}
+            onStatus={handleStatus}
+            onEdit={setEditing}
+            onDelete={setDeleting}
+          />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            from={from}
+            to={to}
+            onPageChange={setPage}
+          />
+        </>
       ) : (
         <KanbanView
           tasks={filtered}

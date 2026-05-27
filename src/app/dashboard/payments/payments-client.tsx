@@ -22,6 +22,7 @@ import {
 } from "@/app/actions/paymentActions";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Pagination, usePagination } from "@/components/pagination";
 import { formatCurrency, formatDateBR, toIsoDate } from "@/lib/format";
 import { computeAdjustedAmount } from "@/lib/payment-adjustment";
 import type { Payment, PaymentMethod, PaymentStatus, Vendor } from "@/types";
@@ -102,6 +103,8 @@ export default function PaymentsClient({ payments, vendors }: Props) {
     });
   }, [payments, search, statusFilter]);
 
+  const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(filtered, 20);
+
   function handleMarkPaid(payment: PaymentWithVendor) {
     startTransition(async () => {
       const r = await markPaymentAsPaid(payment.id);
@@ -143,14 +146,20 @@ export default function PaymentsClient({ payments, vendors }: Props) {
                 <input
                   type="search"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
                   placeholder="Buscar por fornecedor..."
                   className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
                 />
               </div>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as "ALL" | PaymentStatus)}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value as "ALL" | PaymentStatus);
+                  setPage(1);
+                }}
                 className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
               >
                 <option value="ALL">Todos os status</option>
@@ -227,7 +236,7 @@ export default function PaymentsClient({ payments, vendors }: Props) {
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((payment) => (
+                    pageItems.map((payment) => (
                       <tr key={payment.id} className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30">
                         <td className="px-6 py-4 text-zinc-200">{formatDateBR(payment.dueDate)}</td>
                         <td className="px-6 py-4">{payment.vendor.name}</td>
@@ -306,7 +315,7 @@ export default function PaymentsClient({ payments, vendors }: Props) {
                 {payments.length === 0 ? "Nenhum pagamento cadastrado." : "Nenhum resultado para o filtro."}
               </div>
             ) : (
-              filtered.map((payment) => (
+              pageItems.map((payment) => (
                 <div key={payment.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -377,6 +386,15 @@ export default function PaymentsClient({ payments, vendors }: Props) {
               ))
             )}
           </div>
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            from={from}
+            to={to}
+            onPageChange={setPage}
+          />
         </>
       ) : (
         <PaymentsCalendar

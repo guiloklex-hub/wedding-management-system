@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/vendorActions";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Pagination, usePagination } from "@/components/pagination";
 import { formatCurrency } from "@/lib/format";
 import type { CategoryDef } from "@/lib/categories";
 import type { Vendor, BudgetItem, VendorStatus } from "@/types";
@@ -103,6 +104,8 @@ export default function VendorsClient({ vendors, categories }: Props) {
     });
   }, [vendors, search, statusFilter]);
 
+  const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(filtered, 20);
+
   function handleStatusChange(vendor: VendorRow, newStatus: VendorStatus) {
     const item = vendor.budgetItems[0];
     const hasActual = !!item?.actualValue;
@@ -152,14 +155,20 @@ export default function VendorsClient({ vendors, categories }: Props) {
             <input
               type="search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               placeholder="Buscar fornecedor..."
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
             />
           </div>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as "ALL" | VendorStatus)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value as "ALL" | VendorStatus);
+              setPage(1);
+            }}
             className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
           >
             <option value="ALL">Todos os status</option>
@@ -214,7 +223,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
                   </td>
                 </tr>
               ) : (
-                filtered.map((vendor) => {
+                pageItems.map((vendor) => {
                   const budget = vendor.budgetItems[0];
                   const value = budget?.actualValue ?? budget?.estimatedValue ?? 0;
                   const isReal = budget?.actualValue != null;
@@ -317,7 +326,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
             {vendors.length === 0 ? "Nenhum fornecedor cadastrado." : "Nenhum resultado para o filtro."}
           </div>
         ) : (
-          filtered.map((vendor) => {
+          pageItems.map((vendor) => {
             const budget = vendor.budgetItems[0];
             const value = budget?.actualValue ?? budget?.estimatedValue ?? 0;
             const isReal = budget?.actualValue != null;
@@ -398,6 +407,15 @@ export default function VendorsClient({ vendors, categories }: Props) {
           })
         )}
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        from={from}
+        to={to}
+        onPageChange={setPage}
+      />
 
       {isCreateOpen && (
         <VendorFormModal

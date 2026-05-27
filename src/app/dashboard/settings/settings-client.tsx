@@ -8,6 +8,7 @@ import {
   Download,
   KeyRound,
   Loader2,
+  Mail,
   MoreVertical,
   Pencil,
   Power,
@@ -50,6 +51,7 @@ import {
 } from "@/app/actions/userActions";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Pagination, usePagination } from "@/components/pagination";
 import { formatDateBR, formatDateTimeBR } from "@/lib/format";
 import { ROLES, ROLE_LABEL, ROLE_DESCRIPTION, type Role, canManageUsers } from "@/lib/permissions";
 import type { SecuritySettings } from "@/lib/security-settings";
@@ -96,7 +98,18 @@ type Member = {
 
 const ROLE_OPTIONS: Role[] = [...ROLES];
 
-type Tab = "event" | "security" | "team" | "whatsapp" | "profile" | "backup";
+type NotificationLogEntry = {
+  id: string;
+  kind: string;
+  channel: string;
+  targetEmail: string | null;
+  targetPhone: string | null;
+  status: string;
+  errorMsg: string | null;
+  createdAt: Date;
+};
+
+type Tab = "event" | "security" | "team" | "whatsapp" | "profile" | "backup" | "notifications";
 
 export default function SettingsClient({
   initial,
@@ -104,12 +117,14 @@ export default function SettingsClient({
   me,
   members,
   securitySettings,
+  notificationLogs,
 }: {
   initial: Initial;
   pixSettings: PixSettings;
   me: Me;
   members: Member[];
   securitySettings: SecuritySettings;
+  notificationLogs: NotificationLogEntry[];
 }) {
   const toast = useToast();
   const [tab, setTab] = useState<Tab>("event");
@@ -128,6 +143,11 @@ export default function SettingsClient({
         <TabBtn current={tab} value="team" onClick={() => setTab("team")}>
           Time
         </TabBtn>
+        {manageUsers ? (
+          <TabBtn current={tab} value="notifications" onClick={() => setTab("notifications")}>
+            Notificações
+          </TabBtn>
+        ) : null}
         {isAdmin ? (
           <TabBtn current={tab} value="whatsapp" onClick={() => setTab("whatsapp")}>
             WhatsApp
@@ -158,8 +178,88 @@ export default function SettingsClient({
       ) : null}
       {tab === "whatsapp" && isAdmin ? <WhatsAppTab toast={toast} /> : null}
       {tab === "profile" ? <ProfileTab me={me} toast={toast} /> : null}
-      {tab === "backup" ? <BackupTab /> : null}
+      {tab === "backup" ? <BackupTab isAdmin={isAdmin} toast={toast} /> : null}
+      {tab === "notifications" && manageUsers ? (
+        <NotificationsTab logs={notificationLogs} />
+      ) : null}
     </div>
+  );
+}
+
+function NotificationsTab({ logs }: { logs: NotificationLogEntry[] }) {
+  const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(logs, 20);
+  return (
+    <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-xl">
+      <div className="flex items-center gap-2">
+        <Mail className="h-5 w-5 text-rose-400" />
+        <h2 className="text-lg font-semibold text-white">Envios recentes</h2>
+      </div>
+      <p className="mt-1 text-sm text-zinc-500">
+        Últimos envios de e-mail/WhatsApp. Use esta lista para diagnosticar falhas de SMTP ou
+        destinatário inválido (ex.: o admin@admin.com padrão do seed).
+      </p>
+      {logs.length === 0 ? (
+        <p className="mt-4 rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
+          Nenhum envio registrado ainda.
+        </p>
+      ) : (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500">
+                <th className="py-2 pr-3 font-medium">Quando</th>
+                <th className="py-2 pr-3 font-medium">Tipo</th>
+                <th className="py-2 pr-3 font-medium">Canal</th>
+                <th className="py-2 pr-3 font-medium">Destinatário</th>
+                <th className="py-2 pr-3 font-medium">Status</th>
+                <th className="py-2 font-medium">Erro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pageItems.map((l) => {
+                const failed = l.status === "FAILED";
+                return (
+                  <tr key={l.id} className="border-b border-zinc-900 align-top">
+                    <td className="py-2 pr-3 whitespace-nowrap text-zinc-400">
+                      {formatDateTimeBR(l.createdAt)}
+                    </td>
+                    <td className="py-2 pr-3 text-zinc-300">{l.kind}</td>
+                    <td className="py-2 pr-3 text-zinc-400">{l.channel}</td>
+                    <td className="py-2 pr-3 text-zinc-400">
+                      {l.targetEmail ?? l.targetPhone ?? "—"}
+                    </td>
+                    <td className="py-2 pr-3">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          failed
+                            ? "bg-rose-500/20 text-rose-300"
+                            : "bg-emerald-500/20 text-emerald-300"
+                        }`}
+                      >
+                        {l.status}
+                      </span>
+                    </td>
+                    <td className="py-2 text-xs text-rose-300/80 break-words">
+                      {l.errorMsg ?? ""}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="mt-3">
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              from={from}
+              to={to}
+              onPageChange={setPage}
+            />
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -1115,6 +1215,7 @@ function EditUserModal({
     <Modal onClose={onClose} title={`Editar ${member.name ?? member.email}`}>
       <form action={handle} className="space-y-3">
         <Field name="name" label="Nome" required defaultValue={member.name ?? ""} />
+        <Field name="email" label="E-mail" type="email" required defaultValue={member.email} />
         <Field
           name="phone"
           label="Telefone (WhatsApp, opcional)"
@@ -1461,22 +1562,345 @@ function ProfileTab({
   );
 }
 
-function BackupTab() {
+type BackupValidationResponse = {
+  ok: boolean;
+  version?: number;
+  systemVersion?: number;
+  exportedAt?: string;
+  meta?: {
+    appVersion?: string;
+    hostname?: string;
+    nodeVersion?: string;
+    exportedBy?: { id?: string; email?: string | null };
+  } | null;
+  checksumValid?: boolean | null;
+  checksum?: { algorithm: string; value: string } | null;
+  counts?: Record<string, number>;
+  warnings?: string[];
+  error?: string;
+  issues?: { path: string; message: string }[];
+};
+
+type BackupRestoreResponse = {
+  ok?: boolean;
+  counts?: Record<string, number>;
+  warnings?: string[];
+  protectedCurrentUser?: boolean;
+  error?: string;
+  issues?: { path: string; message: string }[];
+};
+
+function BackupTab({
+  isAdmin,
+  toast,
+}: {
+  isAdmin: boolean;
+  toast: ReturnType<typeof useToast>;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [validation, setValidation] = useState<BackupValidationResponse | null>(null);
+  const [validating, setValidating] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [password, setPassword] = useState("");
+  const [acknowledge, setAcknowledge] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [lastRestore, setLastRestore] = useState<BackupRestoreResponse | null>(null);
+
+  function reset() {
+    setFile(null);
+    setValidation(null);
+    setPassword("");
+    setAcknowledge(false);
+  }
+
+  async function handleValidate() {
+    if (!file) {
+      toast.error("Selecione um arquivo de backup primeiro.");
+      return;
+    }
+    setValidating(true);
+    setValidation(null);
+    setLastRestore(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/backup/validate", { method: "POST", body: fd });
+      const body = (await res.json()) as BackupValidationResponse;
+      setValidation(body);
+      if (!res.ok || !body.ok) {
+        toast.error(body.error ?? "Arquivo de backup inválido.");
+      } else {
+        toast.success("Arquivo de backup validado.");
+      }
+    } catch (err) {
+      toast.error("Falha ao validar arquivo", (err as Error).message);
+    } finally {
+      setValidating(false);
+    }
+  }
+
+  async function handleRestore() {
+    if (!file || !password || !acknowledge || !isAdmin) return;
+    setRestoring(true);
+    setConfirmOpen(false);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("password", password);
+      fd.append("confirm", "WIPE_AND_RESTORE");
+      const res = await fetch("/api/backup/restore", { method: "POST", body: fd });
+      const body = (await res.json()) as BackupRestoreResponse;
+      setLastRestore(body);
+      if (!res.ok || !body.ok) {
+        toast.error(body.error ?? "Falha ao restaurar backup.");
+      } else {
+        toast.success("Backup restaurado com sucesso. Recarregando…");
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    } catch (err) {
+      toast.error("Falha ao restaurar", (err as Error).message);
+    } finally {
+      setRestoring(false);
+    }
+  }
+
+  const canRestore =
+    isAdmin &&
+    !!validation?.ok &&
+    !!file &&
+    validation.checksumValid !== false &&
+    password.length > 0 &&
+    acknowledge;
+
   return (
-    <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-      <h2 className="text-lg font-semibold text-zinc-100">Backup</h2>
-      <p className="mt-1 text-sm text-zinc-500">
-        Baixa um JSON com fornecedores, pagamentos, aportes, configurações, convidados e tudo mais.
+    <div className="space-y-4">
+      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+        <h2 className="text-lg font-semibold text-zinc-100">Exportar backup</h2>
+        <p className="mt-1 text-sm text-zinc-500">
+          Baixa um JSON com fornecedores, pagamentos, aportes, configurações, convidados e tudo
+          mais. Inclui checksum SHA-256 para validação.
+        </p>
+        <a
+          href="/api/backup"
+          download
+          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-700"
+        >
+          <Download className="h-4 w-4" /> Exportar backup JSON
+        </a>
+        <p className="mt-3 text-xs text-zinc-500">
+          Faça um backup mensal e antes/depois do casamento. Guarde em local seguro — o arquivo
+          contém dados sensíveis.
+        </p>
+      </section>
+
+      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-100">Restaurar backup</h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            {isAdmin
+              ? "Carregue um JSON exportado por este sistema. O restore apaga e recria todos os dados na transação. Só admins."
+              : "Apenas administradores podem restaurar backups. Você pode validar o arquivo aqui, mas o restore exige role ADMIN."}
+          </p>
+        </div>
+
+        <label className="block">
+          <span className="text-xs font-medium text-zinc-400">Arquivo .json</span>
+          <input
+            type="file"
+            accept="application/json,.json"
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              setFile(f);
+              setValidation(null);
+              setPassword("");
+              setAcknowledge(false);
+            }}
+            className="mt-1 block w-full text-sm text-zinc-300 file:mr-3 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-3 file:py-2 file:text-xs file:font-medium file:text-zinc-200 hover:file:bg-zinc-700"
+          />
+          {file ? (
+            <p className="mt-1 text-xs text-zinc-500">
+              {file.name} · {(file.size / 1024).toFixed(1)} KB
+            </p>
+          ) : null}
+        </label>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleValidate}
+            disabled={!file || validating}
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
+          >
+            {validating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ShieldCheck className="h-4 w-4" />
+            )}
+            Validar arquivo
+          </button>
+          {file ? (
+            <button
+              type="button"
+              onClick={reset}
+              className="text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
+            >
+              Limpar
+            </button>
+          ) : null}
+        </div>
+
+        {validation ? <ValidationSummary v={validation} /> : null}
+
+        {isAdmin && validation?.ok && validation.checksumValid !== false ? (
+          <div className="space-y-3 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4">
+            <div className="flex items-start gap-2 text-sm text-amber-200">
+              <ShieldAlert className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <span>
+                <strong>O restore apaga TODOS os dados atuais</strong> e os substitui pelos do
+                arquivo. Esta operação não pode ser desfeita. Faça um backup antes.
+              </span>
+            </div>
+
+            <label className="block">
+              <span className="text-xs font-medium text-zinc-400">Sua senha (confirmação)</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+                placeholder="••••••••"
+              />
+            </label>
+
+            <label className="flex items-start gap-2 text-sm text-zinc-200">
+              <input
+                type="checkbox"
+                checked={acknowledge}
+                onChange={(e) => setAcknowledge(e.target.checked)}
+                className="mt-1"
+              />
+              <span>
+                Entendo que esta ação <strong>apaga todos os dados</strong> do sistema e os
+                substitui pelos do arquivo. Já fiz um backup antes.
+              </span>
+            </label>
+
+            <button
+              type="button"
+              disabled={!canRestore || restoring}
+              onClick={() => setConfirmOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-40"
+            >
+              {restoring ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArchiveRestore className="h-4 w-4" />
+              )}
+              Restaurar agora
+            </button>
+          </div>
+        ) : null}
+
+        {lastRestore?.ok && lastRestore.counts ? (
+          <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-4 text-sm text-emerald-200">
+            <p className="font-medium">Restore concluído.</p>
+            <p className="mt-1 text-xs text-emerald-200/80">
+              Total restaurado:{" "}
+              {Object.entries(lastRestore.counts)
+                .filter(([, c]) => c > 0)
+                .map(([k, c]) => `${k}: ${c}`)
+                .join(" · ") || "0 registros"}
+            </p>
+            {lastRestore.protectedCurrentUser ? (
+              <p className="mt-1 text-xs text-emerald-200/80">
+                Sua conta foi preservada pois não estava no backup.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Confirmar restauração"
+        description="Esta ação é IRREVERSÍVEL. Todos os dados atuais serão substituídos pelos do arquivo. Continuar?"
+        confirmLabel={restoring ? "Restaurando…" : "Sim, restaurar"}
+        cancelLabel="Cancelar"
+        onConfirm={handleRestore}
+        onCancel={() => setConfirmOpen(false)}
+        tone="danger"
+        busy={restoring}
+      />
+    </div>
+  );
+}
+
+function ValidationSummary({ v }: { v: BackupValidationResponse }) {
+  if (!v.ok) {
+    return (
+      <div className="rounded-xl border border-rose-500/40 bg-rose-500/5 p-3 text-sm text-rose-200">
+        <p className="font-medium">{v.error ?? "Arquivo inválido"}</p>
+        {v.issues && v.issues.length > 0 ? (
+          <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-rose-200/80">
+            {v.issues.slice(0, 8).map((i, idx) => (
+              <li key={idx}>
+                <code className="text-rose-300">{i.path || "(raiz)"}</code>: {i.message}
+              </li>
+            ))}
+            {v.issues.length > 8 ? (
+              <li>...e mais {v.issues.length - 8} problemas.</li>
+            ) : null}
+          </ul>
+        ) : null}
+      </div>
+    );
+  }
+
+  const totalRows =
+    v.counts
+      ? Object.values(v.counts).reduce((sum, n) => sum + n, 0)
+      : 0;
+
+  return (
+    <div className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-950/40 p-3 text-xs text-zinc-300">
+      <p className="text-sm text-zinc-100">
+        ✓ Backup v{v.version} válido — {totalRows} registros, exportado em{" "}
+        {v.exportedAt ? formatDateTimeBR(new Date(v.exportedAt)) : "—"}.
       </p>
-      <a
-        href="/api/backup"
-        download
-        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-700"
-      >
-        <Download className="h-4 w-4" /> Exportar backup JSON
-      </a>
-      <p className="mt-3 text-xs text-zinc-500">Faça um backup mensal e antes/depois do casamento.</p>
-    </section>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 sm:grid-cols-3">
+        {v.counts
+          ? Object.entries(v.counts)
+              .filter(([, c]) => c > 0)
+              .map(([k, c]) => (
+                <span key={k}>
+                  <span className="text-zinc-500">{k}:</span> <strong>{c}</strong>
+                </span>
+              ))
+          : null}
+      </div>
+      {v.meta?.hostname || v.meta?.appVersion ? (
+        <p className="text-zinc-500">
+          {v.meta?.hostname ? `host: ${v.meta.hostname}` : ""}
+          {v.meta?.hostname && v.meta?.appVersion ? " · " : ""}
+          {v.meta?.appVersion ? `app: v${v.meta.appVersion}` : ""}
+        </p>
+      ) : null}
+      {v.checksum ? (
+        <p className="text-zinc-500">
+          checksum:{" "}
+          <code className="text-zinc-300">{v.checksum.value.slice(0, 16)}…</code>{" "}
+          {v.checksumValid ? "✓" : "✗"}
+        </p>
+      ) : null}
+      {v.warnings && v.warnings.length > 0 ? (
+        <ul className="mt-1 space-y-0.5 text-amber-300/80">
+          {v.warnings.map((w, idx) => (
+            <li key={idx}>⚠ {w}</li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
   );
 }
 

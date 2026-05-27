@@ -29,14 +29,29 @@ banco. Veja [i18n.md](i18n.md) para o padrão completo.
 | `PAYMENT_OVERDUE` | Pagamento já passou da data | ✅ | ✅ |
 | `TASK_DUE` | Tarefa vence em até 2 dias | ✅ | ✅ |
 | `TASK_OVERDUE` | Tarefa já passou da data | ✅ | ✅ |
+| `GUEST_RSVP` | Convidado responde o RSVP (individual ou de grupo) | ✅ (gestores/noivos) | ✅ |
 | `SYSTEM_WHATSAPP_DOWN` | Conexão WhatsApp caiu por > ~1 min, ou exige novo QR | ✅ (admins) | — |
 | `SYSTEM_WHATSAPP_RECOVERED` | Conexão WhatsApp voltou após queda já avisada | ✅ (admins) | — |
 
+`GUEST_RSVP` vai para todos os usuários ativos com role `ADMIN`/`GROOM`/`BRIDE`/`PLANNER`
+(reusa o mesmo conjunto do cron de lembretes). É **best-effort** e **deduplicado por dia**
+por `refId` (o convidado/grupo só gera uma notificação por dia, mesmo reabrindo o link).
+O disparo é em `notifyRsvpResponse` ([src/lib/notifications/rsvp.ts](../src/lib/notifications/rsvp.ts)),
+chamado por `publicRsvpRespond` e `publicRsvpRespondForGroup`.
+
 Cada envio é registrado em `NotificationLog`:
-- `status` = `OK` | `ERROR`
+- `status` = `SENT` | `FAILED`
 - `errorMsg` em caso de falha
 - `kind` + `refType` + `refId` permitem **idempotência por dia** (um pagamento
   X nunca recebe duas notificações `PAYMENT_DUE` no mesmo dia).
+
+### Diagnóstico de envios (Ajustes › Notificações)
+
+Gestores (ADMIN/GROOM/BRIDE) veem em **Ajustes › Notificações** os últimos 50 envios
+(`NotificationLog`) com tipo, canal, destinatário, `status` (SENT/FAILED) e a mensagem de
+erro do SMTP. Use isso para diagnosticar, por exemplo, falhas recorrentes quando o admin
+ainda está com o e-mail placeholder `admin@admin.com` do seed — troque o e-mail em
+**Ajustes › Time** (qualquer usuário) ou em **Perfil** (o seu, com confirmação de senha).
 
 ## Configuração SMTP
 

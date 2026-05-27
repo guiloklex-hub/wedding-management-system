@@ -6,6 +6,59 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.6.5",
+    date: "2026-05-27",
+    highlights: [
+      "📄 Listas longas agora são paginadas (20 itens por página) com controle numerado + Anterior/Próxima e o indicador 'Mostrando X–Y de Z'. Vale para Convidados, Tarefas (visão Lista), Pagamentos (visão Lista), Presentes, Enxoval, Fornecedores, Receitas, Caixa e o histórico de envios em Ajustes › Notificações.",
+      "🔎 A busca e os filtros continuam instantâneos: a paginação recai sobre o resultado já filtrado e volta para a primeira página sempre que você muda o filtro.",
+    ],
+  },
+  {
+    version: "0.6.4",
+    date: "2026-05-27",
+    highlights: [
+      "✉️ Agora dá para trocar o e-mail de qualquer usuário em Ajustes › Time (corrige o admin@admin.com padrão e cadastra os e-mails reais dos noivos) e o seu próprio e-mail em Perfil, confirmando a senha atual.",
+      "📋 Nova aba Ajustes › Notificações: lista os últimos 50 envios de e-mail/WhatsApp com status (enviado/falhou) e a mensagem de erro — fim do mistério de 'o e-mail não chega'.",
+      "💌 Quando um convidado responde o RSVP (individual ou em grupo), os noivos/gestores recebem um aviso por e-mail/WhatsApp (deduplicado por dia).",
+    ],
+  },
+  {
+    version: "0.6.3",
+    date: "2026-05-27",
+    highlights: [
+      "🪑 'Mapa de assentos' voltou a ter porta de entrada na interface: item no menu lateral (grupo Casamento, abaixo de 'Dia D') e card de atalho no topo de 'Dia do casamento'. Antes só dava para chegar digitando a URL.",
+      "↕️ As mesas agora podem ser reordenadas: arraste cada mesa pela alça (ícone de cabo no cabeçalho) para mudar a ordem no grid — a nova ordem fica salva. Os convidados continuam sendo arrastados normalmente para dentro das mesas.",
+    ],
+  },
+  {
+    version: "0.6.2",
+    date: "2026-05-26",
+    highlights: [
+      "📥 Importação de convidados por arquivo em /dashboard/guests/import. Suporta planilhas do Wedy (.xlsx) e o CSV exportado pelo próprio sistema (.csv) — fecha o ciclo de export/reimport. Preview de novos vs. duplicados, lista de grupos detectados, PINs preservados e modo configurável (pular existentes / atualizar / criar tudo).",
+      "🏷️ Novo model GuestTag (M:N). Tags vindas do import viram tags reais; 'Padrinhos', 'Madrinha' etc. ativam também a flag isPadrinho.",
+      "🔢 GuestGroup agora tem rsvpPin (4-8 chars, informativo, vindo do convite original) e Guest ganhou age (idade exata para crianças).",
+      "📞 No import do Wedy o telefone/email do responsável vai para GuestGroup.contactPhone/contactEmail (não para o Guest individual), refletindo que no Wedy o contato é por convite/família.",
+    ],
+  },
+  {
+    version: "0.6.1",
+    date: "2026-05-26",
+    highlights: [
+      "👨‍👩‍👧 Importação CSV de convidados agora cria automaticamente os grupos/famílias presentes na coluna 'Grupo' (e reaproveita os existentes pelo nome). Convidados da mesma família já saem com `groupId` preenchido — basta abrir o grupo depois para configurar contato e copiar o link de RSVP coletivo.",
+      "↩️ Tela de grupos (`/dashboard/guests/groups`) ganhou link 'Voltar para convidados' no topo, eliminando a necessidade de usar o botão do navegador.",
+    ],
+  },
+  {
+    version: "0.6.0",
+    date: "2026-05-23",
+    highlights: [
+      "💾 Backup JSON v3 com envelope `{ checksum, payload }` (SHA-256), metadata do host/app/exporter e nome de arquivo padronizado (`wedding-finance-backup-YYYY-MM-DD.json`). ADMIN exporta também `users` (com bcrypt + 2FA secrets), `notificationLogs` e `auditLogs`. GROOM/BRIDE continuam exportando só os 22 modelos de negócio.",
+      "🛡️ Endpoint `POST /api/backup/validate` faz dry-run do arquivo (Zod schema + checksum) sem tocar no banco. Retorna versão, contagens, warnings e issues.",
+      "♻️ Endpoint `POST /api/backup/restore` apaga e recria todos os dados em uma única transação Prisma (timeout 120s). Exige role ADMIN, re-autenticação com senha bcrypt, confirmação explícita `WIPE_AND_RESTORE` e respeita rate-limit (3/h por usuário+IP). Preserva o admin logado quando ele não está no backup. Audit `BACKUP_RESTORE` ao final.",
+      "🖥️ Tela Ajustes → Backup ganhou seção 'Restaurar backup' com seletor de arquivo, botão 'Validar arquivo' (mostra versão, contagens, host, checksum) e fluxo de restauração com senha + checkbox de irreversibilidade + confirm dialog.",
+    ],
+  },
+  {
     version: "0.5.0",
     date: "2026-05-17",
     highlights: [

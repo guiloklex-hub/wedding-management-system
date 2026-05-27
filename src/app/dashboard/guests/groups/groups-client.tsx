@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Link2, Trash2, Edit3, Users, CheckCircle2, X } from "lucide-react";
+import { ArrowLeft, Plus, Link2, Trash2, Edit3, Users, CheckCircle2, X } from "lucide-react";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
@@ -125,6 +126,12 @@ export default function GroupsClient({
 
   return (
     <div className="space-y-4 p-4 md:p-6">
+      <Link
+        href="/dashboard/guests"
+        className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-300"
+      >
+        <ArrowLeft className="h-4 w-4" /> Voltar para convidados
+      </Link>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-zinc-100 md:text-2xl">Grupos / Famílias</h1>

@@ -18,6 +18,7 @@ import {
 } from "@/app/actions/trousseauActions";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Pagination, usePagination } from "@/components/pagination";
 import { formatCurrency } from "@/lib/format";
 
 type Item = {
@@ -69,6 +70,8 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
     if (filter === "ALL") return items;
     return items.filter((i) => i.status === filter);
   }, [items, filter]);
+
+  const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(filtered, 20);
 
   const totals = useMemo(() => {
     const estTotal = items.reduce((s, i) => s + (i.estimatedPrice ?? 0), 0);
@@ -137,7 +140,10 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <select
           value={filter}
-          onChange={(e) => setFilter(e.target.value as typeof filter)}
+          onChange={(e) => {
+            setFilter(e.target.value as typeof filter);
+            setPage(1);
+          }}
           className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
         >
           <option value="ALL">Todos</option>
@@ -160,7 +166,7 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {filtered.map((it) => {
+          {pageItems.map((it) => {
             const prio = PRIORITY_LABEL[it.priority] ?? PRIORITY_LABEL.NICE_TO_HAVE;
             return (
               <article
@@ -255,6 +261,15 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
           })}
         </div>
       )}
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        from={from}
+        to={to}
+        onPageChange={setPage}
+      />
 
       {(open || editing) && (
         <ItemModal

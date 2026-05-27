@@ -17,6 +17,7 @@ import {
   ShoppingBasket,
   Sparkles,
   Target,
+  Upload,
   Users,
   Wallet,
   Wrench,
@@ -236,6 +237,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
         body: "Uma senha provisória é gerada e enviada por email (e WhatsApp, se configurado) ao novo usuário.",
       },
       { title: "Primeiro login do convidado", body: "Ele(a) será forçado(a) a trocar a senha imediatamente." },
+      {
+        title: "Trocar o e-mail de um usuário",
+        body: "Em Ajustes › Time, edite o membro e altere o campo 'E-mail'. É assim que você corrige o admin@admin.com padrão e cadastra os e-mails reais dos noivos. Cada um também pode trocar o próprio e-mail em Perfil (pedindo a senha atual).",
+      },
+    ],
+    tips: [
+      "O e-mail é o login. Ao trocá-lo, use o novo no próximo login — a sessão aberta continua valendo.",
+      "Sem um e-mail real cadastrado, lembretes e avisos de RSVP falham no envio (veja Ajustes › Notificações).",
     ],
     warnings: ["O cadastro público está desativado — só admins criam contas."],
   },
@@ -498,6 +507,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
         body: "Defina SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM. Reinicie o servidor após mudar .env.",
       },
       { title: "Teste", body: "Crie uma tarefa com deadline em alguns minutos e rode o cron manualmente para validar." },
+      {
+        title: "Diagnostique falhas em Ajustes › Notificações",
+        body: "Os últimos 50 envios aparecem ali com status SENT/FAILED e a mensagem de erro do SMTP. Erros repetidos para admin@admin.com indicam que o e-mail placeholder do seed ainda não foi trocado (faça isso em Ajustes › Time ou no Perfil).",
+      },
     ],
     warnings: [
       "Gmail só aceita **App Password** (16 caracteres). Senha normal **não** funciona desde 2022.",
@@ -620,13 +633,36 @@ export const HELP_ARTICLES: HelpArticle[] = [
     id: "backup-download",
     title: "Baixar backup dos dados",
     category: "backup-calendar",
-    keywords: ["backup", "json", "exportar", "download", "lgpd"],
+    keywords: ["backup", "json", "exportar", "download", "lgpd", "checksum"],
     icon: Database,
-    summary: "Exporte todos os seus dados em um único arquivo JSON.",
+    summary: "Exporte todos os dados (v3, com checksum SHA-256) em um único JSON.",
     steps: [
-      { title: "Logue como ADMIN", body: "/dashboard/settings → aba 'Backup'." },
-      { title: "Clique em 'Baixar JSON'", body: "Arquivo nomeado `wedding-finance-backup-YYYY-MM-DD.json`." },
-      { title: "Guarde em local seguro", body: "Recomendamos fazer backup semanalmente." },
+      { title: "Logue como ADMIN, GROOM ou BRIDE", body: "/dashboard/settings → aba 'Backup'." },
+      { title: "Clique em 'Exportar backup JSON'", body: "Arquivo nomeado `wedding-finance-backup-YYYY-MM-DD.json` com envelope `{ checksum, payload }`." },
+      { title: "Guarde em local seguro", body: "Inclui hashes bcrypt das senhas e secrets de 2FA — trate como secret. Faça backup semanal mais antes/depois do casamento." },
+    ],
+    tips: [
+      "O checksum SHA-256 é validado automaticamente antes de qualquer restauração.",
+      "v3 inclui Users, NotificationLog e AuditLog quando exportado por ADMIN. Roles GROOM/BRIDE exportam só dados de negócio.",
+    ],
+  },
+  {
+    id: "backup-restore",
+    title: "Restaurar backup",
+    category: "backup-calendar",
+    keywords: ["restore", "restaurar", "backup", "import", "wipe"],
+    icon: Database,
+    summary: "Apaga e recria todos os dados a partir de um arquivo JSON exportado pelo sistema.",
+    steps: [
+      { title: "Faça backup do estado atual primeiro", body: "Antes de restaurar, exporte um backup novo. O restore é IRREVERSÍVEL." },
+      { title: "Logue como ADMIN", body: "Restore é restrito a admins. Outras roles só conseguem validar o arquivo." },
+      { title: "Ajustes → Backup → Restaurar backup", body: "Selecione o arquivo. Clique em 'Validar arquivo' primeiro para conferir checksum, versão e contagens." },
+      { title: "Confirme com sua senha", body: "Digite a senha do admin logado, marque o aviso de irreversibilidade e clique 'Restaurar agora'." },
+    ],
+    warnings: [
+      "Apaga e recria todos os dados em uma transação Prisma única. Em caso de erro, nenhum registro é commitado.",
+      "Rate-limit: 3 tentativas por hora por usuário+IP.",
+      "Se o backup contém seu próprio usuário, sua sessão pode expirar logo após o restore — relogue com as credenciais do backup.",
     ],
   },
   {
@@ -710,18 +746,21 @@ export const HELP_ARTICLES: HelpArticle[] = [
     id: "seating-chart",
     title: "Mapa visual de assentos",
     category: "wedding-day",
-    keywords: ["mesa", "assento", "lugar", "seating", "salão", "layout", "drag"],
+    keywords: ["mesa", "assento", "lugar", "seating", "salão", "layout", "drag", "reordenar"],
     icon: Users,
     summary:
-      "Arraste convidados confirmados para mesas com capacidade definida. Use no /dashboard/wedding-day/seating.",
+      "Arraste convidados confirmados para mesas com capacidade definida. Abra pelo menu 'Mapa de assentos' (grupo Casamento) ou pelo card no topo de 'Dia do casamento'.",
     steps: [
+      { title: "Abra o mapa", body: "Menu lateral → 'Mapa de assentos' (logo abaixo de 'Dia D'), ou card de atalho no topo da tela 'Dia do casamento'." },
       { title: "Crie mesas", body: "Botão 'Nova mesa' — defina nome, capacidade e formato (redonda/retangular/quadrada)." },
       { title: "Arraste convidados", body: "O pool lateral lista só quem está CONFIRMADO. Solte um chip em cima da mesa; a capacidade considera +1 confirmados." },
+      { title: "Reordene as mesas", body: "Arraste cada mesa pela alça (ícone de cabo no cabeçalho) para mudar a ordem no grid. A nova ordem fica salva." },
       { title: "Desaloque ou reorganize", body: "Solte de volta no pool para liberar o assento, ou em outra mesa para realocar." },
     ],
     tips: [
       "Capacidade leva em conta acompanhantes. Convidado com +2 ocupa 3 assentos.",
       "Mesa cheia recusa o drop e mostra toast.",
+      "Só a alça move a mesa — assim os chips de convidado dentro do card continuam clicáveis e arrastáveis.",
     ],
   },
   {
@@ -740,6 +779,44 @@ export const HELP_ARTICLES: HelpArticle[] = [
     tips: [
       "RSVP individual continua funcionando — o link de grupo é alternativa, não substituto.",
       "Cada convidado pode estar em apenas um grupo.",
+      "Importou um CSV com a coluna 'Grupo' preenchida? Os grupos são criados automaticamente (e os existentes reaproveitados pelo nome) — basta abrir o grupo depois para preencher contato e copiar o link.",
+    ],
+  },
+  {
+    id: "guest-import-wedy",
+    title: "Importar lista do Wedy (.xlsx) ou do próprio sistema (.csv)",
+    category: "guests",
+    keywords: ["importar", "wedy", "xlsx", "csv", "planilha", "migrar", "excel"],
+    icon: Upload,
+    summary:
+      "Trazer convidados de outros sistemas (Wedy) ou reimportar um CSV exportado pelo próprio sistema.",
+    steps: [
+      {
+        title: "Acesse Convidados → Importar lista",
+        body: "Vai abrir /dashboard/guests/import. Selecione o arquivo .xlsx (Wedy) ou .csv (exportado pelo próprio sistema). Até 5 MB, 2000 linhas.",
+      },
+      {
+        title: "Confira o preview",
+        body: "O sistema mostra X novos, Y já existem (mesmo grupo) e Z divergem. Grupos, tags e PINs detectados aparecem listados.",
+      },
+      {
+        title: "Escolha como tratar duplicatas",
+        body: "Pular existentes (padrão, mais seguro), atualizar os existentes com os dados do arquivo, ou criar tudo (útil para homônimos em famílias diferentes).",
+      },
+      {
+        title: "Confirme",
+        body: "Tudo é gravado em uma transação. Tags e grupos novos são criados automaticamente. Tags 'Padrinhos', 'Madrinha', etc. marcam também a flag de padrinho.",
+      },
+    ],
+    tips: [
+      "Você ainda pode importar via texto colado: dentro da página de import há um link 'Prefere colar texto?'.",
+      "O Wedy traz tags com os nomes dos noivos — elas viram tags normais, mas o lado (NOIVO/NOIVA) precisa ser ajustado manualmente em cada convidado.",
+      "Importou do Wedy? O telefone/email vai automaticamente para o contato do grupo (cabeça da família), não para cada convidado.",
+      "Reimportar o CSV exportado pelo botão 'CSV' funciona como um backup manual — fecha o ciclo export/import.",
+    ],
+    warnings: [
+      "Status fora do mapeamento conhecido (Sem resposta/Confirmado/Recusado/Talvez) é tratado como 'Convidado'.",
+      "O PIN do convite (4 dígitos do Wedy) é salvo só como referência. O link público continua usando o token do sistema.",
     ],
   },
   {
@@ -905,6 +982,11 @@ export const HELP_FAQ: FaqItem[] = [
     question: "Posso usar em produção sem domínio próprio?",
     answer:
       "Tecnicamente sim (acessando por IP), mas o Auth.js v5 exige domínio e HTTPS para cookies seguros. Recomendamos um domínio + Cloudflare Tunnel ou Let's Encrypt.",
+  },
+  {
+    question: "Minhas listas estão grandes — dá para navegar por páginas?",
+    answer:
+      "Sim. Listas como Convidados, Tarefas, Pagamentos, Presentes, Enxoval, Fornecedores, Receitas e Caixa mostram 20 itens por página, com controle de páginas no rodapé (Anterior/Próxima + números) e o indicador 'Mostrando X–Y de Z'. A busca e os filtros continuam valendo: a paginação recai sobre o resultado filtrado e volta para a primeira página quando você muda o filtro.",
   },
   {
     question: "Os convidados precisam criar conta para responder o RSVP?",

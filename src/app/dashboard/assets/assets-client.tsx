@@ -5,6 +5,7 @@ import { Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { createAsset, deleteAsset, updateAsset } from "@/app/actions/assetActions";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Pagination, usePagination } from "@/components/pagination";
 import { formatCurrency, formatDateBR, toIsoDate } from "@/lib/format";
 import type { Asset } from "@/types";
 
@@ -63,6 +64,11 @@ export default function AssetsClient({ assets, goals }: Props) {
     return assets.filter((a) => a.title.toLowerCase().includes(term));
   }, [assets, search]);
 
+  const { pageItems, page, totalPages, total: pageTotal, from, to, setPage } = usePagination(
+    filtered,
+    20,
+  );
+
   const total = useMemo(() => assets.reduce((s, a) => s + a.amount, 0), [assets]);
 
   function handleDelete() {
@@ -88,7 +94,10 @@ export default function AssetsClient({ assets, goals }: Props) {
             <input
               type="search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               placeholder="Buscar aporte..."
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-emerald-500/50"
             />
@@ -125,7 +134,7 @@ export default function AssetsClient({ assets, goals }: Props) {
                   </td>
                 </tr>
               ) : (
-                filtered.map((asset) => (
+                pageItems.map((asset) => (
                   <tr key={asset.id} className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30">
                     <td className="px-6 py-4 text-zinc-200">{formatDateBR(asset.date)}</td>
                     <td className="px-6 py-4">
@@ -163,6 +172,15 @@ export default function AssetsClient({ assets, goals }: Props) {
           </table>
         </div>
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={pageTotal}
+        from={from}
+        to={to}
+        onPageChange={setPage}
+      />
 
       {(isCreateOpen || editing) && (
         <AssetFormModal

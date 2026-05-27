@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/giftActions";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Pagination, usePagination } from "@/components/pagination";
 import { formatCurrency, formatDateBR, toIsoDate } from "@/lib/format";
 
 type GiftRow = {
@@ -45,6 +46,8 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
     if (filter === "PENDING_THANK") return gifts.filter((g) => g.status !== "THANKED");
     return gifts;
   }, [gifts, filter]);
+
+  const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(filtered, 20);
 
   const totals = useMemo(() => {
     const cash = gifts.filter((g) => g.type === "CASH").reduce((s, g) => s + (g.amount ?? 0), 0);
@@ -111,7 +114,10 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
       <div className="flex items-center justify-between">
         <select
           value={filter}
-          onChange={(e) => setFilter(e.target.value as typeof filter)}
+          onChange={(e) => {
+            setFilter(e.target.value as typeof filter);
+            setPage(1);
+          }}
           className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
         >
           <option value="ALL">Todos</option>
@@ -132,7 +138,7 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
         </div>
       ) : (
         <ul className="space-y-2">
-          {filtered.map((g) => (
+          {pageItems.map((g) => (
             <li key={g.id} className="flex flex-col gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 sm:flex-row sm:items-center">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-800">
                 <GiftIcon className={`h-4 w-4 ${g.type === "CASH" ? "text-emerald-400" : "text-sky-400"}`} />
@@ -220,6 +226,15 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
           ))}
         </ul>
       )}
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        from={from}
+        to={to}
+        onPageChange={setPage}
+      />
 
       {(open || editing) && (
         <GiftFormModal

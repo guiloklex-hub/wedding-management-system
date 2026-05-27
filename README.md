@@ -35,12 +35,13 @@ confirmou a presença.
 - 🌴 **Lua de mel** (destino, atividades, hospedagens, vôos)
 - 🛏️ **Enxoval** por cômodo
 - 💍 **Painel do Dia D** (cronograma, plano B chuva, contatos críticos, check-in)
+- 🪑 **Mapa de assentos** — arraste convidados confirmados para as mesas e reordene as mesas pela alça; capacidade considera +1s
 - 📊 **Insights** financeiros (health score, heatmap, detector de creep)
-- 📨 **Notificações por email + WhatsApp** (Baileys) — no idioma do destinatário
+- 📨 **Notificações por email + WhatsApp** (Baileys) — no idioma do destinatário, com aviso aos noivos quando um convidado responde o RSVP e painel de diagnóstico de envios (Ajustes › Notificações)
 - 🌐 **Multi-idioma** (pt-BR, inglês, espanhol) — escolhido por usuário e respeitado em emails/WhatsApp/RSVP
 - 🔐 **2FA TOTP**, reset por email/WhatsApp, audit log
 - 📅 **iCalendar (.ics)** para sincronizar com Google/Apple Calendar
-- 💾 **Backup JSON** completo de todos os dados
+- 💾 **Backup e restore JSON** com checksum SHA-256, validação Zod e restauração transacional
 - 📱 **PWA** — instalável no celular, funciona offline básico
 - ❓ **Central de Ajuda interna** com busca, filtros, passo-a-passo e FAQ
 

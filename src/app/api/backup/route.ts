@@ -1,8 +1,11 @@
+import { hostname } from "node:os";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { canViewSensitiveFinance } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
+import { BACKUP_VERSION, computeChecksum, type BackupPayload } from "@/lib/backup";
+import appPkg from "@/../package.json";
 
 export const dynamic = "force-dynamic";
 
@@ -11,13 +14,16 @@ export async function GET() {
   if (!session?.user) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  if (!canViewSensitiveFinance((session.user as { role?: string }).role)) {
+  const userRole = (session.user as { role?: string }).role;
+  if (!canViewSensitiveFinance(userRole)) {
     return NextResponse.json({ error: "Sem permissão para esta área" }, { status: 403 });
   }
+  const isAdmin = userRole === "ADMIN";
 
   const [
     eventSettings,
     securitySettings,
+    users,
     vendors,
     vendorContacts,
     vendorNotes,
@@ -38,9 +44,14 @@ export async function GET() {
     seatingTables,
     gifts,
     tasks,
+    notificationLogs,
+    auditLogs,
   ] = await Promise.all([
     prisma.eventSettings.findUnique({ where: { id: "singleton" } }),
     prisma.securitySettings.findUnique({ where: { id: "singleton" } }),
+    isAdmin
+      ? prisma.user.findMany({ orderBy: { createdAt: "asc" } })
+      : Promise.resolve([]),
     prisma.vendor.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.vendorContact.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.vendorNote.findMany({ orderBy: { createdAt: "asc" } }),
@@ -61,13 +72,30 @@ export async function GET() {
     prisma.seatingTable.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.gift.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.task.findMany({ orderBy: { createdAt: "asc" } }),
+    isAdmin
+      ? prisma.notificationLog.findMany({ orderBy: { createdAt: "asc" } })
+      : Promise.resolve([]),
+    isAdmin
+      ? prisma.auditLog.findMany({ orderBy: { createdAt: "asc" } })
+      : Promise.resolve([]),
   ]);
 
-  const payload = {
+  const sessionUser = session.user as { id?: string; email?: string | null };
+
+  const payload: BackupPayload = {
+    version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
-    version: 2,
+    meta: {
+      appVersion: appPkg.version,
+      hostname: hostname(),
+      nodeVersion: process.version,
+      exportedBy: sessionUser.id
+        ? { id: sessionUser.id, email: sessionUser.email ?? null }
+        : undefined,
+    },
     eventSettings,
     securitySettings,
+    users: isAdmin ? users : undefined,
     vendors,
     vendorContacts,
     vendorNotes,
@@ -88,46 +116,66 @@ export async function GET() {
     seatingTables,
     gifts,
     tasks,
+    notificationLogs: isAdmin ? notificationLogs : undefined,
+    auditLogs: isAdmin ? auditLogs : undefined,
   };
+
+  const checksum = {
+    algorithm: "sha256" as const,
+    value: computeChecksum(payload),
+  };
+
+  const counts: Record<string, number> = {
+    vendors: vendors.length,
+    vendorContacts: vendorContacts.length,
+    vendorNotes: vendorNotes.length,
+    contracts: contracts.length,
+    attachments: attachments.length,
+    venues: venues.length,
+    venueChecklistItems: venueChecklistItems.length,
+    budgetItems: budgetItems.length,
+    payments: payments.length,
+    incomes: incomes.length,
+    assets: assets.length,
+    savingsGoals: savingsGoals.length,
+    honeymoonItems: honeymoonItems.length,
+    trousseauItems: trousseauItems.length,
+    guestGroups: guestGroups.length,
+    guests: guests.length,
+    seatingTables: seatingTables.length,
+    gifts: gifts.length,
+    tasks: tasks.length,
+  };
+  if (isAdmin) {
+    counts.users = users.length;
+    counts.notificationLogs = notificationLogs.length;
+    counts.auditLogs = auditLogs.length;
+  }
 
   await audit(
     "EventSettings",
     "singleton",
     "BACKUP_EXPORT",
     {
-      tables: Object.keys(payload).filter(
-        (k) => k !== "exportedAt" && k !== "version",
-      ),
-      counts: {
-        vendors: vendors.length,
-        contracts: contracts.length,
-        attachments: attachments.length,
-        venues: venues.length,
-        budgetItems: budgetItems.length,
-        payments: payments.length,
-        incomes: incomes.length,
-        assets: assets.length,
-        savingsGoals: savingsGoals.length,
-        honeymoonItems: honeymoonItems.length,
-        trousseauItems: trousseauItems.length,
-        guestGroups: guestGroups.length,
-        guests: guests.length,
-        seatingTables: seatingTables.length,
-        gifts: gifts.length,
-        tasks: tasks.length,
-      },
+      version: BACKUP_VERSION,
+      checksum: checksum.value,
+      counts,
+      includesSensitive: isAdmin,
     },
-    (session.user as { id?: string }).id,
+    sessionUser.id,
   );
 
-  const filename = `wedding-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const filename = `wedding-finance-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const body = JSON.stringify({ checksum, payload }, null, 2);
 
-  return new NextResponse(JSON.stringify(payload, null, 2), {
+  return new NextResponse(body, {
     status: 200,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "no-store",
+      "X-Backup-Version": String(BACKUP_VERSION),
+      "X-Backup-Checksum": checksum.value,
     },
   });
 }

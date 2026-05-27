@@ -10,6 +10,7 @@ import {
 } from "@/app/actions/incomeActions";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Pagination, usePagination } from "@/components/pagination";
 import { formatCurrency, formatDateBR, toIsoDate } from "@/lib/format";
 
 type IncomeRow = {
@@ -54,6 +55,8 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
     }
     return { expected, received, total: expected + received };
   }, [incomes]);
+
+  const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(incomes, 20);
 
   function handleCreate(formData: FormData) {
     setBusy(true);
@@ -144,7 +147,7 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
                   </td>
                 </tr>
               ) : (
-                incomes.map((row) => (
+                pageItems.map((row) => (
                   <tr key={row.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
                     <td className="px-6 py-4">
                       <div className="text-zinc-200">{row.title}</div>
@@ -208,6 +211,15 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
           </table>
         </div>
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        from={from}
+        to={to}
+        onPageChange={setPage}
+      />
 
       {(open || editing) && (
         <IncomeFormModal

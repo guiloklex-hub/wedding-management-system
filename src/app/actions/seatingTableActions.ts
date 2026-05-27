@@ -109,6 +109,35 @@ export async function deleteSeatingTable(tableId: string): Promise<ActionResult>
   }
 }
 
+const ReorderSchema = z.array(z.string().min(1).max(64)).min(1).max(200);
+
+export async function reorderSeatingTables(orderedIds: string[]): Promise<ActionResult> {
+  const denied = await denyIfNoEdit();
+  if (denied) return denied;
+
+  const parsed = ReorderSchema.safeParse(orderedIds);
+  if (!parsed.success) {
+    return { success: false, error: "Ordem inválida" };
+  }
+  const ids = parsed.data;
+  try {
+    await prisma.$transaction(
+      ids.map((id, i) =>
+        prisma.seatingTable.updateMany({
+          where: { id, deletedAt: null },
+          data: { sortOrder: i },
+        }),
+      ),
+    );
+    await audit("SeatingTable", ids[0], "REORDER", { count: ids.length });
+    revalidatePath("/dashboard/wedding-day/seating");
+    return { success: true };
+  } catch (err) {
+    console.error("[reorderSeatingTables]", err);
+    return { success: false, error: "Erro ao reordenar mesas" };
+  }
+}
+
 export async function updateTablePosition(
   tableId: string,
   x: number,

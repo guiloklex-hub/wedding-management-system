@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import {
   DndContext,
+  type CollisionDetection,
   type DragEndEvent,
   type DragStartEvent,
   DragOverlay,
@@ -12,8 +13,10 @@ import {
   useSensor,
   useSensors,
   pointerWithin,
+  closestCenter,
 } from "@dnd-kit/core";
-import { Plus, Users, Info } from "lucide-react";
+import { SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
+import { GripVertical, Plus, Users, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -21,6 +24,7 @@ import {
   assignGuestToTable,
   createSeatingTable,
   deleteSeatingTable,
+  reorderSeatingTables,
   updateSeatingTable,
 } from "@/app/actions/seatingTableActions";
 import { GuestChip, type GuestChipData } from "./_components/GuestChip";
@@ -33,6 +37,7 @@ type Table = {
   shape: string;
   x: number;
   y: number;
+  sortOrder: number;
   notes: string | null;
 };
 
@@ -46,6 +51,27 @@ function computeSeatsUsed(guests: GuestChipData[], tableId: string): number {
     .filter((g) => g.tableId === tableId)
     .reduce((sum, g) => sum + 1 + (g.plusOnesConfirmed ?? 0), 0);
 }
+
+// Guests droppam em mesas/pool; mesas reordenam entre si. Filtramos os candidatos
+// pelo tipo do item ativo para o `over` nunca ficar ambíguo (cada card é, ao mesmo
+// tempo, um item sortable e um droppable de convidado).
+const seatingCollision: CollisionDetection = (args) => {
+  const activeType = args.active.data.current?.type;
+  if (activeType === "table-sort") {
+    return closestCenter({
+      ...args,
+      droppableContainers: args.droppableContainers.filter(
+        (c) => c.data.current?.type === "table-sort",
+      ),
+    });
+  }
+  return pointerWithin({
+    ...args,
+    droppableContainers: args.droppableContainers.filter(
+      (c) => c.data.current?.type === "table" || c.data.current?.type === "pool",
+    ),
+  });
+};
 
 export default function SeatingClient({ initialTables, initialGuests }: Props) {
   const router = useRouter();
@@ -64,6 +90,7 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
     setGuests(initialGuests);
   }
   const [activeGuest, setActiveGuest] = useState<GuestChipData | null>(null);
+  const [activeTable, setActiveTable] = useState<Table | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<Table | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Table | null>(null);
@@ -87,11 +114,42 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
       const guestId = idStr.slice("guest:".length);
       const guest = guests.find((g) => g.id === guestId);
       if (guest) setActiveGuest(guest);
+      return;
     }
+    const table = tables.find((t) => t.id === idStr);
+    if (table) setActiveTable(table);
+  }
+
+  function handleReorder(e: DragEndEvent) {
+    const activeId = String(e.active.id);
+    const overId = e.over ? String(e.over.id) : null;
+    if (!overId || overId === activeId) return;
+    const oldIndex = tables.findIndex((t) => t.id === activeId);
+    const newIndex = tables.findIndex((t) => t.id === overId);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const previous = tables;
+    const reordered = arrayMove(tables, oldIndex, newIndex);
+    setTables(reordered);
+
+    startTransition(async () => {
+      const res = await reorderSeatingTables(reordered.map((t) => t.id));
+      if (!res.success) {
+        toast.error("Falha", res.error);
+        setTables(previous);
+      } else {
+        router.refresh();
+      }
+    });
   }
 
   function handleDragEnd(e: DragEndEvent) {
     setActiveGuest(null);
+    setActiveTable(null);
+    if (e.active.data.current?.type === "table-sort") {
+      handleReorder(e);
+      return;
+    }
     const activeId = String(e.active.id);
     if (!activeId.startsWith("guest:")) return;
     const guestId = activeId.slice("guest:".length);
@@ -183,7 +241,7 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={pointerWithin}
+      collisionDetection={seatingCollision}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -219,34 +277,36 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
               <Info className="h-3.5 w-3.5" />
               {tables.length === 0
                 ? "Crie a primeira mesa para começar."
-                : "Solte um convidado em cima de uma mesa para alocar."}
+                : "Solte um convidado numa mesa para alocar; arraste pela alça para reordenar."}
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {tables.map((t) => {
-                const tableGuests = guests.filter((g) => g.tableId === t.id);
-                const seatsUsed = computeSeatsUsed(guests, t.id);
-                return (
-                  <TableCard
-                    key={t.id}
-                    id={t.id}
-                    name={t.name}
-                    capacity={t.capacity}
-                    shape={t.shape as "ROUND" | "RECT" | "SQUARE"}
-                    seatsUsed={seatsUsed}
-                    onEdit={() => setEditing(t)}
-                    onDelete={() => setConfirmDelete(t)}
-                  >
-                    {tableGuests.length === 0 ? (
-                      <p className="rounded-lg border border-dashed border-zinc-700 px-2 py-3 text-center text-[11px] text-zinc-500">
-                        Solte convidados aqui
-                      </p>
-                    ) : (
-                      tableGuests.map((g) => <GuestChip key={g.id} guest={g} compact />)
-                    )}
-                  </TableCard>
-                );
-              })}
-            </div>
+            <SortableContext items={tables.map((t) => t.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {tables.map((t) => {
+                  const tableGuests = guests.filter((g) => g.tableId === t.id);
+                  const seatsUsed = computeSeatsUsed(guests, t.id);
+                  return (
+                    <TableCard
+                      key={t.id}
+                      id={t.id}
+                      name={t.name}
+                      capacity={t.capacity}
+                      shape={t.shape as "ROUND" | "RECT" | "SQUARE"}
+                      seatsUsed={seatsUsed}
+                      onEdit={() => setEditing(t)}
+                      onDelete={() => setConfirmDelete(t)}
+                    >
+                      {tableGuests.length === 0 ? (
+                        <p className="rounded-lg border border-dashed border-zinc-700 px-2 py-3 text-center text-[11px] text-zinc-500">
+                          Solte convidados aqui
+                        </p>
+                      ) : (
+                        tableGuests.map((g) => <GuestChip key={g.id} guest={g} compact />)
+                      )}
+                    </TableCard>
+                  );
+                })}
+              </div>
+            </SortableContext>
           </section>
         </div>
 
@@ -290,6 +350,14 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
           <div className="rounded-lg border border-rose-500 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-100 shadow-lg">
             {activeGuest.name}
             {activeGuest.plusOnesConfirmed > 0 ? ` +${activeGuest.plusOnesConfirmed}` : ""}
+          </div>
+        ) : activeTable ? (
+          <div className="flex items-center gap-2 rounded-2xl border border-rose-500 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 shadow-2xl">
+            <GripVertical className="h-4 w-4 text-zinc-500" />
+            <span className="font-medium">{activeTable.name}</span>
+            <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
+              {computeSeatsUsed(guests, activeTable.id)}/{activeTable.capacity}
+            </span>
           </div>
         ) : null}
       </DragOverlay>

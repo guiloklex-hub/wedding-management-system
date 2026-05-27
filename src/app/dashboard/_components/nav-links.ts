@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { canViewSensitiveFinance } from "@/lib/permissions";
 import {
+  Armchair,
   BarChart3,
   Building2,
   CalendarHeart,
@@ -42,7 +43,8 @@ export const LINKS: NavLink[] = [
   { href: "/dashboard/goals", labelKey: "nav.goals", icon: Target, finance: true },
   { href: "/dashboard/guests", labelKey: "nav.guests", icon: UserPlus },
   { href: "/dashboard/gifts", labelKey: "nav.gifts", icon: Gift },
-  { href: "/dashboard/wedding-day", labelKey: "nav.weddingDay", icon: CalendarHeart },
+  { href: "/dashboard/wedding-day", labelKey: "nav.weddingDay", icon: CalendarHeart, exact: true },
+  { href: "/dashboard/wedding-day/seating", labelKey: "nav.seating", icon: Armchair },
   { href: "/dashboard/honeymoon", labelKey: "nav.honeymoon", icon: Plane },
   { href: "/dashboard/trousseau", labelKey: "nav.trousseau", icon: ShoppingBasket },
   { href: "/dashboard/settings", labelKey: "nav.settings", icon: SettingsIcon },
@@ -80,7 +82,12 @@ export const NAV_CATEGORIES: NavCategory[] = [
   {
     id: "wedding",
     labelKey: "nav.cat.wedding",
-    hrefs: ["/dashboard/wedding-day", "/dashboard/honeymoon", "/dashboard/trousseau"],
+    hrefs: [
+      "/dashboard/wedding-day",
+      "/dashboard/wedding-day/seating",
+      "/dashboard/honeymoon",
+      "/dashboard/trousseau",
+    ],
   },
   {
     id: "people",

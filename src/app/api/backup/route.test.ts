@@ -7,6 +7,7 @@ vi.mock("@/auth", () => ({
 }));
 
 import { GET } from "./route";
+import { BACKUP_VERSION, computeChecksum } from "@/lib/backup";
 
 beforeEach(() => {
   authMock.mockReset();
@@ -16,6 +17,7 @@ beforeEach(() => {
 function mockEmptyTables() {
   prismaMock.eventSettings.findUnique.mockResolvedValue({ id: "singleton" } as never);
   prismaMock.securitySettings.findUnique.mockResolvedValue({ id: "singleton" } as never);
+  prismaMock.user.findMany.mockResolvedValue([] as never);
   prismaMock.vendor.findMany.mockResolvedValue([] as never);
   prismaMock.vendorContact.findMany.mockResolvedValue([] as never);
   prismaMock.vendorNote.findMany.mockResolvedValue([] as never);
@@ -36,6 +38,8 @@ function mockEmptyTables() {
   prismaMock.seatingTable.findMany.mockResolvedValue([] as never);
   prismaMock.gift.findMany.mockResolvedValue([] as never);
   prismaMock.task.findMany.mockResolvedValue([] as never);
+  prismaMock.notificationLog.findMany.mockResolvedValue([] as never);
+  prismaMock.auditLog.findMany.mockResolvedValue([] as never);
 }
 
 describe("GET /api/backup", () => {
@@ -45,7 +49,13 @@ describe("GET /api/backup", () => {
     expect(res.status).toBe(401);
   });
 
-  it("retorna 200 JSON com headers de download", async () => {
+  it("retorna 403 para role sem permissão financeira sensível", async () => {
+    authMock.mockResolvedValue({ user: { id: "u1", role: "VIEWER" } });
+    const res = await GET();
+    expect(res.status).toBe(403);
+  });
+
+  it("retorna 200 com envelope { checksum, payload } e headers", async () => {
     authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
     mockEmptyTables();
 
@@ -53,54 +63,51 @@ describe("GET /api/backup", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toMatch(/application\/json/);
     expect(res.headers.get("Content-Disposition")).toMatch(
-      /attachment; filename="wedding-backup-\d{4}-\d{2}-\d{2}\.json"/,
+      /attachment; filename="wedding-finance-backup-\d{4}-\d{2}-\d{2}\.json"/,
     );
     expect(res.headers.get("Cache-Control")).toBe("no-store");
+    expect(res.headers.get("X-Backup-Version")).toBe(String(BACKUP_VERSION));
+    expect(res.headers.get("X-Backup-Checksum")).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it("payload contém exportedAt, version e todas as coleções esperadas", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
+  it("payload tem version 3, meta, checksum válido e coleções esperadas", async () => {
+    authMock.mockResolvedValue({ user: { id: "u1", email: "admin@x", role: "ADMIN" } });
     const sample = { id: "v1" };
     mockEmptyTables();
     prismaMock.vendor.findMany.mockResolvedValue([sample] as never);
     prismaMock.budgetItem.findMany.mockResolvedValue([sample] as never);
     prismaMock.payment.findMany.mockResolvedValue([sample] as never);
     prismaMock.asset.findMany.mockResolvedValue([sample] as never);
+    prismaMock.user.findMany.mockResolvedValue([
+      { id: "u1", email: "admin@x" },
+    ] as never);
 
     const res = await GET();
     const body = (await res.json()) as {
-      exportedAt: string;
-      version: number;
-      eventSettings: unknown;
-      vendors: unknown[];
-      budgetItems: unknown[];
-      payments: unknown[];
-      assets: unknown[];
-      incomes: unknown[];
-      guests: unknown[];
-      tasks: unknown[];
+      checksum: { algorithm: string; value: string };
+      payload: Record<string, unknown> & { version: number; meta?: Record<string, unknown> };
     };
 
-    expect(body.version).toBe(2);
-    expect(new Date(body.exportedAt).getTime()).toBeGreaterThan(0);
-    expect(body.eventSettings).toEqual({ id: "singleton" });
-    expect(body.vendors).toEqual([sample]);
-    expect(body.budgetItems).toEqual([sample]);
-    expect(body.payments).toEqual([sample]);
-    expect(body.assets).toEqual([sample]);
-    expect(body.incomes).toEqual([]);
-    expect(body.guests).toEqual([]);
-    expect(body.tasks).toEqual([]);
+    expect(body.payload.version).toBe(BACKUP_VERSION);
+    expect(body.checksum.algorithm).toBe("sha256");
+    expect(body.checksum.value).toBe(computeChecksum(body.payload as never));
+    expect(body.payload.meta).toBeDefined();
+    expect((body.payload.meta as { appVersion?: string }).appVersion).toBeTruthy();
+    expect(body.payload.users).toEqual([{ id: "u1", email: "admin@x" }]);
+    expect(body.payload.vendors).toEqual([sample]);
   });
 
-  it("ordenação asc por createdAt nas coleções de auditoria", async () => {
-    authMock.mockResolvedValue({ user: { id: "u1", role: "ADMIN" } });
+  it("não inclui users/auditLogs/notificationLogs para non-admin (GROOM/BRIDE)", async () => {
+    authMock.mockResolvedValue({ user: { id: "u1", role: "GROOM" } });
     mockEmptyTables();
 
-    await GET();
-    expect(prismaMock.vendor.findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
-    expect(prismaMock.budgetItem.findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
-    expect(prismaMock.payment.findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
-    expect(prismaMock.asset.findMany).toHaveBeenCalledWith({ orderBy: { date: "asc" } });
+    const res = await GET();
+    const body = (await res.json()) as {
+      payload: { users?: unknown; auditLogs?: unknown; notificationLogs?: unknown };
+    };
+    expect(body.payload.users).toBeUndefined();
+    expect(body.payload.auditLogs).toBeUndefined();
+    expect(body.payload.notificationLogs).toBeUndefined();
+    expect(prismaMock.user.findMany).not.toHaveBeenCalled();
   });
 });

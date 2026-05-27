@@ -4,8 +4,10 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
+  Armchair,
   CalendarHeart,
   CheckCircle2,
+  ChevronRight,
   CloudRain,
   Loader2,
   Phone,
@@ -150,6 +152,22 @@ export default function WeddingDayClient({
         <Stat label="Chegaram" value={`${checkedIn}/${totalSeats}`} accent={checkedIn > 0 ? "emerald" : "amber"} />
         <Stat label="Tarefas do dia" value={String(tasksToday.length)} accent="amber" />
       </div>
+
+      <Link
+        href="/dashboard/wedding-day/seating"
+        className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 transition-colors hover:border-rose-500/40 hover:bg-zinc-900/80"
+      >
+        <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-rose-500/15 text-rose-300">
+          <Armchair className="h-5 w-5" />
+        </span>
+        <div className="min-w-0">
+          <h3 className="font-semibold text-zinc-100">Mapa de assentos</h3>
+          <p className="text-sm text-zinc-400">
+            Organize as mesas e arraste os convidados confirmados para os lugares.
+          </p>
+        </div>
+        <ChevronRight className="ml-auto h-5 w-5 flex-none text-zinc-500" />
+      </Link>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Cronograma do dia" icon={<CalendarHeart className="h-5 w-5" />}>

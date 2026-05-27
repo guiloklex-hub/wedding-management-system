@@ -29,6 +29,10 @@
   "profile": {
     "invalidLocale": "Invalid language",
     "errorSaving": "Error saving profile",
-    "saved": "Profile updated"
+    "saved": "Profile updated",
+    "invalidEmail": "Invalid email",
+    "wrongPassword": "Current password is incorrect",
+    "emailTaken": "A user with this email already exists",
+    "emailUpdated": "Email updated. Use it on your next login."
   }
 }

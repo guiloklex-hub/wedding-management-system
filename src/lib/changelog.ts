@@ -6,6 +6,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.6.4",
+    date: "2026-05-27",
+    highlights: [
+      "✉️ Agora dá para trocar o e-mail de qualquer usuário em Ajustes › Time (corrige o admin@admin.com padrão e cadastra os e-mails reais dos noivos) e o seu próprio e-mail em Perfil, confirmando a senha atual.",
+      "📋 Nova aba Ajustes › Notificações: lista os últimos 50 envios de e-mail/WhatsApp com status (enviado/falhou) e a mensagem de erro — fim do mistério de 'o e-mail não chega'.",
+      "💌 Quando um convidado responde o RSVP (individual ou em grupo), os noivos/gestores recebem um aviso por e-mail/WhatsApp (deduplicado por dia).",
+    ],
+  },
+  {
     version: "0.6.3",
     date: "2026-05-27",
     highlights: [

@@ -52,6 +52,12 @@
     "optional": "(optional)",
     "required": "required"
   },
+  "profile": {
+    "changeEmailTitle": "Change email",
+    "currentPassword": "Current password",
+    "newEmail": "New email",
+    "reloginHint": "After changing your email, use the new one on your next login."
+  },
   "status": {
     "pending": "Pending",
     "paid": "Paid",

@@ -237,6 +237,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
         body: "Uma senha provisória é gerada e enviada por email (e WhatsApp, se configurado) ao novo usuário.",
       },
       { title: "Primeiro login do convidado", body: "Ele(a) será forçado(a) a trocar a senha imediatamente." },
+      {
+        title: "Trocar o e-mail de um usuário",
+        body: "Em Ajustes › Time, edite o membro e altere o campo 'E-mail'. É assim que você corrige o admin@admin.com padrão e cadastra os e-mails reais dos noivos. Cada um também pode trocar o próprio e-mail em Perfil (pedindo a senha atual).",
+      },
+    ],
+    tips: [
+      "O e-mail é o login. Ao trocá-lo, use o novo no próximo login — a sessão aberta continua valendo.",
+      "Sem um e-mail real cadastrado, lembretes e avisos de RSVP falham no envio (veja Ajustes › Notificações).",
     ],
     warnings: ["O cadastro público está desativado — só admins criam contas."],
   },
@@ -499,6 +507,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
         body: "Defina SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM. Reinicie o servidor após mudar .env.",
       },
       { title: "Teste", body: "Crie uma tarefa com deadline em alguns minutos e rode o cron manualmente para validar." },
+      {
+        title: "Diagnostique falhas em Ajustes › Notificações",
+        body: "Os últimos 50 envios aparecem ali com status SENT/FAILED e a mensagem de erro do SMTP. Erros repetidos para admin@admin.com indicam que o e-mail placeholder do seed ainda não foi trocado (faça isso em Ajustes › Time ou no Perfil).",
+      },
     ],
     warnings: [
       "Gmail só aceita **App Password** (16 caracteres). Senha normal **não** funciona desde 2022.",

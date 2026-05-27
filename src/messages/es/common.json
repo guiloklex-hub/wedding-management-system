@@ -52,6 +52,12 @@
     "optional": "(opcional)",
     "required": "obligatorio"
   },
+  "profile": {
+    "changeEmailTitle": "Cambiar correo",
+    "currentPassword": "Contraseña actual",
+    "newEmail": "Nuevo correo",
+    "reloginHint": "Al cambiar el correo, úsalo en tu próximo inicio de sesión."
+  },
   "status": {
     "pending": "Pendiente",
     "paid": "Pagado",

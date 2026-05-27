@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoEdit } from "@/lib/finance-access";
+import { notifyRsvpResponse } from "@/lib/notifications/rsvp";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -240,6 +241,13 @@ export async function publicRsvpRespondForGroup(input: {
     });
     revalidatePath("/dashboard/guests");
     revalidatePath("/dashboard/guests/groups");
+
+    void notifyRsvpResponse({
+      refType: "GuestGroup",
+      refId: group.id,
+      guestName: group.name,
+      rsvpStatus: "RESPONDED",
+    });
 
     return {
       success: true,

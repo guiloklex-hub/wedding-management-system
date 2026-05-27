@@ -89,6 +89,21 @@
     "waSubtitle": "Atrasada há {days, plural, one {# dia} other {# dias}}.",
     "waDeadlineWas": "Prazo era: {date}"
   },
+  "GUEST_RSVP": {
+    "subject": "Novo RSVP: {guest}",
+    "intro": "{guest} respondeu ao convite.",
+    "guestLabel": "Convidado",
+    "statusLabel": "Resposta",
+    "groupLabel": "Grupo",
+    "plusOnesLabel": "Acompanhantes",
+    "status": {
+      "CONFIRMED": "Confirmou presença",
+      "DECLINED": "Não vai",
+      "PENDING": "Pendente",
+      "MAYBE": "Talvez",
+      "RESPONDED": "Respondeu"
+    }
+  },
   "SYSTEM_WHATSAPP_DOWN": {
     "subjectLoggedOut": "⚠ Ação necessária: WhatsApp desconectado",
     "subjectWaitingQr": "⚠ Ação necessária: WhatsApp pediu novo QR Code",

@@ -22,6 +22,7 @@ import {
 } from "@/app/actions/guestActions";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Pagination, usePagination } from "@/components/pagination";
 
 type Guest = {
   id: string;
@@ -85,6 +86,8 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
       return true;
     });
   }, [guests, search, filter]);
+
+  const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(filtered, 20);
 
   const stats = useMemo(() => {
     const total = guests.length;
@@ -214,14 +217,20 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
             <input
               type="search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               placeholder="Buscar..."
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
             />
           </div>
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as typeof filter)}
+            onChange={(e) => {
+              setFilter(e.target.value as typeof filter);
+              setPage(1);
+            }}
             className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
           >
             <option value="ALL">Todos</option>
@@ -284,7 +293,7 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
                   </td>
                 </tr>
               ) : (
-                filtered.map((g) => (
+                pageItems.map((g) => (
                   <tr key={g.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1 font-medium text-zinc-200">
@@ -373,6 +382,15 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
           </table>
         </div>
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        from={from}
+        to={to}
+        onPageChange={setPage}
+      />
 
       {(open || editing) && (
         <GuestFormModal

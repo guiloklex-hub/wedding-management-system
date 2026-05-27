@@ -84,6 +84,12 @@
     "daysAgo": "{count, plural, =0 {hoy} one {hace # día} other {hace # días}}",
     "daysOverdue": "{count, plural, one {# día de atraso} other {# días de atraso}}"
   },
+  "pagination": {
+    "showing": "Mostrando {from}–{to} de {total}",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "navLabel": "Paginación"
+  },
   "nav": {
     "dashboard": "Panel",
     "vendors": "Proveedores",

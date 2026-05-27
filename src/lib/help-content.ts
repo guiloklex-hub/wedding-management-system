@@ -984,6 +984,11 @@ export const HELP_FAQ: FaqItem[] = [
       "Tecnicamente sim (acessando por IP), mas o Auth.js v5 exige domínio e HTTPS para cookies seguros. Recomendamos um domínio + Cloudflare Tunnel ou Let's Encrypt.",
   },
   {
+    question: "Minhas listas estão grandes — dá para navegar por páginas?",
+    answer:
+      "Sim. Listas como Convidados, Tarefas, Pagamentos, Presentes, Enxoval, Fornecedores, Receitas e Caixa mostram 20 itens por página, com controle de páginas no rodapé (Anterior/Próxima + números) e o indicador 'Mostrando X–Y de Z'. A busca e os filtros continuam valendo: a paginação recai sobre o resultado filtrado e volta para a primeira página quando você muda o filtro.",
+  },
+  {
     question: "Os convidados precisam criar conta para responder o RSVP?",
     answer:
       "Não — cada convidado tem um link único `/rsvp/[token]` que funciona sem login. Você compartilha pelo WhatsApp ou outro canal.",

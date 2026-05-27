@@ -52,7 +52,7 @@ export default async function SettingsPage() {
   const notificationLogs = canManageUsers(me?.role)
     ? await prisma.notificationLog.findMany({
         orderBy: { createdAt: "desc" },
-        take: 50,
+        take: 200,
         select: {
           id: true,
           kind: true,

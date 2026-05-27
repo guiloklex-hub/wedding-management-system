@@ -197,3 +197,18 @@ docs.
 | Tarefa atrasada | a cada 30 min | ✅ | ✅ | — |
 
 > ℹ️ Toda notificação é idempotente por dia (ver `NotificationLog`).
+
+## Paginação das listas
+
+As listas que podem crescer são paginadas no cliente (20 itens por página) via
+o componente reutilizável [`src/components/pagination.tsx`](../src/components/pagination.tsx)
+(`usePagination` + `<Pagination>`). A busca/filtro continua sendo feita em
+memória e a paginação recai sobre o resultado já filtrado — ao trocar o filtro,
+volta para a página 1. O controle mostra números de página + Anterior/Próxima e
+"Mostrando X–Y de Z", e some quando há uma página só.
+
+Listas paginadas: Convidados, Tarefas (visão Lista), Pagamentos (visão Lista),
+Presentes, Enxoval, Fornecedores, Receitas, Caixa e o histórico de envios em
+Ajustes › Notificações (busca até 200 registros). Visões não-lista (Kanban de
+tarefas, calendário de pagamentos) e listas curtas (Locais, Metas, Lua de Mel)
+não são paginadas.

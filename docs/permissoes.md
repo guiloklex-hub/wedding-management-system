@@ -77,6 +77,17 @@ Estas roles **também** são bloqueadas das áreas financeiras (`canViewSensitiv
 
 Ajustes › Time › "Convidar membro". Defina a role na criação. Comportamento de finanças aplica imediatamente.
 
+## Gestão de e-mails
+
+- **Editar e-mail de qualquer usuário**: gestores (ADMIN/GROOM/BRIDE — `canManageUsers`) usam
+  **Ajustes › Time › editar membro**. O `updateUser` valida unicidade do e-mail (campo `@unique`).
+  É a forma de corrigir o `admin@admin.com` placeholder criado pelo seed e de cadastrar os
+  e-mails reais dos noivos para que recebam lembretes e RSVPs.
+- **Editar o próprio e-mail**: qualquer usuário em **Perfil** (`/dashboard/profile`), informando
+  a **senha atual** (`updateOwnEmail` em [src/app/actions/profileActions.ts](../src/app/actions/profileActions.ts)).
+- Trocar o e-mail **não** derruba a sessão atual (a sessão é keyed por `id`); o novo e-mail
+  passa a valer no **próximo login**. Ambas as ações gravam `AuditLog` (`action: "UPDATE"`).
+
 ## Anexos e contratos (v0.4.0)
 
 Funções específicas em `src/lib/permissions.ts`:

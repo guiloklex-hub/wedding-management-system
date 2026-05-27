@@ -8,6 +8,7 @@ import {
   Download,
   KeyRound,
   Loader2,
+  Mail,
   MoreVertical,
   Pencil,
   Power,
@@ -96,7 +97,18 @@ type Member = {
 
 const ROLE_OPTIONS: Role[] = [...ROLES];
 
-type Tab = "event" | "security" | "team" | "whatsapp" | "profile" | "backup";
+type NotificationLogEntry = {
+  id: string;
+  kind: string;
+  channel: string;
+  targetEmail: string | null;
+  targetPhone: string | null;
+  status: string;
+  errorMsg: string | null;
+  createdAt: Date;
+};
+
+type Tab = "event" | "security" | "team" | "whatsapp" | "profile" | "backup" | "notifications";
 
 export default function SettingsClient({
   initial,
@@ -104,12 +116,14 @@ export default function SettingsClient({
   me,
   members,
   securitySettings,
+  notificationLogs,
 }: {
   initial: Initial;
   pixSettings: PixSettings;
   me: Me;
   members: Member[];
   securitySettings: SecuritySettings;
+  notificationLogs: NotificationLogEntry[];
 }) {
   const toast = useToast();
   const [tab, setTab] = useState<Tab>("event");
@@ -128,6 +142,11 @@ export default function SettingsClient({
         <TabBtn current={tab} value="team" onClick={() => setTab("team")}>
           Time
         </TabBtn>
+        {manageUsers ? (
+          <TabBtn current={tab} value="notifications" onClick={() => setTab("notifications")}>
+            Notificações
+          </TabBtn>
+        ) : null}
         {isAdmin ? (
           <TabBtn current={tab} value="whatsapp" onClick={() => setTab("whatsapp")}>
             WhatsApp
@@ -159,7 +178,76 @@ export default function SettingsClient({
       {tab === "whatsapp" && isAdmin ? <WhatsAppTab toast={toast} /> : null}
       {tab === "profile" ? <ProfileTab me={me} toast={toast} /> : null}
       {tab === "backup" ? <BackupTab isAdmin={isAdmin} toast={toast} /> : null}
+      {tab === "notifications" && manageUsers ? (
+        <NotificationsTab logs={notificationLogs} />
+      ) : null}
     </div>
+  );
+}
+
+function NotificationsTab({ logs }: { logs: NotificationLogEntry[] }) {
+  return (
+    <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-xl">
+      <div className="flex items-center gap-2">
+        <Mail className="h-5 w-5 text-rose-400" />
+        <h2 className="text-lg font-semibold text-white">Envios recentes</h2>
+      </div>
+      <p className="mt-1 text-sm text-zinc-500">
+        Últimos 50 envios de e-mail/WhatsApp. Use esta lista para diagnosticar falhas de SMTP ou
+        destinatário inválido (ex.: o admin@admin.com padrão do seed).
+      </p>
+      {logs.length === 0 ? (
+        <p className="mt-4 rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
+          Nenhum envio registrado ainda.
+        </p>
+      ) : (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500">
+                <th className="py-2 pr-3 font-medium">Quando</th>
+                <th className="py-2 pr-3 font-medium">Tipo</th>
+                <th className="py-2 pr-3 font-medium">Canal</th>
+                <th className="py-2 pr-3 font-medium">Destinatário</th>
+                <th className="py-2 pr-3 font-medium">Status</th>
+                <th className="py-2 font-medium">Erro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((l) => {
+                const failed = l.status === "FAILED";
+                return (
+                  <tr key={l.id} className="border-b border-zinc-900 align-top">
+                    <td className="py-2 pr-3 whitespace-nowrap text-zinc-400">
+                      {formatDateTimeBR(l.createdAt)}
+                    </td>
+                    <td className="py-2 pr-3 text-zinc-300">{l.kind}</td>
+                    <td className="py-2 pr-3 text-zinc-400">{l.channel}</td>
+                    <td className="py-2 pr-3 text-zinc-400">
+                      {l.targetEmail ?? l.targetPhone ?? "—"}
+                    </td>
+                    <td className="py-2 pr-3">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          failed
+                            ? "bg-rose-500/20 text-rose-300"
+                            : "bg-emerald-500/20 text-emerald-300"
+                        }`}
+                      >
+                        {l.status}
+                      </span>
+                    </td>
+                    <td className="py-2 text-xs text-rose-300/80 break-words">
+                      {l.errorMsg ?? ""}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -1115,6 +1203,7 @@ function EditUserModal({
     <Modal onClose={onClose} title={`Editar ${member.name ?? member.email}`}>
       <form action={handle} className="space-y-3">
         <Field name="name" label="Nome" required defaultValue={member.name ?? ""} />
+        <Field name="email" label="E-mail" type="email" required defaultValue={member.email} />
         <Field
           name="phone"
           label="Telefone (WhatsApp, opcional)"

@@ -10,6 +10,7 @@ export type NotificationKind =
   | "PAYMENT_OVERDUE"
   | "TASK_DUE"
   | "TASK_OVERDUE"
+  | "GUEST_RSVP"
   | "SYSTEM_WHATSAPP_DOWN"
   | "SYSTEM_WHATSAPP_RECOVERED";
 
@@ -70,6 +71,14 @@ export type RenderInput =
       taskTitle: string;
       deadline: Date;
       daysOverdue: number;
+    } & WithLocale)
+  | ({
+      kind: "GUEST_RSVP";
+      userName: string;
+      guestName: string;
+      rsvpStatus: string;
+      plusOnes?: number;
+      groupName?: string | null;
     } & WithLocale)
   | ({
       kind: "SYSTEM_WHATSAPP_DOWN";
@@ -439,6 +448,51 @@ ${tk("waSubtitle", { days: input.daysOverdue })}
 
 ${escapeWaMarkdown(input.taskTitle)}
 ${tk("waDeadlineWas", { date })}`;
+      return { subject, html, text, waText };
+    }
+
+    case "GUEST_RSVP": {
+      const tk = (key: string, values?: Record<string, string | number | Date>) =>
+        t(`GUEST_RSVP.${key}`, values);
+      const guest = escapeHtml(input.guestName);
+      const statusLabel = tk(`status.${input.rsvpStatus}`);
+      const safeStatus = escapeHtml(statusLabel);
+      const subject = tk("subject", { guest: input.guestName });
+      const groupRow = input.groupName
+        ? `<tr><td style="padding:8px 0;color:#a1a1aa;">${escapeHtml(tk("groupLabel"))}</td><td style="padding:8px 0;text-align:right;">${escapeHtml(input.groupName)}</td></tr>`
+        : "";
+      const plusRow =
+        input.plusOnes && input.plusOnes > 0
+          ? `<tr><td style="padding:8px 0;color:#a1a1aa;">${escapeHtml(tk("plusOnesLabel"))}</td><td style="padding:8px 0;text-align:right;">${input.plusOnes}</td></tr>`
+          : "";
+      const html = wrapHtml(
+        subject,
+        `<p>${greetingHtml}</p>
+<p>${escapeHtml(tk("intro", { guest: input.guestName }))}</p>
+<table style="width:100%;border-collapse:collapse;margin-top:16px;">
+<tr><td style="padding:8px 0;color:#a1a1aa;">${escapeHtml(tk("guestLabel"))}</td><td style="padding:8px 0;text-align:right;">${guest}</td></tr>
+<tr><td style="padding:8px 0;color:#a1a1aa;">${escapeHtml(tk("statusLabel"))}</td><td style="padding:8px 0;text-align:right;font-weight:600;">${safeStatus}</td></tr>
+${groupRow}
+${plusRow}
+</table>`,
+        locale,
+        footer,
+        header,
+      );
+      const groupText = input.groupName ? `\n${tk("groupLabel")}: ${input.groupName}` : "";
+      const plusText =
+        input.plusOnes && input.plusOnes > 0 ? `\n${tk("plusOnesLabel")}: ${input.plusOnes}` : "";
+      const text = `${tk("intro", { guest: input.guestName })}
+
+${tk("guestLabel")}: ${input.guestName}
+${tk("statusLabel")}: ${statusLabel}${groupText}${plusText}`;
+      const waGroup = input.groupName ? `\n• ${tk("groupLabel")}: ${escapeWaMarkdown(input.groupName)}` : "";
+      const waText = `*${header}*
+
+${tk("intro", { guest: escapeWaMarkdown(input.guestName) })}
+
+• ${tk("guestLabel")}: ${escapeWaMarkdown(input.guestName)}
+• ${tk("statusLabel")}: ${statusLabel}${waGroup}`;
       return { subject, html, text, waText };
     }
 

@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoEdit } from "@/lib/finance-access";
+import { notifyRsvpResponse } from "@/lib/notifications/rsvp";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import {
   detectMagic,
@@ -340,6 +341,15 @@ export async function publicRsvpRespond(
       },
     });
     revalidatePath("/dashboard/guests");
+
+    void notifyRsvpResponse({
+      refType: "Guest",
+      refId: updated.id,
+      guestName: updated.name,
+      rsvpStatus: updated.rsvpStatus,
+      plusOnes: updated.plusOnesConfirmed,
+    });
+
     return { success: true, data: { name: updated.name, status: updated.rsvpStatus } };
   } catch (err) {
     console.error("[publicRsvpRespond]", err);

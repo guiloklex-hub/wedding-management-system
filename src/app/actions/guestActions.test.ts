@@ -537,6 +537,40 @@ describe("commitGuestImport", () => {
     expect(upd.data.isPadrinho).toBe(true);
   });
 
+  it("UPSERT_BY_NAME no Wedy zera Guest.phone/email (contactsBelongToGroup=true) — evita dado duplicado", async () => {
+    // Guest existente tem phone/email antigos (cenário: import anterior antes do
+    // PR que move contatos pro grupo). UPSERT precisa forçar null pra não ficar
+    // duplicado em Guest.phone + GuestGroup.contactPhone.
+    prismaMock.guest.findMany
+      .mockResolvedValueOnce([
+        {
+          id: "exist-1",
+          name: "Ana",
+          phone: "antigo-no-guest",
+          email: "antigo@x.com",
+          groupName: "G",
+        },
+      ] as never)
+      .mockResolvedValueOnce([
+        { id: "exist-1", name: "Ana", groupName: "G" },
+      ] as never);
+    const file = await wedyXlsxFile([
+      ["G", "Ana", "Sem resposta", "+5511999990000", "ana@x.com", "", "Adulto", "", ""],
+    ]);
+    const preview = await previewGuestImport(undefined, importForm(file));
+    if (!preview.success) throw new Error();
+    await commitGuestImport({
+      importToken: preview.data!.importToken,
+      mode: "UPSERT_BY_NAME",
+    });
+    const upd = prismaMock.guest.update.mock.calls[0][0] as {
+      data: { phone: string | null; email: string | null };
+    };
+    // Importante: null explícito (não undefined), senão o Prisma deixa o antigo.
+    expect(upd.data.phone).toBeNull();
+    expect(upd.data.email).toBeNull();
+  });
+
   it("CREATE_ALL_DUPLICATES sempre cria, mesmo com match no mesmo grupo", async () => {
     prismaMock.guest.findMany
       .mockResolvedValueOnce([

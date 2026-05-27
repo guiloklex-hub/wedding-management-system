@@ -797,8 +797,11 @@ export async function commitGuestImport(input: {
             await tx.guest.update({
               where: { id: sameGroup.id },
               data: {
-                phone: guestPhone ?? undefined,
-                email: guestEmail ?? undefined,
+                // Quando contatos pertencem ao grupo, força null no Guest mesmo
+                // que o registro existente tenha valor antigo — caso contrário
+                // o dado fica duplicado (Guest.phone + GuestGroup.contactPhone).
+                phone: contactsToGroup ? null : (row.phone ?? undefined),
+                email: contactsToGroup ? null : (row.email ?? undefined),
                 rsvpStatus: row.rsvpStatus,
                 isChild: row.isChild,
                 age: row.age,

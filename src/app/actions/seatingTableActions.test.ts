@@ -14,9 +14,9 @@ beforeEach(() => {
   authMock.mockResolvedValue({ user: { id: "test-user", role: "ADMIN" } });
   prismaMock.auditLog.create.mockResolvedValue({} as never);
   // Suporta as duas formas usadas pelas actions: callback (assign) e array (reorder).
-  prismaMock.$transaction.mockImplementation((arg: unknown) => {
+  prismaMock.$transaction.mockImplementation(async (arg: unknown) => {
     if (typeof arg === "function") {
-      return (arg as (tx: typeof prismaMock) => unknown)(prismaMock);
+      return (arg as (tx: typeof prismaMock) => Promise<unknown>)(prismaMock);
     }
     return Promise.all(arg as Promise<unknown>[]);
   });

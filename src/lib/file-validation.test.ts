@@ -4,6 +4,8 @@ import {
   assertMagicMatchesMime,
   assertAllowedForKind,
   assertSizeForKind,
+  assertGuestImportSize,
+  GUEST_IMPORT_MAX_BYTES,
   maxBytesForKind,
   FileValidationError,
 } from "./file-validation";
@@ -75,6 +77,11 @@ describe("detectMagic", () => {
   it("retorna unknown para buffer vazio", () => {
     expect(detectMagic(Buffer.alloc(0))).toBe("unknown");
   });
+
+  it("identifica XLSX (container ZIP) pelo magic PK\\x03\\x04", () => {
+    const buf = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00]);
+    expect(detectMagic(buf)).toBe("xlsx");
+  });
 });
 
 describe("assertMagicMatchesMime", () => {
@@ -126,5 +133,16 @@ describe("assertSizeForKind", () => {
 
   it("usa limite default para kind desconhecido", () => {
     expect(maxBytesForKind("XXX_UNKNOWN")).toBe(10 * 1024 * 1024);
+  });
+});
+
+describe("assertGuestImportSize", () => {
+  it("permite tamanho abaixo de 5MB", () => {
+    expect(() => assertGuestImportSize(1024)).not.toThrow();
+    expect(() => assertGuestImportSize(GUEST_IMPORT_MAX_BYTES)).not.toThrow();
+  });
+
+  it("rejeita acima de 5MB", () => {
+    expect(() => assertGuestImportSize(GUEST_IMPORT_MAX_BYTES + 1)).toThrow(FileValidationError);
   });
 });

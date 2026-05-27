@@ -64,7 +64,7 @@
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "tsx": "^4.22.0",
-    "typescript": "^5",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.6",
     "vitest-mock-extended": "^4.0.0"
   },

@@ -77,6 +77,33 @@ UI em `/dashboard/guests/groups`:
 - Copiar link RSVP para enviar ao responsável.
 - Ver contagem (sim / pendente / não) por grupo.
 
+### Importação em massa (CSV)
+
+A action `bulkImportGuests` aceita a coluna `Grupo` na 5ª posição
+(`Nome,Telefone,Email,Lado,Grupo`). Quando preenchida:
+
+- Busca `GuestGroup` existente pelo `name` exato (case-sensitive, `deletedAt: null`).
+- Se não existir, cria o `GuestGroup` (apenas com `name` — contato fica em branco para o usuário completar depois).
+- Associa o convidado ao grupo via `Guest.groupId` (e mantém `Guest.groupName` como string redundante).
+- Linhas com o mesmo nome de grupo compartilham o mesmo `groupId`.
+
+Tudo roda dentro de `prisma.$transaction` para não deixar estado parcial. O retorno
+inclui `groupsCreated` além de `created` e `skipped`.
+
+### Importação por arquivo XLSX (Wedy)
+
+Além do texto colado, há a página `/dashboard/guests/import` que aceita arquivos
+.xlsx exportados de outros sistemas (hoje: Wedy). Ela usa as Server Actions
+`previewGuestImport` + `commitGuestImport`, traz tags (M:N via `GuestTag`), PIN
+do convite no `GuestGroup.rsvpPin` e fluxo em 2 passos (preview com diff +
+escolha de modo). Detalhes em [importacao-convidados.md](importacao-convidados.md).
+
+## Campo `GuestGroup.rsvpPin`
+
+Persistido **apenas como referência cruzada** ao convite original do Wedy ou
+sistemas similares. Aceita 4-8 chars alfanuméricos. O link público continua
+usando `rsvpToken` cuid — não há rota de login por PIN nesta versão.
+
 ## Quando usar cada um
 
 - **Indivíduo importante (padrinho, parente próximo, parceiro de trabalho):** use o link individual.
@@ -85,4 +112,7 @@ UI em `/dashboard/guests/groups`:
 
 ## Campo legado `Guest.groupName`
 
-Continua existindo como string livre. Não é usado para o link de grupo. Considere migrar entrada por entrada e remover em versão futura.
+Continua existindo como string livre, agora preenchido automaticamente em paralelo
+ao `groupId` quando a importação CSV cria/associa um grupo. O link de RSVP coletivo
+usa exclusivamente o `groupId`. Considere migrar entradas antigas (com `groupName`
+mas sem `groupId`) executando uma rotina manual e remover o campo em versão futura.

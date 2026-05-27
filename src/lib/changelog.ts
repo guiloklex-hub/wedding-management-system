@@ -6,6 +6,23 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.6.2",
+    date: "2026-05-26",
+    highlights: [
+      "📥 Importação de convidados por arquivo XLSX em /dashboard/guests/import. Suporta planilhas do Wedy out-of-the-box, com preview de novos vs. duplicados, lista de grupos detectados, PINs preservados e modo configurável (pular existentes / atualizar / criar tudo).",
+      "🏷️ Novo model GuestTag (M:N). Tags vindas do import viram tags reais; 'Padrinhos', 'Madrinha' etc. ativam também a flag isPadrinho.",
+      "🔢 GuestGroup agora tem rsvpPin (4-8 chars, informativo, vindo do convite original) e Guest ganhou age (idade exata para crianças).",
+    ],
+  },
+  {
+    version: "0.6.1",
+    date: "2026-05-26",
+    highlights: [
+      "👨‍👩‍👧 Importação CSV de convidados agora cria automaticamente os grupos/famílias presentes na coluna 'Grupo' (e reaproveita os existentes pelo nome). Convidados da mesma família já saem com `groupId` preenchido — basta abrir o grupo depois para configurar contato e copiar o link de RSVP coletivo.",
+      "↩️ Tela de grupos (`/dashboard/guests/groups`) ganhou link 'Voltar para convidados' no topo, eliminando a necessidade de usar o botão do navegador.",
+    ],
+  },
+  {
     version: "0.6.0",
     date: "2026-05-23",
     highlights: [

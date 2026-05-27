@@ -35,6 +35,12 @@ export function rateLimit(
   return { ok: true, remaining: max - b.count, resetAt: b.resetAt };
 }
 
+/** Apenas para uso em testes. */
+export function __resetRateLimit(): void {
+  buckets.clear();
+  lastSweep = 0;
+}
+
 export function getClientIp(headers: Headers): string {
   const cf = headers.get("cf-connecting-ip");
   if (cf) return cf.trim();

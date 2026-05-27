@@ -4,7 +4,6 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
-  ChevronDown,
   Copy,
   Download,
   Loader2,
@@ -14,10 +13,8 @@ import {
   Trash2,
   Upload,
   Users,
-  X,
 } from "lucide-react";
 import {
-  bulkImportGuests,
   createGuest,
   deleteGuest,
   toggleCheckin,
@@ -69,12 +66,10 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Guest | null>(null);
   const [deleting, setDeleting] = useState<Guest | null>(null);
-  const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"ALL" | "CONFIRMED" | "PENDING" | "PADRINHOS" | "CHILDREN" | "CHECKED_IN">("ALL");
   const [busy, setBusy] = useState(false);
   const [updatingBusy, setUpdatingBusy] = useState(false);
-  const [importBusy, setImportBusy] = useState(false);
   const [, startTransition] = useTransition();
 
   const filtered = useMemo(() => {
@@ -151,21 +146,6 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
       else toast.error("Falha", r.error);
     });
   }
-  function handleImport(formData: FormData) {
-    setImportBusy(true);
-    startTransition(async () => {
-      try {
-        const r = await bulkImportGuests(undefined, formData);
-        if (r.success && r.data) {
-          toast.success(`${r.data.created} importados`, `${r.data.skipped} linhas puladas`);
-          setImportOpen(false);
-        } else if (!r.success) toast.error("Falha", r.error);
-      } finally {
-        setImportBusy(false);
-      }
-    });
-  }
-
   function copyRsvp(guest: Guest) {
     const url = `${baseUrl}/rsvp/${guest.rsvpToken}`;
     navigator.clipboard.writeText(url).then(
@@ -266,13 +246,12 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
           >
             <Download className="h-4 w-4" /> CSV
           </button>
-          <button
-            type="button"
-            onClick={() => setImportOpen(true)}
+          <Link
+            href="/dashboard/guests/import"
             className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-200 hover:bg-rose-500/20"
           >
             <Upload className="h-4 w-4" /> Importar lista
-          </button>
+          </Link>
           <button
             type="button"
             onClick={() => setOpen(true)}
@@ -407,10 +386,6 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
           formAction={editing ? handleUpdate : handleCreate}
         />
       )}
-
-      {importOpen ? (
-        <ImportModal isBusy={importBusy} onClose={() => setImportOpen(false)} formAction={handleImport} />
-      ) : null}
 
       <ConfirmDialog
         open={!!deleting}
@@ -558,80 +533,6 @@ function GuestFormModal({
               className="flex flex-1 items-center justify-center rounded-xl bg-rose-600 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
               {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function ImportModal({
-  isBusy,
-  onClose,
-  formAction,
-}: {
-  isBusy: boolean;
-  onClose: () => void;
-  formAction: (formData: FormData) => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
-      <div className="my-4 w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Importar convidados em massa</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1 text-zinc-300 hover:bg-zinc-800"
-            aria-label="Fechar"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <p className="mt-2 text-sm text-zinc-400">
-          Cole linhas no formato <code className="rounded bg-zinc-800 px-1">Nome,Telefone,Email,Lado,Grupo</code>{" "}
-          (uma linha por convidado). Telefone, email, lado e grupo são opcionais. Lado aceita NOIVO/NOIVA/AMBOS.
-        </p>
-        <form action={formAction} className="mt-4 space-y-3">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Conteúdo</label>
-            <textarea
-              name="raw"
-              required
-              rows={10}
-              placeholder={`Maria Silva,+5511999990000,maria@example.com,NOIVA,Família\nJoão Souza\nAna,,ana@example.com,,Trabalho dele`}
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Separador</label>
-            <select
-              name="separator"
-              defaultValue="AUTO"
-              className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
-            >
-              <option value="AUTO">Detectar automaticamente</option>
-              <option value="COMMA">, (vírgula)</option>
-              <option value="SEMICOLON">; (ponto-vírgula)</option>
-              <option value="TAB">Tab</option>
-            </select>
-          </div>
-          <div className="flex gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-xl bg-zinc-800 py-2 text-sm font-medium text-white hover:bg-zinc-700"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isBusy}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-600 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
-            >
-              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronDown className="h-4 w-4 rotate-90" />}
-              Importar
             </button>
           </div>
         </form>

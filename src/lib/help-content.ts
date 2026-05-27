@@ -17,6 +17,7 @@ import {
   ShoppingBasket,
   Sparkles,
   Target,
+  Upload,
   Users,
   Wallet,
   Wrench,
@@ -763,6 +764,42 @@ export const HELP_ARTICLES: HelpArticle[] = [
     tips: [
       "RSVP individual continua funcionando — o link de grupo é alternativa, não substituto.",
       "Cada convidado pode estar em apenas um grupo.",
+      "Importou um CSV com a coluna 'Grupo' preenchida? Os grupos são criados automaticamente (e os existentes reaproveitados pelo nome) — basta abrir o grupo depois para preencher contato e copiar o link.",
+    ],
+  },
+  {
+    id: "guest-import-wedy",
+    title: "Importar lista do Wedy (e outros .xlsx)",
+    category: "guests",
+    keywords: ["importar", "wedy", "xlsx", "planilha", "migrar", "excel"],
+    icon: Upload,
+    summary:
+      "Trazer convidados de outros sistemas de planejamento sem retrabalho. Hoje: Wedy (XLSX).",
+    steps: [
+      {
+        title: "Acesse Convidados → Importar lista",
+        body: "Vai abrir /dashboard/guests/import. Selecione o arquivo .xlsx exportado do outro sistema (até 5 MB, 2000 linhas).",
+      },
+      {
+        title: "Confira o preview",
+        body: "O sistema mostra X novos, Y já existem (mesmo grupo) e Z divergem. Grupos, tags e PINs detectados aparecem listados.",
+      },
+      {
+        title: "Escolha como tratar duplicatas",
+        body: "Pular existentes (padrão, mais seguro), atualizar os existentes com os dados do arquivo, ou criar tudo (útil para homônimos em famílias diferentes).",
+      },
+      {
+        title: "Confirme",
+        body: "Tudo é gravado em uma transação. Tags e grupos novos são criados automaticamente. Tags 'Padrinhos', 'Madrinha', etc. marcam também a flag de padrinho.",
+      },
+    ],
+    tips: [
+      "Você ainda pode importar via texto colado: dentro da página de import há um link 'Prefere colar texto?'.",
+      "O Wedy traz tags com os nomes dos noivos — elas viram tags normais, mas o lado (NOIVO/NOIVA) precisa ser ajustado manualmente em cada convidado.",
+    ],
+    warnings: [
+      "Status fora do mapeamento conhecido (Sem resposta/Confirmado/Recusado/Talvez) é tratado como 'Convidado'.",
+      "O PIN do convite (4 dígitos do Wedy) é salvo só como referência. O link público continua usando o token do sistema.",
     ],
   },
   {

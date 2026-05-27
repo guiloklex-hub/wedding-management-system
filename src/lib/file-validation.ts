@@ -4,6 +4,7 @@ export type DetectedType =
   | "jpeg"
   | "webp"
   | "heic"
+  | "xlsx"
   | "unknown";
 
 const MIME_FOR_TYPE: Record<Exclude<DetectedType, "unknown">, ReadonlySet<string>> = {
@@ -12,6 +13,12 @@ const MIME_FOR_TYPE: Record<Exclude<DetectedType, "unknown">, ReadonlySet<string
   jpeg: new Set(["image/jpeg", "image/jpg"]),
   webp: new Set(["image/webp"]),
   heic: new Set(["image/heic", "image/heif"]),
+  xlsx: new Set([
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/zip",
+    "application/x-zip-compressed",
+    "application/octet-stream",
+  ]),
 };
 
 export const ALLOWED_MIME_BY_KIND: Record<string, ReadonlySet<string>> = {
@@ -61,6 +68,7 @@ const PNG_HEADER = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
 const JPEG_HEADER = Buffer.from([0xff, 0xd8, 0xff]);
 const RIFF = Buffer.from("RIFF", "ascii");
 const WEBP = Buffer.from("WEBP", "ascii");
+const ZIP_HEADER = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
 const HEIC_BRANDS = ["heic", "heix", "heim", "heis", "hevc", "hevx", "mif1", "msf1"];
 
 export function detectMagic(buf: Buffer): DetectedType {
@@ -84,6 +92,7 @@ export function detectMagic(buf: Buffer): DetectedType {
     const head = buf.subarray(0, Math.min(buf.length, 1024));
     if (head.indexOf(PDF_HEADER) !== -1) return "pdf";
   }
+  if (buf.length >= 4 && buf.subarray(0, 4).equals(ZIP_HEADER)) return "xlsx";
   return "unknown";
 }
 
@@ -129,5 +138,14 @@ export function assertSizeForKind(kind: string, size: number): void {
   if (size > max) {
     const mb = Math.round(max / MB);
     throw new FileValidationError(`Arquivo excede ${mb} MB para ${kind}.`);
+  }
+}
+
+export const GUEST_IMPORT_MAX_BYTES = 5 * MB;
+
+export function assertGuestImportSize(size: number): void {
+  if (size > GUEST_IMPORT_MAX_BYTES) {
+    const mb = Math.round(GUEST_IMPORT_MAX_BYTES / MB);
+    throw new FileValidationError(`Arquivo excede ${mb} MB.`);
   }
 }

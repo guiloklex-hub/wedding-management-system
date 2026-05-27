@@ -89,3 +89,5 @@ backups/
 
 # Arquivos temporarios
 temp.md
+temp/
+temp/*

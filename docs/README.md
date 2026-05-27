@@ -42,6 +42,7 @@ Se você é um casal querendo apenas usar o sistema, comece pelo
 | Pix nos presentes (cota lua de mel) | [pix.md](pix.md) |
 | Relatórios de BI (hub /dashboard/reports + Insights) | [relatorios.md](relatorios.md) |
 | Anexos e contratos (upload seguro, versionamento) | [anexos.md](anexos.md) |
+| Importação de convidados (XLSX, Wedy) | [importacao-convidados.md](importacao-convidados.md) |
 
 ## Para quem vai contribuir
 

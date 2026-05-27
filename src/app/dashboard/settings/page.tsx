@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getEventConfig } from "@/lib/event-config";
 import { getSecuritySettings } from "@/lib/security-settings";
+import { canManageUsers } from "@/lib/permissions";
 import { toIsoDate } from "@/lib/format";
 import SettingsClient from "./settings-client";
 
@@ -48,6 +49,23 @@ export default async function SettingsPage() {
 
   const securitySettings = await getSecuritySettings();
 
+  const notificationLogs = canManageUsers(me?.role)
+    ? await prisma.notificationLog.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 200,
+        select: {
+          id: true,
+          kind: true,
+          channel: true,
+          targetEmail: true,
+          targetPhone: true,
+          status: true,
+          errorMsg: true,
+          createdAt: true,
+        },
+      })
+    : [];
+
   return (
     <div className="space-y-6">
       <div>
@@ -70,6 +88,7 @@ export default async function SettingsPage() {
         me={me}
         members={members}
         securitySettings={securitySettings}
+        notificationLogs={notificationLogs}
       />
     </div>
   );

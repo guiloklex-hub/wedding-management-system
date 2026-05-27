@@ -170,6 +170,7 @@ export async function createUser(
 const UpdateSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1).max(120).optional(),
+  email: emailSchema().optional(),
   phone: PhoneSchema.optional(),
   role: RoleSchema.optional(),
   isActive: z
@@ -194,12 +195,12 @@ export async function updateUser(
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
-  const { id, name, phone, role, isActive } = parsed.data;
+  const { id, name, email, phone, role, isActive } = parsed.data;
 
   try {
     const target = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, role: true, isActive: true, archivedAt: true },
+      select: { id: true, email: true, role: true, isActive: true, archivedAt: true },
     });
     if (!target || target.archivedAt) return { success: false, error: "Usuário não encontrado" };
 
@@ -219,8 +220,16 @@ export async function updateUser(
       }
     }
 
+    if (email && email !== target.email) {
+      const owner = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+      if (owner && owner.id !== target.id) {
+        return { success: false, error: "Já existe um usuário com este email" };
+      }
+    }
+
     const data: Record<string, unknown> = {};
     if (typeof name === "string") data.name = name;
+    if (email && email !== target.email) data.email = email;
     if (phone !== undefined) data.phone = phone;
     if (role) data.role = role;
     if (typeof isActive === "boolean") data.isActive = isActive;
@@ -231,6 +240,9 @@ export async function updateUser(
     revalidatePath("/dashboard/settings");
     return { success: true };
   } catch (err) {
+    if (typeof err === "object" && err !== null && (err as { code?: string }).code === "P2002") {
+      return { success: false, error: "Já existe um usuário com este email" };
+    }
     console.error("[updateUser]", err);
     return { success: false, error: "Erro ao atualizar usuário" };
   }

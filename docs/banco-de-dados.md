@@ -75,8 +75,10 @@ Arquivo: [prisma/schema.prisma](../prisma/schema.prisma).
 | `Honeymoon` | Singleton: lua de mel. |
 | `HoneymoonItem` | Itens da lua de mel (atividade, vôo, hospedagem). |
 | `TrousseauItem` | Enxoval (cômodo, prioridade, status compra). |
-| `Guest` | Convidados (RSVP, +1s, dietary, padrinho, checkin, `language` opcional para RSVP localizado, `rsvpTokenExpiresAt` opcional). |
-| `GuestGroup` | Convite de família com `rsvpToken` único e `rsvpTokenExpiresAt` opcional. |
+| `Guest` | Convidados (RSVP, +1s, dietary, padrinho, checkin, `language` opcional para RSVP localizado, `rsvpTokenExpiresAt` opcional, `age` opcional para crianças). Relação M:N com `GuestTag` via `GuestTagOnGuest`. |
+| `GuestGroup` | Convite de família com `rsvpToken` único e `rsvpTokenExpiresAt` opcional. `rsvpPin` opcional (informativo, vindo de imports externos). |
+| `GuestTag` | Tags de convidados (Padrinhos, Florista, etc.), com `name @unique` e `color` opcional. |
+| `GuestTagOnGuest` | Junction table M:N entre `Guest` e `GuestTag` (`@@id([guestId, tagId])`, cascade no delete). |
 | `SeatingTable` | Mesa do evento (capacidade, forma, posição x/y). |
 | `Gift` | Presentes (cash/item, status recebimento). |
 | `Task` | Tarefas (status, prioridade, responsável, deadline). |

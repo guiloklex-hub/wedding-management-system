@@ -89,6 +89,21 @@
     "waSubtitle": "Overdue by {days, plural, one {# day} other {# days}}.",
     "waDeadlineWas": "Was due: {date}"
   },
+  "GUEST_RSVP": {
+    "subject": "New RSVP: {guest}",
+    "intro": "{guest} replied to the invitation.",
+    "guestLabel": "Guest",
+    "statusLabel": "Reply",
+    "groupLabel": "Group",
+    "plusOnesLabel": "Plus-ones",
+    "status": {
+      "CONFIRMED": "Attending",
+      "DECLINED": "Not attending",
+      "PENDING": "Pending",
+      "MAYBE": "Maybe",
+      "RESPONDED": "Responded"
+    }
+  },
   "SYSTEM_WHATSAPP_DOWN": {
     "subjectLoggedOut": "⚠ Action required: WhatsApp disconnected",
     "subjectWaitingQr": "⚠ Action required: WhatsApp requested a new QR code",

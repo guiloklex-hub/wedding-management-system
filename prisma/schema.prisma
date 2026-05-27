@@ -398,6 +398,7 @@ model Guest {
   isChild             Boolean   @default(false)
   isVIP               Boolean   @default(false)
   isPadrinho          Boolean   @default(false)
+  age                 Int?
   dietary             String?
   language            String?
   tableNumber         String?
@@ -412,6 +413,7 @@ model Guest {
   gifts             Gift[]
   group             GuestGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
   table             SeatingTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  tags              GuestTagOnGuest[]
 
   @@index([rsvpStatus])
   @@index([deletedAt])
@@ -424,6 +426,7 @@ model GuestGroup {
   name                String
   rsvpToken           String    @unique @default(cuid())
   rsvpTokenExpiresAt  DateTime?
+  rsvpPin             String?
   contactName         String?
   contactEmail        String?
   contactPhone        String?
@@ -437,6 +440,31 @@ model GuestGroup {
   @@index([deletedAt])
 }
 
+model GuestTag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  guests    GuestTagOnGuest[]
+
+  @@index([deletedAt])
+}
+
+model GuestTagOnGuest {
+  guestId   String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  guest     Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  tag       GuestTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([guestId, tagId])
+  @@index([tagId])
+}
+
 model SeatingTable {
   id          String   @id @default(cuid())
   name        String
@@ -444,6 +472,7 @@ model SeatingTable {
   shape       String   @default("ROUND")
   x           Float    @default(0)
   y           Float    @default(0)
+  sortOrder   Int      @default(0)
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

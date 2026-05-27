@@ -769,16 +769,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
   },
   {
     id: "guest-import-wedy",
-    title: "Importar lista do Wedy (e outros .xlsx)",
+    title: "Importar lista do Wedy (.xlsx) ou do próprio sistema (.csv)",
     category: "guests",
-    keywords: ["importar", "wedy", "xlsx", "planilha", "migrar", "excel"],
+    keywords: ["importar", "wedy", "xlsx", "csv", "planilha", "migrar", "excel"],
     icon: Upload,
     summary:
-      "Trazer convidados de outros sistemas de planejamento sem retrabalho. Hoje: Wedy (XLSX).",
+      "Trazer convidados de outros sistemas (Wedy) ou reimportar um CSV exportado pelo próprio sistema.",
     steps: [
       {
         title: "Acesse Convidados → Importar lista",
-        body: "Vai abrir /dashboard/guests/import. Selecione o arquivo .xlsx exportado do outro sistema (até 5 MB, 2000 linhas).",
+        body: "Vai abrir /dashboard/guests/import. Selecione o arquivo .xlsx (Wedy) ou .csv (exportado pelo próprio sistema). Até 5 MB, 2000 linhas.",
       },
       {
         title: "Confira o preview",
@@ -796,6 +796,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
     tips: [
       "Você ainda pode importar via texto colado: dentro da página de import há um link 'Prefere colar texto?'.",
       "O Wedy traz tags com os nomes dos noivos — elas viram tags normais, mas o lado (NOIVO/NOIVA) precisa ser ajustado manualmente em cada convidado.",
+      "Importou do Wedy? O telefone/email vai automaticamente para o contato do grupo (cabeça da família), não para cada convidado.",
+      "Reimportar o CSV exportado pelo botão 'CSV' funciona como um backup manual — fecha o ciclo export/import.",
     ],
     warnings: [
       "Status fora do mapeamento conhecido (Sem resposta/Confirmado/Recusado/Talvez) é tratado como 'Convidado'.",

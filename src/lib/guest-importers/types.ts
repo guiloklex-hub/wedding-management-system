@@ -5,6 +5,8 @@ export type ImportedRsvpStatus =
   | "DECLINED"
   | "MAYBE";
 
+export type GuestSide = "NOIVO" | "NOIVA" | "AMBOS";
+
 export type ParsedRow = {
   name: string;
   groupName: string | null;
@@ -17,13 +19,28 @@ export type ParsedRow = {
   age: number | null;
   pin: string | null;
   rawSource: Record<string, string>;
+  // Campos opcionais que só alguns importers preenchem.
+  side?: GuestSide | null;
+  isVIP?: boolean;
+  plusOnesAllowed?: number;
+  tableNumber?: string | null;
+  dietary?: string | null;
+  city?: string | null;
 };
 
-export type ImporterId = "wedy";
+export type ImporterId = "wedy" | "internal-csv";
+
+export type RecordRow = Record<string, string>;
 
 export type Importer = {
   id: ImporterId;
   label: string;
-  detect(buf: Buffer): Promise<boolean>;
-  parse(buf: Buffer): Promise<ParsedRow[]>;
+  /** Quando true, contatos (phone/email/contactName) da primeira linha
+   *  com dados preenchidos viram contato do GuestGroup, e os Guests
+   *  individuais ficam sem phone/email próprios. */
+  contactsBelongToGroup: boolean;
+  /** Decide se a planilha/CSV pertence a este importador. */
+  detect(records: RecordRow[], headers: string[]): boolean;
+  /** Converte os dicionários cabeçalho→valor em ParsedRow canônico. */
+  parseRecords(records: RecordRow[]): ParsedRow[];
 };

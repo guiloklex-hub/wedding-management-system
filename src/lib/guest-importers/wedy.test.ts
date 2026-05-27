@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll } from "vitest";
-import ExcelJS from "exceljs";
+import { describe, it, expect } from "vitest";
 import { wedyImporter } from "./wedy";
+import type { RecordRow } from "./types";
 
 const FULL_HEADERS = [
   "Nome do convite",
@@ -14,79 +14,59 @@ const FULL_HEADERS = [
   "Pin do convite",
 ];
 
-async function buildWedyXlsx(
-  rows: Array<Array<string | number>>,
-  headers: string[] = FULL_HEADERS,
-): Promise<Buffer> {
-  const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet("Sheet1");
-  ws.addRow(headers);
-  for (const row of rows) ws.addRow(row);
-  const ab = await wb.xlsx.writeBuffer();
-  return Buffer.from(ab as ArrayBuffer);
+function buildRecord(values: Record<string, string>): RecordRow {
+  const rec: RecordRow = {};
+  for (const h of FULL_HEADERS) rec[h] = values[h] ?? "";
+  return rec;
 }
 
-async function buildEmptyXlsx(): Promise<Buffer> {
-  const wb = new ExcelJS.Workbook();
-  wb.addWorksheet("Sheet1");
-  const ab = await wb.xlsx.writeBuffer();
-  return Buffer.from(ab as ArrayBuffer);
+function row(values: Record<string, string>): RecordRow {
+  return buildRecord(values);
 }
 
 describe("wedyImporter.detect", () => {
-  let fullBuf: Buffer;
-  let partialBuf: Buffer;
-  let foreignBuf: Buffer;
-  let emptyBuf: Buffer;
+  it("detecta com todos os headers Wedy", () => {
+    expect(wedyImporter.detect([], FULL_HEADERS)).toBe(true);
+  });
 
-  beforeAll(async () => {
-    fullBuf = await buildWedyXlsx([["Família A", "Ana", "Sem resposta", "", "", "", "Adulto", "", ""]]);
-    // 6 colunas das esperadas presentes
-    partialBuf = await buildWedyXlsx(
-      [["A", "B", "C", "D", "E", "F"]],
-      [
+  it("detecta com 6 das 9 colunas esperadas", () => {
+    expect(
+      wedyImporter.detect([], [
         "Nome do convite",
         "Nome completo do convidado",
         "Status",
         "Telefone",
         "E-mail",
         "Tags",
-      ],
-    );
-    foreignBuf = await buildWedyXlsx(
-      [["x"]],
-      ["Outro Sistema", "Coluna Bizarra", "Algo Mais"],
-    );
-    emptyBuf = await buildEmptyXlsx();
+      ]),
+    ).toBe(true);
   });
 
-  it("detecta planilha com todos os headers Wedy", async () => {
-    expect(await wedyImporter.detect(fullBuf)).toBe(true);
+  it("não detecta com headers incompatíveis", () => {
+    expect(
+      wedyImporter.detect([], ["Outro Sistema", "Coluna Bizarra", "Algo Mais"]),
+    ).toBe(false);
   });
 
-  it("detecta planilha com 6 das 9 colunas esperadas", async () => {
-    expect(await wedyImporter.detect(partialBuf)).toBe(true);
-  });
-
-  it("não detecta planilha com headers incompatíveis", async () => {
-    expect(await wedyImporter.detect(foreignBuf)).toBe(false);
-  });
-
-  it("não detecta planilha vazia", async () => {
-    expect(await wedyImporter.detect(emptyBuf)).toBe(false);
-  });
-
-  it("retorna false (não lança) para buffer inválido", async () => {
-    expect(await wedyImporter.detect(Buffer.from([0, 1, 2, 3]))).toBe(false);
+  it("não detecta sem headers", () => {
+    expect(wedyImporter.detect([], [])).toBe(false);
   });
 });
 
-describe("wedyImporter.parse", () => {
-  it("mapeia todos os campos básicos de uma linha completa", async () => {
-    const buf = await buildWedyXlsx([
-      ["Família Silva", "Maria Silva", "Sem resposta", "+5511999990000", "maria@x.com", "Padrinhos, Tayná", "Adulto", "", "8696"],
+describe("wedyImporter.parseRecords", () => {
+  it("mapeia todos os campos básicos de uma linha completa", () => {
+    const rows = wedyImporter.parseRecords([
+      row({
+        "Nome do convite": "Família Silva",
+        "Nome completo do convidado": "Maria Silva",
+        "Status": "Sem resposta",
+        "Telefone": "+5511999990000",
+        "E-mail": "maria@x.com",
+        "Tags": "Padrinhos, Tayná",
+        "Faixa etária": "Adulto",
+        "Pin do convite": "8696",
+      }),
     ]);
-    const rows = await wedyImporter.parse(buf);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       name: "Maria Silva",
@@ -102,14 +82,13 @@ describe("wedyImporter.parse", () => {
     });
   });
 
-  it("mapeia status: Confirmado/Recusado/Talvez", async () => {
-    const buf = await buildWedyXlsx([
-      ["G1", "A", "Confirmado", "", "", "", "Adulto", "", ""],
-      ["G2", "B", "Recusado", "", "", "", "Adulto", "", ""],
-      ["G3", "C", "Talvez", "", "", "", "Adulto", "", ""],
-      ["G4", "D", "Não convidado", "", "", "", "Adulto", "", ""],
+  it("mapeia status: Confirmado/Recusado/Talvez/Não convidado", () => {
+    const rows = wedyImporter.parseRecords([
+      row({ "Nome do convite": "G1", "Nome completo do convidado": "A", "Status": "Confirmado", "Faixa etária": "Adulto" }),
+      row({ "Nome do convite": "G2", "Nome completo do convidado": "B", "Status": "Recusado", "Faixa etária": "Adulto" }),
+      row({ "Nome do convite": "G3", "Nome completo do convidado": "C", "Status": "Talvez", "Faixa etária": "Adulto" }),
+      row({ "Nome do convite": "G4", "Nome completo do convidado": "D", "Status": "Não convidado", "Faixa etária": "Adulto" }),
     ]);
-    const rows = await wedyImporter.parse(buf);
     expect(rows.map((r) => r.rsvpStatus)).toEqual([
       "CONFIRMED",
       "DECLINED",
@@ -118,100 +97,92 @@ describe("wedyImporter.parse", () => {
     ]);
   });
 
-  it("status desconhecido cai em INVITED e preserva rsvpStatusRaw", async () => {
-    const buf = await buildWedyXlsx([
-      ["G", "X", "Coisa-Estranha", "", "", "", "Adulto", "", ""],
+  it("status desconhecido cai em INVITED e preserva rsvpStatusRaw", () => {
+    const [r] = wedyImporter.parseRecords([
+      row({ "Nome do convite": "G", "Nome completo do convidado": "X", "Status": "Coisa-Estranha", "Faixa etária": "Adulto" }),
     ]);
-    const [row] = await wedyImporter.parse(buf);
-    expect(row.rsvpStatus).toBe("INVITED");
-    expect(row.rsvpStatusRaw).toBe("Coisa-Estranha");
+    expect(r.rsvpStatus).toBe("INVITED");
+    expect(r.rsvpStatusRaw).toBe("Coisa-Estranha");
   });
 
-  it("isChild=true quando Faixa etária = Criança", async () => {
-    const buf = await buildWedyXlsx([
-      ["G", "Kid", "Sem resposta", "", "", "", "Criança", "8", ""],
+  it("isChild=true quando Faixa etária = Criança", () => {
+    const [r] = wedyImporter.parseRecords([
+      row({ "Nome do convite": "G", "Nome completo do convidado": "Kid", "Status": "Sem resposta", "Faixa etária": "Criança", "Idade exata (caso for criança)": "8" }),
     ]);
-    const [row] = await wedyImporter.parse(buf);
-    expect(row.isChild).toBe(true);
-    expect(row.age).toBe(8);
+    expect(r.isChild).toBe(true);
+    expect(r.age).toBe(8);
   });
 
-  it("ignora 'Idade desconhecida' (não-numérica) preenchendo age=null", async () => {
-    const buf = await buildWedyXlsx([
-      ["G", "Kid", "Sem resposta", "", "", "", "Criança", "Idade desconhecida", ""],
+  it("ignora 'Idade desconhecida' (não-numérica) preenchendo age=null", () => {
+    const [r] = wedyImporter.parseRecords([
+      row({ "Nome do convite": "G", "Nome completo do convidado": "Kid", "Status": "Sem resposta", "Faixa etária": "Criança", "Idade exata (caso for criança)": "Idade desconhecida" }),
     ]);
-    const [row] = await wedyImporter.parse(buf);
-    expect(row.age).toBeNull();
+    expect(r.age).toBeNull();
   });
 
-  it("rejeita idade fora do range 0-17", async () => {
-    const buf = await buildWedyXlsx([
-      ["G", "X", "Sem resposta", "", "", "", "Criança", "25", ""],
+  it("rejeita idade fora do range 0-17", () => {
+    const [r] = wedyImporter.parseRecords([
+      row({ "Nome do convite": "G", "Nome completo do convidado": "X", "Status": "Sem resposta", "Faixa etária": "Criança", "Idade exata (caso for criança)": "25" }),
     ]);
-    const [row] = await wedyImporter.parse(buf);
-    expect(row.age).toBeNull();
+    expect(r.age).toBeNull();
   });
 
-  it("rejeita PIN com formato inválido", async () => {
-    const buf = await buildWedyXlsx([
-      ["G", "X", "Sem resposta", "", "", "", "Adulto", "", "abc"],
-      ["G", "Y", "Sem resposta", "", "", "", "Adulto", "", "ABCDEFGHIJK"],
-      ["G", "Z", "Sem resposta", "", "", "", "Adulto", "", "1234"],
-      ["G", "W", "Sem resposta", "", "", "", "Adulto", "", "AB12"],
+  it("rejeita PIN com formato inválido", () => {
+    const rows = wedyImporter.parseRecords([
+      row({ "Nome do convite": "G", "Nome completo do convidado": "X", "Status": "Sem resposta", "Faixa etária": "Adulto", "Pin do convite": "abc" }),
+      row({ "Nome do convite": "G", "Nome completo do convidado": "Y", "Status": "Sem resposta", "Faixa etária": "Adulto", "Pin do convite": "ABCDEFGHIJK" }),
+      row({ "Nome do convite": "G", "Nome completo do convidado": "Z", "Status": "Sem resposta", "Faixa etária": "Adulto", "Pin do convite": "1234" }),
+      row({ "Nome do convite": "G", "Nome completo do convidado": "W", "Status": "Sem resposta", "Faixa etária": "Adulto", "Pin do convite": "AB12" }),
     ]);
-    const rows = await wedyImporter.parse(buf);
     expect(rows[0].pin).toBeNull();
     expect(rows[1].pin).toBeNull();
     expect(rows[2].pin).toBe("1234");
     expect(rows[3].pin).toBe("AB12");
   });
 
-  it("split e trim de tags, limita a 20", async () => {
+  it("split e trim de tags, limita a 20", () => {
     const many = Array.from({ length: 25 }, (_, i) => `t${i}`).join(", ");
-    const buf = await buildWedyXlsx([
-      ["G", "X", "Sem resposta", "", "", many, "Adulto", "", ""],
+    const [r] = wedyImporter.parseRecords([
+      row({ "Nome do convite": "G", "Nome completo do convidado": "X", "Status": "Sem resposta", "Faixa etária": "Adulto", "Tags": many }),
     ]);
-    const [row] = await wedyImporter.parse(buf);
-    expect(row.tags).toHaveLength(20);
-    expect(row.tags[0]).toBe("t0");
-    expect(row.tags[19]).toBe("t19");
+    expect(r.tags).toHaveLength(20);
+    expect(r.tags[0]).toBe("t0");
+    expect(r.tags[19]).toBe("t19");
   });
 
-  it("descarta linha sem nome", async () => {
-    const buf = await buildWedyXlsx([
-      ["G", "  ", "Sem resposta", "", "", "", "Adulto", "", ""],
-      ["G", "Ana", "Sem resposta", "", "", "", "Adulto", "", ""],
+  it("descarta linha sem nome", () => {
+    const rows = wedyImporter.parseRecords([
+      row({ "Nome do convite": "G", "Nome completo do convidado": "  ", "Status": "Sem resposta", "Faixa etária": "Adulto" }),
+      row({ "Nome do convite": "G", "Nome completo do convidado": "Ana", "Status": "Sem resposta", "Faixa etária": "Adulto" }),
     ]);
-    const rows = await wedyImporter.parse(buf);
     expect(rows.map((r) => r.name)).toEqual(["Ana"]);
   });
 
-  it("aplica limites de tamanho a name/groupName/phone/email", async () => {
-    const buf = await buildWedyXlsx([
-      [
-        "g".repeat(200),
-        "n".repeat(200),
-        "Sem resposta",
-        "p".repeat(100),
-        `${"e".repeat(200)}@x.com`,
-        "",
-        "Adulto",
-        "",
-        "",
-      ],
+  it("aplica limites de tamanho a name/groupName/phone/email", () => {
+    const [r] = wedyImporter.parseRecords([
+      row({
+        "Nome do convite": "g".repeat(200),
+        "Nome completo do convidado": "n".repeat(200),
+        "Status": "Sem resposta",
+        "Telefone": "p".repeat(100),
+        "E-mail": `${"e".repeat(200)}@x.com`,
+        "Faixa etária": "Adulto",
+      }),
     ]);
-    const [row] = await wedyImporter.parse(buf);
-    expect(row.name.length).toBe(160);
-    expect(row.groupName?.length).toBe(80);
-    expect(row.phone?.length).toBe(40);
-    expect(row.email?.length).toBe(160);
+    expect(r.name.length).toBe(160);
+    expect(r.groupName?.length).toBe(80);
+    expect(r.phone?.length).toBe(40);
+    expect(r.email?.length).toBe(160);
   });
 
-  it("preserva tags com nomes dos noivos (case original)", async () => {
-    const buf = await buildWedyXlsx([
-      ["G", "X", "Sem resposta", "", "", "Tayná, Guilherme", "Adulto", "", ""],
+  it("preserva tags com nomes dos noivos (case original)", () => {
+    const [r] = wedyImporter.parseRecords([
+      row({ "Nome do convite": "G", "Nome completo do convidado": "X", "Status": "Sem resposta", "Faixa etária": "Adulto", "Tags": "Tayná, Guilherme" }),
     ]);
-    const [row] = await wedyImporter.parse(buf);
-    expect(row.tags).toEqual(["Tayná", "Guilherme"]);
+    expect(r.tags).toEqual(["Tayná", "Guilherme"]);
+  });
+
+  it("indica que contatos pertencem ao grupo (não ao indivíduo)", () => {
+    expect(wedyImporter.contactsBelongToGroup).toBe(true);
   });
 });

@@ -299,7 +299,7 @@ export async function bulkImportGuests(
 }
 
 const RsvpPublicSchema = z.object({
-  token: z.string().min(1),
+  token: z.string().trim().min(1).max(64),
   status: z.enum(["CONFIRMED", "DECLINED", "MAYBE"]),
   plusOnesConfirmed: z.coerce.number().int().min(0).max(10).default(0),
   dietary: optStr(200),

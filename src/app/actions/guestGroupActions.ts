@@ -1,11 +1,13 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoEdit } from "@/lib/finance-access";
 import { notifyRsvpResponse } from "@/lib/notifications/rsvp";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -171,6 +173,11 @@ export async function publicRsvpRespondForGroup(input: {
   }>;
   notes?: string | null;
 }): Promise<ActionResult<{ groupName: string; count: number }>> {
+  const ip = getClientIp(await headers());
+  const rl = rateLimit(`rsvp:${ip}`, 10, 60_000);
+  if (!rl.ok) {
+    return { success: false, error: "Muitas tentativas. Tente novamente em alguns minutos." };
+  }
   const normalized = {
     token: input.token,
     notes: input.notes ?? null,
@@ -188,9 +195,10 @@ export async function publicRsvpRespondForGroup(input: {
 
   try {
     const group = await prisma.guestGroup.findFirst({
-      where: { rsvpToken: parsed.data.token },
+      where: { rsvpToken: parsed.data.token, deletedAt: null },
       include: {
         guests: {
+          where: { deletedAt: null },
           select: { id: true, plusOnesAllowed: true },
         },
       },
@@ -218,7 +226,7 @@ export async function publicRsvpRespondForGroup(input: {
         const plusMax = plusAllowedById.get(r.guestId) ?? 0;
         const plus = r.status === "CONFIRMED" ? Math.min(r.plusOnesConfirmed, plusMax) : 0;
         return prisma.guest.updateMany({
-          where: { id: r.guestId, groupId: group.id },
+          where: { id: r.guestId, groupId: group.id, deletedAt: null },
           data: {
             rsvpStatus: r.status,
             rsvpRespondedAt: now,

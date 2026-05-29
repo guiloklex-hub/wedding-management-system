@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Copy, CheckCircle2, Settings, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/toast";
 import { markGiftAsPixReceived } from "@/app/actions/giftActions";
@@ -27,6 +28,7 @@ export default function PixPanel({
   missingFields: string[];
   pixError: string | null;
 }) {
+  const t = useTranslations("dashboard.gifts");
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
@@ -36,8 +38,8 @@ export default function PixPanel({
   function copy() {
     if (!brCode) return;
     navigator.clipboard.writeText(brCode).then(
-      () => toast.success("Código copiado"),
-      () => toast.error("Erro", "Não foi possível copiar"),
+      () => toast.success(t("pix.toast.copied")),
+      () => toast.error(t("pix.toast.error"), t("pix.toast.copyFailed")),
     );
   }
 
@@ -46,10 +48,10 @@ export default function PixPanel({
     const res = await markGiftAsPixReceived(giftId, createAsset);
     setBusy(false);
     if (!res.success) {
-      toast.error("Erro", res.error);
+      toast.error(t("pix.toast.error"), res.error);
       return;
     }
-    toast.success("Pix marcado como recebido");
+    toast.success(t("pix.toast.marked"));
     startTransition(() => router.refresh());
   }
 
@@ -58,17 +60,17 @@ export default function PixPanel({
       <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5">
         <div className="mb-3 flex items-center gap-2 text-amber-200">
           <AlertTriangle className="h-4 w-4" />
-          <h2 className="text-sm font-semibold">Configuração Pix incompleta</h2>
+          <h2 className="text-sm font-semibold">{t("pix.incomplete.title")}</h2>
         </div>
         <p className="mb-3 text-sm text-zinc-300">
-          Para gerar o QR Code, configure: <strong>{missingFields.join(", ")}</strong>.
+          {t("pix.incomplete.intro")} <strong>{missingFields.join(", ")}</strong>.
         </p>
         <Link
           href="/dashboard/settings"
           className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500"
         >
           <Settings className="h-4 w-4" />
-          Ir para Ajustes
+          {t("pix.incomplete.goToSettings")}
         </Link>
       </div>
     );
@@ -77,7 +79,7 @@ export default function PixPanel({
   if (pixError) {
     return (
       <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-5 text-sm text-rose-200">
-        Erro ao gerar Pix: {pixError}
+        {t("pix.errorPrefix")} {pixError}
       </div>
     );
   }
@@ -88,7 +90,7 @@ export default function PixPanel({
         {qrDataUrl ? (
           <Image
             src={qrDataUrl}
-            alt="QR Code Pix"
+            alt={t("pix.qrAlt")}
             width={300}
             height={300}
             className="mx-auto rounded-lg bg-white p-2"
@@ -99,27 +101,27 @@ export default function PixPanel({
 
       <div className="space-y-3">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
-          <h2 className="text-sm font-semibold text-zinc-100">Resumo</h2>
+          <h2 className="text-sm font-semibold text-zinc-100">{t("pix.summary.title")}</h2>
           <dl className="mt-2 space-y-1 text-sm">
-            <Row label="Presente">{giverName ?? `#${giftId.slice(0, 6)}`}</Row>
-            <Row label="Valor">
-              {formattedAmount ?? <span className="text-zinc-500">sem valor (livre)</span>}
+            <Row label={t("pix.summary.gift")}>{giverName ?? `#${giftId.slice(0, 6)}`}</Row>
+            <Row label={t("pix.summary.value")}>
+              {formattedAmount ?? <span className="text-zinc-500">{t("pix.summary.freeValue")}</span>}
             </Row>
-            <Row label="Status Pix">
+            <Row label={t("pix.summary.status")}>
               {pixPaidAt ? (
                 <span className="inline-flex items-center gap-1 text-emerald-300">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Recebido em{" "}
+                  <CheckCircle2 className="h-3.5 w-3.5" /> {t("pix.summary.receivedOn")}{" "}
                   {new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(new Date(pixPaidAt))}
                 </span>
               ) : (
-                <span className="text-amber-300">Aguardando confirmação</span>
+                <span className="text-amber-300">{t("pix.summary.awaiting")}</span>
               )}
             </Row>
           </dl>
         </div>
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
-          <h2 className="mb-2 text-sm font-semibold text-zinc-100">Pix copia e cola</h2>
+          <h2 className="mb-2 text-sm font-semibold text-zinc-100">{t("pix.copyPaste.title")}</h2>
           <textarea
             readOnly
             value={brCode ?? ""}
@@ -131,16 +133,14 @@ export default function PixPanel({
             className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
           >
             <Copy className="h-3.5 w-3.5" />
-            Copiar código
+            {t("pix.copyPaste.copyButton")}
           </button>
         </div>
 
         {!pixPaidAt ? (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
-            <h2 className="mb-2 text-sm font-semibold text-zinc-100">Confirmar recebimento</h2>
-            <p className="mb-3 text-xs text-zinc-400">
-              Após verificar o pagamento na sua conta, marque como recebido.
-            </p>
+            <h2 className="mb-2 text-sm font-semibold text-zinc-100">{t("pix.confirm.title")}</h2>
+            <p className="mb-3 text-xs text-zinc-400">{t("pix.confirm.hint")}</p>
             <label className="mb-3 flex items-center gap-2 text-xs text-zinc-300">
               <input
                 type="checkbox"
@@ -148,7 +148,7 @@ export default function PixPanel({
                 onChange={(e) => setCreateAsset(e.target.checked)}
                 className="h-4 w-4 rounded border-zinc-700 bg-zinc-800"
               />
-              Adicionar valor ao caixa (Asset)
+              {t("pix.confirm.addToAsset")}
             </label>
             <button
               type="button"
@@ -157,7 +157,7 @@ export default function PixPanel({
               className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60"
             >
               <CheckCircle2 className="h-4 w-4" />
-              {busy ? "Salvando..." : "Marcar como recebido"}
+              {busy ? t("pix.confirm.saving") : t("pix.confirm.markReceived")}
             </button>
           </div>
         ) : null}

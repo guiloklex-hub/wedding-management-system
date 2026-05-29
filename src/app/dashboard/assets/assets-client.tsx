@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { createAsset, deleteAsset, updateAsset } from "@/app/actions/assetActions";
 import { useToast } from "@/components/toast";
@@ -15,6 +16,8 @@ type AssetRow = Asset & { goal: GoalRef | null };
 type Props = { assets: AssetRow[]; goals: GoalRef[] };
 
 export default function AssetsClient({ assets, goals }: Props) {
+  const t = useTranslations("dashboard.assets");
+  const tc = useTranslations("common");
   const toast = useToast();
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<AssetRow | null>(null);
@@ -30,10 +33,10 @@ export default function AssetsClient({ assets, goals }: Props) {
       try {
         const r = await createAsset(undefined, formData);
         if (r.success) {
-          toast.success("Aporte registrado");
+          toast.success(t("toast.created"));
           setCreateOpen(false);
         } else {
-          toast.error("Falha", r.error);
+          toast.error(t("toast.failTitle"), r.error);
         }
       } finally {
         setCreating(false);
@@ -47,10 +50,10 @@ export default function AssetsClient({ assets, goals }: Props) {
       try {
         const r = await updateAsset(undefined, formData);
         if (r.success) {
-          toast.success("Aporte atualizado");
+          toast.success(t("toast.updated"));
           setEditing(null);
         } else {
-          toast.error("Falha", r.error);
+          toast.error(t("toast.failTitle"), r.error);
         }
       } finally {
         setUpdating(false);
@@ -77,10 +80,10 @@ export default function AssetsClient({ assets, goals }: Props) {
     startTransition(async () => {
       const r = await deleteAsset(target.id);
       if (r.success) {
-        toast.success("Aporte excluído");
+        toast.success(t("toast.deleted"));
         setDeleting(null);
       } else {
-        toast.error("Falha", r.error);
+        toast.error(t("toast.failTitle"), r.error);
       }
     });
   }
@@ -98,12 +101,12 @@ export default function AssetsClient({ assets, goals }: Props) {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              placeholder="Buscar aporte..."
+              placeholder={t("list.searchPlaceholder")}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-emerald-500/50"
             />
           </div>
           <span className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
-            Total: {formatCurrency(total)}
+            {t("list.total", { value: formatCurrency(total) })}
           </span>
         </div>
         <button
@@ -111,7 +114,7 @@ export default function AssetsClient({ assets, goals }: Props) {
           className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-emerald-500"
         >
           <Plus className="h-4 w-4" />
-          <span>Novo Aporte</span>
+          <span>{t("list.new")}</span>
         </button>
       </div>
 
@@ -120,17 +123,17 @@ export default function AssetsClient({ assets, goals }: Props) {
           <table className="w-full text-left text-sm text-zinc-400">
             <thead className="border-b border-zinc-800 bg-zinc-900/80 text-xs uppercase text-zinc-500">
               <tr>
-                <th className="px-6 py-4 font-medium">Data</th>
-                <th className="px-6 py-4 font-medium">Origem</th>
-                <th className="px-6 py-4 font-medium">Valor</th>
-                <th className="px-6 py-4 text-right font-medium">Ações</th>
+                <th className="px-6 py-4 font-medium">{t("table.date")}</th>
+                <th className="px-6 py-4 font-medium">{t("table.source")}</th>
+                <th className="px-6 py-4 font-medium">{t("table.amount")}</th>
+                <th className="px-6 py-4 text-right font-medium">{t("table.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-8 text-center text-zinc-500">
-                    {assets.length === 0 ? "Nenhum aporte registrado." : "Nenhum resultado para o filtro."}
+                    {assets.length === 0 ? t("list.empty") : t("list.noResults")}
                   </td>
                 </tr>
               ) : (
@@ -151,7 +154,7 @@ export default function AssetsClient({ assets, goals }: Props) {
                           type="button"
                           onClick={() => setEditing(asset)}
                           className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
-                          aria-label="Editar"
+                          aria-label={tc("actions.edit")}
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
@@ -159,7 +162,7 @@ export default function AssetsClient({ assets, goals }: Props) {
                           type="button"
                           onClick={() => setDeleting(asset)}
                           className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
-                          aria-label="Excluir"
+                          aria-label={tc("actions.delete")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -198,9 +201,9 @@ export default function AssetsClient({ assets, goals }: Props) {
 
       <ConfirmDialog
         open={!!deleting}
-        title="Excluir aporte?"
+        title={t("delete.title")}
         description={deleting ? `${deleting.title} · ${formatCurrency(deleting.amount)}` : undefined}
-        confirmLabel="Excluir"
+        confirmLabel={tc("actions.delete")}
         tone="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleting(null)}
@@ -224,17 +227,19 @@ function AssetFormModal({
   formAction: (formData: FormData) => void;
   onClose: () => void;
 }) {
+  const t = useTranslations("dashboard.assets");
+  const tc = useTranslations("common");
   const todayIso = toIsoDate(new Date());
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
       <div className="my-4 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
         <form action={formAction} className="space-y-4 p-6">
-          <h2 className="text-xl font-bold text-white">{mode === "create" ? "Novo aporte" : "Editar aporte"}</h2>
+          <h2 className="text-xl font-bold text-white">{mode === "create" ? t("form.titleCreate") : t("form.titleEdit")}</h2>
 
           {asset ? <input type="hidden" name="id" value={asset.id} /> : null}
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Título / Origem</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.titleLabel")}</label>
             <input
               type="text"
               name="title"
@@ -242,13 +247,13 @@ function AssetFormModal({
               defaultValue={asset?.title ?? ""}
               maxLength={120}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-emerald-500/50"
-              placeholder="Ex: Salário de Março"
+              placeholder={t("form.titlePlaceholder")}
             />
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Valor (R$)</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.amountLabel")}</label>
               <input
                 type="number"
                 step="0.01"
@@ -259,7 +264,7 @@ function AssetFormModal({
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Data</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.dateLabel")}</label>
               <input
                 type="date"
                 name="date"
@@ -271,13 +276,13 @@ function AssetFormModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Vincular a uma meta (opcional)</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.goalLabel")}</label>
             <select
               name="goalId"
               defaultValue={asset?.goalId ?? ""}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-emerald-500/50"
             >
-              <option value="">— sem meta —</option>
+              <option value="">{t("form.goalNone")}</option>
               {goals.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.name}
@@ -287,7 +292,7 @@ function AssetFormModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Notas</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.notesLabel")}</label>
             <textarea
               name="notes"
               rows={2}
@@ -303,14 +308,14 @@ function AssetFormModal({
               onClick={onClose}
               className="flex-1 rounded-xl bg-zinc-800 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
             >
-              Cancelar
+              {tc("actions.cancel")}
             </button>
             <button
               type="submit"
               disabled={isBusy}
               className="flex flex-1 items-center justify-center rounded-xl bg-emerald-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
             >
-              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : tc("actions.save")}
             </button>
           </div>
         </form>

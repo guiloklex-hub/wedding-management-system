@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { audit } from "@/lib/audit";
 import {
@@ -10,6 +11,7 @@ import {
   getWhatsAppStatus,
   sendWhatsApp,
 } from "@/lib/notifications/whatsapp";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 export type WhatsAppStatusPayload = {
@@ -26,11 +28,13 @@ async function requireAdmin(): Promise<
   | { ok: true; userId: string }
   | { ok: false; error: string }
 > {
+  const t = await getTranslations("actions.whatsapp");
+  const tc = await getTranslations("actions.common");
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!userId) return { ok: false, error: "Não autorizado" };
-  if (role !== "ADMIN") return { ok: false, error: "Apenas administradores" };
+  if (!userId) return { ok: false, error: tc("unauthorized") };
+  if (role !== "ADMIN") return { ok: false, error: t("adminOnly") };
   return { ok: true, userId };
 }
 
@@ -101,6 +105,7 @@ export async function sendWhatsAppTest(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.whatsapp");
   const guard = await requireAdmin();
   if (!guard.ok) return { success: false, error: guard.error };
 
@@ -108,14 +113,11 @@ export async function sendWhatsAppTest(
   if (!parsed.success) {
     return {
       success: false,
-      error: parsed.error.issues[0]?.message ?? "Telefone inválido",
+      error: zodErrorMessage(parsed.error, await getTranslations("common")),
     };
   }
 
-  const result = await sendWhatsApp(
-    parsed.data.phone,
-    "*Wedding Finance*\n\nMensagem de teste enviada com sucesso. Sua integração com WhatsApp está funcionando. ✅",
-  );
+  const result = await sendWhatsApp(parsed.data.phone, t("testMessageBody"));
 
   if (!result.ok) return { success: false, error: result.error };
   return { success: true };

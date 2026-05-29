@@ -2,9 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { updateEventConfig } from "@/lib/event-config";
 import { audit } from "@/lib/audit";
 import { denyIfNoManage } from "@/lib/finance-access";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -36,12 +38,13 @@ export async function updateSettings(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.settings");
   const denied = await denyIfNoManage();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = SettingsSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   try {
@@ -59,7 +62,7 @@ export async function updateSettings(
     return { success: true };
   } catch (err) {
     console.error("[updateSettings]", err);
-    return { success: false, error: "Erro ao salvar configurações" };
+    return { success: false, error: t("errorSaving") };
   }
 }
 
@@ -67,12 +70,13 @@ export async function updatePixSettings(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.settings");
   const denied = await denyIfNoManage();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = PixSettingsSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     await updateEventConfig({
@@ -87,6 +91,6 @@ export async function updatePixSettings(
     return { success: true };
   } catch (err) {
     console.error("[updatePixSettings]", err);
-    return { success: false, error: "Erro ao salvar configurações Pix" };
+    return { success: false, error: t("errorSavingPix") };
   }
 }

@@ -2,9 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { denyIfNoEdit } from "@/lib/finance-access";
 import { money } from "@/lib/validation";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -38,11 +40,12 @@ export async function createTrousseauItem(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.trousseau");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const parsed = CreateSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     await prisma.trousseauItem.create({
@@ -62,7 +65,7 @@ export async function createTrousseauItem(
     return { success: true };
   } catch (err) {
     console.error("[createTrousseauItem]", err);
-    return { success: false, error: "Erro ao adicionar" };
+    return { success: false, error: t("errorAdding") };
   }
 }
 
@@ -70,11 +73,12 @@ export async function updateTrousseauItem(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.trousseau");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const parsed = UpdateSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const result = await prisma.trousseauItem.updateMany({
@@ -91,12 +95,12 @@ export async function updateTrousseauItem(
         notes: parsed.data.notes,
       },
     });
-    if (result.count === 0) return { success: false, error: "Item não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     revalidatePath("/dashboard/trousseau");
     return { success: true };
   } catch (err) {
     console.error("[updateTrousseauItem]", err);
-    return { success: false, error: "Erro ao atualizar" };
+    return { success: false, error: t("errorUpdating") };
   }
 }
 
@@ -104,6 +108,7 @@ export async function setTrousseauStatus(
   id: string,
   status: "TO_BUY" | "BOUGHT" | "GIFTED",
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.trousseau");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
@@ -111,16 +116,17 @@ export async function setTrousseauStatus(
       where: { id, deletedAt: null },
       data: { status },
     });
-    if (result.count === 0) return { success: false, error: "Item não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     revalidatePath("/dashboard/trousseau");
     return { success: true };
   } catch (err) {
     console.error("[setTrousseauStatus]", err);
-    return { success: false, error: "Erro ao atualizar status" };
+    return { success: false, error: t("errorUpdatingStatus") };
   }
 }
 
 export async function deleteTrousseauItem(id: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.trousseau");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
@@ -128,11 +134,11 @@ export async function deleteTrousseauItem(id: string): Promise<ActionResult> {
       where: { id, deletedAt: null },
       data: { deletedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Item não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     revalidatePath("/dashboard/trousseau");
     return { success: true };
   } catch (err) {
     console.error("[deleteTrousseauItem]", err);
-    return { success: false, error: "Erro ao excluir" };
+    return { success: false, error: t("errorDeleting") };
   }
 }

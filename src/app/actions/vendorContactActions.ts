@@ -2,9 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoEdit } from "@/lib/finance-access";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 const PhoneSchema = z
@@ -49,12 +51,13 @@ export async function createVendorContact(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.vendorContact");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = ContactCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const created = await prisma.$transaction(async (tx) => {
@@ -77,7 +80,7 @@ export async function createVendorContact(
     return { success: true };
   } catch (err) {
     console.error("[createVendorContact]", err);
-    return { success: false, error: "Erro ao adicionar contato" };
+    return { success: false, error: t("errorCreate") };
   }
 }
 
@@ -85,12 +88,13 @@ export async function updateVendorContact(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.vendorContact");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = ContactUpdateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     await prisma.$transaction(async (tx) => {
@@ -112,11 +116,12 @@ export async function updateVendorContact(
     return { success: true };
   } catch (err) {
     console.error("[updateVendorContact]", err);
-    return { success: false, error: "Erro ao atualizar contato" };
+    return { success: false, error: t("errorUpdate") };
   }
 }
 
 export async function deleteVendorContact(contactId: string, vendorId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.vendorContact");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
@@ -124,11 +129,11 @@ export async function deleteVendorContact(contactId: string, vendorId: string): 
       where: { id: contactId, vendorId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Contato não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     revalidatePath(`/dashboard/vendors/${vendorId}`);
     return { success: true };
   } catch (err) {
     console.error("[deleteVendorContact]", err);
-    return { success: false, error: "Erro ao excluir contato" };
+    return { success: false, error: t("errorDelete") };
   }
 }

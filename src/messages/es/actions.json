@@ -1,4 +1,31 @@
 {
+  "asset": {
+    "notFound": "Aporte no encontrado",
+    "errorCreate": "Error al crear el aporte",
+    "errorUpdate": "Error al actualizar el aporte",
+    "errorDelete": "Error al eliminar el aporte"
+  },
+  "attachment": {
+    "notFound": "Adjunto no encontrado",
+    "vendorNotFound": "Proveedor no encontrado",
+    "contractNotFound": "Contrato no encontrado",
+    "venueNotFound": "Lugar no encontrado",
+    "noPermission": "Sin permiso",
+    "noPermissionEdit": "Sin permiso para editar",
+    "noPermissionKind": "Sin permiso para este tipo de adjunto",
+    "noPermissionView": "Sin permiso para este adjunto",
+    "onlyAdminCoupleRemoveContract": "Solo el administrador, el novio o la novia pueden eliminar contratos.",
+    "rateLimitUser": "Demasiadas subidas seguidas. Inténtalo de nuevo en 1 minuto.",
+    "rateLimitIp": "Límite de subidas superado.",
+    "invalidTarget": "Destino inválido",
+    "fileRequired": "Archivo obligatorio",
+    "errorUpload": "Error al subir el archivo",
+    "errorDelete": "Error al eliminar el adjunto"
+  },
+  "auth": {
+    "invalidCredentials": "Credenciales inválidas.",
+    "loginGenericError": "Algo salió mal al iniciar sesión."
+  },
   "common": {
     "unauthorized": "No autorizado",
     "forbidden": "Acceso denegado",
@@ -6,9 +33,96 @@
     "notFound": "No encontrado",
     "generic": "Algo salió mal. Inténtalo de nuevo."
   },
-  "auth": {
-    "invalidCredentials": "Credenciales inválidas.",
-    "loginGenericError": "Algo salió mal al iniciar sesión."
+  "contract": {
+    "notFound": "Contrato no encontrado",
+    "noPermissionSign": "Sin permiso para firmar",
+    "noPermissionUpload": "Sin permiso para subir el contrato",
+    "rateLimitUser": "Demasiadas subidas seguidas. Inténtalo de nuevo en 1 minuto.",
+    "rateLimitIp": "Límite de subidas superado.",
+    "invalidTarget": "Destino inválido",
+    "fileRequired": "Archivo obligatorio",
+    "errorCreate": "Error al crear el contrato",
+    "errorUpdate": "Error al actualizar el contrato",
+    "errorDelete": "Error al eliminar el contrato",
+    "errorSign": "Error al registrar la firma",
+    "errorUpload": "Error al subir el contrato"
+  },
+  "gift": {
+    "notFound": "Regalo no encontrado",
+    "errorCreating": "Error al registrar el regalo",
+    "errorUpdating": "Error al actualizar el regalo",
+    "errorUpdatingShort": "Error al actualizar",
+    "errorDeleting": "Error al eliminar el regalo",
+    "errorMarkingPix": "Error al marcar Pix como recibido",
+    "pixAlreadyReceived": "Pix ya marcado como recibido",
+    "assetTitle": "Pix de {giver}{honeymoon}",
+    "assetGuestFallback": "invitado",
+    "assetHoneymoonSuffix": " (aporte luna de miel)",
+    "assetNotes": "Generado a partir del regalo #{id}"
+  },
+  "goal": {
+    "notFound": "Meta no encontrada",
+    "errorCreate": "Error al crear la meta",
+    "errorUpdate": "Error al actualizar la meta",
+    "errorDelete": "Error al eliminar la meta"
+  },
+  "guest": {
+    "errorCreating": "Error al crear el invitado",
+    "notFound": "Invitado no encontrado",
+    "errorUpdating": "Error al actualizar el invitado",
+    "errorDeleting": "Error al eliminar el invitado",
+    "errorCheckin": "Error al registrar la asistencia",
+    "noLinesFound": "No se encontraron líneas",
+    "errorImporting": "Error al importar",
+    "tooManyAttempts": "Demasiados intentos. Inténtalo de nuevo en unos minutos.",
+    "inviteNotFound": "Invitación no encontrada",
+    "linkExpired": "Enlace caducado. Solicita una nueva invitación.",
+    "errorRsvp": "Error al registrar la respuesta",
+    "tooManyUploads": "Demasiadas subidas seguidas. Espera 1 minuto.",
+    "uploadLimitExceeded": "Límite de subidas superado.",
+    "fileRequired": "Archivo obligatorio",
+    "unknownSource": "Origen desconocido",
+    "unsupportedFormat": "Formato no compatible. Usa .xlsx (Wedy) o .csv (exportación del propio sistema).",
+    "unrecognizedFormat": "No se pudo identificar el formato. Compatibles: Wedy (.xlsx) o CSV exportado por el propio sistema.",
+    "noValidRows": "No se encontró ninguna fila válida en la planilla.",
+    "rowLimit": "Límite de {max} filas por importación.",
+    "errorProcessingFile": "Error al procesar el archivo",
+    "importSessionExpired": "La sesión de importación caducó. Reenvía el archivo.",
+    "errorCommittingImport": "Error al guardar la importación"
+  },
+  "guestGroup": {
+    "errorCreating": "Error al crear el grupo",
+    "notFound": "Grupo no encontrado",
+    "errorUpdating": "Error al actualizar el grupo",
+    "invalidId": "ID no válido",
+    "errorDeleting": "Error al eliminar el grupo",
+    "errorUpdatingMembers": "Error al actualizar los miembros",
+    "tooManyAttempts": "Demasiados intentos. Inténtalo de nuevo en unos minutos.",
+    "groupInviteNotFound": "Invitación de grupo no encontrada",
+    "linkExpired": "Enlace caducado. Solicita una nueva invitación.",
+    "guestOutsideGroup": "Respuesta no válida (invitado fuera del grupo)",
+    "errorRsvp": "Error al registrar las respuestas"
+  },
+  "honeymoon": {
+    "itemNotFound": "Ítem no encontrado",
+    "errorSaving": "Error al guardar",
+    "errorAdding": "Error al agregar",
+    "errorUpdating": "Error al actualizar",
+    "errorDeleting": "Error al eliminar"
+  },
+  "income": {
+    "notFound": "Ingreso no encontrado",
+    "errorCreate": "Error al crear el ingreso",
+    "errorUpdate": "Error al actualizar el ingreso",
+    "errorMarkReceived": "Error al marcar como recibido",
+    "errorDelete": "Error al eliminar el ingreso"
+  },
+  "onboarding": {
+    "coupleNameRequired": "Ingresa el nombre de la pareja",
+    "invalidDate": "Fecha inválida",
+    "errorCouple": "Error al guardar datos de la pareja",
+    "errorBudget": "Error al guardar el presupuesto",
+    "errorFinish": "Error al finalizar la incorporación"
   },
   "passwordReset": {
     "invalidEmail": "Correo inválido",
@@ -19,12 +133,18 @@
     "userNotFoundOrInactive": "Usuario no encontrado o inactivo",
     "errorResetting": "Error al restablecer la contraseña"
   },
-  "onboarding": {
-    "coupleNameRequired": "Ingresa el nombre de la pareja",
-    "invalidDate": "Fecha inválida",
-    "errorCouple": "Error al guardar datos de la pareja",
-    "errorBudget": "Error al guardar el presupuesto",
-    "errorFinish": "Error al finalizar la incorporación"
+  "payment": {
+    "vendorNotFound": "Proveedor no encontrado",
+    "notFound": "Pago no encontrado",
+    "notFoundOrPaid": "Pago no encontrado o ya pagado",
+    "cannotUndo": "No se puede revertir este pago",
+    "errorCreate": "Error al crear el pago",
+    "errorUpdate": "Error al actualizar el pago",
+    "errorMarkPaid": "Error al saldar el pago",
+    "errorUndo": "Error al revertir el pago",
+    "errorDelete": "Error al eliminar el pago",
+    "errorSplit": "Error al crear los pagos divididos",
+    "errorInstallments": "Error al generar las cuotas"
   },
   "profile": {
     "invalidLocale": "Idioma inválido",
@@ -34,5 +154,109 @@
     "wrongPassword": "La contraseña actual es incorrecta",
     "emailTaken": "Ya existe un usuario con este correo",
     "emailUpdated": "Correo actualizado. Úsalo en tu próximo inicio de sesión."
+  },
+  "seatingTable": {
+    "errorCreate": "Error al crear la mesa",
+    "tableNotFound": "Mesa no encontrada",
+    "errorUpdate": "Error al actualizar la mesa",
+    "invalidId": "ID inválido",
+    "errorDelete": "Error al eliminar la mesa",
+    "invalidOrder": "Orden inválido",
+    "errorReorder": "Error al reordenar las mesas",
+    "invalidCoords": "Coordenadas inválidas",
+    "errorMove": "Error al mover la mesa",
+    "invalidGuestId": "ID de invitado inválido",
+    "invalidTableId": "ID de mesa inválido",
+    "guestNotFound": "Invitado no encontrado",
+    "tableFull": "La mesa \"{name}\" no tiene asientos suficientes (capacidad {capacity}, ocupados {used}, necesario {needed})",
+    "errorAssign": "Error al asignar al invitado"
+  },
+  "security": {
+    "errorGenerating": "Error al generar la configuración 2FA",
+    "invalidCode": "Código inválido",
+    "invalidTotp": "Código TOTP inválido",
+    "errorEnabling": "Error al activar 2FA",
+    "codeRequired": "Código obligatorio",
+    "notActive": "2FA no está activo",
+    "errorDisabling": "Error al desactivar 2FA"
+  },
+  "settings": {
+    "errorSaving": "Error al guardar la configuración",
+    "errorSavingPix": "Error al guardar la configuración de Pix"
+  },
+  "task": {
+    "notFound": "Tarea no encontrada",
+    "errorCreate": "Error al crear la tarea",
+    "errorUpdate": "Error al actualizar la tarea",
+    "errorStatus": "Error al actualizar el estado",
+    "errorDelete": "Error al eliminar la tarea",
+    "errorTemplates": "Error al cargar la plantilla",
+    "eventDateRequired": "Configura la fecha del evento en Ajustes para usar las plantillas."
+  },
+  "trousseau": {
+    "notFound": "Artículo no encontrado",
+    "errorAdding": "Error al añadir",
+    "errorUpdating": "Error al actualizar",
+    "errorUpdatingStatus": "Error al actualizar el estado",
+    "errorDeleting": "Error al eliminar"
+  },
+  "user": {
+    "noPermission": "Sin permiso",
+    "invalidSession": "Sesión inválida",
+    "emailTaken": "Ya existe un usuario con este correo",
+    "passwordTooShort": "La contraseña debe tener al menos {min} caracteres",
+    "passwordTooLong": "Contraseña demasiado larga",
+    "errorCreating": "Error al crear el usuario",
+    "notFound": "Usuario no encontrado",
+    "cannotChangeOwnRole": "No puedes cambiar tu propio rol",
+    "cannotDeactivateSelf": "No puedes desactivarte a ti mismo",
+    "keepOneAdmin": "Mantén al menos un administrador activo",
+    "errorUpdating": "Error al actualizar el usuario",
+    "errorResettingPassword": "Error al restablecer la contraseña",
+    "invalidId": "ID inválido",
+    "errorResetting2FA": "Error al restablecer 2FA",
+    "cannotArchiveSelf": "No puedes archivarte a ti mismo",
+    "errorArchiving": "Error al archivar el usuario",
+    "errorRestoring": "Error al restaurar el usuario",
+    "newPasswordMustDiffer": "La nueva contraseña debe ser diferente de la actual",
+    "wrongCurrentPassword": "La contraseña actual es incorrecta",
+    "errorChangingPassword": "Error al cambiar la contraseña",
+    "errorUpdatingProfile": "Error al actualizar el perfil",
+    "securityPolicyAdminOnly": "Solo los administradores pueden cambiar la política de seguridad",
+    "errorSavingSecurityPolicy": "Error al guardar la política de seguridad"
+  },
+  "vendor": {
+    "errorCreate": "Error al crear el proveedor",
+    "errorUpdate": "Error al actualizar el proveedor",
+    "errorStatus": "Error al actualizar el estado",
+    "errorDelete": "Error al eliminar el proveedor"
+  },
+  "vendorContact": {
+    "notFound": "Contacto no encontrado",
+    "errorCreate": "Error al añadir el contacto",
+    "errorUpdate": "Error al actualizar el contacto",
+    "errorDelete": "Error al eliminar el contacto"
+  },
+  "vendorNote": {
+    "notFound": "Nota no encontrada",
+    "errorCreate": "Error al añadir la nota",
+    "errorDelete": "Error al eliminar la nota"
+  },
+  "venue": {
+    "errorCreate": "Error al crear el lugar",
+    "notFound": "Lugar no encontrado",
+    "errorUpdate": "Error al actualizar el lugar",
+    "errorDelete": "Error al eliminar el lugar",
+    "errorAddItem": "Error al agregar el elemento",
+    "errorUpdateItem": "Error al actualizar el elemento",
+    "itemNotFound": "Elemento no encontrado",
+    "errorDeleteItem": "Error al eliminar el elemento"
+  },
+  "weddingDay": {
+    "errorSaving": "Error al guardar"
+  },
+  "whatsapp": {
+    "adminOnly": "Solo administradores",
+    "testMessageBody": "*Wedding Finance*\n\nMensaje de prueba enviado con éxito. Tu integración con WhatsApp está funcionando. ✅"
   }
 }

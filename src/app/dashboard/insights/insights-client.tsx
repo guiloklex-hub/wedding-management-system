@@ -13,6 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useTranslations } from "next-intl";
 import { AlertTriangle, TrendingDown, TrendingUp } from "lucide-react";
 import { formatCurrency, formatDateBR } from "@/lib/format";
 import type {
@@ -56,6 +57,7 @@ export default function InsightsClient({
   burndown,
   waterfall,
 }: Props) {
+  const t = useTranslations("dashboard.insights");
   return (
     <div className="space-y-6">
       <HealthCard health={health} />
@@ -70,8 +72,8 @@ export default function InsightsClient({
         className="scroll-mt-24 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-100">Curva S — Previsto vs Realizado</h2>
-          <span className="text-xs text-zinc-500">Banda = contingência configurada</span>
+          <h2 className="text-lg font-semibold text-zinc-100">{t("sCurve.title")}</h2>
+          <span className="text-xs text-zinc-500">{t("sCurve.hint")}</span>
         </div>
         <SCurve data={sCurve} valueFormatter={(n) => formatCurrency(n)} />
       </section>
@@ -81,8 +83,8 @@ export default function InsightsClient({
         className="scroll-mt-24 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-100">Burndown de Tarefas</h2>
-          <span className="text-xs text-zinc-500">Ideal vs real até a data do evento</span>
+          <h2 className="text-lg font-semibold text-zinc-100">{t("burndown.title")}</h2>
+          <span className="text-xs text-zinc-500">{t("burndown.hint")}</span>
         </div>
         <Burndown data={burndown} />
       </section>
@@ -94,8 +96,8 @@ export default function InsightsClient({
         className="scroll-mt-24 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-100">Variação por Categoria</h2>
-          <span className="text-xs text-zinc-500">Verde = poupou · Rosa = estourou</span>
+          <h2 className="text-lg font-semibold text-zinc-100">{t("waterfall.title")}</h2>
+          <span className="text-xs text-zinc-500">{t("waterfall.hint")}</span>
         </div>
         <Waterfall data={waterfall} valueFormatter={(n) => formatCurrency(n)} />
       </section>
@@ -108,6 +110,7 @@ export default function InsightsClient({
 }
 
 function HealthCard({ health }: { health: HealthScoreResult }) {
+  const t = useTranslations("dashboard.insights");
   const tone =
     health.score >= 75
       ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-200"
@@ -121,14 +124,14 @@ function HealthCard({ health }: { health: HealthScoreResult }) {
         <div className="flex items-center gap-4">
           <ScoreGauge score={health.score} />
           <div>
-            <p className="text-xs uppercase tracking-wider opacity-70">Health Score</p>
+            <p className="text-xs uppercase tracking-wider opacity-70">{t("health.label")}</p>
             <p className="text-3xl font-bold">{health.score}/100</p>
             <p className="mt-1 text-xs opacity-70">
               {health.score >= 75
-                ? "Projeto saudável."
+                ? t("health.statusGood")
                 : health.score >= 50
-                  ? "Atenção em alguns pontos."
-                  : "Precisa de ajustes urgentes."}
+                  ? t("health.statusWarn")
+                  : t("health.statusBad")}
             </p>
           </div>
         </div>
@@ -190,10 +193,11 @@ function CashflowProjection({
   cashflow: MonthlyPoint[];
   worstBalance: number;
 }) {
+  const t = useTranslations("dashboard.insights");
   return (
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-zinc-100">Fluxo de caixa projetado</h3>
+        <h3 className="text-lg font-semibold text-zinc-100">{t("cashflow.title")}</h3>
         <span
           className={`rounded-full border px-2 py-0.5 text-xs ${
             worstBalance >= 0
@@ -201,16 +205,13 @@ function CashflowProjection({
               : "border-rose-500/30 bg-rose-500/10 text-rose-300"
           }`}
         >
-          Pior saldo: {formatCurrency(worstBalance)}
+          {t("cashflow.worstBalance", { value: formatCurrency(worstBalance) })}
         </span>
       </div>
-      <p className="mt-1 text-xs text-zinc-500">
-        Saldo cumulativo até o evento, considerando aportes existentes + receitas previstas −
-        pagamentos pendentes.
-      </p>
+      <p className="mt-1 text-xs text-zinc-500">{t("cashflow.description")}</p>
       <div className="mt-4 h-72 w-full">
         {cashflow.length === 0 ? (
-          <p className="py-10 text-center text-sm text-zinc-500">Sem dados ainda.</p>
+          <p className="py-10 text-center text-sm text-zinc-500">{t("noData")}</p>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={cashflow}>
@@ -234,7 +235,10 @@ function CashflowProjection({
                   borderRadius: 12,
                   color: "#fff",
                 }}
-                formatter={(value, name) => [formatCurrency(Number(value)), labelForKey(String(name))]}
+                formatter={(value, name) => [
+                  formatCurrency(Number(value)),
+                  labelForKey(String(name), t),
+                ]}
               />
               <Area
                 type="monotone"
@@ -252,6 +256,7 @@ function CashflowProjection({
 }
 
 function WaterfallChart({ cashflow }: { cashflow: MonthlyPoint[] }) {
+  const t = useTranslations("dashboard.insights");
   const data = cashflow.map((c) => ({
     monthLabel: c.monthLabel,
     income: c.income,
@@ -262,13 +267,11 @@ function WaterfallChart({ cashflow }: { cashflow: MonthlyPoint[] }) {
 
   return (
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-      <h3 className="text-lg font-semibold text-zinc-100">Entradas e saídas por mês</h3>
-      <p className="mt-1 text-xs text-zinc-500">
-        Barras verdes = receitas. Barras vermelhas = pagamentos. Zona vermelha de fundo = saldo negativo projetado.
-      </p>
+      <h3 className="text-lg font-semibold text-zinc-100">{t("monthlyFlow.title")}</h3>
+      <p className="mt-1 text-xs text-zinc-500">{t("monthlyFlow.description")}</p>
       <div className="mt-4 h-72 w-full">
         {data.length === 0 ? (
-          <p className="py-10 text-center text-sm text-zinc-500">Sem dados ainda.</p>
+          <p className="py-10 text-center text-sm text-zinc-500">{t("noData")}</p>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data}>
@@ -286,7 +289,10 @@ function WaterfallChart({ cashflow }: { cashflow: MonthlyPoint[] }) {
                   borderRadius: 12,
                   color: "#fff",
                 }}
-                formatter={(value, name) => [formatCurrency(Math.abs(Number(value))), labelForKey(String(name))]}
+                formatter={(value, name) => [
+                  formatCurrency(Math.abs(Number(value))),
+                  labelForKey(String(name), t),
+                ]}
               />
               <Bar dataKey="income" stackId="flow" fill="#10b981" radius={[4, 4, 0, 0]}>
                 {data.map((_, i) => (
@@ -315,6 +321,7 @@ function WhatIfSimulator({
   cashflow: MonthlyPoint[];
   eventDate: Date;
 }) {
+  const t = useTranslations("dashboard.insights");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
 
@@ -344,33 +351,41 @@ function WhatIfSimulator({
 
   return (
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-      <h3 className="text-lg font-semibold text-zinc-100">Posso fechar esse contrato agora?</h3>
+      <h3 className="text-lg font-semibold text-zinc-100">{t("whatIf.title")}</h3>
       <p className="mt-1 text-xs text-zinc-500">
-        Simule adicionar um pagamento futuro e veja o impacto no fluxo de caixa até{" "}
-        {formatDateBR(eventDate)}.
+        {t("whatIf.description", { date: formatDateBR(eventDate) })}
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <Input label="Valor (R$)" type="number" step="0.01" value={amount} onChange={setAmount} />
-        <Input label="Data prevista" type="date" value={date} onChange={setDate} />
+        <Input
+          label={t("whatIf.amountLabel")}
+          type="number"
+          step="0.01"
+          value={amount}
+          onChange={setAmount}
+        />
+        <Input label={t("whatIf.dateLabel")} type="date" value={date} onChange={setDate} />
         <div className="flex items-end">
           {result ? (
             <ResultBadge tone={result.lowestAfter >= 0 ? "ok" : "bad"} />
           ) : (
-            <span className="text-xs text-zinc-500">Preencha valor e data</span>
+            <span className="text-xs text-zinc-500">{t("whatIf.fillPrompt")}</span>
           )}
         </div>
       </div>
 
       {result ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <Stat label={`Saldo em ${result.monthLabel ?? "—"}`} value={formatCurrency(result.postBalance)} />
           <Stat
-            label="Pior saldo até o evento"
+            label={t("whatIf.balanceAt", { month: result.monthLabel ?? "—" })}
+            value={formatCurrency(result.postBalance)}
+          />
+          <Stat
+            label={t("whatIf.worstBalance")}
             value={formatCurrency(result.lowestAfter)}
             accent={result.lowestAfter >= 0 ? "emerald" : "rose"}
           />
           <Stat
-            label="Saldo final no evento"
+            label={t("whatIf.finalBalance")}
             value={formatCurrency(result.finalAfter)}
             accent={result.finalAfter >= 0 ? "emerald" : "rose"}
           />
@@ -381,30 +396,30 @@ function WhatIfSimulator({
 }
 
 function ResultBadge({ tone }: { tone: "ok" | "bad" }) {
+  const t = useTranslations("dashboard.insights");
   if (tone === "ok")
     return (
       <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
-        <TrendingUp className="h-3 w-3" /> Pode fechar
+        <TrendingUp className="h-3 w-3" /> {t("whatIf.canAfford")}
       </span>
     );
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-xs text-rose-300">
-      <TrendingDown className="h-3 w-3" /> Estoura o caixa
+      <TrendingDown className="h-3 w-3" /> {t("whatIf.exceedsCash")}
     </span>
   );
 }
 
 function CreepCard({ items }: { items: CategoryCreep[] }) {
+  const t = useTranslations("dashboard.insights");
   if (items.length === 0) return null;
   const positives = items.filter((i) => i.delta > 0);
   return (
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-      <h3 className="text-lg font-semibold text-zinc-100">Variação por categoria</h3>
-      <p className="mt-1 text-xs text-zinc-500">
-        Compara estimado vs contratado em cada categoria. Itens com aumento &gt; 10% precisam de atenção.
-      </p>
+      <h3 className="text-lg font-semibold text-zinc-100">{t("creep.title")}</h3>
+      <p className="mt-1 text-xs text-zinc-500">{t("creep.description")}</p>
       {positives.length === 0 ? (
-        <p className="mt-4 text-sm text-zinc-500">Nenhuma categoria está acima do estimado.</p>
+        <p className="mt-4 text-sm text-zinc-500">{t("creep.allWithinBudget")}</p>
       ) : null}
       <ul className="mt-4 space-y-2">
         {items.map((c) => {
@@ -434,8 +449,8 @@ function CreepCard({ items }: { items: CategoryCreep[] }) {
                 </span>
               </div>
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-400">
-                <span>Estimado: {formatCurrency(c.estimated)}</span>
-                <span>Contratado: {formatCurrency(c.actual)}</span>
+                <span>{t("creep.estimated", { value: formatCurrency(c.estimated) })}</span>
+                <span>{t("creep.contracted", { value: formatCurrency(c.actual) })}</span>
                 <span className={c.delta > 0 ? "text-rose-300" : "text-emerald-300"}>
                   {c.delta > 0 ? "+" : ""}
                   {formatCurrency(c.delta)}
@@ -458,14 +473,15 @@ function HeatmapCard({
   eventDate: Date;
   daysToEvent: number;
 }) {
+  const t = useTranslations("dashboard.insights");
   if (heatmap.length === 0) return null;
   const maxAmount = Math.max(...heatmap.map((c) => c.amount), 0);
 
   return (
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-      <h3 className="text-lg font-semibold text-zinc-100">Concentração de pagamentos pendentes</h3>
+      <h3 className="text-lg font-semibold text-zinc-100">{t("heatmap.title")}</h3>
       <p className="mt-1 text-xs text-zinc-500">
-        Até {formatDateBR(eventDate)} ({daysToEvent} dias). Quanto mais intenso, mais concentrado o dia.
+        {t("heatmap.description", { date: formatDateBR(eventDate), days: daysToEvent })}
       </p>
       <div className="mt-4 flex flex-wrap gap-1">
         {heatmap.map((c) => {
@@ -474,7 +490,11 @@ function HeatmapCard({
           return (
             <div
               key={c.date}
-              title={`${formatDateBR(c.date)} · ${formatCurrency(c.amount)} (${c.count} pagamento(s))`}
+              title={t("heatmap.cellTitle", {
+                date: formatDateBR(c.date),
+                value: formatCurrency(c.amount),
+                count: c.count,
+              })}
               className="h-7 w-7 rounded-md border border-zinc-800"
               style={{ background: `rgba(244, 63, 94, ${alpha})` }}
             />
@@ -531,9 +551,9 @@ function Input({
   );
 }
 
-function labelForKey(k: string): string {
-  if (k === "ending") return "Saldo final";
-  if (k === "income") return "Receitas";
-  if (k === "outflow") return "Pagamentos";
+function labelForKey(k: string, t: (key: string) => string): string {
+  if (k === "ending") return t("chartLegend.ending");
+  if (k === "income") return t("chartLegend.income");
+  if (k === "outflow") return t("chartLegend.outflow");
   return k;
 }

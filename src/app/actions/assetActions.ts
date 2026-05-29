@@ -2,16 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoFinance } from "@/lib/finance-access";
 import { money } from "@/lib/validation";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 const AssetCreateSchema = z.object({
-  title: z.string().trim().min(1, "Título é obrigatório").max(120),
-  amount: money.min(0.01, "Valor deve ser positivo"),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
+  title: z.string().trim().min(1).max(120),
+  amount: money.min(0.01),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   goalId: z.string().optional().transform((v) => (v && v.length > 0 ? v : null)),
   notes: z
     .string()
@@ -29,12 +31,13 @@ export async function createAsset(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.asset");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = AssetCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   try {
@@ -53,7 +56,7 @@ export async function createAsset(
     return { success: true };
   } catch (err) {
     console.error("[createAsset]", err);
-    return { success: false, error: "Erro ao criar aporte" };
+    return { success: false, error: t("errorCreate") };
   }
 }
 
@@ -61,12 +64,13 @@ export async function updateAsset(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.asset");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = AssetUpdateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   try {
@@ -80,7 +84,7 @@ export async function updateAsset(
         notes: parsed.data.notes ?? null,
       },
     });
-    if (result.count === 0) return { success: false, error: "Aporte não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
 
     await audit("Asset", parsed.data.id, "UPDATE");
     revalidatePath("/dashboard");
@@ -88,11 +92,12 @@ export async function updateAsset(
     return { success: true };
   } catch (err) {
     console.error("[updateAsset]", err);
-    return { success: false, error: "Erro ao atualizar aporte" };
+    return { success: false, error: t("errorUpdate") };
   }
 }
 
 export async function deleteAsset(assetId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.asset");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   try {
@@ -100,7 +105,7 @@ export async function deleteAsset(assetId: string): Promise<ActionResult> {
       where: { id: assetId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Aporte não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
 
     await audit("Asset", assetId, "DELETE");
     revalidatePath("/dashboard");
@@ -108,6 +113,6 @@ export async function deleteAsset(assetId: string): Promise<ActionResult> {
     return { success: true };
   } catch (err) {
     console.error("[deleteAsset]", err);
-    return { success: false, error: "Erro ao excluir aporte" };
+    return { success: false, error: t("errorDelete") };
   }
 }

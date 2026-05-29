@@ -1,26 +1,21 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { AlertTriangle } from "lucide-react";
 import { StackedBar, type StackSeries } from "@/components/charts/stacked-bar";
 import { RadialProgress } from "@/components/charts/radial-progress";
 import { formatCurrency } from "@/lib/format";
 import type { TrousseauProgress } from "@/lib/reports/trousseau-progress";
 
-const STACK_SERIES: StackSeries[] = [
-  { key: "GIFTED", label: "Recebidos", color: "#22c55e" },
-  { key: "BOUGHT", label: "Comprados", color: "#3b82f6" },
-  { key: "TO_BUY", label: "A comprar", color: "#71717a" },
-];
-
-const ROOM_LABEL: Record<string, string> = {
-  KITCHEN: "Cozinha",
-  BATHROOM: "Banheiro",
-  BEDROOM: "Quarto",
-  LIVING: "Sala",
-  LAUNDRY: "Lavanderia",
-  ELECTRONICS: "Eletrônicos",
-  OTHER: "Outros",
-};
+const ROOM_KEYS = new Set([
+  "KITCHEN",
+  "BATHROOM",
+  "BEDROOM",
+  "LIVING",
+  "LAUNDRY",
+  "ELECTRONICS",
+  "OTHER",
+]);
 
 export function TrousseauReportClient({
   result,
@@ -29,8 +24,18 @@ export function TrousseauReportClient({
   result: TrousseauProgress;
   showFinance: boolean;
 }) {
+  const t = useTranslations("dashboard.reports.trousseau");
+
+  const STACK_SERIES: StackSeries[] = [
+    { key: "GIFTED", label: t("status.gifted"), color: "#22c55e" },
+    { key: "BOUGHT", label: t("status.bought"), color: "#3b82f6" },
+    { key: "TO_BUY", label: t("status.toBuy"), color: "#71717a" },
+  ];
+
+  const roomLabel = (room: string) => (ROOM_KEYS.has(room) ? t(`room.${room}`) : room);
+
   const byRoomData = result.byRoom.map((r) => ({
-    name: ROOM_LABEL[r.room] ?? r.room,
+    name: roomLabel(r.room),
     TO_BUY: r.counts.TO_BUY,
     BOUGHT: r.counts.BOUGHT,
     GIFTED: r.counts.GIFTED,
@@ -39,22 +44,22 @@ export function TrousseauReportClient({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-        <Tile label="Itens" value={String(result.totalCount)} />
+        <Tile label={t("tiles.items")} value={String(result.totalCount)} />
         <Tile
-          label="Conclusão"
+          label={t("tiles.completion")}
           value={`${Math.round(result.completionPct * 100)}%`}
           color="text-emerald-400"
         />
         {showFinance ? (
-          <Tile label="Estimado" value={formatCurrency(result.totalEstimated)} />
+          <Tile label={t("tiles.estimated")} value={formatCurrency(result.totalEstimated)} />
         ) : (
-          <Tile label="Por cômodo" value={String(result.byRoom.length)} />
+          <Tile label={t("tiles.byRoom")} value={String(result.byRoom.length)} />
         )}
         {showFinance ? (
-          <Tile label="Atual" value={formatCurrency(result.totalActual)} color="text-violet-400" />
+          <Tile label={t("tiles.actual")} value={formatCurrency(result.totalActual)} color="text-violet-400" />
         ) : (
           <Tile
-            label="Essenciais pendentes"
+            label={t("tiles.essentialsPending")}
             value={String(result.essentialsPending)}
             color={result.essentialsPending > 0 ? "text-amber-400" : "text-emerald-400"}
           />
@@ -66,29 +71,30 @@ export function TrousseauReportClient({
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
           <div>
             <p className="text-sm font-semibold text-amber-300">
-              {result.essentialsPending} item(ns) ESSENTIAL ainda em &quot;a comprar&quot;
+              {t("essentials.warning", { count: result.essentialsPending })}
             </p>
-            <p className="mt-1 text-xs text-amber-200/80">
-              Priorize esses antes de itens NICE_TO_HAVE ou LUXURY.
-            </p>
+            <p className="mt-1 text-xs text-amber-200/80">{t("essentials.hint")}</p>
           </div>
         </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-          <h2 className="mb-4 text-sm font-semibold text-zinc-200">Progresso geral</h2>
+          <h2 className="mb-4 text-sm font-semibold text-zinc-200">{t("overall.title")}</h2>
           <RadialProgress
             value={result.completionPct}
             max={1}
-            label="Concluído"
-            sublabel={`${Math.round(result.completionPct * 100)}% de ${result.totalCount} itens`}
+            label={t("overall.label")}
+            sublabel={t("overall.sublabel", {
+              pct: Math.round(result.completionPct * 100),
+              total: result.totalCount,
+            })}
             color="#22c55e"
           />
         </div>
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm lg:col-span-2">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-100">Por cômodo</h2>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-100">{t("byRoom.title")}</h2>
           {byRoomData.length > 0 ? (
             <StackedBar
               data={byRoomData}
@@ -97,7 +103,7 @@ export function TrousseauReportClient({
               height={Math.max(220, byRoomData.length * 36 + 60)}
             />
           ) : (
-            <p className="text-sm text-zinc-500">Nenhum item adicionado ao enxoval ainda.</p>
+            <p className="text-sm text-zinc-500">{t("byRoom.empty")}</p>
           )}
         </div>
       </div>

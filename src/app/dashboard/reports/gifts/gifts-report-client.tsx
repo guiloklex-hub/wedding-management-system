@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   LineChart,
   Line,
@@ -26,53 +27,54 @@ export function GiftsReportClient({
   result: GiftsAnalytics;
   showFinance: boolean;
 }) {
+  const t = useTranslations("dashboard.reports.gifts");
   const typeDonut: DonutDatum[] = [
-    { name: "Dinheiro", value: result.byType.cash, color: "#22c55e" },
-    { name: "Itens", value: result.byType.item, color: "#8b5cf6" },
+    { name: t("type.cash"), value: result.byType.cash, color: "#22c55e" },
+    { name: t("type.item"), value: result.byType.item, color: "#8b5cf6" },
   ].filter((d) => d.value > 0);
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-        <Tile label="Presentes" value={result.totalCount} />
+        <Tile label={t("tiles.count")} value={result.totalCount} />
         {showFinance ? (
-          <Tile label="Total em dinheiro" value={formatCurrency(result.totalCash)} color="text-emerald-400" />
+          <Tile label={t("tiles.totalCash")} value={formatCurrency(result.totalCash)} color="text-emerald-400" />
         ) : (
-          <Tile label="Em dinheiro" value={`${result.byType.cash}`} color="text-emerald-400" />
+          <Tile label={t("tiles.cashCount")} value={`${result.byType.cash}`} color="text-emerald-400" />
         )}
         <Tile
-          label="Agradecidos"
+          label={t("tiles.thanked")}
           value={`${Math.round(result.thankedPct * 100)}%`}
           color="text-zinc-100"
-          sub={`${result.thankedCount} de ${result.totalCount}`}
+          sub={t("tiles.thankedSub", { count: result.thankedCount, total: result.totalCount })}
         />
         {showFinance ? (
           <Tile
-            label="Lua de mel (PIX)"
+            label={t("tiles.honeymoon")}
             value={formatCurrency(result.honeymoonShareTotal)}
             color="text-violet-400"
-            sub={`${result.honeymoonShareCount} contribuição(ões)`}
+            sub={t("tiles.contributions", { count: result.honeymoonShareCount })}
           />
         ) : (
           <Tile
-            label="Lua de mel (PIX)"
+            label={t("tiles.honeymoon")}
             value={`${result.honeymoonShareCount}`}
             color="text-violet-400"
-            sub="contribuições"
+            sub={t("tiles.contributionsShort")}
           />
         )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-100">Distribuição (CASH × ITEM)</h2>
-          <Donut data={typeDonut} valueFormatter={(n) => `${n} presente(s)`} />
+          <h2 className="mb-4 text-lg font-semibold text-zinc-100">{t("distribution.title")}</h2>
+          <Donut data={typeDonut} valueFormatter={(n) => t("distribution.giftCount", { count: n })} />
         </div>
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-100">Captação cumulativa</h2>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-100">{t("cumulative.title")}</h2>
           {result.weeklyAccum.length === 0 ? (
-            <p className="text-sm text-zinc-500">Sem dados de recebimento.</p>
+            <p className="text-sm text-zinc-500">{t("cumulative.empty")}</p>
           ) : (
             <div className="h-[260px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -89,7 +91,7 @@ export function GiftsReportClient({
                     itemStyle={{ color: "#fff" }}
                     formatter={(v, name) => {
                       const isCumulative = name === "cumulative";
-                      const label = isCumulative ? "Acumulado (R$)" : "Quantidade";
+                      const label = isCumulative ? t("cumulative.legendAmount") : t("cumulative.legendCount");
                       const display =
                         isCumulative && showFinance ? formatCurrency(Number(v ?? 0)) : String(v ?? 0);
                       return [display, label];
@@ -121,9 +123,9 @@ export function GiftsReportClient({
       </div>
 
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-zinc-100">Top givers</h2>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-100">{t("topGivers.title")}</h2>
         {result.topGivers.length === 0 ? (
-          <p className="text-sm text-zinc-500">Sem presentes registrados.</p>
+          <p className="text-sm text-zinc-500">{t("topGivers.empty")}</p>
         ) : (
           <ul className="space-y-2">
             {result.topGivers.map((g, i) => (
@@ -136,7 +138,7 @@ export function GiftsReportClient({
                   {g.name}
                 </span>
                 <span className="flex items-center gap-3">
-                  <span className="text-xs text-zinc-500">{g.count} presente(s)</span>
+                  <span className="text-xs text-zinc-500">{t("topGivers.giftCount", { count: g.count })}</span>
                   {showFinance && g.total > 0 ? (
                     <span className="font-semibold text-emerald-300">{formatCurrency(g.total)}</span>
                   ) : null}

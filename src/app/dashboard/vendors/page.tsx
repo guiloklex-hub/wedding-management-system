@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES } from "@/lib/categories";
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 
 export default async function VendorsPage() {
+  const t = await getTranslations("dashboard.vendors");
   const session = await auth();
   const role = (session?.user as { role?: string } | undefined)?.role;
   const showFinance = canViewSensitiveFinance(role);
@@ -25,7 +27,7 @@ export default async function VendorsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-white">Fornecedores</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-white">{t("page.title")}</h1>
       </div>
       <VendorsClient vendors={vendors} categories={[...CATEGORIES]} />
     </div>

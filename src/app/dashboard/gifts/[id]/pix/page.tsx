@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import QRCode from "qrcode";
+import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -23,6 +24,7 @@ export default async function GiftPixPage({
   if (!canEdit(role)) redirect("/dashboard");
 
   const { id } = await params;
+  const t = await getTranslations("dashboard.gifts");
   const gift = await prisma.gift.findFirst({
     where: { id },
   });
@@ -30,9 +32,9 @@ export default async function GiftPixPage({
 
   const cfg = await getEventConfig();
   const missingFields: string[] = [];
-  if (!cfg.pixKey) missingFields.push("chave Pix");
-  if (!cfg.pixHolderName) missingFields.push("nome do recebedor");
-  if (!cfg.pixCity) missingFields.push("cidade");
+  if (!cfg.pixKey) missingFields.push(t("pix.field.key"));
+  if (!cfg.pixHolderName) missingFields.push(t("pix.field.holder"));
+  if (!cfg.pixCity) missingFields.push(t("pix.field.city"));
 
   const amount = typeof gift.amount === "number" && gift.amount > 0 ? gift.amount : undefined;
 
@@ -52,7 +54,7 @@ export default async function GiftPixPage({
       qrDataUrl = await QRCode.toDataURL(brCode, { width: 360, margin: 1 });
     } catch (err) {
       console.error("[gift pix]", err);
-      pixError = err instanceof Error ? err.message : "Erro ao gerar QR Code";
+      pixError = err instanceof Error ? err.message : t("pix.errorGenerating");
     }
   }
 
@@ -64,9 +66,9 @@ export default async function GiftPixPage({
           className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Voltar
+          {t("pix.back")}
         </Link>
-        <h1 className="text-xl font-semibold text-zinc-100">QR Code Pix</h1>
+        <h1 className="text-xl font-semibold text-zinc-100">{t("pix.title")}</h1>
       </header>
 
       <PixPanel

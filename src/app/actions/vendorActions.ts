@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoEdit } from "@/lib/finance-access";
 import { money } from "@/lib/validation";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 const VendorCreateSchema = z.object({
@@ -54,12 +56,13 @@ export async function createVendor(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
+  const t = await getTranslations("actions.vendor");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = VendorCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   try {
@@ -91,7 +94,7 @@ export async function createVendor(
     return { success: true, data: { id: vendor.id } };
   } catch (err) {
     console.error("[createVendor]", err);
-    return { success: false, error: "Erro ao criar fornecedor" };
+    return { success: false, error: t("errorCreate") };
   }
 }
 
@@ -99,12 +102,13 @@ export async function updateVendor(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.vendor");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = VendorUpdateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   try {
@@ -146,7 +150,7 @@ export async function updateVendor(
     return { success: true };
   } catch (err) {
     console.error("[updateVendor]", err);
-    return { success: false, error: "Erro ao atualizar fornecedor" };
+    return { success: false, error: t("errorUpdate") };
   }
 }
 
@@ -155,6 +159,7 @@ export async function updateVendorStatus(
   status: "NEGOTIATION" | "CONTRACTED" | "FINALIZED",
   actualValue?: number,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.vendor");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
@@ -174,11 +179,12 @@ export async function updateVendorStatus(
     return { success: true };
   } catch (err) {
     console.error("[updateVendorStatus]", err);
-    return { success: false, error: "Erro ao atualizar status" };
+    return { success: false, error: t("errorStatus") };
   }
 }
 
 export async function deleteVendor(vendorId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.vendor");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
@@ -202,6 +208,6 @@ export async function deleteVendor(vendorId: string): Promise<ActionResult> {
     return { success: true };
   } catch (err) {
     console.error("[deleteVendor]", err);
-    return { success: false, error: "Erro ao excluir fornecedor" };
+    return { success: false, error: t("errorDelete") };
   }
 }

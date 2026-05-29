@@ -1,1 +1,2033 @@
-{}
+{
+  "assets": {
+    "page": {
+      "title": "Cash (Money Saved)"
+    },
+    "list": {
+      "searchPlaceholder": "Search contribution...",
+      "total": "Total: {value}",
+      "new": "New Contribution",
+      "empty": "No contributions recorded yet.",
+      "noResults": "No results for this filter."
+    },
+    "table": {
+      "date": "Date",
+      "source": "Source",
+      "amount": "Amount",
+      "actions": "Actions"
+    },
+    "delete": {
+      "title": "Delete contribution?"
+    },
+    "toast": {
+      "created": "Contribution recorded",
+      "updated": "Contribution updated",
+      "deleted": "Contribution deleted",
+      "failTitle": "Failed"
+    },
+    "form": {
+      "titleCreate": "New contribution",
+      "titleEdit": "Edit contribution",
+      "titleLabel": "Title / Source",
+      "titlePlaceholder": "e.g. March salary",
+      "amountLabel": "Amount",
+      "dateLabel": "Date",
+      "goalLabel": "Link to a goal (optional)",
+      "goalNone": "— no goal —",
+      "notesLabel": "Notes"
+    }
+  },
+  "gifts": {
+    "page": {
+      "title": "Gifts received",
+      "subtitle": "Record what you received (cash or item), from whom, and mark when the thank-you has been sent."
+    },
+    "stats": {
+      "cashTotal": "Total in cash",
+      "itemsReceived": "Items received",
+      "pendingThank": "Awaiting thank-you"
+    },
+    "filter": {
+      "all": "All",
+      "pendingThank": "Awaiting thank-you"
+    },
+    "list": {
+      "empty": "No gifts recorded."
+    },
+    "anonymous": "Anonymous",
+    "type": {
+      "cash": "Cash",
+      "item": "Item"
+    },
+    "badge": {
+      "thanked": "Thanked",
+      "honeymoon": "honeymoon",
+      "pixReceived": "Pix received"
+    },
+    "actions": {
+      "new": "New gift",
+      "generatePix": "Generate Pix QR",
+      "toggleThank": "Toggle thank-you",
+      "markThanked": "Mark as thanked",
+      "unmarkThanked": "Unmark thanked"
+    },
+    "delete": {
+      "title": "Delete gift?"
+    },
+    "form": {
+      "titleCreate": "New gift",
+      "titleEdit": "Edit gift",
+      "type": "Type",
+      "guest": "Guest (optional)",
+      "giverName": "Giver's name (if no guest)",
+      "amount": "Amount",
+      "description": "Description",
+      "receivedAt": "Received on",
+      "honeymoonShare": "Honeymoon contribution (show dedicated Pix QR)",
+      "notes": "Notes"
+    },
+    "toast": {
+      "created": "Gift recorded",
+      "updated": "Gift updated",
+      "removed": "Gift removed",
+      "thanked": "Marked as thanked",
+      "unthanked": "Unmarked",
+      "failed": "Failed"
+    },
+    "pix": {
+      "back": "Back",
+      "title": "Pix QR Code",
+      "qrAlt": "Pix QR Code",
+      "errorGenerating": "Error generating QR Code",
+      "errorPrefix": "Error generating Pix:",
+      "field": {
+        "key": "Pix key",
+        "holder": "recipient name",
+        "city": "city"
+      },
+      "incomplete": {
+        "title": "Incomplete Pix configuration",
+        "intro": "To generate the QR Code, configure:",
+        "goToSettings": "Go to Settings"
+      },
+      "summary": {
+        "title": "Summary",
+        "gift": "Gift",
+        "value": "Amount",
+        "freeValue": "no amount (open)",
+        "status": "Pix status",
+        "receivedOn": "Received on",
+        "awaiting": "Awaiting confirmation"
+      },
+      "copyPaste": {
+        "title": "Pix copy and paste",
+        "copyButton": "Copy code"
+      },
+      "confirm": {
+        "title": "Confirm receipt",
+        "hint": "After verifying the payment in your account, mark it as received.",
+        "addToAsset": "Add amount to cash (Asset)",
+        "saving": "Saving...",
+        "markReceived": "Mark as received"
+      },
+      "toast": {
+        "copied": "Code copied",
+        "marked": "Pix marked as received",
+        "error": "Error",
+        "copyFailed": "Could not copy"
+      }
+    }
+  },
+  "goals": {
+    "page": {
+      "title": "Savings goals",
+      "subtitle": "Define how much to save by when. Contributions (cash) can be linked to a goal."
+    },
+    "list": {
+      "new": "New goal",
+      "empty": "No goals yet. Create one to track your savings progress toward the target date."
+    },
+    "card": {
+      "inactive": "inactive",
+      "target": "Target: {date}",
+      "pctReached": "{pct}% reached",
+      "contributions": "{count, plural, one {# contribution} other {# contributions}}",
+      "remaining": "Remaining",
+      "perMonth": "Per month"
+    },
+    "form": {
+      "createTitle": "New goal",
+      "editTitle": "Edit goal",
+      "name": "Name",
+      "targetAmount": "Target amount (R$)",
+      "targetDate": "Target date",
+      "imageUrl": "Inspiration image URL (optional)",
+      "imageUrlPlaceholder": "https://example.com/image.jpg",
+      "isActive": "Active goal",
+      "notes": "Notes"
+    },
+    "delete": {
+      "title": "Delete goal?",
+      "description": "Linked contributions still exist, but they lose the link."
+    },
+    "toast": {
+      "created": "Goal created",
+      "updated": "Goal updated",
+      "removed": "Goal removed",
+      "failed": "Failed"
+    }
+  },
+  "guests": {
+    "page": {
+      "title": "Guests",
+      "subtitle": "Manage the list, send unique RSVP links and track confirmations."
+    },
+    "stats": {
+      "list": "List",
+      "guests": "guests",
+      "confirmed": "Confirmed",
+      "heads": "{count, plural, one {# head} other {# heads}}",
+      "pending": "Pending",
+      "declined": "Declined"
+    },
+    "filters": {
+      "searchPlaceholder": "Search...",
+      "all": "All",
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "padrinhos": "Groomsmen & bridesmaids",
+      "children": "Children",
+      "checkedIn": "Already arrived"
+    },
+    "actions": {
+      "groups": "Groups",
+      "csv": "CSV",
+      "importList": "Import list",
+      "newGuest": "New guest"
+    },
+    "table": {
+      "name": "Name",
+      "group": "Group",
+      "rsvp": "RSVP",
+      "plusOne": "+1",
+      "table": "Table",
+      "attendance": "Attendance",
+      "actions": "Actions",
+      "empty": "Empty list.",
+      "noResults": "No results."
+    },
+    "tags": {
+      "padrinhoShort": "G",
+      "child": "Child",
+      "vip": "VIP"
+    },
+    "attendance": {
+      "arrived": "Arrived",
+      "mark": "Mark"
+    },
+    "rowActions": {
+      "copyRsvp": "Copy RSVP link"
+    },
+    "rsvp": {
+      "notInvited": "Not invited",
+      "invited": "Invited",
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "maybe": "Maybe"
+    },
+    "delete": {
+      "confirmTitle": "Delete {name}?",
+      "confirmTitleGeneric": "Delete?"
+    },
+    "toast": {
+      "created": "Guest created",
+      "updated": "Guest updated",
+      "removed": "Guest removed",
+      "checkinReverted": "Check-in reverted",
+      "checkinDone": "Attendance recorded",
+      "linkCopied": "Link copied",
+      "copyFailed": "Failed to copy"
+    },
+    "csv": {
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "side": "Side",
+      "group": "Group",
+      "status": "Status",
+      "plusOnesConfirmed": "+1 confirmed",
+      "table": "Table",
+      "dietary": "Dietary",
+      "city": "City",
+      "padrinho": "Groomsman",
+      "vip": "VIP",
+      "child": "Child",
+      "yes": "yes",
+      "fileName": "guests"
+    },
+    "form": {
+      "createTitle": "New guest",
+      "editTitle": "Edit {name}",
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "side": "Side",
+      "groupName": "Group (e.g. his family)",
+      "city": "City",
+      "rsvpStatus": "RSVP status",
+      "plusOnesAllowed": "Companions allowed",
+      "tableNumber": "Table / section",
+      "dietary": "Dietary restrictions",
+      "isChild": "Child",
+      "isVIP": "VIP",
+      "isPadrinho": "Groomsman / bridesmaid",
+      "notes": "Notes"
+    },
+    "side": {
+      "groom": "Groom",
+      "bride": "Bride",
+      "both": "Both"
+    },
+    "groups": {
+      "backToGuests": "Back to guests",
+      "title": "Groups / Families",
+      "subtitle": "Create groups to generate a single RSVP link per family.",
+      "newGroup": "New group",
+      "empty": "No groups yet.",
+      "card": {
+        "contact": "Contact: {name}",
+        "people": "{count, plural, one {# person} other {# people}}",
+        "yes": "{count} yes",
+        "pending": "{count} pending",
+        "no": "{count} no",
+        "copyLink": "Copy link",
+        "members": "Members"
+      },
+      "form": {
+        "createTitle": "New group",
+        "editTitle": "Edit group",
+        "name": "Group name",
+        "contactName": "Contact (optional)",
+        "email": "Email",
+        "phone": "Phone",
+        "notes": "Notes",
+        "saving": "Saving..."
+      },
+      "members": {
+        "title": "Members of {name}",
+        "subtitle": "Select the guests who belong to this group.",
+        "searchPlaceholder": "Search guest...",
+        "noneAvailable": "No guests available.",
+        "selectedCount": "{count, plural, one {# selected} other {# selected}}"
+      },
+      "toast": {
+        "linkCopied": "Link copied",
+        "copyFailed": "Could not copy",
+        "created": "Group created",
+        "updated": "Group updated",
+        "deleted": "Group deleted",
+        "membersUpdated": "Members updated"
+      },
+      "delete": {
+        "title": "Delete group?",
+        "description": "The group \"{name}\" will be removed. The guests will not be deleted."
+      }
+    },
+    "import": {
+      "backToGuests": "Back to guests",
+      "title": "Import guest list",
+      "subtitle": "Upload the file exported from another system (currently: {sources}). You'll see a preview before confirming.",
+      "toast": {
+        "selectFile": "Select an .xlsx file",
+        "unexpectedResponse": "Unexpected server response",
+        "importFailed": "Import failed"
+      },
+      "upload": {
+        "fileLabel": "File (.xlsx or .csv)",
+        "fileHint": "Maximum size: 5 MB. Up to 2000 rows per import. Wedy exports as .xlsx; this system exports as .csv (CSV button at /dashboard/guests).",
+        "sourceLabel": "Source",
+        "autoDetect": "Detect automatically",
+        "preferPaste": "Prefer to paste raw text?",
+        "analyze": "Analyze file"
+      },
+      "preview": {
+        "rowsInFile": "Rows in file",
+        "new": "New",
+        "existingSameGroup": "Already exist (same group)",
+        "divergent": "Divergent",
+        "detectedSource": "Detected source",
+        "fileValid": "valid file, headers recognized.",
+        "detectedGroups": "Detected groups ({count})",
+        "noGroups": "No groups in the spreadsheet.",
+        "peopleCount": "{count, plural, one {# person} other {# people}}",
+        "pin": "PIN {pin}",
+        "detectedTags": "Detected tags ({count})",
+        "noTags": "No tags.",
+        "tagsNote": "New tags will be created. Tags named \"Padrinhos\", \"Madrinha\", etc. also set the guest's groomsman flag.",
+        "sampleTitle": "Sample (up to {count} rows)",
+        "filterAll": "All",
+        "filterNew": "New",
+        "filterExisting": "Already exist",
+        "filterDivergent": "Divergent",
+        "confirmImport": "Confirm import"
+      },
+      "mode": {
+        "heading": "How to handle duplicates",
+        "CREATE_NEW_ONLY": {
+          "label": "Skip rows that already exist in the same group",
+          "description": "Safest. Creates only new guests; nothing is changed."
+        },
+        "UPSERT_BY_NAME": {
+          "label": "Update data of those who already exist in the same group",
+          "description": "Overwrites phone, email, status and tags of guests that already exist. Creates the new ones."
+        },
+        "CREATE_ALL_DUPLICATES": {
+          "label": "Create everything, even if it already exists",
+          "description": "Use when there are namesakes in different families that should not be merged."
+        }
+      },
+      "done": {
+        "title": "Import complete",
+        "created": "<b>{count}</b> guest(s) created.",
+        "updated": "<b>{count}</b> guest(s) updated.",
+        "skipped": "<b>{count}</b> row(s) skipped.",
+        "groupsCreated": "<b>{count}</b> group(s) created.",
+        "tagsCreated": "<b>{count}</b> tag(s) created.",
+        "viewList": "View guest list",
+        "importAnother": "Import another"
+      },
+      "table": {
+        "noRowsForFilter": "No rows for this filter.",
+        "status": "Status",
+        "name": "Name",
+        "group": "Group",
+        "rsvp": "RSVP",
+        "phone": "Phone",
+        "email": "Email",
+        "tags": "Tags",
+        "child": "Child",
+        "pin": "PIN",
+        "statusNew": "New",
+        "statusDuplicateSame": "Already exists (same group)",
+        "statusDuplicateDiff": "Already exists, data differs",
+        "rawStatusHint": "Original status \"{raw}\" not recognized; treated as Invited.",
+        "childYes": "Yes",
+        "childYesAge": "Yes ({age})"
+      },
+      "paste": {
+        "title": "Paste raw text",
+        "instructions": "Paste lines in the format <code>Name,Phone,Email,Side,Group</code> (one line per guest). Phone, email, side and group are optional. Side accepts NOIVO/NOIVA/AMBOS. When the <strong>Group</strong> column is filled in, new groups are created automatically (and existing ones reused, matching by name) — guests from the same family share a single RSVP link.",
+        "contentLabel": "Content",
+        "placeholder": "Maria Silva,+5511999990000,maria@example.com,NOIVA,Family\nJoão Souza\nAna,,ana@example.com,,His work",
+        "separatorLabel": "Separator",
+        "sepAuto": "Detect automatically",
+        "sepComma": ", (comma)",
+        "sepSemicolon": "; (semicolon)",
+        "sepTab": "Tab",
+        "submit": "Import",
+        "toast": {
+          "importedTitle": "{count} imported",
+          "skippedLines": "{count, plural, one {# line skipped} other {# lines skipped}}",
+          "groupsSuffix": ", {count, plural, one {# group created} other {# groups created}}"
+        }
+      }
+    }
+  },
+  "home": {
+    "header": {
+      "title": "Overview",
+      "weddingOn": "Wedding on {date}",
+      "configurePrompt": "Set up your event to get started"
+    },
+    "onboarding": {
+      "title": "Shall we set up your wedding?",
+      "body": "In under 2 minutes you'll set the date, the couple's names, and how notifications work. Click here to start the wizard."
+    },
+    "quitAlert": {
+      "title": "Payoff Alert!",
+      "body": "{days, plural, one {# day left and there's still an outstanding balance of {balance}.} other {# days left and there's still an outstanding balance of {balance}.}}",
+      "pendingValues": "pending amounts"
+    },
+    "kpi": {
+      "totalBudget": {
+        "title": "Total Budget",
+        "hint": "Contingency: {value}"
+      },
+      "totalPaid": {
+        "title": "Total Paid",
+        "hint": "{pct}% of budget"
+      },
+      "remainingBalance": {
+        "title": "Outstanding Balance"
+      },
+      "cashCoverage": {
+        "title": "Cash Coverage",
+        "hintPct": "{pct}% of outstanding balance",
+        "hintPaid": "Balance settled"
+      },
+      "vendors": {
+        "title": "Vendors",
+        "hint": "{pct}% contracted"
+      },
+      "tasks": {
+        "title": "Tasks",
+        "hintOverdue": "{count, plural, one {# overdue} other {# overdue}}",
+        "hintUpToDate": "All caught up"
+      },
+      "guests": {
+        "title": "Guests",
+        "hint": "{total} total · {confirmed} confirmed"
+      },
+      "daysToEvent": {
+        "title": "Days until the event"
+      },
+      "budgetSummary": {
+        "title": "Budget Summary",
+        "hint": "Contracted: {contracted} · Paid: {paid}"
+      }
+    },
+    "risks": {
+      "title": "Warning signs"
+    },
+    "funnel": {
+      "title": "Vendor Funnel",
+      "empty": "No vendors registered.",
+      "negotiating": "Negotiating",
+      "contracted": "Contracted",
+      "finalized": "Finalized"
+    },
+    "budgetDistribution": {
+      "title": "Budget Distribution"
+    },
+    "upcomingPayments": {
+      "title": "Upcoming Payments",
+      "empty": "No payments in the next 30 days.",
+      "dueLabel": "Due: {date}"
+    },
+    "charts": {
+      "noData": "Not enough data for the chart"
+    },
+    "rsvp": {
+      "title": "RSVPs",
+      "empty": "No guests registered yet.",
+      "respondedConfirming": "{confirmed} of {total} have confirmed",
+      "confirmed": "{count, plural, one {# confirmed} other {# confirmed}}",
+      "maybe": "{count, plural, one {# maybe} other {# maybe}}",
+      "declined": "{count, plural, one {# declined} other {# declined}}",
+      "pending": "{count, plural, one {# pending} other {# pending}}",
+      "plusOnes": "{count, plural, one {+# plus-one confirmed} other {+# plus-ones confirmed}}",
+      "totalGuests": "{count, plural, one {# guest in total} other {# guests in total}}"
+    },
+    "gifts": {
+      "title": "Gifts received",
+      "empty": "No gifts recorded yet.",
+      "breakdown": "{cash} in cash · {items} in items",
+      "thankedLabel": "Thanked:",
+      "thankedCount": "{thanked} of {total}"
+    },
+    "upcomingTasks": {
+      "title": "Upcoming Tasks",
+      "empty": "No pending tasks.",
+      "noDeadline": "No due date",
+      "priority": {
+        "urgent": "URGENT",
+        "high": "HIGH",
+        "medium": "MEDIUM",
+        "low": "LOW"
+      }
+    },
+    "countdown": {
+      "past": "Event has passed",
+      "today": "Today's the day!",
+      "remaining": "{days, plural, one {# day left} other {# days left}}"
+    },
+    "install": {
+      "dismiss": "Dismiss",
+      "title": "Install as an app",
+      "iosBody": "Add Wedding Finance Planner directly to your iPhone's home screen for a full-screen experience just like a native app:",
+      "iosTap": "Tap",
+      "iosShare": "Share",
+      "iosAddToHome": "Add to Home Screen",
+      "androidBody": "Add the Wedding Finance Planner app to your home screen to keep track of your finances and tasks with quick access and notifications.",
+      "installButton": "Install App"
+    }
+  },
+  "honeymoon": {
+    "page": {
+      "title": "Honeymoon",
+      "subtitle": "Itinerary, bookings, documents and budget for the post-wedding trip."
+    },
+    "info": {
+      "destination": "Destination",
+      "notDecided": "Not decided yet",
+      "budget": "Budget",
+      "committed": "Committed",
+      "editTrip": "Edit trip details",
+      "departure": "Departure",
+      "return": "Return"
+    },
+    "currency": {
+      "brl": "Real (BRL)",
+      "usd": "Dollar (USD)",
+      "eur": "Euro (EUR)"
+    },
+    "list": {
+      "empty": "Nothing added yet. Start with flights and hotels."
+    },
+    "actions": {
+      "newItem": "New item"
+    },
+    "kind": {
+      "FLIGHT": "Flight",
+      "HOTEL": "Accommodation",
+      "TRANSFER": "Transfer",
+      "ACTIVITY": "Activity",
+      "DOCUMENT": "Document",
+      "BAGGAGE": "Baggage",
+      "OTHER": "Other"
+    },
+    "status": {
+      "PLANNED": "Planned",
+      "BOOKED": "Booked",
+      "CONFIRMED": "Confirmed",
+      "PAID": "Paid",
+      "CANCELLED": "Cancelled"
+    },
+    "form": {
+      "titleCreate": "New item",
+      "titleEdit": "Edit item",
+      "kind": "Type",
+      "title": "Title",
+      "vendor": "Airline / vendor",
+      "start": "Start",
+      "end": "End",
+      "amount": "Amount",
+      "confirmationNumber": "Confirmation number"
+    },
+    "delete": {
+      "confirmTitle": "Delete item?"
+    },
+    "toast": {
+      "updated": "Updated",
+      "itemAdded": "Item added",
+      "itemUpdated": "Item updated",
+      "itemRemoved": "Item removed",
+      "failed": "Failed"
+    }
+  },
+  "income": {
+    "page": {
+      "title": "Income & earnings",
+      "subtitle": "Recurring income, bonuses, cash gifts and pre-wedding sales."
+    },
+    "summary": {
+      "total": "Total estimated",
+      "expected": "To receive",
+      "received": "Received"
+    },
+    "actions": {
+      "new": "New income",
+      "received": "Received it"
+    },
+    "table": {
+      "title": "Title",
+      "source": "Source",
+      "amount": "Amount",
+      "expectedDate": "Expected date",
+      "status": "Status",
+      "actions": "Actions",
+      "empty": "No income recorded."
+    },
+    "row": {
+      "givenBy": "from {name}"
+    },
+    "frequency": {
+      "ONE_TIME": "One-time",
+      "MONTHLY": "Monthly"
+    },
+    "source": {
+      "SALARY": "Salary",
+      "BONUS": "Bonus / 13th salary",
+      "GIFT": "Cash gift",
+      "FREELANCE": "Freelance",
+      "SALE": "Sale",
+      "RESTITUTION": "Tax refund",
+      "OTHER": "Other"
+    },
+    "status": {
+      "EXPECTED": "Expected",
+      "RECEIVED": "Received",
+      "CANCELLED": "Cancelled"
+    },
+    "form": {
+      "titleCreate": "New income",
+      "titleEdit": "Edit income",
+      "title": "Title",
+      "source": "Source",
+      "amount": "Amount",
+      "expectedDate": "Expected date",
+      "frequency": "Frequency",
+      "status": "Status",
+      "givenByName": "Given by (gift)",
+      "notes": "Notes"
+    },
+    "confirmDelete": {
+      "title": "Delete income?"
+    },
+    "toast": {
+      "created": "Income recorded",
+      "updated": "Income updated",
+      "marked": "Marked as received",
+      "deleted": "Income removed",
+      "fail": "Failed"
+    }
+  },
+  "insights": {
+    "header": {
+      "title": "Financial insights",
+      "subtitle": "Projection, project health and per-category budget creep detector."
+    },
+    "noData": "No data yet.",
+    "health": {
+      "label": "Health Score",
+      "statusGood": "Healthy project.",
+      "statusWarn": "A few points need attention.",
+      "statusBad": "Needs urgent adjustments."
+    },
+    "cashflow": {
+      "title": "Projected cash flow",
+      "worstBalance": "Worst balance: {value}",
+      "description": "Cumulative balance up to the event, considering existing contributions + expected income − pending payments."
+    },
+    "monthlyFlow": {
+      "title": "Inflows and outflows by month",
+      "description": "Green bars = income. Red bars = payments. Red background zone = projected negative balance."
+    },
+    "sCurve": {
+      "title": "S-Curve — Planned vs Actual",
+      "hint": "Band = configured contingency"
+    },
+    "burndown": {
+      "title": "Task Burndown",
+      "hint": "Ideal vs actual up to the event date"
+    },
+    "waterfall": {
+      "title": "Variation by Category",
+      "hint": "Green = saved · Pink = over budget"
+    },
+    "whatIf": {
+      "title": "Can I sign this contract now?",
+      "description": "Simulate adding a future payment and see the impact on cash flow up to {date}.",
+      "amountLabel": "Amount ($)",
+      "dateLabel": "Expected date",
+      "fillPrompt": "Enter amount and date",
+      "balanceAt": "Balance in {month}",
+      "worstBalance": "Worst balance until the event",
+      "finalBalance": "Final balance at the event",
+      "canAfford": "You can afford it",
+      "exceedsCash": "Overdraws your cash"
+    },
+    "creep": {
+      "title": "Variation by category",
+      "description": "Compares estimated vs contracted in each category. Items with an increase > 10% need attention.",
+      "allWithinBudget": "No category is above the estimate.",
+      "estimated": "Estimated: {value}",
+      "contracted": "Contracted: {value}"
+    },
+    "heatmap": {
+      "title": "Pending payment concentration",
+      "description": "Until {date} ({days, plural, one {# day} other {# days}}). The more intense, the more concentrated the day.",
+      "cellTitle": "{date} · {value} ({count, plural, one {# payment} other {# payments}})"
+    },
+    "chartLegend": {
+      "ending": "Ending balance",
+      "income": "Income",
+      "outflow": "Payments"
+    }
+  },
+  "payments": {
+    "title": "Payments",
+    "view": {
+      "list": "List",
+      "calendar": "Calendar"
+    },
+    "actions": {
+      "new": "New Payment",
+      "generateInstallments": "Generate Installments",
+      "markPaid": "Mark Paid",
+      "revert": "Revert"
+    },
+    "filter": {
+      "allStatus": "All statuses"
+    },
+    "list": {
+      "searchPlaceholder": "Search by vendor...",
+      "empty": "No payments registered.",
+      "noResults": "No results for this filter."
+    },
+    "table": {
+      "dueDate": "Due Date",
+      "vendor": "Vendor",
+      "method": "Method",
+      "installment": "Installment"
+    },
+    "card": {
+      "dueOn": "Due on {date}"
+    },
+    "method": {
+      "PIX": "PIX",
+      "BOLETO": "Bank Slip",
+      "CREDIT": "Credit Card",
+      "TRANSFER": "Transfer",
+      "CASH": "Cash"
+    },
+    "amount": {
+      "adjustedTooltip": "Base {base} + late fee {lateFee} + interest {interest} ({days} day(s) overdue)"
+    },
+    "form": {
+      "createTitle": "New Payment",
+      "editTitle": "Edit payment",
+      "splitToggle": "Deposit + Balance",
+      "vendor": "Vendor",
+      "selectPlaceholder": "Select...",
+      "amount": "Amount (R$)",
+      "dueDate": "Due Date",
+      "method": "Method",
+      "status": "Status",
+      "installments": "Installments",
+      "installmentNumberPlaceholder": "e.g. 1",
+      "installmentNumberLabel": "Current installment number",
+      "installmentOf": "of",
+      "totalInstallmentsPlaceholder": "e.g. 12",
+      "totalInstallmentsLabel": "Total installments",
+      "installmentsHint": "Leave blank for a one-time payment.",
+      "notes": "Notes",
+      "optionalShort": "optional",
+      "lateFee": "Late fee (%)",
+      "lateFeePlaceholder": "e.g. 2",
+      "interest": "Interest %/month",
+      "interestPlaceholder": "e.g. 1"
+    },
+    "split": {
+      "depositTitle": "1. Deposit (paid today)",
+      "balanceTitle": "2. Final balance (pending)",
+      "balanceMethod": "Balance method"
+    },
+    "delete": {
+      "title": "Delete payment?",
+      "description": "Payment of {amount} to {vendor}.\nThis will soft-delete the record and remove it from the lists."
+    },
+    "installmentsModal": {
+      "title": "Generate installments",
+      "description": "Creates N pending payments at a fixed interval. Useful for installment contracts.",
+      "totalAmount": "Total amount (R$)",
+      "count": "No. of installments",
+      "eachInstallment": "Each installment:",
+      "firstDate": "First date",
+      "intervalDays": "Interval (days)",
+      "lateFee": "Late fee (%) optional",
+      "interest": "Interest %/month optional",
+      "generating": "Generating...",
+      "generateButton": "Generate {count, plural, one {# installment} other {# installments}}"
+    },
+    "toast": {
+      "created": "Payment created",
+      "splitCreated": "Deposit and balance recorded",
+      "createFailed": "Failed to create",
+      "updated": "Payment updated",
+      "updateFailed": "Failed to update",
+      "markedPaid": "Payment settled",
+      "reverted": "Payment reverted",
+      "genericFailed": "Failed",
+      "deleted": "Payment deleted",
+      "deleteFailed": "Failed to delete",
+      "installmentsGenerated": "Installments generated"
+    },
+    "calendar": {
+      "annualView": "Annual View",
+      "yearTitle": "Financial Calendar for {year}",
+      "monthTitle": "{month} {year}",
+      "prevYear": "Previous year",
+      "nextYear": "Next year",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "noScheduled": "No scheduled expenses",
+      "paymentCount": "{count, plural, one {# payment} other {# payments}}",
+      "totalPlanned": "Total Planned:",
+      "paidWithCount": "Paid ({count}):",
+      "pendingWithCount": "Pending ({count}):",
+      "progress": "PROGRESS",
+      "percentPaid": "{percent}% paid",
+      "moreOthers": "+{count} more",
+      "allExpensesOf": "All Expenses for {month}",
+      "expensesOfDay": "Expenses for {month} {day}",
+      "viewAllMonth": "View all for the month",
+      "noExpenses": "No expenses recorded for this period.",
+      "month": {
+        "0": "January",
+        "1": "February",
+        "2": "March",
+        "3": "April",
+        "4": "May",
+        "5": "June",
+        "6": "July",
+        "7": "August",
+        "8": "September",
+        "9": "October",
+        "10": "November",
+        "11": "December"
+      }
+    }
+  },
+  "reports": {
+    "hub": {
+      "title": "Reports",
+      "subtitle": "Detailed analytical views by area. The BI charts inside /dashboard/insights also appear here as shortcuts.",
+      "inInsights": "In Insights",
+      "items": {
+        "scurve": {
+          "title": "S-Curve — Planned vs Actual",
+          "description": "Compares planned payments against actual ones over time, with a contingency band."
+        },
+        "vendorFunnel": {
+          "title": "Vendor Funnel",
+          "description": "Track how many are in negotiation, contracted, and finalized."
+        },
+        "risk": {
+          "title": "Risk Radar",
+          "description": "Red flags consolidated in a single panel."
+        },
+        "guests": {
+          "title": "Guests & RSVP",
+          "description": "Response rate, plus-ones, VIPs, and distribution by group and city."
+        },
+        "gifts": {
+          "title": "Gifts",
+          "description": "CASH × ITEM, pending thank-yous, top givers, and the honeymoon fund."
+        },
+        "burndown": {
+          "title": "Task Burndown",
+          "description": "Compare the ideal vs actual pace of tasks completed up to the event date."
+        },
+        "honeymoon": {
+          "title": "Honeymoon",
+          "description": "Status by stage and funding from gifts via PIX."
+        },
+        "trousseau": {
+          "title": "Trousseau",
+          "description": "Progress by room and essentials still pending."
+        },
+        "waterfall": {
+          "title": "Variance by Category",
+          "description": "Waterfall showing where the budget overran and by how much."
+        },
+        "activity": {
+          "title": "Activity Timeline",
+          "description": "Latest relevant changes recorded in the audit log."
+        }
+      }
+    },
+    "activity": {
+      "back": "Back to reports",
+      "title": "Activity Timeline",
+      "subtitle": "Last 100 changes recorded in the system. Filter by entity below.",
+      "filterAll": "All",
+      "empty": "No audit records yet.",
+      "systemActor": "System",
+      "action": {
+        "CREATE": "created",
+        "UPDATE": "updated",
+        "DELETE": "removed",
+        "RESTORE": "restored",
+        "MARK_PAID": "marked as paid",
+        "UNDO_PAID": "undid payment",
+        "STATUS_CHANGE": "changed status",
+        "UPLOAD": "uploaded",
+        "DOWNLOAD": "downloaded",
+        "REPLACE": "replaced",
+        "SIGN": "signed",
+        "ARCHIVE": "archived",
+        "RESET_PASSWORD": "reset password",
+        "RESET_2FA": "removed 2FA",
+        "CHANGE_OWN_PASSWORD": "changed their own password",
+        "LOGIN": "logged in",
+        "BULK_CREATE": "bulk-created",
+        "ASSIGN_TABLE": "assigned a table",
+        "UNASSIGN_TABLE": "unassigned a table",
+        "RSVP_GROUP_RESPOND": "responded to a group RSVP",
+        "MARK_PIX_RECEIVED": "marked PIX received",
+        "ONBOARDING_COUPLE": "completed the couple step",
+        "ONBOARDING_BUDGET": "completed the budget step",
+        "ONBOARDING_FINISH": "finished onboarding"
+      },
+      "entity": {
+        "Vendor": "vendor",
+        "Payment": "payment",
+        "BudgetItem": "budget item",
+        "Asset": "asset",
+        "EventSettings": "event settings",
+        "User": "user",
+        "SecuritySettings": "security settings",
+        "SeatingTable": "table",
+        "Guest": "guest",
+        "GuestGroup": "guest group",
+        "Gift": "gift",
+        "Contract": "contract",
+        "Attachment": "attachment"
+      }
+    },
+    "gifts": {
+      "back": "Back to reports",
+      "title": "Gifts",
+      "subtitle": "Analysis of gifts received: cash vs items, pending thank-yous, the honeymoon fund, and top givers.",
+      "type": {
+        "cash": "Cash",
+        "item": "Items"
+      },
+      "tiles": {
+        "count": "Gifts",
+        "totalCash": "Total cash",
+        "cashCount": "In cash",
+        "thanked": "Thanked",
+        "thankedSub": "{count} of {total}",
+        "honeymoon": "Honeymoon (PIX)",
+        "contributions": "{count, plural, one {# contribution} other {# contributions}}",
+        "contributionsShort": "contributions"
+      },
+      "distribution": {
+        "title": "Distribution (CASH × ITEM)",
+        "giftCount": "{count, plural, one {# gift} other {# gifts}}"
+      },
+      "cumulative": {
+        "title": "Cumulative intake",
+        "empty": "No receipt data.",
+        "legendAmount": "Cumulative ($)",
+        "legendCount": "Quantity"
+      },
+      "topGivers": {
+        "title": "Top givers",
+        "empty": "No gifts recorded.",
+        "giftCount": "{count, plural, one {# gift} other {# gifts}}"
+      }
+    },
+    "guests": {
+      "back": "Back to reports",
+      "title": "Guests & RSVP",
+      "subtitle": "Response rate, plus-ones, VIPs, groomsmen, and distribution by group/city.",
+      "status": {
+        "confirmed": "Confirmed",
+        "maybe": "Maybe",
+        "pending": "Pending",
+        "declined": "Declined"
+      },
+      "tiles": {
+        "invited": "Guests",
+        "confirmed": "Confirmed",
+        "plusOnes": "+ Plus-ones",
+        "children": "Children"
+      },
+      "rsvp": {
+        "title": "RSVP status",
+        "peopleCount": "{count, plural, one {# person} other {# people}}",
+        "effectiveLabel": "Effective total (with +1s):"
+      },
+      "byGroup": {
+        "title": "By group",
+        "empty": "No guest groups registered."
+      },
+      "vips": {
+        "title": "VIPs & Groomsmen",
+        "vipsConfirmed": "VIPs confirmed",
+        "padrinhosConfirmed": "Groomsmen confirmed"
+      },
+      "cities": {
+        "title": "Top cities",
+        "empty": "No city provided."
+      }
+    },
+    "honeymoon": {
+      "back": "Back to reports",
+      "title": "Honeymoon",
+      "subtitle": "Status by stage (PLANNED → PAID), by item type, and coverage from the gift fund via PIX.",
+      "noPermission": {
+        "title": "No permission",
+        "body": "This report exposes financial figures. Request access from an administrator."
+      },
+      "status": {
+        "paid": "Paid",
+        "confirmed": "Confirmed",
+        "booked": "Booked",
+        "planned": "Planned",
+        "cancelled": "Cancelled"
+      },
+      "kind": {
+        "FLIGHT": "Flights",
+        "HOTEL": "Lodging",
+        "TRANSFER": "Transfer",
+        "ACTIVITY": "Activities",
+        "DOCUMENT": "Documents",
+        "BAGGAGE": "Baggage",
+        "OTHER": "Other"
+      },
+      "tiles": {
+        "items": "Items",
+        "booked": "Booked",
+        "paid": "Paid",
+        "fundedFromGifts": "Received via PIX (fund)"
+      },
+      "coverage": {
+        "title": "Coverage from fund",
+        "sublabel": "contributions via PIX",
+        "empty": "Set a total honeymoon budget to see coverage."
+      },
+      "byKind": {
+        "title": "By item type",
+        "empty": "No items added to the honeymoon yet."
+      },
+      "foreignCurrency": {
+        "title": "Amounts in foreign currencies",
+        "body": "The totals above show values in BRL. Items in other currencies:"
+      }
+    },
+    "risk": {
+      "back": "Back to reports",
+      "title": "Risk Radar",
+      "subtitle": "Consolidated signals that deserve attention: liquidity, contracts on time, overdue tasks, and vendors that exceeded the estimated budget.",
+      "empty": "No red flags right now. Good work.",
+      "tiles": {
+        "critical": "Critical",
+        "warning": "Warning",
+        "ok": "Ok"
+      }
+    },
+    "trousseau": {
+      "back": "Back to reports",
+      "title": "Trousseau",
+      "subtitle": "Progress by room and essential items still pending.",
+      "status": {
+        "gifted": "Received",
+        "bought": "Bought",
+        "toBuy": "To buy"
+      },
+      "room": {
+        "KITCHEN": "Kitchen",
+        "BATHROOM": "Bathroom",
+        "BEDROOM": "Bedroom",
+        "LIVING": "Living room",
+        "LAUNDRY": "Laundry",
+        "ELECTRONICS": "Electronics",
+        "OTHER": "Other"
+      },
+      "tiles": {
+        "items": "Items",
+        "completion": "Completion",
+        "estimated": "Estimated",
+        "byRoom": "By room",
+        "actual": "Actual",
+        "essentialsPending": "Essentials pending"
+      },
+      "essentials": {
+        "warning": "{count, plural, one {# ESSENTIAL item still in \"to buy\"} other {# ESSENTIAL items still in \"to buy\"}}",
+        "hint": "Prioritize these before NICE_TO_HAVE or LUXURY items."
+      },
+      "overall": {
+        "title": "Overall progress",
+        "label": "Completed",
+        "sublabel": "{pct}% of {total} items"
+      },
+      "byRoom": {
+        "title": "By room",
+        "empty": "No items added to the trousseau yet."
+      }
+    },
+    "vendorFunnel": {
+      "back": "Back to reports",
+      "title": "Vendor Funnel",
+      "subtitle": "Distribution by stage and average time between negotiation, contract, and finalization.",
+      "series": {
+        "negotiating": "Negotiating",
+        "contracted": "Contracted",
+        "finalized": "Finalized"
+      },
+      "tiles": {
+        "negotiation": "In negotiation",
+        "contracted": "Contracted",
+        "finalized": "Finalized"
+      },
+      "byCategory": {
+        "title": "By category",
+        "vendorCount": "{count, plural, one {# vendor} other {# vendors}}"
+      },
+      "avg": {
+        "negToContract": "Average time from negotiation → contract",
+        "contractToFinalized": "Average time from contract → finalization",
+        "daysUnit": "days"
+      }
+    }
+  },
+  "settings": {
+    "page": {
+      "title": "Settings",
+      "subtitle": "Wedding, team, and security settings."
+    },
+    "tabs": {
+      "event": "Wedding",
+      "security": "Security",
+      "team": "Team",
+      "notifications": "Notifications",
+      "whatsapp": "WhatsApp",
+      "profile": "Profile",
+      "backup": "Backup"
+    },
+    "toast": {
+      "failed": "Failed"
+    },
+    "notifications": {
+      "title": "Recent deliveries",
+      "subtitle": "Latest email/WhatsApp deliveries. Use this list to diagnose SMTP failures or invalid recipients (e.g., the default seed admin@admin.com).",
+      "empty": "No deliveries recorded yet.",
+      "col": {
+        "when": "When",
+        "type": "Type",
+        "channel": "Channel",
+        "recipient": "Recipient",
+        "status": "Status",
+        "error": "Error"
+      }
+    },
+    "event": {
+      "title": "Wedding details",
+      "coupleNames": "Couple names",
+      "eventDate": "Event date",
+      "currency": "Currency",
+      "currencyBRL": "Real (BRL)",
+      "currencyUSD": "Dollar (USD)",
+      "currencyEUR": "Euro (EUR)",
+      "contingency": "Contingency (%)",
+      "save": "Save",
+      "toast": {
+        "saved": "Settings saved",
+        "saveFailed": "Failed to save",
+        "pixSaved": "Pix updated"
+      }
+    },
+    "pix": {
+      "title": "Pix (honeymoon fund)",
+      "subtitle": "Set up the couple's Pix key to generate a static QR Code for cash gifts.",
+      "key": "Pix key",
+      "keyType": "Key type",
+      "typeCPF": "CPF",
+      "typeCNPJ": "CNPJ",
+      "typeEmail": "Email",
+      "typePhone": "Phone",
+      "typeRandom": "Random",
+      "holderName": "Recipient name (max. 25)",
+      "city": "Recipient city (max. 15)",
+      "save": "Save Pix"
+    },
+    "security": {
+      "loginRequired": "Sign in to manage security.",
+      "requiredWarningStrong": "2FA is required for your role ({role})",
+      "requiredWarningRest": ". Set it up now to keep guaranteed access.",
+      "title": "Two-factor authentication (2FA)",
+      "descEnabled": "Enabled — login asks for a code from your authenticator app.",
+      "descDisabled": "Add an extra layer using Google Authenticator, 1Password, or similar.",
+      "badgeActive": "Active",
+      "badgeInactive": "Inactive",
+      "enable": "Enable 2FA",
+      "step1": "1. Scan the QR Code with your authenticator app (Google Authenticator, 1Password, Authy).",
+      "manualHint": "If you can't scan, enter it manually:",
+      "step2": "2. Confirm with the current code shown in the app.",
+      "codeLabel": "6-digit code",
+      "confirmEnable": "Confirm and enable",
+      "cancel": "Cancel",
+      "backupTitle": "🔑 Save these backup codes",
+      "backupHint": "Use them instead of the TOTP code if you lose access to the app. Each one works only once.",
+      "backupDismiss": "I've saved them, hide",
+      "disableLabel": "To disable, enter a TOTP or backup code",
+      "disable": "Disable 2FA",
+      "toast": {
+        "enabled": "2FA enabled",
+        "disabled": "2FA disabled"
+      }
+    },
+    "team": {
+      "title": "Members",
+      "subtitleManage": "Create users directly. The system sends credentials by email and/or WhatsApp.",
+      "subtitleReadonly": "Only administrators and the couple can manage members.",
+      "newUser": "New user",
+      "searchPlaceholder": "Search by name or email",
+      "allRoles": "All roles",
+      "showArchived": "Show archived",
+      "noMembers": "No members found with the current filters.",
+      "row": {
+        "you": "(you)",
+        "joined": "joined {date}",
+        "lastLogin": "last login {date}",
+        "archived": "Archived",
+        "active": "Active",
+        "inactive": "Inactive",
+        "twoFactor": "2FA",
+        "tempPassword": "Temporary password",
+        "actions": "Actions"
+      },
+      "menu": {
+        "edit": "Edit",
+        "resetPassword": "Reset password",
+        "reset2fa": "Reset 2FA",
+        "deactivate": "Deactivate",
+        "activate": "Reactivate",
+        "restore": "Restore",
+        "archive": "Archive"
+      },
+      "confirm": {
+        "reset2faTitle": "Reset 2FA for {name}?",
+        "reset2faDesc": "The current codes will stop working. The user will need to set it up again.",
+        "reset2faLabel": "Reset",
+        "activateTitle": "Reactivate {name}?",
+        "deactivateTitle": "Deactivate {name}?",
+        "activateDesc": "The user will be able to sign in again.",
+        "deactivateDesc": "The user won't be able to sign in until reactivated.",
+        "activateLabel": "Reactivate",
+        "deactivateLabel": "Deactivate",
+        "archiveTitle": "Archive {name}?",
+        "archiveDesc": "The user is deactivated and removed from the list (can be restored later).",
+        "archiveLabel": "Archive",
+        "restoreTitle": "Restore {name}?",
+        "restoreDesc": "The user returns to the active list.",
+        "restoreLabel": "Restore"
+      },
+      "toast": {
+        "reset2fa": "2FA reset",
+        "activated": "User reactivated",
+        "deactivated": "User deactivated",
+        "archived": "User archived",
+        "restored": "User restored",
+        "created": "User created",
+        "updated": "User updated",
+        "passwordReset": "Password reset — share the new one with the user"
+      },
+      "password": {
+        "show": "Show",
+        "hide": "Hide",
+        "generate": "Generate"
+      },
+      "create": {
+        "title": "New user",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone (WhatsApp, optional)",
+        "phoneHint": "E.164 format (with + and country code). Used to send credentials and reminders.",
+        "tempPassword": "Temporary password (minimum {min} characters)",
+        "mustChangeHint": "The user will be required to change the password at first login.",
+        "role": "Role",
+        "cancel": "Cancel",
+        "submit": "Create user"
+      },
+      "edit": {
+        "title": "Edit {name}",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone (WhatsApp, optional)",
+        "role": "Role",
+        "selfRoleHint": "You can't change your own role.",
+        "cancel": "Cancel",
+        "submit": "Save"
+      },
+      "reset": {
+        "title": "Reset password for {name}",
+        "hint": "The user will be required to change the password at next login.",
+        "newPassword": "New temporary password",
+        "cancel": "Cancel",
+        "submit": "Reset"
+      }
+    },
+    "policy": {
+      "title": "Security policy",
+      "subtitle": "Define who needs mandatory 2FA and the minimum password length.",
+      "require2faLabel": "Mandatory 2FA for roles:",
+      "minPasswordLength": "Minimum password length",
+      "save": "Save policy",
+      "toast": {
+        "saved": "Security policy saved"
+      }
+    },
+    "profile": {
+      "loginRequired": "Sign in to manage your profile.",
+      "title": "My profile",
+      "emailLabel": "Email:",
+      "roleLabel": "Role:",
+      "lastLogin": "Last login: {date}",
+      "passwordUpdatedAt": "Password updated on {date}",
+      "passwordNeverChanged": "Password never changed",
+      "displayName": "Display name",
+      "saveName": "Save name",
+      "changePasswordTitle": "Change my password",
+      "changePasswordHint": "Enter your current and new password. The new one must be different from the current one.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "updatePassword": "Update password",
+      "twoFactorTitle": "Two-factor authentication",
+      "twoFactorEnabled": "Enabled. You can disable it in the Security tab.",
+      "twoFactorDisabled": "Inactive. Enable it in the Security tab to strengthen your account.",
+      "twoFactorSeeTab": "See the “Security” tab to set it up.",
+      "toast": {
+        "nameUpdated": "Name updated",
+        "passwordUpdated": "Password updated"
+      }
+    },
+    "backup": {
+      "exportTitle": "Export backup",
+      "exportSubtitle": "Downloads a JSON with vendors, payments, contributions, settings, guests, and everything else. Includes an SHA-256 checksum for validation.",
+      "exportButton": "Export JSON backup",
+      "exportHint": "Make a monthly backup and before/after the wedding. Keep it in a safe place — the file contains sensitive data.",
+      "restoreTitle": "Restore backup",
+      "restoreSubtitleAdmin": "Upload a JSON exported by this system. The restore wipes and recreates all data in a transaction. Admins only.",
+      "restoreSubtitleReadonly": "Only administrators can restore backups. You can validate the file here, but the restore requires the ADMIN role.",
+      "fileLabel": ".json file",
+      "validateButton": "Validate file",
+      "clear": "Clear",
+      "warnStrong": "The restore wipes ALL current data",
+      "warnRest": " and replaces it with the file's data. This operation cannot be undone. Make a backup first.",
+      "passwordLabel": "Your password (confirmation)",
+      "acknowledgeStart": "I understand that this action",
+      "acknowledgeStrong": "wipes all data",
+      "acknowledgeEnd": " from the system and replaces it with the file's data. I've already made a backup.",
+      "restoreNow": "Restore now",
+      "restoreDone": "Restore complete.",
+      "totalRestored": "Total restored:",
+      "zeroRecords": "0 records",
+      "accountPreserved": "Your account was preserved because it wasn't in the backup.",
+      "confirm": {
+        "title": "Confirm restore",
+        "description": "This action is IRREVERSIBLE. All current data will be replaced with the file's data. Continue?",
+        "restoring": "Restoring…",
+        "confirmLabel": "Yes, restore",
+        "cancel": "Cancel"
+      },
+      "toast": {
+        "selectFirst": "Select a backup file first.",
+        "invalidFile": "Invalid backup file.",
+        "validated": "Backup file validated.",
+        "validateFailed": "Failed to validate file",
+        "restoreFailed": "Failed to restore backup.",
+        "restored": "Backup restored successfully. Reloading…",
+        "restoreError": "Failed to restore"
+      },
+      "validation": {
+        "invalid": "Invalid file",
+        "root": "(root)",
+        "moreIssues": "...and {count} more issues.",
+        "summary": "✓ Backup v{version} valid — {rows} records, exported on {date}.",
+        "host": "host: {host}",
+        "app": "app: v{version}",
+        "checksum": "checksum:"
+      }
+    },
+    "modal": {
+      "close": "Close"
+    },
+    "whatsapp": {
+      "title": "WhatsApp",
+      "subtitle": "Connect a number to send credentials, reminders, and password resets via WhatsApp.",
+      "needsManualAction": "Action needed: the session expired or was unlinked. Click \"Connect\" to generate a new QR Code.",
+      "reconnecting": "Reconnecting automatically · attempts: {attempts}",
+      "lastDisconnect": "dropped at {date}",
+      "qrInstructions": "Open WhatsApp on your phone → Settings → Linked devices → Link a device. Scan:",
+      "qrAlt": "WhatsApp QR Code",
+      "disconnect": "Disconnect",
+      "reopenQr": "Reopen QR",
+      "connect": "Connect",
+      "refresh": "Refresh",
+      "testTitle": "Send test message",
+      "sendTest": "Send test",
+      "status": {
+        "connected": "Connected",
+        "connectedWithPhone": "Connected ({phone})",
+        "waitingQr": "Waiting for QR Code scan",
+        "connecting": "Connecting...",
+        "disconnected": "Disconnected"
+      },
+      "toast": {
+        "connecting": "Starting connection. Scan the QR Code.",
+        "disconnected": "WhatsApp disconnected",
+        "numberRequired": "Enter a number",
+        "testSent": "Test message sent"
+      }
+    }
+  },
+  "tasks": {
+    "page": {
+      "title": "Tasks",
+      "subtitle": "Use the ready-made 12-month template or create standalone tasks. Exports to your calendar."
+    },
+    "toast": {
+      "created": "Task created",
+      "updated": "Task updated",
+      "removed": "Task removed",
+      "failed": "Failed",
+      "templatesAllExist": "All template tasks already exist",
+      "templatesCreated": "{count, plural, one {# task created} other {# tasks created}}"
+    },
+    "filter": {
+      "all": "All",
+      "open": "Open",
+      "overdue": "Overdue",
+      "week": "Next 7 days"
+    },
+    "view": {
+      "list": "List",
+      "kanban": "Kanban"
+    },
+    "toolbar": {
+      "exportIcs": "Export (.ics)",
+      "loadTemplate": "Load template",
+      "newTask": "New task"
+    },
+    "delete": {
+      "title": "Delete task?",
+      "titleNamed": "Delete \"{title}\"?"
+    },
+    "list": {
+      "empty": "No tasks in this filter."
+    },
+    "kanban": {
+      "empty": "Empty"
+    },
+    "row": {
+      "complete": "Complete",
+      "reopen": "Reopen",
+      "template": "template"
+    },
+    "status": {
+      "TODO": "To do",
+      "IN_PROGRESS": "In progress",
+      "DONE": "Done",
+      "BLOCKED": "Blocked"
+    },
+    "priority": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "URGENT": "Urgent"
+    },
+    "form": {
+      "createTitle": "New task",
+      "editTitle": "Edit task",
+      "title": "Title",
+      "deadline": "Deadline",
+      "responsible": "Responsible",
+      "responsiblePlaceholder": "groom / bride / planner",
+      "priority": "Priority",
+      "vendor": "Vendor",
+      "venue": "Venue"
+    }
+  },
+  "trousseau": {
+    "page": {
+      "title": "Trousseau",
+      "subtitle": "List what you still need to buy, set priorities and track the budget by room."
+    },
+    "stats": {
+      "estimated": "Estimated",
+      "bought": "Bought",
+      "toBuy": "To buy",
+      "gifted": "Gifted"
+    },
+    "filter": {
+      "all": "All"
+    },
+    "status": {
+      "TO_BUY": "To buy",
+      "BOUGHT": "Bought",
+      "GIFTED": "Gifted"
+    },
+    "room": {
+      "KITCHEN": "Kitchen",
+      "BATHROOM": "Bathroom",
+      "BEDROOM": "Bedroom",
+      "LIVING": "Living room",
+      "LAUNDRY": "Laundry",
+      "ELECTRONICS": "Appliances",
+      "OTHER": "Other"
+    },
+    "priority": {
+      "ESSENTIAL": "Essential",
+      "NICE_TO_HAVE": "Nice to have",
+      "LUXURY": "Luxury"
+    },
+    "list": {
+      "add": "New item",
+      "empty": "Nothing here yet."
+    },
+    "card": {
+      "paid": "(paid: {value})",
+      "storeLink": "Store link",
+      "toggleBought": "Toggle bought",
+      "toggleGifted": "Gifted"
+    },
+    "confirmDelete": {
+      "title": "Delete item?"
+    },
+    "form": {
+      "createTitle": "New trousseau item",
+      "editTitle": "Edit item",
+      "item": "Item",
+      "room": "Room",
+      "priority": "Priority",
+      "estimatedPrice": "Estimated price",
+      "actualPrice": "Price paid",
+      "store": "Store",
+      "link": "Link",
+      "notes": "Notes"
+    },
+    "toast": {
+      "created": "Item added",
+      "updated": "Item updated",
+      "deleted": "Item removed"
+    }
+  },
+  "vendors": {
+    "page": {
+      "title": "Vendors"
+    },
+    "list": {
+      "new": "New Vendor",
+      "empty": "No vendors registered yet.",
+      "noResults": "No results for this filter.",
+      "searchPlaceholder": "Search vendor..."
+    },
+    "filter": {
+      "allStatus": "All statuses"
+    },
+    "status": {
+      "negotiation": "Negotiating",
+      "contracted": "Contracted",
+      "finalized": "Finalized"
+    },
+    "value": {
+      "real": "Actual",
+      "estimated": "Estimated"
+    },
+    "table": {
+      "category": "Category",
+      "select": "Select",
+      "selectVendor": "Select {name}"
+    },
+    "compareButton": {
+      "label": "Compare ({count})",
+      "selectMore": "Select 1 more to compare"
+    },
+    "statusPrompt": {
+      "message": "What is the ACTUAL amount contracted with {name}? (numbers only, e.g. 12500.00)",
+      "invalidValue": "Invalid amount"
+    },
+    "form": {
+      "createTitle": "New Vendor",
+      "editTitle": "Edit {name}",
+      "name": "Name",
+      "namePlaceholder": "e.g. Colonial Catering",
+      "category": "Category",
+      "categoryChoose": "— choose —",
+      "freeLabel": "Free label",
+      "freeLabelPlaceholder": "e.g. Catering",
+      "estimatedValue": "Estimated amount ($)",
+      "estimatedValuePlaceholder": "e.g. 15000.00",
+      "actualValue": "Actual amount ($)",
+      "actualValuePlaceholder": "Empty = not closed yet",
+      "contractLink": "Contract link (optional)",
+      "notes": "Notes",
+      "notesPlaceholder": "Notes, contacts, terms...",
+      "saveChanges": "Save changes"
+    },
+    "delete": {
+      "title": "Delete vendor?",
+      "titleNamed": "Delete {name}?",
+      "description": "This will soft-delete the vendor along with its budgets and associated payments.\nYou will no longer see these records in the listings."
+    },
+    "toast": {
+      "created": "Vendor created",
+      "createFailed": "Failed to create",
+      "updated": "Vendor updated",
+      "updateFailed": "Failed to update",
+      "deleted": "Vendor deleted",
+      "deleteFailed": "Failed to delete",
+      "statusUpdated": "Status updated",
+      "failed": "Failed"
+    },
+    "compare": {
+      "back": "Back to vendors",
+      "title": "Compare proposals",
+      "hint": "Select 2 to 4 vendors from the list and click \"Compare\".",
+      "comparing": "{count, plural, one {Comparing # vendor.} other {Comparing # vendors.}}",
+      "criterion": "Criterion",
+      "open": "Open →",
+      "legend": "💡 Green on the price marks the cheapest; ⭐ on the rating marks the best rated.",
+      "status": {
+        "negotiation": "Negotiating",
+        "contracted": "Contracted",
+        "finalized": "Finalized"
+      },
+      "row": {
+        "status": "Status",
+        "rating": "Rating",
+        "totalValue": "Total amount",
+        "paid": "Paid",
+        "balance": "Balance",
+        "indicatedBy": "Referred by",
+        "tags": "Tags",
+        "counts": "Contacts / Contracts / Attachments",
+        "notes": "Notes",
+        "lastInteraction": "Last interaction",
+        "contractLink": "Contract link"
+      },
+      "empty": {
+        "title": "No vendor selected.",
+        "description": "Go back to the list, check the boxes for the vendors you want to compare and click \"Compare\".",
+        "cta": "Go to vendors →"
+      }
+    },
+    "detail": {
+      "back": "Back to vendors",
+      "status": {
+        "negotiation": "Negotiating",
+        "contracted": "Contracted",
+        "finalized": "Finalized"
+      },
+      "header": {
+        "indicatedBy": "Referred by: {name}",
+        "contractLink": "Contract link",
+        "budgeted": "Budgeted",
+        "paid": "Paid",
+        "balance": "Balance"
+      },
+      "toast": {
+        "failed": "Failed"
+      },
+      "contacts": {
+        "title": "Contacts",
+        "empty": "No contacts registered.",
+        "primary": "Primary",
+        "deleteAria": "Delete contact",
+        "formTitle": "New contact",
+        "name": "Name",
+        "role": "Role (e.g. manager, front desk)",
+        "isPrimary": "Primary contact",
+        "removeTitle": "Remove contact?",
+        "added": "Contact added",
+        "removed": "Contact removed"
+      },
+      "notes": {
+        "title": "Notes and negotiation",
+        "bodyPlaceholder": "Write down what happened, decided, agreed...",
+        "add": "Add",
+        "empty": "No notes yet. Use this space as a negotiation log.",
+        "deleteAria": "Delete note",
+        "removeTitle": "Remove note?",
+        "added": "Note added",
+        "removed": "Note removed"
+      },
+      "noteKind": {
+        "NOTE": "Note",
+        "NEGOTIATION_EVENT": "Negotiation",
+        "MEETING": "Meeting",
+        "DECISION": "Decision"
+      },
+      "contracts": {
+        "title": "Contracts",
+        "empty": "No contracts recorded. Use this to store key clauses and versions.",
+        "value": "Amount",
+        "signed": "Signed",
+        "expires": "Expires",
+        "paymentTerms": "Payment terms",
+        "cancellationPolicy": "Cancellation policy",
+        "included": "Included",
+        "excluded": "Not included",
+        "notes": "Notes",
+        "deleteAria": "Delete contract",
+        "removeTitle": "Delete contract?",
+        "removeDescription": "The contract will be removed from the listing but can be recovered from the database.",
+        "created": "Contract created",
+        "removed": "Contract removed"
+      },
+      "contractStatus": {
+        "DRAFT": "Draft",
+        "SENT": "Sent",
+        "NEGOTIATING": "Negotiating",
+        "SIGNED_DIGITAL": "Signed (digital)",
+        "SIGNED_PHYSICAL": "Signed (physical)",
+        "CANCELLED": "Cancelled"
+      },
+      "contractForm": {
+        "title": "New contract",
+        "titleLabel": "Title",
+        "titlePlaceholder": "e.g. Colonial Catering Contract",
+        "totalValue": "Total amount ($)",
+        "signedAt": "Signature date",
+        "expiresAt": "Validity / expiration",
+        "includedItems": "What is included",
+        "excludedItems": "What is NOT included",
+        "save": "Save contract"
+      },
+      "contractFile": {
+        "noViewPermission": "Contract document available, but your profile doesn't have permission to view it.",
+        "title": "Contract file",
+        "inlineFallback": "The browser couldn't display the PDF inline.",
+        "openNewTab": "Open the contract in a new tab",
+        "uploadedAt": "uploaded on {date}",
+        "uploadedBy": "by {name}",
+        "downloadPdf": "Download PDF",
+        "noPdfYet": "No PDF attached to this contract yet.",
+        "replaceLabel": "Replace contract (becomes v{version})",
+        "uploadLabel": "Upload contract PDF",
+        "onlyPdf": "PDF only, up to 8 MB.",
+        "send": "Upload",
+        "markSigned": "Mark as signed:",
+        "signDigital": "Digital signature",
+        "signPhysical": "Physical signature",
+        "historyShow": "Show history ({count, plural, one {# version} other {# versions}})",
+        "historyHide": "Hide history ({count, plural, one {# version} other {# versions}})",
+        "download": "Download",
+        "newVersionTitle": "Create new version v{version}?",
+        "newVersionDescription": "The current version will be archived (kept in history for 30 days). Are you sure?",
+        "confirmReplace": "Yes, replace",
+        "updated": "Contract updated",
+        "newVersionToast": "New version v{version}",
+        "pdfSent": "Contract PDF uploaded",
+        "keptVersionToast": "Kept as v{version}",
+        "signed": "Contract signed"
+      },
+      "attachments": {
+        "title": "Attachments",
+        "fileLabel": "File (PDF/PNG/JPG, up to 10MB)",
+        "kindLabel": "Type",
+        "send": "Upload",
+        "empty": "No files attached.",
+        "deleteAria": "Delete attachment",
+        "removeTitle": "Delete attachment?",
+        "uploaded": "File attached",
+        "removed": "Attachment removed"
+      },
+      "attachmentKind": {
+        "CONTRACT": "Contract",
+        "PROPOSAL": "Proposal",
+        "RECEIPT": "Receipt",
+        "INVOICE": "Invoice / Bill",
+        "ID_DOC": "Document",
+        "PHOTO": "Photo",
+        "OTHER": "Other"
+      },
+      "payments": {
+        "title": "Payments",
+        "empty": "No payments. Use the Payments tab to add some.",
+        "paid": "Paid",
+        "pending": "Pending",
+        "manage": "Manage payments →"
+      }
+    }
+  },
+  "venues": {
+    "page": {
+      "title": "Venues",
+      "subtitle": "Compare candidates, jot down pros and cons, and keep your visit checklist up to date."
+    },
+    "list": {
+      "new": "New venue",
+      "empty": "No venues added yet. Add candidates to compare them side by side.",
+      "favorite": "Favorite",
+      "deleteAria": "Delete venue",
+      "checklistCount": "Checklist {done}/{total}",
+      "attachments": "{count, plural, one {# attachment} other {# attachments}}",
+      "visitedOn": "Visited on {date}",
+      "noVisit": "Not visited"
+    },
+    "fields": {
+      "seated": "Seated",
+      "standing": "Standing",
+      "rate": "Rental",
+      "name": "Name",
+      "address": "Address",
+      "mapsUrl": "Google Maps / Waze link",
+      "baseRate": "Rental price ($)",
+      "capacitySeated": "Seated capacity",
+      "capacityStanding": "Standing capacity",
+      "contactName": "Contact (name)",
+      "contactPhone": "Contact (phone)",
+      "visitedAt": "Visit date",
+      "pros": "Pros",
+      "cons": "Cons",
+      "restrictions": "Restrictions",
+      "pricingNotes": "Pricing notes",
+      "notes": "General notes"
+    },
+    "form": {
+      "namePlaceholder": "e.g. Lakeside Manor",
+      "markFavorite": "Mark as favorite",
+      "seedChecklist": "Create the default visit checklist (20 questions)"
+    },
+    "delete": {
+      "confirmTitle": "Delete {name}?",
+      "confirmTitleFallback": "Delete venue?",
+      "confirmDescription": "The venue and its checklist will be removed from the listings.",
+      "confirmDescriptionDetail": "The venue and its checklist will be marked as deleted."
+    },
+    "toast": {
+      "created": "Venue created",
+      "removed": "Venue removed",
+      "updated": "Updated",
+      "fail": "Failed"
+    },
+    "detail": {
+      "back": "Back to venues",
+      "contactLabel": "Contact:",
+      "openMaps": "Open in Maps",
+      "closeEdit": "Close editing",
+      "deleteVenue": "Delete venue"
+    },
+    "editForm": {
+      "title": "Edit venue",
+      "mapsUrl": "Maps link",
+      "baseRate": "Rental ($)",
+      "contactName": "Contact",
+      "contactPhone": "Phone",
+      "visitedAt": "Visited on",
+      "favorite": "Favorite",
+      "pricingNotes": "Pricing notes"
+    },
+    "checklist": {
+      "title": "Visit checklist",
+      "answered": "{done}/{total} answered",
+      "answerPlaceholder": "Note the answer",
+      "deleteItemAria": "Delete item",
+      "addPlaceholder": "New question for the checklist..."
+    },
+    "attachments": {
+      "title": "Attachments",
+      "file": "File",
+      "kind": "Type",
+      "kinds": {
+        "PHOTO": "Visit photo",
+        "CONTRACT": "Contract",
+        "PROPOSAL": "Proposal",
+        "OTHER": "Other"
+      },
+      "upload": "Upload",
+      "empty": "No attachments yet.",
+      "removed": "Attachment removed",
+      "deleteAria": "Delete attachment",
+      "deleteTitle": "Delete attachment?"
+    }
+  },
+  "weddingDay": {
+    "header": {
+      "mode": "Wedding Day Mode",
+      "fallbackTitle": "The big day",
+      "countdown": "Countdown",
+      "daysLeft": "{count, plural, one {# day} other {# days}}"
+    },
+    "stats": {
+      "confirmed": "Confirmed",
+      "totalHeads": "Total headcount",
+      "arrived": "Arrived",
+      "tasksToday": "Tasks today"
+    },
+    "seatingLink": {
+      "title": "Seating chart",
+      "description": "Arrange the tables and drag confirmed guests to their seats."
+    },
+    "schedule": {
+      "title": "Day schedule",
+      "empty": "No schedule added yet. Use the button below to set one up (e.g. 7:00 AM hairdresser, 2:00 PM catering arrival...).",
+      "placeholder": "E.g.:\n07:00 — hairdresser arrives\n11:00 — getting-ready photos\n16:30 — ceremony\n..."
+    },
+    "rainPlan": {
+      "title": "Rain plan B / contingencies",
+      "empty": "No plan B documented."
+    },
+    "notes": {
+      "title": "Special notes",
+      "empty": "No notes.",
+      "closeEdit": "Close editing",
+      "openEdit": "Edit schedule / plan B / notes",
+      "placeholder": "First-dance song, waltz, surprise, cake flavors..."
+    },
+    "contacts": {
+      "title": "Key contacts",
+      "empty": "No contracted vendors.",
+      "addContact": "Add contact"
+    },
+    "tasks": {
+      "title": "Tasks today",
+      "empty": "No tasks scheduled for today."
+    },
+    "payments": {
+      "title": "Payments today"
+    },
+    "checkin": {
+      "title": "Quick check-in",
+      "searchPlaceholder": "Search guest...",
+      "empty": "No guests.",
+      "childPrefix": "Child · ",
+      "arrived": "Arrived",
+      "mark": "Check in"
+    },
+    "toast": {
+      "saved": "Saved",
+      "error": "Failed"
+    },
+    "seating": {
+      "title": "Seating chart",
+      "subtitle": "Drag confirmed guests onto the tables. Capacity accounts for +1s.",
+      "newTable": "New table",
+      "stats": {
+        "tables": "Tables",
+        "totalSeats": "Total seats",
+        "allocatedGuests": "Assigned guests"
+      },
+      "hint": {
+        "empty": "Create the first table to get started.",
+        "help": "Drop a guest onto a table to assign them; drag the handle to reorder."
+      },
+      "table": {
+        "dropGuests": "Drop guests here"
+      },
+      "pool": {
+        "title": "Guest pool",
+        "empty": "All confirmed guests are assigned. Drop here to unassign."
+      },
+      "form": {
+        "createTitle": "New table",
+        "editTitle": "Edit table",
+        "capacity": "Capacity",
+        "shape": "Shape",
+        "saving": "Saving..."
+      },
+      "shape": {
+        "round": "Round",
+        "rect": "Rectangular",
+        "square": "Square"
+      },
+      "delete": {
+        "title": "Delete table?",
+        "description": "Table \"{name}\" will be removed and its guests will become unassigned."
+      },
+      "toast": {
+        "errorTitle": "Error",
+        "error": "Failed",
+        "created": "Table created",
+        "updated": "Table updated",
+        "deleted": "Table deleted",
+        "tableFull": "Table full",
+        "tableFullDetail": "Capacity {capacity}, occupied {used}, required {needed}"
+      },
+      "chip": {
+        "dragAria": "Drag {name}"
+      },
+      "card": {
+        "reorderAria": "Reorder table",
+        "editAria": "Edit table",
+        "deleteAria": "Delete table"
+      }
+    }
+  }
+}

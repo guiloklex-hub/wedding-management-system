@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getEventConfig } from "@/lib/event-config";
@@ -9,6 +10,7 @@ import SettingsClient from "./settings-client";
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
+  const t = await getTranslations("dashboard.settings");
   const cfg = await getEventConfig();
   const session = await auth();
   const email = session?.user?.email ?? null;
@@ -69,8 +71,8 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Ajustes</h1>
-        <p className="text-sm text-zinc-500">Configurações do casamento, time e segurança.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-white">{t("page.title")}</h1>
+        <p className="text-sm text-zinc-500">{t("page.subtitle")}</p>
       </div>
       <SettingsClient
         initial={{

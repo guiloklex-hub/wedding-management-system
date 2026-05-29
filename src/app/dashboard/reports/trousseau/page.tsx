@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { canViewSensitiveFinance } from "@/lib/permissions";
@@ -10,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function TrousseauReportPage() {
   const session = await auth();
+  const t = await getTranslations("dashboard.reports.trousseau");
   const role = (session?.user as { role?: string } | undefined)?.role;
   const finance = canViewSensitiveFinance(role);
 
@@ -24,12 +26,10 @@ export default async function TrousseauReportPage() {
           className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300"
         >
           <ChevronLeft className="h-3 w-3" />
-          Voltar para relatórios
+          {t("back")}
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">Enxoval</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Progresso por cômodo e itens essenciais ainda pendentes.
-        </p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="mt-1 text-sm text-zinc-500">{t("subtitle")}</p>
       </div>
 
       <TrousseauReportClient result={result} showFinance={finance} />

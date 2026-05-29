@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import {
   BedDouble,
   Briefcase,
@@ -49,15 +50,8 @@ type Honeymoon = {
   items: Item[];
 };
 
-const KIND_LABEL: Record<string, string> = {
-  FLIGHT: "Voo",
-  HOTEL: "Hospedagem",
-  TRANSFER: "Transfer",
-  ACTIVITY: "Passeio",
-  DOCUMENT: "Documento",
-  BAGGAGE: "Bagagem",
-  OTHER: "Outro",
-};
+const KIND_KEYS = ["FLIGHT", "HOTEL", "TRANSFER", "ACTIVITY", "DOCUMENT", "BAGGAGE", "OTHER"] as const;
+const STATUS_KEYS = ["PLANNED", "BOOKED", "CONFIRMED", "PAID", "CANCELLED"] as const;
 
 const KIND_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   FLIGHT: Plane,
@@ -69,15 +63,9 @@ const KIND_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   OTHER: Briefcase,
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  PLANNED: "Planejado",
-  BOOKED: "Reservado",
-  CONFIRMED: "Confirmado",
-  PAID: "Pago",
-  CANCELLED: "Cancelado",
-};
-
 export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon }) {
+  const t = useTranslations("dashboard.honeymoon");
+  const tc = useTranslations("common");
   const toast = useToast();
   const [editingInfo, setEditingInfo] = useState(false);
   const [busyInfo, setBusyInfo] = useState(false);
@@ -115,9 +103,9 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
       try {
         const r = await updateHoneymoon(undefined, formData);
         if (r.success) {
-          toast.success("Atualizado");
+          toast.success(t("toast.updated"));
           setEditingInfo(false);
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.failed"), r.error);
       } finally {
         setBusyInfo(false);
       }
@@ -130,9 +118,9 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
       try {
         const r = await createHoneymoonItem(undefined, formData);
         if (r.success) {
-          toast.success("Item adicionado");
+          toast.success(t("toast.itemAdded"));
           setOpen(false);
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.failed"), r.error);
       } finally {
         setBusyItem(false);
       }
@@ -145,9 +133,9 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
       try {
         const r = await updateHoneymoonItem(undefined, formData);
         if (r.success) {
-          toast.success("Item atualizado");
+          toast.success(t("toast.itemUpdated"));
           setEditing(null);
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.failed"), r.error);
       } finally {
         setUpdateBusy(false);
       }
@@ -160,9 +148,9 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
     startTransition(async () => {
       const r = await deleteHoneymoonItem(id);
       if (r.success) {
-        toast.success("Item removido");
+        toast.success(t("toast.itemRemoved"));
         setDeleting(null);
-      } else toast.error("Falha", r.error);
+      } else toast.error(t("toast.failed"), r.error);
     });
   }
 
@@ -172,8 +160,8 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
         {!editingInfo ? (
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-wider text-zinc-500">Destino</p>
-              <h2 className="mt-1 text-2xl font-bold text-white">{honeymoon.destination ?? "Ainda não decidido"}</h2>
+              <p className="text-xs uppercase tracking-wider text-zinc-500">{t("info.destination")}</p>
+              <h2 className="mt-1 text-2xl font-bold text-white">{honeymoon.destination ?? t("info.notDecided")}</h2>
               <p className="mt-1 text-sm text-zinc-400">
                 {honeymoon.startDate ? formatDateBR(honeymoon.startDate) : "—"}
                 {" → "}
@@ -185,7 +173,7 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
             </div>
             <div className="flex flex-col items-end gap-2">
               <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-4 py-2">
-                <p className="text-[10px] uppercase tracking-wider text-zinc-500">Orçamento</p>
+                <p className="text-[10px] uppercase tracking-wider text-zinc-500">{t("info.budget")}</p>
                 <p className="text-lg font-bold text-zinc-100">
                   {honeymoon.budget
                     ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: honeymoon.currency }).format(honeymoon.budget)
@@ -193,7 +181,7 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
                 </p>
               </div>
               <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-4 py-2">
-                <p className="text-[10px] uppercase tracking-wider text-zinc-500">Comprometido</p>
+                <p className="text-[10px] uppercase tracking-wider text-zinc-500">{t("info.committed")}</p>
                 <p className="text-lg font-bold text-rose-300">{formatCurrency(totals.totalCost)}</p>
               </div>
               <button
@@ -201,32 +189,32 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
                 onClick={() => setEditingInfo(true)}
                 className="text-xs text-rose-300 hover:text-rose-200"
               >
-                Editar dados da viagem
+                {t("info.editTrip")}
               </button>
             </div>
           </div>
         ) : (
           <form action={handleInfoSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field name="destination" label="Destino" defaultValue={honeymoon.destination ?? ""} />
+            <Field name="destination" label={t("info.destination")} defaultValue={honeymoon.destination ?? ""} />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:col-span-2">
-              <Field name="startDate" label="Saída" type="date" defaultValue={honeymoon.startDate ? toIsoDate(new Date(honeymoon.startDate)) : ""} />
-              <Field name="endDate" label="Volta" type="date" defaultValue={honeymoon.endDate ? toIsoDate(new Date(honeymoon.endDate)) : ""} />
+              <Field name="startDate" label={t("info.departure")} type="date" defaultValue={honeymoon.startDate ? toIsoDate(new Date(honeymoon.startDate)) : ""} />
+              <Field name="endDate" label={t("info.return")} type="date" defaultValue={honeymoon.endDate ? toIsoDate(new Date(honeymoon.endDate)) : ""} />
             </div>
-            <Field name="budget" label="Orçamento" type="number" step="0.01" defaultValue={honeymoon.budget?.toString() ?? ""} />
+            <Field name="budget" label={t("info.budget")} type="number" step="0.01" defaultValue={honeymoon.budget?.toString() ?? ""} />
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Moeda</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">{tc("labels.currency")}</label>
               <select
                 name="currency"
                 defaultValue={honeymoon.currency}
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
               >
-                <option value="BRL">Real (BRL)</option>
-                <option value="USD">Dólar (USD)</option>
-                <option value="EUR">Euro (EUR)</option>
+                <option value="BRL">{t("currency.brl")}</option>
+                <option value="USD">{t("currency.usd")}</option>
+                <option value="EUR">{t("currency.eur")}</option>
               </select>
             </div>
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Notas</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">{tc("labels.notes")}</label>
               <textarea
                 name="notes"
                 rows={3}
@@ -241,7 +229,7 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
                 onClick={() => setEditingInfo(false)}
                 className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
               >
-                Cancelar
+                {tc("actions.cancel")}
               </button>
               <button
                 type="submit"
@@ -249,7 +237,7 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
                 className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
               >
                 {busyInfo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Salvar
+                {tc("actions.save")}
               </button>
             </div>
           </form>
@@ -262,13 +250,13 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
           onClick={() => setOpen(true)}
           className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500"
         >
-          <Plus className="h-4 w-4" /> Novo item
+          <Plus className="h-4 w-4" /> {t("actions.newItem")}
         </button>
       </div>
 
       {honeymoon.items.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 p-8 text-center text-sm text-zinc-500">
-          Nada adicionado ainda. Comece pelos voos e hotéis.
+          {t("list.empty")}
         </p>
       ) : (
         <div className="space-y-4">
@@ -278,7 +266,7 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
               <section key={kind} className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
                 <div className="mb-3 flex items-center gap-2 text-zinc-100">
                   <Icon className="h-5 w-5" />
-                  <h3 className="font-semibold">{KIND_LABEL[kind] ?? kind}</h3>
+                  <h3 className="font-semibold">{(KIND_KEYS as readonly string[]).includes(kind) ? t(`kind.${kind}`) : kind}</h3>
                   <span className="text-xs text-zinc-500">({items.length})</span>
                 </div>
                 <ul className="space-y-2">
@@ -293,7 +281,7 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
                           {it.vendor ? <span>{it.vendor}</span> : null}
                           {it.startAt ? <span>📅 {formatDateBR(it.startAt)}</span> : null}
                           {it.confirmationNumber ? <span>#{it.confirmationNumber}</span> : null}
-                          <span>{STATUS_LABEL[it.status] ?? it.status}</span>
+                          <span>{(STATUS_KEYS as readonly string[]).includes(it.status) ? t(`status.${it.status}`) : it.status}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -308,7 +296,7 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
                         <button
                           type="button"
                           onClick={() => setEditing(it)}
-                          aria-label="Editar"
+                          aria-label={tc("actions.edit")}
                           className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
                         >
                           <Pencil className="h-4 w-4" />
@@ -316,7 +304,7 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
                         <button
                           type="button"
                           onClick={() => setDeleting(it)}
-                          aria-label="Excluir"
+                          aria-label={tc("actions.delete")}
                           className="rounded-lg p-1.5 text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -346,8 +334,8 @@ export default function HoneymoonClient({ honeymoon }: { honeymoon: Honeymoon })
 
       <ConfirmDialog
         open={!!deleting}
-        title="Excluir item?"
-        confirmLabel="Excluir"
+        title={t("delete.confirmTitle")}
+        confirmLabel={tc("actions.delete")}
         tone="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleting(null)}
@@ -369,35 +357,37 @@ function ItemModal({
   onClose: () => void;
   formAction: (formData: FormData) => void;
 }) {
+  const t = useTranslations("dashboard.honeymoon");
+  const tc = useTranslations("common");
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
       <div className="my-4 w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
         <h2 className="text-lg font-semibold text-white">
-          {mode === "create" ? "Novo item" : "Editar item"}
+          {mode === "create" ? t("form.titleCreate") : t("form.titleEdit")}
         </h2>
         <form action={formAction} className="mt-4 grid gap-3 sm:grid-cols-2">
           {item ? <input type="hidden" name="id" value={item.id} /> : null}
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Tipo</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.kind")}</label>
             <select
               name="kind"
               defaultValue={item?.kind ?? "ACTIVITY"}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
             >
-              {Object.entries(KIND_LABEL).map(([k, v]) => (
+              {KIND_KEYS.map((k) => (
                 <option key={k} value={k}>
-                  {v}
+                  {t(`kind.${k}`)}
                 </option>
               ))}
             </select>
           </div>
-          <Field name="title" label="Título" required defaultValue={item?.title ?? ""} />
-          <Field name="vendor" label="Companhia / fornecedor" defaultValue={item?.vendor ?? ""} />
-          <Field name="startAt" label="Início" type="date" defaultValue={item?.startAt ? toIsoDate(new Date(item.startAt)) : ""} />
-          <Field name="endAt" label="Fim" type="date" defaultValue={item?.endAt ? toIsoDate(new Date(item.endAt)) : ""} />
-          <Field name="amount" label="Valor" type="number" step="0.01" defaultValue={item?.amount?.toString() ?? ""} />
+          <Field name="title" label={t("form.title")} required defaultValue={item?.title ?? ""} />
+          <Field name="vendor" label={t("form.vendor")} defaultValue={item?.vendor ?? ""} />
+          <Field name="startAt" label={t("form.start")} type="date" defaultValue={item?.startAt ? toIsoDate(new Date(item.startAt)) : ""} />
+          <Field name="endAt" label={t("form.end")} type="date" defaultValue={item?.endAt ? toIsoDate(new Date(item.endAt)) : ""} />
+          <Field name="amount" label={t("form.amount")} type="number" step="0.01" defaultValue={item?.amount?.toString() ?? ""} />
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Moeda</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{tc("labels.currency")}</label>
             <select
               name="currency"
               defaultValue={item?.currency ?? "BRL"}
@@ -408,23 +398,23 @@ function ItemModal({
               <option value="EUR">EUR</option>
             </select>
           </div>
-          <Field name="confirmationNumber" label="Localizador" defaultValue={item?.confirmationNumber ?? ""} />
+          <Field name="confirmationNumber" label={t("form.confirmationNumber")} defaultValue={item?.confirmationNumber ?? ""} />
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Status</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{tc("labels.status")}</label>
             <select
               name="status"
               defaultValue={item?.status ?? "PLANNED"}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
             >
-              {Object.entries(STATUS_LABEL).map(([k, v]) => (
+              {STATUS_KEYS.map((k) => (
                 <option key={k} value={k}>
-                  {v}
+                  {t(`status.${k}`)}
                 </option>
               ))}
             </select>
           </div>
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Notas</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{tc("labels.notes")}</label>
             <textarea
               name="notes"
               rows={2}
@@ -439,14 +429,14 @@ function ItemModal({
               onClick={onClose}
               className="flex-1 rounded-xl bg-zinc-800 py-2 text-sm font-medium text-white hover:bg-zinc-700"
             >
-              Cancelar
+              {tc("actions.cancel")}
             </button>
             <button
               type="submit"
               disabled={isBusy}
               className="flex flex-1 items-center justify-center rounded-xl bg-rose-600 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
-              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : tc("actions.save")}
             </button>
           </div>
         </form>

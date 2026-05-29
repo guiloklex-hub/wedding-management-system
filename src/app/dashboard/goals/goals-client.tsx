@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, Pencil, Plus, Target, Trash2 } from "lucide-react";
 import { createGoal, deleteGoal, updateGoal } from "@/app/actions/goalActions";
 import { useToast } from "@/components/toast";
@@ -20,6 +21,8 @@ type GoalRow = {
 };
 
 export default function GoalsClient({ goals }: { goals: GoalRow[] }) {
+  const t = useTranslations("dashboard.goals");
+  const tc = useTranslations("common");
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<GoalRow | null>(null);
@@ -34,9 +37,9 @@ export default function GoalsClient({ goals }: { goals: GoalRow[] }) {
       try {
         const r = await createGoal(undefined, formData);
         if (r.success) {
-          toast.success("Meta criada");
+          toast.success(t("toast.created"));
           setOpen(false);
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.failed"), r.error);
       } finally {
         setBusy(false);
       }
@@ -49,9 +52,9 @@ export default function GoalsClient({ goals }: { goals: GoalRow[] }) {
       try {
         const r = await updateGoal(undefined, formData);
         if (r.success) {
-          toast.success("Meta atualizada");
+          toast.success(t("toast.updated"));
           setEditing(null);
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.failed"), r.error);
       } finally {
         setUpdatingBusy(false);
       }
@@ -64,9 +67,9 @@ export default function GoalsClient({ goals }: { goals: GoalRow[] }) {
     startTransition(async () => {
       const r = await deleteGoal(id);
       if (r.success) {
-        toast.success("Meta removida");
+        toast.success(t("toast.removed"));
         setDeleting(null);
-      } else toast.error("Falha", r.error);
+      } else toast.error(t("toast.failed"), r.error);
     });
   }
 
@@ -78,13 +81,13 @@ export default function GoalsClient({ goals }: { goals: GoalRow[] }) {
           onClick={() => setOpen(true)}
           className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500"
         >
-          <Plus className="h-4 w-4" /> Nova meta
+          <Plus className="h-4 w-4" /> {t("list.new")}
         </button>
       </div>
 
       {goals.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 p-8 text-center text-sm text-zinc-500">
-          Nenhuma meta. Crie uma para acompanhar o progresso da poupança até a data alvo.
+          {t("list.empty")}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -129,19 +132,21 @@ export default function GoalsClient({ goals }: { goals: GoalRow[] }) {
                         <h3 className="text-lg font-semibold text-zinc-100 font-serif leading-snug truncate">{g.name}</h3>
                         {!g.isActive ? (
                           <span className="rounded-full bg-zinc-800/80 px-2 py-0.5 text-[10px] text-zinc-400">
-                            inativa
+                            {t("card.inactive")}
                           </span>
                         ) : null}
                       </div>
                       {g.targetDate ? (
-                        <p className="mt-0.5 text-xs text-zinc-400">Alvo: {formatDateBR(g.targetDate)}</p>
+                        <p className="mt-0.5 text-xs text-zinc-400">
+                          {t("card.target", { date: formatDateBR(g.targetDate) })}
+                        </p>
                       ) : null}
                     </div>
                     <div className="flex gap-1">
                       <button
                         type="button"
                         onClick={() => setEditing(g)}
-                        aria-label="Editar"
+                        aria-label={tc("actions.edit")}
                         className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 transition-colors"
                       >
                         <Pencil className="h-4 w-4" />
@@ -149,7 +154,7 @@ export default function GoalsClient({ goals }: { goals: GoalRow[] }) {
                       <button
                         type="button"
                         onClick={() => setDeleting(g)}
-                        aria-label="Excluir"
+                        aria-label={tc("actions.delete")}
                         className="rounded-lg p-1.5 text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -174,13 +179,13 @@ export default function GoalsClient({ goals }: { goals: GoalRow[] }) {
                         />
                       </div>
                       <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-400">
-                        <span>{pct.toFixed(1)}% atingido</span>
-                        <span>{g.assetCount} aporte(s)</span>
+                        <span>{t("card.pctReached", { pct: pct.toFixed(1) })}</span>
+                        <span>{t("card.contributions", { count: g.assetCount })}</span>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <Mini label="Falta">{formatCurrency(remaining)}</Mini>
-                      <Mini label="Por mês">
+                      <Mini label={t("card.remaining")}>{formatCurrency(remaining)}</Mini>
+                      <Mini label={t("card.perMonth")}>
                         {monthlyNeed ? formatCurrency(monthlyNeed) : "—"}
                       </Mini>
                     </div>
@@ -207,9 +212,9 @@ export default function GoalsClient({ goals }: { goals: GoalRow[] }) {
 
       <ConfirmDialog
         open={!!deleting}
-        title="Excluir meta?"
-        description="Os aportes vinculados continuam existindo, mas perdem a vinculação."
-        confirmLabel="Excluir"
+        title={t("delete.title")}
+        description={t("delete.description")}
+        confirmLabel={tc("actions.delete")}
         tone="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleting(null)}
@@ -240,19 +245,21 @@ function GoalFormModal({
   onClose: () => void;
   formAction: (formData: FormData) => void;
 }) {
+  const t = useTranslations("dashboard.goals");
+  const tc = useTranslations("common");
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
       <div className="my-4 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
         <h2 className="text-lg font-semibold text-white">
-          {mode === "create" ? "Nova meta" : "Editar meta"}
+          {mode === "create" ? t("form.createTitle") : t("form.editTitle")}
         </h2>
         <form action={formAction} className="mt-4 space-y-3">
           {goal ? <input type="hidden" name="id" value={goal.id} /> : null}
-          <Field name="name" label="Nome" required defaultValue={goal?.name ?? ""} />
+          <Field name="name" label={t("form.name")} required defaultValue={goal?.name ?? ""} />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field
               name="targetAmount"
-              label="Valor alvo (R$)"
+              label={t("form.targetAmount")}
               type="number"
               step="0.01"
               required
@@ -260,15 +267,15 @@ function GoalFormModal({
             />
             <Field
               name="targetDate"
-              label="Data alvo"
+              label={t("form.targetDate")}
               type="date"
               defaultValue={goal?.targetDate ? toIsoDate(new Date(goal.targetDate)) : ""}
             />
           </div>
           <Field
             name="imageUrl"
-            label="URL da Imagem de Inspiração (Opcional)"
-            placeholder="https://exemplo.com/imagem.jpg"
+            label={t("form.imageUrl")}
+            placeholder={t("form.imageUrlPlaceholder")}
             defaultValue={goal?.imageUrl ?? ""}
             type="url"
           />
@@ -279,10 +286,10 @@ function GoalFormModal({
               defaultChecked={goal?.isActive ?? true}
               className="accent-rose-500"
             />
-            Meta ativa
+            {t("form.isActive")}
           </label>
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Notas</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.notes")}</label>
             <textarea
               name="notes"
               rows={2}
@@ -297,14 +304,14 @@ function GoalFormModal({
               onClick={onClose}
               className="flex-1 rounded-xl bg-zinc-800 py-2 text-sm font-medium text-white hover:bg-zinc-700"
             >
-              Cancelar
+              {tc("actions.cancel")}
             </button>
             <button
               type="submit"
               disabled={isBusy}
               className="flex flex-1 items-center justify-center rounded-xl bg-rose-600 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
-              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : tc("actions.save")}
             </button>
           </div>
         </form>

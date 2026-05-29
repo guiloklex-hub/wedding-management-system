@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { resolveCategoryLabel } from "@/lib/categories";
 import { buildVendorFunnel } from "@/lib/reports/vendor-funnel";
@@ -8,6 +9,7 @@ import { FunnelClient } from "./funnel-client";
 export const dynamic = "force-dynamic";
 
 export default async function VendorFunnelPage() {
+  const t = await getTranslations("dashboard.reports.vendorFunnel");
   const vendors = await prisma.vendor.findMany({
     where: { deletedAt: null },
     include: { contracts: { where: { deletedAt: null }, select: { signedAt: true, createdAt: true } } },
@@ -33,12 +35,10 @@ export default async function VendorFunnelPage() {
           className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300"
         >
           <ChevronLeft className="h-3 w-3" />
-          Voltar para relatórios
+          {t("back")}
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">Funil de Fornecedores</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Distribuição por estágio e tempo médio entre negociação, contrato e finalização.
-        </p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="mt-1 text-sm text-zinc-500">{t("subtitle")}</p>
       </div>
 
       <FunnelClient result={result} />

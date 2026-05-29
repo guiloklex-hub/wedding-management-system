@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   CheckCircle2,
   Copy,
@@ -46,12 +47,12 @@ type Guest = {
   notes: string | null;
 };
 
-const RSVP_LABEL: Record<string, string> = {
-  NOT_INVITED: "Não convidado",
-  INVITED: "Convidado",
-  CONFIRMED: "Confirmado",
-  DECLINED: "Recusou",
-  MAYBE: "Talvez",
+const RSVP_KEY: Record<string, string> = {
+  NOT_INVITED: "rsvp.notInvited",
+  INVITED: "rsvp.invited",
+  CONFIRMED: "rsvp.confirmed",
+  DECLINED: "rsvp.declined",
+  MAYBE: "rsvp.maybe",
 };
 
 const RSVP_CHIP: Record<string, string> = {
@@ -63,6 +64,10 @@ const RSVP_CHIP: Record<string, string> = {
 };
 
 export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; baseUrl: string }) {
+  const t = useTranslations("dashboard.guests");
+  const tc = useTranslations("common");
+  const rsvpLabel = (status: string) =>
+    RSVP_KEY[status] ? t(RSVP_KEY[status]) : status;
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Guest | null>(null);
@@ -109,9 +114,9 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
       try {
         const r = await createGuest(undefined, formData);
         if (r.success) {
-          toast.success("Convidado criado");
+          toast.success(t("toast.created"));
           setOpen(false);
-        } else toast.error("Falha", r.error);
+        } else toast.error(tc("common.errorGeneric"), r.error);
       } finally {
         setBusy(false);
       }
@@ -123,9 +128,9 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
       try {
         const r = await updateGuest(undefined, formData);
         if (r.success) {
-          toast.success("Convidado atualizado");
+          toast.success(t("toast.updated"));
           setEditing(null);
-        } else toast.error("Falha", r.error);
+        } else toast.error(tc("common.errorGeneric"), r.error);
       } finally {
         setUpdatingBusy(false);
       }
@@ -137,41 +142,41 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
     startTransition(async () => {
       const r = await deleteGuest(id);
       if (r.success) {
-        toast.success("Convidado removido");
+        toast.success(t("toast.removed"));
         setDeleting(null);
-      } else toast.error("Falha", r.error);
+      } else toast.error(tc("common.errorGeneric"), r.error);
     });
   }
   function handleCheckin(guest: Guest) {
     startTransition(async () => {
       const r = await toggleCheckin(guest.id, !guest.checkedInAt);
-      if (r.success) toast.success(guest.checkedInAt ? "Check-in revertido" : "Presença registrada");
-      else toast.error("Falha", r.error);
+      if (r.success) toast.success(guest.checkedInAt ? t("toast.checkinReverted") : t("toast.checkinDone"));
+      else toast.error(tc("common.errorGeneric"), r.error);
     });
   }
   function copyRsvp(guest: Guest) {
     const url = `${baseUrl}/rsvp/${guest.rsvpToken}`;
     navigator.clipboard.writeText(url).then(
-      () => toast.success("Link copiado"),
-      () => toast.error("Falha ao copiar"),
+      () => toast.success(t("toast.linkCopied")),
+      () => toast.error(t("toast.copyFailed")),
     );
   }
 
   function exportCsv() {
     const header = [
-      "Nome",
-      "Telefone",
-      "Email",
-      "Lado",
-      "Grupo",
-      "Status",
-      "+1 confirmados",
-      "Mesa",
-      "Restrições",
-      "Cidade",
-      "Padrinho",
-      "VIP",
-      "Criança",
+      t("csv.name"),
+      t("csv.phone"),
+      t("csv.email"),
+      t("csv.side"),
+      t("csv.group"),
+      t("csv.status"),
+      t("csv.plusOnesConfirmed"),
+      t("csv.table"),
+      t("csv.dietary"),
+      t("csv.city"),
+      t("csv.padrinho"),
+      t("csv.vip"),
+      t("csv.child"),
     ].join(",");
     const rows = filtered.map((g) =>
       [
@@ -180,14 +185,14 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
         g.email ?? "",
         g.side ?? "",
         g.groupName ?? "",
-        RSVP_LABEL[g.rsvpStatus] ?? g.rsvpStatus,
+        rsvpLabel(g.rsvpStatus),
         g.plusOnesConfirmed,
         g.tableNumber ?? "",
         g.dietary ?? "",
         g.city ?? "",
-        g.isPadrinho ? "sim" : "",
-        g.isVIP ? "sim" : "",
-        g.isChild ? "sim" : "",
+        g.isPadrinho ? t("csv.yes") : "",
+        g.isVIP ? t("csv.yes") : "",
+        g.isChild ? t("csv.yes") : "",
       ]
         .map((v) => `"${String(v).replace(/"/g, '""')}"`)
         .join(","),
@@ -196,7 +201,7 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `convidados-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `${t("csv.fileName")}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -204,10 +209,15 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Lista" value={stats.total} sub="convidados" />
-        <StatTile label="Confirmados" value={stats.confirmed} sub={`${stats.seats} cabeças`} accent="emerald" />
-        <StatTile label="Pendentes" value={stats.pending} accent="amber" />
-        <StatTile label="Recusaram" value={stats.declined} accent="rose" />
+        <StatTile label={t("stats.list")} value={stats.total} sub={t("stats.guests")} />
+        <StatTile
+          label={t("stats.confirmed")}
+          value={stats.confirmed}
+          sub={t("stats.heads", { count: stats.seats })}
+          accent="emerald"
+        />
+        <StatTile label={t("stats.pending")} value={stats.pending} accent="amber" />
+        <StatTile label={t("stats.declined")} value={stats.declined} accent="rose" />
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -221,7 +231,7 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              placeholder="Buscar..."
+              placeholder={t("filters.searchPlaceholder")}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
             />
           </div>
@@ -233,12 +243,12 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
             }}
             className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
           >
-            <option value="ALL">Todos</option>
-            <option value="CONFIRMED">Confirmados</option>
-            <option value="PENDING">Pendentes</option>
-            <option value="PADRINHOS">Padrinhos</option>
-            <option value="CHILDREN">Crianças</option>
-            <option value="CHECKED_IN">Já chegaram</option>
+            <option value="ALL">{t("filters.all")}</option>
+            <option value="CONFIRMED">{t("filters.confirmed")}</option>
+            <option value="PENDING">{t("filters.pending")}</option>
+            <option value="PADRINHOS">{t("filters.padrinhos")}</option>
+            <option value="CHILDREN">{t("filters.children")}</option>
+            <option value="CHECKED_IN">{t("filters.checkedIn")}</option>
           </select>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -246,27 +256,27 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
             href="/dashboard/guests/groups"
             className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-700"
           >
-            <Users className="h-4 w-4" /> Grupos
+            <Users className="h-4 w-4" /> {t("actions.groups")}
           </Link>
           <button
             type="button"
             onClick={exportCsv}
             className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-700"
           >
-            <Download className="h-4 w-4" /> CSV
+            <Download className="h-4 w-4" /> {t("actions.csv")}
           </button>
           <Link
             href="/dashboard/guests/import"
             className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-200 hover:bg-rose-500/20"
           >
-            <Upload className="h-4 w-4" /> Importar lista
+            <Upload className="h-4 w-4" /> {t("actions.importList")}
           </Link>
           <button
             type="button"
             onClick={() => setOpen(true)}
             className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg hover:bg-rose-500"
           >
-            <Plus className="h-4 w-4" /> Novo convidado
+            <Plus className="h-4 w-4" /> {t("actions.newGuest")}
           </button>
         </div>
       </div>
@@ -276,20 +286,20 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
           <table className="w-full text-left text-sm text-zinc-400">
             <thead className="border-b border-zinc-800 bg-zinc-900/80 text-xs uppercase text-zinc-500">
               <tr>
-                <th className="px-4 py-3 font-medium">Nome</th>
-                <th className="px-4 py-3 font-medium">Grupo</th>
-                <th className="px-4 py-3 font-medium">RSVP</th>
-                <th className="px-4 py-3 font-medium">+1</th>
-                <th className="px-4 py-3 font-medium">Mesa</th>
-                <th className="px-4 py-3 font-medium">Presença</th>
-                <th className="px-4 py-3 text-right font-medium">Ações</th>
+                <th className="px-4 py-3 font-medium">{t("table.name")}</th>
+                <th className="px-4 py-3 font-medium">{t("table.group")}</th>
+                <th className="px-4 py-3 font-medium">{t("table.rsvp")}</th>
+                <th className="px-4 py-3 font-medium">{t("table.plusOne")}</th>
+                <th className="px-4 py-3 font-medium">{t("table.table")}</th>
+                <th className="px-4 py-3 font-medium">{t("table.attendance")}</th>
+                <th className="px-4 py-3 text-right font-medium">{t("table.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
-                    {guests.length === 0 ? "Lista vazia." : "Nenhum resultado."}
+                    {guests.length === 0 ? t("table.empty") : t("table.noResults")}
                   </td>
                 </tr>
               ) : (
@@ -298,9 +308,9 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1 font-medium text-zinc-200">
                         <span>{g.name}</span>
-                        {g.isPadrinho ? <Tag>P</Tag> : null}
-                        {g.isChild ? <Tag>Criança</Tag> : null}
-                        {g.isVIP ? <Tag>VIP</Tag> : null}
+                        {g.isPadrinho ? <Tag>{t("tags.padrinhoShort")}</Tag> : null}
+                        {g.isChild ? <Tag>{t("tags.child")}</Tag> : null}
+                        {g.isVIP ? <Tag>{t("tags.vip")}</Tag> : null}
                       </div>
                       <div className="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-zinc-500">
                         {g.phone ? <span>{g.phone}</span> : null}
@@ -321,7 +331,7 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
                           RSVP_CHIP[g.rsvpStatus] ?? RSVP_CHIP.INVITED
                         }`}
                       >
-                        {RSVP_LABEL[g.rsvpStatus] ?? g.rsvpStatus}
+                        {rsvpLabel(g.rsvpStatus)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs">
@@ -340,10 +350,10 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
                       >
                         {g.checkedInAt ? (
                           <>
-                            <CheckCircle2 className="h-3 w-3" /> Chegou
+                            <CheckCircle2 className="h-3 w-3" /> {t("attendance.arrived")}
                           </>
                         ) : (
-                          "Marcar"
+                          t("attendance.mark")
                         )}
                       </button>
                     </td>
@@ -352,7 +362,7 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
                         <button
                           type="button"
                           onClick={() => copyRsvp(g)}
-                          aria-label="Copiar link RSVP"
+                          aria-label={t("rowActions.copyRsvp")}
                           className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
                         >
                           <Copy className="h-4 w-4" />
@@ -360,7 +370,7 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
                         <button
                           type="button"
                           onClick={() => setEditing(g)}
-                          aria-label="Editar"
+                          aria-label={tc("actions.edit")}
                           className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
                         >
                           <Pencil className="h-4 w-4" />
@@ -368,7 +378,7 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
                         <button
                           type="button"
                           onClick={() => setDeleting(g)}
-                          aria-label="Excluir"
+                          aria-label={tc("actions.delete")}
                           className="rounded-lg p-1.5 text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -407,8 +417,8 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
 
       <ConfirmDialog
         open={!!deleting}
-        title={deleting ? `Excluir ${deleting.name}?` : "Excluir?"}
-        confirmLabel="Excluir"
+        title={deleting ? t("delete.confirmTitle", { name: deleting.name }) : t("delete.confirmTitleGeneric")}
+        confirmLabel={tc("actions.delete")}
         tone="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleting(null)}
@@ -460,62 +470,64 @@ function GuestFormModal({
   onClose: () => void;
   formAction: (formData: FormData) => void;
 }) {
+  const t = useTranslations("dashboard.guests");
+  const tc = useTranslations("common");
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
       <div className="my-4 w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
         <h2 className="text-lg font-semibold text-white">
-          {mode === "create" ? "Novo convidado" : `Editar ${guest?.name ?? ""}`}
+          {mode === "create" ? t("form.createTitle") : t("form.editTitle", { name: guest?.name ?? "" })}
         </h2>
         <form action={formAction} className="mt-4 grid gap-3 sm:grid-cols-2">
           {guest ? <input type="hidden" name="id" value={guest.id} /> : null}
-          <Field name="name" label="Nome" required defaultValue={guest?.name ?? ""} />
-          <Field name="phone" label="Telefone" defaultValue={guest?.phone ?? ""} />
-          <Field name="email" label="Email" type="email" defaultValue={guest?.email ?? ""} />
+          <Field name="name" label={t("form.name")} required defaultValue={guest?.name ?? ""} />
+          <Field name="phone" label={t("form.phone")} defaultValue={guest?.phone ?? ""} />
+          <Field name="email" label={t("form.email")} type="email" defaultValue={guest?.email ?? ""} />
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Lado</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.side")}</label>
             <select
               name="side"
               defaultValue={guest?.side ?? ""}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
             >
               <option value="">—</option>
-              <option value="NOIVO">Noivo</option>
-              <option value="NOIVA">Noiva</option>
-              <option value="AMBOS">Ambos</option>
+              <option value="NOIVO">{t("side.groom")}</option>
+              <option value="NOIVA">{t("side.bride")}</option>
+              <option value="AMBOS">{t("side.both")}</option>
             </select>
           </div>
-          <Field name="groupName" label="Grupo (ex: família dele)" defaultValue={guest?.groupName ?? ""} />
-          <Field name="city" label="Cidade" defaultValue={guest?.city ?? ""} />
+          <Field name="groupName" label={t("form.groupName")} defaultValue={guest?.groupName ?? ""} />
+          <Field name="city" label={t("form.city")} defaultValue={guest?.city ?? ""} />
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Status RSVP</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.rsvpStatus")}</label>
             <select
               name="rsvpStatus"
               defaultValue={guest?.rsvpStatus ?? "INVITED"}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
             >
-              <option value="NOT_INVITED">Não convidado</option>
-              <option value="INVITED">Convidado</option>
-              <option value="CONFIRMED">Confirmado</option>
-              <option value="DECLINED">Recusou</option>
-              <option value="MAYBE">Talvez</option>
+              <option value="NOT_INVITED">{t("rsvp.notInvited")}</option>
+              <option value="INVITED">{t("rsvp.invited")}</option>
+              <option value="CONFIRMED">{t("rsvp.confirmed")}</option>
+              <option value="DECLINED">{t("rsvp.declined")}</option>
+              <option value="MAYBE">{t("rsvp.maybe")}</option>
             </select>
           </div>
           <Field
             name="plusOnesAllowed"
-            label="Acompanhantes permitidos"
+            label={t("form.plusOnesAllowed")}
             type="number"
             defaultValue={guest?.plusOnesAllowed?.toString() ?? "0"}
           />
-          <Field name="tableNumber" label="Mesa / setor" defaultValue={guest?.tableNumber ?? ""} />
-          <Field name="dietary" label="Restrições alimentares" defaultValue={guest?.dietary ?? ""} />
+          <Field name="tableNumber" label={t("form.tableNumber")} defaultValue={guest?.tableNumber ?? ""} />
+          <Field name="dietary" label={t("form.dietary")} defaultValue={guest?.dietary ?? ""} />
           <div className="flex flex-col gap-2 sm:col-span-2">
             <label className="flex items-center gap-2 text-sm text-zinc-300">
               <input type="checkbox" name="isChild" defaultChecked={guest?.isChild} className="accent-rose-500" />
-              Criança
+              {t("form.isChild")}
             </label>
             <label className="flex items-center gap-2 text-sm text-zinc-300">
               <input type="checkbox" name="isVIP" defaultChecked={guest?.isVIP} className="accent-rose-500" />
-              VIP
+              {t("form.isVIP")}
             </label>
             <label className="flex items-center gap-2 text-sm text-zinc-300">
               <input
@@ -524,11 +536,11 @@ function GuestFormModal({
                 defaultChecked={guest?.isPadrinho}
                 className="accent-rose-500"
               />
-              Padrinho / madrinha
+              {t("form.isPadrinho")}
             </label>
           </div>
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Notas</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.notes")}</label>
             <textarea
               name="notes"
               rows={2}
@@ -543,14 +555,14 @@ function GuestFormModal({
               onClick={onClose}
               className="flex-1 rounded-xl bg-zinc-800 py-2 text-sm font-medium text-white hover:bg-zinc-700"
             >
-              Cancelar
+              {tc("actions.cancel")}
             </button>
             <button
               type="submit"
               disabled={isBusy}
               className="flex flex-1 items-center justify-center rounded-xl bg-rose-600 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
-              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : tc("actions.save")}
             </button>
           </div>
         </form>

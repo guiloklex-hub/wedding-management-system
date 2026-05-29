@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   AlertTriangle,
   Armchair,
@@ -84,6 +85,8 @@ export default function WeddingDayClient({
   guestStats,
   guests,
 }: Props) {
+  const t = useTranslations("dashboard.weddingDay");
+  const tc = useTranslations("common");
   const toast = useToast();
   const [editingSettings, setEditingSettings] = useState(false);
   const [search, setSearch] = useState("");
@@ -109,9 +112,9 @@ export default function WeddingDayClient({
       try {
         const r = await updateWeddingDay(undefined, formData);
         if (r.success) {
-          toast.success("Salvo");
+          toast.success(t("toast.saved"));
           setEditingSettings(false);
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.error"), r.error);
       } finally {
         setBusy(false);
       }
@@ -121,7 +124,7 @@ export default function WeddingDayClient({
   function handleCheckin(g: Guest) {
     startTransition(async () => {
       const r = await toggleCheckin(g.id, !g.checkedInAt);
-      if (!r.success) toast.error("Falha", r.error);
+      if (!r.success) toast.error(t("toast.error"), r.error);
     });
   }
 
@@ -132,25 +135,25 @@ export default function WeddingDayClient({
           <div>
             <div className="flex items-center gap-2 text-rose-200">
               <CalendarHeart className="h-5 w-5" />
-              <span className="text-xs uppercase tracking-wider">Modo Dia do Casamento</span>
+              <span className="text-xs uppercase tracking-wider">{t("header.mode")}</span>
             </div>
             <h1 className="mt-1 text-3xl font-bold text-white">
-              {coupleNames ?? "O grande dia"}
+              {coupleNames ?? t("header.fallbackTitle")}
             </h1>
             <p className="mt-1 text-sm text-zinc-300">{formatDateBR(eventDate)}</p>
           </div>
           <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-5 py-3 text-center">
-            <p className="text-xs uppercase tracking-wider text-rose-200">Contagem regressiva</p>
-            <p className="text-3xl font-bold text-rose-100">{daysToEvent} dia{daysToEvent === 1 ? "" : "s"}</p>
+            <p className="text-xs uppercase tracking-wider text-rose-200">{t("header.countdown")}</p>
+            <p className="text-3xl font-bold text-rose-100">{t("header.daysLeft", { count: daysToEvent })}</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Confirmados" value={`${confirmed}/${total}`} accent="emerald" />
-        <Stat label="Total de cabeças" value={String(totalSeats)} />
-        <Stat label="Chegaram" value={`${checkedIn}/${totalSeats}`} accent={checkedIn > 0 ? "emerald" : "amber"} />
-        <Stat label="Tarefas do dia" value={String(tasksToday.length)} accent="amber" />
+        <Stat label={t("stats.confirmed")} value={`${confirmed}/${total}`} accent="emerald" />
+        <Stat label={t("stats.totalHeads")} value={String(totalSeats)} />
+        <Stat label={t("stats.arrived")} value={`${checkedIn}/${totalSeats}`} accent={checkedIn > 0 ? "emerald" : "amber"} />
+        <Stat label={t("stats.tasksToday")} value={String(tasksToday.length)} accent="amber" />
       </div>
 
       <Link
@@ -161,61 +164,61 @@ export default function WeddingDayClient({
           <Armchair className="h-5 w-5" />
         </span>
         <div className="min-w-0">
-          <h3 className="font-semibold text-zinc-100">Mapa de assentos</h3>
+          <h3 className="font-semibold text-zinc-100">{t("seatingLink.title")}</h3>
           <p className="text-sm text-zinc-400">
-            Organize as mesas e arraste os convidados confirmados para os lugares.
+            {t("seatingLink.description")}
           </p>
         </div>
         <ChevronRight className="ml-auto h-5 w-5 flex-none text-zinc-500" />
       </Link>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card title="Cronograma do dia" icon={<CalendarHeart className="h-5 w-5" />}>
+        <Card title={t("schedule.title")} icon={<CalendarHeart className="h-5 w-5" />}>
           <pre className="whitespace-pre-wrap font-sans text-sm text-zinc-200">
-            {settings?.daySchedule || "Nenhum cronograma adicionado. Use o botão abaixo para registrar (ex.: 07:00 cabeleireiro, 14:00 chegada do buffet...)."}
+            {settings?.daySchedule || t("schedule.empty")}
           </pre>
         </Card>
 
-        <Card title="Plano B chuva / contingências" icon={<CloudRain className="h-5 w-5" />}>
+        <Card title={t("rainPlan.title")} icon={<CloudRain className="h-5 w-5" />}>
           <pre className="whitespace-pre-wrap font-sans text-sm text-zinc-200">
-            {settings?.rainPlanB || "Sem plano B documentado."}
+            {settings?.rainPlanB || t("rainPlan.empty")}
           </pre>
         </Card>
       </div>
 
-      <Card title="Observações especiais" icon={<AlertTriangle className="h-5 w-5" />}>
+      <Card title={t("notes.title")} icon={<AlertTriangle className="h-5 w-5" />}>
         <pre className="whitespace-pre-wrap font-sans text-sm text-zinc-200">
-          {settings?.daySpecialNotes || "Sem observações."}
+          {settings?.daySpecialNotes || t("notes.empty")}
         </pre>
         <button
           type="button"
           onClick={() => setEditingSettings((v) => !v)}
           className="mt-3 inline-flex items-center gap-1 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-100 hover:bg-zinc-700"
         >
-          {editingSettings ? "Fechar edição" : "Editar cronograma / plano B / observações"}
+          {editingSettings ? t("notes.closeEdit") : t("notes.openEdit")}
         </button>
 
         {editingSettings ? (
           <form action={handleUpdateSettings} className="mt-4 space-y-3">
             <FormTextarea
-              label="Cronograma do dia"
+              label={t("schedule.title")}
               name="daySchedule"
               defaultValue={settings?.daySchedule ?? ""}
               rows={6}
-              placeholder={`Ex:\n07:00 — cabeleireiro chega\n11:00 — fotógrafo making of\n16:30 — cerimônia\n...`}
+              placeholder={t("schedule.placeholder")}
             />
             <FormTextarea
-              label="Plano B chuva / contingências"
+              label={t("rainPlan.title")}
               name="rainPlanB"
               defaultValue={settings?.rainPlanB ?? ""}
               rows={3}
             />
             <FormTextarea
-              label="Observações especiais"
+              label={t("notes.title")}
               name="daySpecialNotes"
               defaultValue={settings?.daySpecialNotes ?? ""}
               rows={3}
-              placeholder="Música primeira dança, valsa, surpresa, sabores do bolo..."
+              placeholder={t("notes.placeholder")}
             />
             <button
               type="submit"
@@ -223,15 +226,15 @@ export default function WeddingDayClient({
               className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              <span>Salvar</span>
+              <span>{tc("actions.save")}</span>
             </button>
           </form>
         ) : null}
       </Card>
 
-      <Card title="Contatos críticos" icon={<Phone className="h-5 w-5" />}>
+      <Card title={t("contacts.title")} icon={<Phone className="h-5 w-5" />}>
         {criticalVendors.length === 0 ? (
-          <p className="text-sm text-zinc-500">Sem fornecedores contratados.</p>
+          <p className="text-sm text-zinc-500">{t("contacts.empty")}</p>
         ) : (
           <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {criticalVendors.map((v) => (
@@ -258,7 +261,7 @@ export default function WeddingDayClient({
                     href={`/dashboard/vendors/${v.id}`}
                     className="mt-1 inline-flex items-center gap-1 text-xs text-rose-400 hover:text-rose-300"
                   >
-                    <Phone className="h-3 w-3" /> Cadastrar contato
+                    <Phone className="h-3 w-3" /> {t("contacts.addContact")}
                   </Link>
                 )}
               </li>
@@ -267,9 +270,9 @@ export default function WeddingDayClient({
         )}
       </Card>
 
-      <Card title="Tarefas do dia" icon={<CheckCircle2 className="h-5 w-5" />}>
+      <Card title={t("tasks.title")} icon={<CheckCircle2 className="h-5 w-5" />}>
         {tasksToday.length === 0 ? (
-          <p className="text-sm text-zinc-500">Nenhuma tarefa marcada para hoje.</p>
+          <p className="text-sm text-zinc-500">{t("tasks.empty")}</p>
         ) : (
           <ul className="space-y-2">
             {tasksToday.map((t) => (
@@ -293,7 +296,7 @@ export default function WeddingDayClient({
       </Card>
 
       {paymentsToday.length > 0 ? (
-        <Card title="Pagamentos do dia">
+        <Card title={t("payments.title")}>
           <ul className="space-y-2">
             {paymentsToday.map((p) => (
               <li
@@ -311,19 +314,19 @@ export default function WeddingDayClient({
         </Card>
       ) : null}
 
-      <Card title="Check-in rápido">
+      <Card title={t("checkin.title")}>
         <div className="relative mb-3">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar convidado..."
+            placeholder={t("checkin.searchPlaceholder")}
             className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
           />
         </div>
         {filteredGuests.length === 0 ? (
-          <p className="text-sm text-zinc-500">Nenhum convidado.</p>
+          <p className="text-sm text-zinc-500">{t("checkin.empty")}</p>
         ) : (
           <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {filteredGuests.map((g) => (
@@ -331,7 +334,7 @@ export default function WeddingDayClient({
                 <div>
                   <p className="font-medium text-zinc-100">{g.name}</p>
                   <p className="text-[11px] text-zinc-500">
-                    {g.isChild ? "Criança · " : ""}
+                    {g.isChild ? t("checkin.childPrefix") : ""}
                     {g.plusOnesConfirmed > 0 ? `+${g.plusOnesConfirmed}` : ""}
                   </p>
                 </div>
@@ -344,7 +347,7 @@ export default function WeddingDayClient({
                       : "border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
                   }`}
                 >
-                  {g.checkedInAt ? "Chegou" : "Marcar"}
+                  {g.checkedInAt ? t("checkin.arrived") : t("checkin.mark")}
                 </button>
               </li>
             ))}

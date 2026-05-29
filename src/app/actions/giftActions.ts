@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoEdit, denyIfNoFinance } from "@/lib/finance-access";
 import { money } from "@/lib/validation";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
@@ -42,12 +44,13 @@ export async function createGift(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.gift");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = GiftCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     await prisma.gift.create({
@@ -66,7 +69,7 @@ export async function createGift(
     return { success: true };
   } catch (err) {
     console.error("[createGift]", err);
-    return { success: false, error: "Erro ao registrar presente" };
+    return { success: false, error: t("errorCreating") };
   }
 }
 
@@ -74,12 +77,13 @@ export async function updateGift(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.gift");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = GiftUpdateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const result = await prisma.gift.updateMany({
@@ -95,16 +99,17 @@ export async function updateGift(
         receivedAt: parsed.data.receivedAt,
       },
     });
-    if (result.count === 0) return { success: false, error: "Presente não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     revalidatePath("/dashboard/gifts");
     return { success: true };
   } catch (err) {
     console.error("[updateGift]", err);
-    return { success: false, error: "Erro ao atualizar presente" };
+    return { success: false, error: t("errorUpdating") };
   }
 }
 
 export async function markGiftThanked(giftId: string, thanked: boolean): Promise<ActionResult> {
+  const t = await getTranslations("actions.gift");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
@@ -115,16 +120,17 @@ export async function markGiftThanked(giftId: string, thanked: boolean): Promise
         thankedAt: thanked ? new Date() : null,
       },
     });
-    if (result.count === 0) return { success: false, error: "Presente não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     revalidatePath("/dashboard/gifts");
     return { success: true };
   } catch (err) {
     console.error("[markGiftThanked]", err);
-    return { success: false, error: "Erro ao atualizar" };
+    return { success: false, error: t("errorUpdatingShort") };
   }
 }
 
 export async function deleteGift(giftId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.gift");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
@@ -132,12 +138,12 @@ export async function deleteGift(giftId: string): Promise<ActionResult> {
       where: { id: giftId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Presente não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     revalidatePath("/dashboard/gifts");
     return { success: true };
   } catch (err) {
     console.error("[deleteGift]", err);
-    return { success: false, error: "Erro ao excluir presente" };
+    return { success: false, error: t("errorDeleting") };
   }
 }
 
@@ -145,14 +151,15 @@ export async function markGiftAsPixReceived(
   giftId: string,
   alsoCreateAsset = false,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.gift");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   try {
     const gift = await prisma.gift.findFirst({
       where: { id: giftId, deletedAt: null },
     });
-    if (!gift) return { success: false, error: "Presente não encontrado" };
-    if (gift.pixPaidAt) return { success: false, error: "Pix já marcado como recebido" };
+    if (!gift) return { success: false, error: t("notFound") };
+    if (gift.pixPaidAt) return { success: false, error: t("pixAlreadyReceived") };
 
     const now = new Date();
     await prisma.$transaction(async (tx: TxClient) => {
@@ -167,10 +174,13 @@ export async function markGiftAsPixReceived(
       if (alsoCreateAsset && gift.amount && gift.amount > 0) {
         await tx.asset.create({
           data: {
-            title: `Pix de ${gift.giverName ?? "convidado"}${gift.isHoneymoonShare ? " (cota lua de mel)" : ""}`,
+            title: t("assetTitle", {
+              giver: gift.giverName ?? t("assetGuestFallback"),
+              honeymoon: gift.isHoneymoonShare ? t("assetHoneymoonSuffix") : "",
+            }),
             amount: gift.amount,
             date: now,
-            notes: `Gerado a partir do presente #${gift.id}`,
+            notes: t("assetNotes", { id: gift.id }),
           },
         });
       }
@@ -186,6 +196,6 @@ export async function markGiftAsPixReceived(
     return { success: true };
   } catch (err) {
     console.error("[markGiftAsPixReceived]", err);
-    return { success: false, error: "Erro ao marcar Pix recebido" };
+    return { success: false, error: t("errorMarkingPix") };
   }
 }

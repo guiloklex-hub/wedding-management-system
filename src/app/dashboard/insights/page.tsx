@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { getEventConfig, daysUntil } from "@/lib/event-config";
 import { resolveCategoryColor, resolveCategoryLabel } from "@/lib/categories";
@@ -18,6 +19,7 @@ export const dynamic = "force-dynamic";
 
 export default async function InsightsPage() {
   await requireFinanceAccess();
+  const t = await getTranslations("dashboard.insights");
 
   const cfg = await getEventConfig();
   if (!cfg.eventDate) redirect("/dashboard/onboarding");
@@ -130,10 +132,8 @@ export default async function InsightsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Insights financeiros</h1>
-        <p className="text-sm text-zinc-500">
-          Projeção, saúde do projeto e detector de orçamento por categoria.
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight text-white">{t("header.title")}</h1>
+        <p className="text-sm text-zinc-500">{t("header.subtitle")}</p>
       </div>
       <InsightsClient
         eventDate={eventDate}

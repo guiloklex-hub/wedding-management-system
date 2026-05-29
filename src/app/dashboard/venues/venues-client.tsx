@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Loader2, MapPin, Plus, Star, Trash2 } from "lucide-react";
 import { createVenue, deleteVenue } from "@/app/actions/venueActions";
 import { useToast } from "@/components/toast";
@@ -23,6 +24,8 @@ type VenueRow = {
 };
 
 export default function VenuesClient({ venues }: { venues: VenueRow[] }) {
+  const t = useTranslations("dashboard.venues");
+  const tc = useTranslations("common");
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -35,9 +38,9 @@ export default function VenuesClient({ venues }: { venues: VenueRow[] }) {
       try {
         const r = await createVenue(undefined, formData);
         if (r.success) {
-          toast.success("Local criado");
+          toast.success(t("toast.created"));
           setOpen(false);
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.fail"), r.error);
       } finally {
         setBusy(false);
       }
@@ -50,9 +53,9 @@ export default function VenuesClient({ venues }: { venues: VenueRow[] }) {
     startTransition(async () => {
       const r = await deleteVenue(target.id);
       if (r.success) {
-        toast.success("Local removido");
+        toast.success(t("toast.removed"));
         setDeleting(null);
-      } else toast.error("Falha", r.error);
+      } else toast.error(t("toast.fail"), r.error);
     });
   }
 
@@ -64,13 +67,13 @@ export default function VenuesClient({ venues }: { venues: VenueRow[] }) {
           className="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-rose-500"
         >
           <Plus className="h-4 w-4" />
-          <span>Novo local</span>
+          <span>{t("list.new")}</span>
         </button>
       </div>
 
       {venues.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 p-8 text-center text-sm text-zinc-500">
-          Nenhum local cadastrado ainda. Adicione candidatos para comparar lado a lado.
+          {t("list.empty")}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -94,13 +97,13 @@ export default function VenuesClient({ venues }: { venues: VenueRow[] }) {
                   {v.isShortlisted ? (
                     <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">
                       <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      Favorito
+                      {t("list.favorite")}
                     </span>
                   ) : null}
                   <button
                     type="button"
                     onClick={() => setDeleting(v)}
-                    aria-label="Excluir local"
+                    aria-label={t("list.deleteAria")}
                     className="rounded-lg p-1.5 text-zinc-500 hover:bg-rose-500/10 hover:text-rose-400"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -109,17 +112,19 @@ export default function VenuesClient({ venues }: { venues: VenueRow[] }) {
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
-                <Mini label="Sentados">{v.capacitySeated ?? "—"}</Mini>
-                <Mini label="Em pé">{v.capacityStanding ?? "—"}</Mini>
-                <Mini label="Locação">{v.baseRate ? formatCurrency(v.baseRate) : "—"}</Mini>
+                <Mini label={t("fields.seated")}>{v.capacitySeated ?? "—"}</Mini>
+                <Mini label={t("fields.standing")}>{v.capacityStanding ?? "—"}</Mini>
+                <Mini label={t("fields.rate")}>{v.baseRate ? formatCurrency(v.baseRate) : "—"}</Mini>
               </div>
 
               <div className="mt-3 flex items-center justify-between text-xs text-zinc-500">
-                <span>
-                  Checklist {v.checklistDone}/{v.checklistTotal}
-                </span>
-                <span>{v.attachmentCount} anexo(s)</span>
-                {v.visitedAt ? <span>Visitado em {formatDateBR(v.visitedAt)}</span> : <span>Sem visita</span>}
+                <span>{t("list.checklistCount", { done: v.checklistDone, total: v.checklistTotal })}</span>
+                <span>{t("list.attachments", { count: v.attachmentCount })}</span>
+                {v.visitedAt ? (
+                  <span>{t("list.visitedOn", { date: formatDateBR(v.visitedAt) })}</span>
+                ) : (
+                  <span>{t("list.noVisit")}</span>
+                )}
               </div>
             </article>
           ))}
@@ -129,35 +134,35 @@ export default function VenuesClient({ venues }: { venues: VenueRow[] }) {
       {open ? (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
           <div className="my-4 w-full max-w-xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
-            <h2 className="text-lg font-semibold text-white">Novo local</h2>
+            <h2 className="text-lg font-semibold text-white">{t("list.new")}</h2>
             <form action={handleSubmit} className="mt-4 space-y-3">
-              <Input name="name" label="Nome" required placeholder="Ex: Vila dos Lagos" />
-              <Input name="address" label="Endereço" />
+              <Input name="name" label={t("fields.name")} required placeholder={t("form.namePlaceholder")} />
+              <Input name="address" label={t("fields.address")} />
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Input name="mapsUrl" label="Link Google Maps / Waze" type="url" />
-                <Input name="baseRate" label="Valor locação (R$)" type="number" step="0.01" />
+                <Input name="mapsUrl" label={t("fields.mapsUrl")} type="url" />
+                <Input name="baseRate" label={t("fields.baseRate")} type="number" step="0.01" />
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Input name="capacitySeated" label="Capacidade sentados" type="number" />
-                <Input name="capacityStanding" label="Capacidade em pé" type="number" />
+                <Input name="capacitySeated" label={t("fields.capacitySeated")} type="number" />
+                <Input name="capacityStanding" label={t("fields.capacityStanding")} type="number" />
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Input name="contactName" label="Contato (nome)" />
-                <Input name="contactPhone" label="Contato (telefone)" />
+                <Input name="contactName" label={t("fields.contactName")} />
+                <Input name="contactPhone" label={t("fields.contactPhone")} />
               </div>
-              <Input name="visitedAt" label="Data da visita" type="date" />
-              <Textarea name="pros" label="Prós" rows={2} />
-              <Textarea name="cons" label="Contras" rows={2} />
-              <Textarea name="restrictions" label="Restrições" rows={2} />
-              <Textarea name="pricingNotes" label="Observações de preço" rows={2} />
-              <Textarea name="notes" label="Observações gerais" rows={2} />
+              <Input name="visitedAt" label={t("fields.visitedAt")} type="date" />
+              <Textarea name="pros" label={t("fields.pros")} rows={2} />
+              <Textarea name="cons" label={t("fields.cons")} rows={2} />
+              <Textarea name="restrictions" label={t("fields.restrictions")} rows={2} />
+              <Textarea name="pricingNotes" label={t("fields.pricingNotes")} rows={2} />
+              <Textarea name="notes" label={t("fields.notes")} rows={2} />
               <label className="flex items-center gap-2 text-sm text-zinc-300">
                 <input type="checkbox" name="isShortlisted" className="accent-rose-500" />
-                Marcar como favorito
+                {t("form.markFavorite")}
               </label>
               <label className="flex items-center gap-2 text-sm text-zinc-300">
                 <input type="checkbox" name="seedChecklist" defaultChecked className="accent-rose-500" />
-                Criar checklist padrão de visita (20 perguntas)
+                {t("form.seedChecklist")}
               </label>
               <div className="flex gap-2 pt-2">
                 <button
@@ -165,14 +170,14 @@ export default function VenuesClient({ venues }: { venues: VenueRow[] }) {
                   onClick={() => setOpen(false)}
                   className="flex-1 rounded-xl bg-zinc-800 py-2 text-sm font-medium text-white hover:bg-zinc-700"
                 >
-                  Cancelar
+                  {tc("actions.cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={busy}
                   className="flex flex-1 items-center justify-center rounded-xl bg-rose-600 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
                 >
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : tc("actions.save")}
                 </button>
               </div>
             </form>
@@ -182,9 +187,9 @@ export default function VenuesClient({ venues }: { venues: VenueRow[] }) {
 
       <ConfirmDialog
         open={!!deleting}
-        title={deleting ? `Excluir ${deleting.name}?` : "Excluir local?"}
-        description="O local e o checklist serão removidos das listagens."
-        confirmLabel="Excluir"
+        title={deleting ? t("delete.confirmTitle", { name: deleting.name }) : t("delete.confirmTitleFallback")}
+        description={t("delete.confirmDescription")}
+        confirmLabel={tc("actions.delete")}
         tone="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleting(null)}

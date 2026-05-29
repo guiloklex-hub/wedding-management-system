@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import {
   ExternalLink,
   Gift,
@@ -21,6 +22,21 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Pagination, usePagination } from "@/components/pagination";
 import { formatCurrency } from "@/lib/format";
 
+type TFn = (key: string) => string;
+
+const ROOM_KEYS = ["KITCHEN", "BATHROOM", "BEDROOM", "LIVING", "LAUNDRY", "ELECTRONICS", "OTHER"] as const;
+const STATUS_KEYS = ["TO_BUY", "BOUGHT", "GIFTED"] as const;
+const PRIORITY_META: Record<string, { chip: string; weight: number }> = {
+  ESSENTIAL: { chip: "bg-rose-500/15 text-rose-300", weight: 1 },
+  NICE_TO_HAVE: { chip: "bg-amber-500/10 text-amber-300", weight: 2 },
+  LUXURY: { chip: "bg-zinc-800 text-zinc-300", weight: 3 },
+};
+const PRIORITY_KEYS = ["ESSENTIAL", "NICE_TO_HAVE", "LUXURY"] as const;
+
+const roomLabel = (t: TFn, k: string) => t(`room.${k}`);
+const priorityLabel = (t: TFn, k: string) => t(`priority.${k}`);
+const statusLabel = (t: TFn, k: string) => t(`status.${k}`);
+
 type Item = {
   id: string;
   title: string;
@@ -34,29 +50,9 @@ type Item = {
   notes: string | null;
 };
 
-const ROOM_LABEL: Record<string, string> = {
-  KITCHEN: "Cozinha",
-  BATHROOM: "Banheiro",
-  BEDROOM: "Quarto",
-  LIVING: "Sala",
-  LAUNDRY: "Lavanderia",
-  ELECTRONICS: "Eletro",
-  OTHER: "Outros",
-};
-
-const PRIORITY_LABEL: Record<string, { label: string; chip: string; weight: number }> = {
-  ESSENTIAL: { label: "Essencial", chip: "bg-rose-500/15 text-rose-300", weight: 1 },
-  NICE_TO_HAVE: { label: "Desejável", chip: "bg-amber-500/10 text-amber-300", weight: 2 },
-  LUXURY: { label: "Luxo", chip: "bg-zinc-800 text-zinc-300", weight: 3 },
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  TO_BUY: "A comprar",
-  BOUGHT: "Comprado",
-  GIFTED: "Ganhei",
-};
-
 export default function TrousseauClient({ items }: { items: Item[] }) {
+  const t = useTranslations("dashboard.trousseau");
+  const tc = useTranslations("common");
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Item | null>(null);
@@ -88,9 +84,9 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
       try {
         const r = await createTrousseauItem(undefined, formData);
         if (r.success) {
-          toast.success("Item adicionado");
+          toast.success(t("toast.created"));
           setOpen(false);
-        } else toast.error("Falha", r.error);
+        } else toast.error(tc("common.errorGeneric"), r.error);
       } finally {
         setBusy(false);
       }
@@ -102,9 +98,9 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
       try {
         const r = await updateTrousseauItem(undefined, formData);
         if (r.success) {
-          toast.success("Item atualizado");
+          toast.success(t("toast.updated"));
           setEditing(null);
-        } else toast.error("Falha", r.error);
+        } else toast.error(tc("common.errorGeneric"), r.error);
       } finally {
         setUpdateBusy(false);
       }
@@ -113,7 +109,7 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
   function handleStatus(it: Item, status: "TO_BUY" | "BOUGHT" | "GIFTED") {
     startTransition(async () => {
       const r = await setTrousseauStatus(it.id, status);
-      if (!r.success) toast.error("Falha", r.error);
+      if (!r.success) toast.error(tc("common.errorGeneric"), r.error);
     });
   }
   function handleDelete() {
@@ -122,19 +118,19 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
     startTransition(async () => {
       const r = await deleteTrousseauItem(id);
       if (r.success) {
-        toast.success("Item removido");
+        toast.success(t("toast.deleted"));
         setDeleting(null);
-      } else toast.error("Falha", r.error);
+      } else toast.error(tc("common.errorGeneric"), r.error);
     });
   }
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-        <Stat label="Estimado" value={formatCurrency(totals.estTotal)} />
-        <Stat label="Comprado" value={formatCurrency(totals.actualTotal)} accent="emerald" />
-        <Stat label="A comprar" value={String(totals.toBuy)} accent="amber" />
-        <Stat label="Ganhei" value={String(totals.gifted)} accent="emerald" />
+        <Stat label={t("stats.estimated")} value={formatCurrency(totals.estTotal)} />
+        <Stat label={t("stats.bought")} value={formatCurrency(totals.actualTotal)} accent="emerald" />
+        <Stat label={t("stats.toBuy")} value={String(totals.toBuy)} accent="amber" />
+        <Stat label={t("stats.gifted")} value={String(totals.gifted)} accent="emerald" />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -146,28 +142,29 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
           }}
           className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
         >
-          <option value="ALL">Todos</option>
-          <option value="TO_BUY">A comprar</option>
-          <option value="BOUGHT">Comprado</option>
-          <option value="GIFTED">Ganhei</option>
+          <option value="ALL">{t("filter.all")}</option>
+          <option value="TO_BUY">{t("status.TO_BUY")}</option>
+          <option value="BOUGHT">{t("status.BOUGHT")}</option>
+          <option value="GIFTED">{t("status.GIFTED")}</option>
         </select>
         <button
           type="button"
           onClick={() => setOpen(true)}
           className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500"
         >
-          <Plus className="h-4 w-4" /> Novo item
+          <Plus className="h-4 w-4" /> {t("list.add")}
         </button>
       </div>
 
       {filtered.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 p-8 text-center text-sm text-zinc-500">
-          Nada por aqui ainda.
+          {t("list.empty")}
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {pageItems.map((it) => {
-            const prio = PRIORITY_LABEL[it.priority] ?? PRIORITY_LABEL.NICE_TO_HAVE;
+            const prioKey = PRIORITY_META[it.priority] ? it.priority : "NICE_TO_HAVE";
+            const prio = PRIORITY_META[prioKey];
             return (
               <article
                 key={it.id}
@@ -182,18 +179,18 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
                         {it.title}
                       </h3>
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${prio.chip}`}>
-                        {prio.label}
+                        {priorityLabel(t, prioKey)}
                       </span>
                     </div>
                     <p className="mt-0.5 text-xs text-zinc-500">
-                      {ROOM_LABEL[it.room] ?? it.room}
+                      {ROOM_KEYS.includes(it.room as (typeof ROOM_KEYS)[number]) ? roomLabel(t, it.room) : it.room}
                       {it.store ? ` · ${it.store}` : ""}
                     </p>
                     <p className="mt-2 text-sm text-zinc-300">
                       {it.estimatedPrice ? formatCurrency(it.estimatedPrice) : "—"}
                       {it.actualPrice ? (
                         <span className="ml-2 text-emerald-300">
-                          (pago: {formatCurrency(it.actualPrice)})
+                          {t("card.paid", { value: formatCurrency(it.actualPrice) })}
                         </span>
                       ) : null}
                     </p>
@@ -204,19 +201,19 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
                         rel="noopener noreferrer"
                         className="mt-1 inline-flex items-center gap-1 text-xs text-rose-300 hover:text-rose-200"
                       >
-                        <ExternalLink className="h-3 w-3" /> Link da loja
+                        <ExternalLink className="h-3 w-3" /> {t("card.storeLink")}
                       </a>
                     ) : null}
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] uppercase tracking-wider text-zinc-300">
-                      {STATUS_LABEL[it.status]}
+                      {statusLabel(t, it.status)}
                     </span>
                     <div className="flex gap-1">
                       <button
                         type="button"
                         onClick={() => handleStatus(it, it.status === "BOUGHT" ? "TO_BUY" : "BOUGHT")}
-                        aria-label="Alternar comprado"
+                        aria-label={t("card.toggleBought")}
                         className={`rounded-lg p-1.5 ${
                           it.status === "BOUGHT"
                             ? "bg-emerald-500/10 text-emerald-300"
@@ -228,7 +225,7 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
                       <button
                         type="button"
                         onClick={() => handleStatus(it, it.status === "GIFTED" ? "TO_BUY" : "GIFTED")}
-                        aria-label="Ganhei"
+                        aria-label={t("card.toggleGifted")}
                         className={`rounded-lg p-1.5 ${
                           it.status === "GIFTED"
                             ? "bg-emerald-500/10 text-emerald-300"
@@ -240,7 +237,7 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
                       <button
                         type="button"
                         onClick={() => setEditing(it)}
-                        aria-label="Editar"
+                        aria-label={tc("actions.edit")}
                         className="rounded-lg bg-zinc-800/70 p-1.5 text-zinc-300 hover:bg-zinc-700"
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -248,7 +245,7 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
                       <button
                         type="button"
                         onClick={() => setDeleting(it)}
-                        aria-label="Excluir"
+                        aria-label={tc("actions.delete")}
                         className="rounded-lg bg-zinc-800/70 p-1.5 text-rose-400 hover:bg-rose-500/20"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -286,8 +283,8 @@ export default function TrousseauClient({ items }: { items: Item[] }) {
 
       <ConfirmDialog
         open={!!deleting}
-        title="Excluir item?"
-        confirmLabel="Excluir"
+        title={t("confirmDelete.title")}
+        confirmLabel={tc("actions.delete")}
         tone="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleting(null)}
@@ -327,67 +324,69 @@ function ItemModal({
   onClose: () => void;
   formAction: (formData: FormData) => void;
 }) {
+  const t = useTranslations("dashboard.trousseau");
+  const tc = useTranslations("common");
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
       <div className="my-4 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
         <h2 className="text-lg font-semibold text-white">
-          {mode === "create" ? "Novo item do enxoval" : "Editar item"}
+          {mode === "create" ? t("form.createTitle") : t("form.editTitle")}
         </h2>
         <form action={formAction} className="mt-4 space-y-3">
           {item ? <input type="hidden" name="id" value={item.id} /> : null}
-          <Field name="title" label="Item" required defaultValue={item?.title ?? ""} />
+          <Field name="title" label={t("form.item")} required defaultValue={item?.title ?? ""} />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Cômodo</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.room")}</label>
               <select
                 name="room"
                 defaultValue={item?.room ?? "OTHER"}
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
               >
-                {Object.entries(ROOM_LABEL).map(([k, v]) => (
+                {ROOM_KEYS.map((k) => (
                   <option key={k} value={k}>
-                    {v}
+                    {roomLabel(t, k)}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Prioridade</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.priority")}</label>
               <select
                 name="priority"
                 defaultValue={item?.priority ?? "NICE_TO_HAVE"}
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
               >
-                {Object.entries(PRIORITY_LABEL).map(([k, v]) => (
+                {PRIORITY_KEYS.map((k) => (
                   <option key={k} value={k}>
-                    {v.label}
+                    {priorityLabel(t, k)}
                   </option>
                 ))}
               </select>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field name="estimatedPrice" label="Preço estimado" type="number" step="0.01" defaultValue={item?.estimatedPrice?.toString() ?? ""} />
-            <Field name="actualPrice" label="Preço pago" type="number" step="0.01" defaultValue={item?.actualPrice?.toString() ?? ""} />
+            <Field name="estimatedPrice" label={t("form.estimatedPrice")} type="number" step="0.01" defaultValue={item?.estimatedPrice?.toString() ?? ""} />
+            <Field name="actualPrice" label={t("form.actualPrice")} type="number" step="0.01" defaultValue={item?.actualPrice?.toString() ?? ""} />
           </div>
-          <Field name="store" label="Loja" defaultValue={item?.store ?? ""} />
-          <Field name="link" label="Link" type="url" defaultValue={item?.link ?? ""} />
+          <Field name="store" label={t("form.store")} defaultValue={item?.store ?? ""} />
+          <Field name="link" label={t("form.link")} type="url" defaultValue={item?.link ?? ""} />
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Status</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{tc("labels.status")}</label>
             <select
               name="status"
               defaultValue={item?.status ?? "TO_BUY"}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
             >
-              {Object.entries(STATUS_LABEL).map(([k, v]) => (
+              {STATUS_KEYS.map((k) => (
                 <option key={k} value={k}>
-                  {v}
+                  {statusLabel(t, k)}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Notas</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.notes")}</label>
             <textarea
               name="notes"
               rows={2}
@@ -402,14 +401,14 @@ function ItemModal({
               onClick={onClose}
               className="flex-1 rounded-xl bg-zinc-800 py-2 text-sm font-medium text-white hover:bg-zinc-700"
             >
-              Cancelar
+              {tc("actions.cancel")}
             </button>
             <button
               type="submit"
               disabled={isBusy}
               className="flex flex-1 items-center justify-center rounded-xl bg-rose-600 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
-              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : tc("actions.save")}
             </button>
           </div>
         </form>

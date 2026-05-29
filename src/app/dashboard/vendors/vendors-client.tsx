@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { GitCompare, Plus, Loader2, Pencil, Trash2, Search, Star } from "lucide-react";
 import {
   createVendor,
@@ -23,12 +24,6 @@ type Props = {
   categories: CategoryDef[];
 };
 
-const STATUS_LABEL: Record<VendorStatus, string> = {
-  NEGOTIATION: "Em Negociação",
-  CONTRACTED: "Contratado",
-  FINALIZED: "Finalizado",
-};
-
 const STATUS_CHIP: Record<VendorStatus, string> = {
   NEGOTIATION: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   CONTRACTED: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
@@ -36,7 +31,14 @@ const STATUS_CHIP: Record<VendorStatus, string> = {
 };
 
 export default function VendorsClient({ vendors, categories }: Props) {
+  const t = useTranslations("dashboard.vendors");
+  const tc = useTranslations("common");
   const toast = useToast();
+  const STATUS_LABEL: Record<VendorStatus, string> = {
+    NEGOTIATION: t("status.negotiation"),
+    CONTRACTED: t("status.contracted"),
+    FINALIZED: t("status.finalized"),
+  };
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<VendorRow | null>(null);
   const [deleting, setDeleting] = useState<VendorRow | null>(null);
@@ -67,10 +69,10 @@ export default function VendorsClient({ vendors, categories }: Props) {
       try {
         const r = await createVendor(undefined, formData);
         if (r.success) {
-          toast.success("Fornecedor criado");
+          toast.success(t("toast.created"));
           setCreateOpen(false);
         } else {
-          toast.error("Falha ao criar", r.error);
+          toast.error(t("toast.createFailed"), r.error);
         }
       } finally {
         setCreating(false);
@@ -84,10 +86,10 @@ export default function VendorsClient({ vendors, categories }: Props) {
       try {
         const r = await updateVendor(undefined, formData);
         if (r.success) {
-          toast.success("Fornecedor atualizado");
+          toast.success(t("toast.updated"));
           setEditing(null);
         } else {
-          toast.error("Falha ao atualizar", r.error);
+          toast.error(t("toast.updateFailed"), r.error);
         }
       } finally {
         setUpdating(false);
@@ -113,13 +115,13 @@ export default function VendorsClient({ vendors, categories }: Props) {
 
     if (newStatus === "CONTRACTED" && !hasActual) {
       const raw = window.prompt(
-        `Qual o valor REAL contratado com ${vendor.name}? (apenas números, ex: 12500.00)`,
+        t("statusPrompt.message", { name: vendor.name }),
         String(item?.estimatedValue ?? ""),
       );
       if (raw === null) return;
       const n = Number(raw.replace(",", "."));
       if (!Number.isFinite(n) || n < 0) {
-        toast.error("Valor inválido");
+        toast.error(t("statusPrompt.invalidValue"));
         return;
       }
       actual = n;
@@ -127,8 +129,8 @@ export default function VendorsClient({ vendors, categories }: Props) {
 
     startTransition(async () => {
       const r = await updateVendorStatus(vendor.id, newStatus, actual);
-      if (r.success) toast.success("Status atualizado");
-      else toast.error("Falha", r.error);
+      if (r.success) toast.success(t("toast.statusUpdated"));
+      else toast.error(t("toast.failed"), r.error);
     });
   }
 
@@ -138,10 +140,10 @@ export default function VendorsClient({ vendors, categories }: Props) {
     startTransition(async () => {
       const r = await deleteVendor(target.id);
       if (r.success) {
-        toast.success("Fornecedor excluído");
+        toast.success(t("toast.deleted"));
         setDeleting(null);
       } else {
-        toast.error("Falha ao excluir", r.error);
+        toast.error(t("toast.deleteFailed"), r.error);
       }
     });
   }
@@ -159,7 +161,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              placeholder="Buscar fornecedor..."
+              placeholder={t("list.searchPlaceholder")}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
             />
           </div>
@@ -171,10 +173,10 @@ export default function VendorsClient({ vendors, categories }: Props) {
             }}
             className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
           >
-            <option value="ALL">Todos os status</option>
-            <option value="NEGOTIATION">Em Negociação</option>
-            <option value="CONTRACTED">Contratado</option>
-            <option value="FINALIZED">Finalizado</option>
+            <option value="ALL">{t("filter.allStatus")}</option>
+            <option value="NEGOTIATION">{t("status.negotiation")}</option>
+            <option value="CONTRACTED">{t("status.contracted")}</option>
+            <option value="FINALIZED">{t("status.finalized")}</option>
           </select>
         </div>
         <div className="flex items-center gap-2">
@@ -184,11 +186,11 @@ export default function VendorsClient({ vendors, categories }: Props) {
                 href={compareHref}
                 className="flex items-center gap-1.5 rounded-xl bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-700"
               >
-                <GitCompare className="h-4 w-4" /> Comparar ({selected.size})
+                <GitCompare className="h-4 w-4" /> {t("compareButton.label", { count: selected.size })}
               </Link>
             ) : (
               <span className="rounded-xl bg-zinc-800/50 px-3 py-2 text-xs text-zinc-400">
-                Selecione mais 1 para comparar
+                {t("compareButton.selectMore")}
               </span>
             )
           ) : null}
@@ -197,7 +199,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
             className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-rose-500"
           >
             <Plus className="h-4 w-4" />
-            <span>Novo Fornecedor</span>
+            <span>{t("list.new")}</span>
           </button>
         </div>
       </div>
@@ -207,19 +209,19 @@ export default function VendorsClient({ vendors, categories }: Props) {
           <table className="w-full text-left text-sm text-zinc-400">
             <thead className="border-b border-zinc-800 bg-zinc-900/80 text-xs uppercase text-zinc-500">
               <tr>
-                <th className="px-4 py-4 font-medium" aria-label="Selecionar"></th>
-                <th className="px-6 py-4 font-medium">Nome</th>
-                <th className="px-6 py-4 font-medium">Categoria</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium">Valor</th>
-                <th className="px-6 py-4 text-right font-medium">Ações</th>
+                <th className="px-4 py-4 font-medium" aria-label={t("table.select")}></th>
+                <th className="px-6 py-4 font-medium">{tc("labels.name")}</th>
+                <th className="px-6 py-4 font-medium">{t("table.category")}</th>
+                <th className="px-6 py-4 font-medium">{tc("labels.status")}</th>
+                <th className="px-6 py-4 font-medium">{tc("labels.amount")}</th>
+                <th className="px-6 py-4 text-right font-medium">{tc("labels.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
-                    {vendors.length === 0 ? "Nenhum fornecedor cadastrado." : "Nenhum resultado para o filtro."}
+                    {vendors.length === 0 ? t("list.empty") : t("list.noResults")}
                   </td>
                 </tr>
               ) : (
@@ -239,7 +241,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
                           checked={isSelected}
                           onChange={() => toggleSelected(vendor.id)}
                           disabled={!isSelected && selected.size >= 4}
-                          aria-label={`Selecionar ${vendor.name}`}
+                          aria-label={t("table.selectVendor", { name: vendor.name })}
                           className="h-4 w-4 accent-rose-500"
                         />
                       </td>
@@ -282,21 +284,21 @@ export default function VendorsClient({ vendors, categories }: Props) {
                           disabled={isPendingTransition}
                           className={`rounded-full border px-2.5 py-1 text-xs font-medium outline-none ${STATUS_CHIP[status]}`}
                         >
-                          <option value="NEGOTIATION">Em Negociação</option>
-                          <option value="CONTRACTED">Contratado</option>
-                          <option value="FINALIZED">Finalizado</option>
+                          <option value="NEGOTIATION">{t("status.negotiation")}</option>
+                          <option value="CONTRACTED">{t("status.contracted")}</option>
+                          <option value="FINALIZED">{t("status.finalized")}</option>
                         </select>
                       </td>
                       <td className="px-6 py-4">
                         <span className="font-medium text-zinc-300">{formatCurrency(value)}</span>
-                        <span className="ml-2 text-xs text-zinc-600">({isReal ? "Real" : "Estimado"})</span>
+                        <span className="ml-2 text-xs text-zinc-600">({isReal ? t("value.real") : t("value.estimated")})</span>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"
                             onClick={() => setEditing(vendor)}
-                            aria-label="Editar"
+                            aria-label={tc("actions.edit")}
                             className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
                           >
                             <Pencil className="h-4 w-4" />
@@ -304,7 +306,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
                           <button
                             type="button"
                             onClick={() => setDeleting(vendor)}
-                            aria-label="Excluir"
+                            aria-label={tc("actions.delete")}
                             className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -323,7 +325,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
       <div className="space-y-3 md:hidden">
         {filtered.length === 0 ? (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 px-4 py-8 text-center text-sm text-zinc-500">
-            {vendors.length === 0 ? "Nenhum fornecedor cadastrado." : "Nenhum resultado para o filtro."}
+            {vendors.length === 0 ? t("list.empty") : t("list.noResults")}
           </div>
         ) : (
           pageItems.map((vendor) => {
@@ -348,7 +350,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
                         checked={isSelected}
                         onChange={() => toggleSelected(vendor.id)}
                         disabled={!isSelected && selected.size >= 4}
-                        aria-label={`Selecionar ${vendor.name}`}
+                        aria-label={t("table.selectVendor", { name: vendor.name })}
                         className="h-4 w-4 accent-rose-500"
                       />
                       <span
@@ -365,7 +367,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
                     </Link>
                     <div className="mt-2 text-sm text-zinc-300">
                       {formatCurrency(value)}{" "}
-                      <span className="text-xs text-zinc-500">({isReal ? "Real" : "Estimado"})</span>
+                      <span className="text-xs text-zinc-500">({isReal ? t("value.real") : t("value.estimated")})</span>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -377,7 +379,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
                         type="button"
                         onClick={() => setEditing(vendor)}
                         className="rounded-lg bg-zinc-800/60 p-1.5 text-zinc-300"
-                        aria-label="Editar"
+                        aria-label={tc("actions.edit")}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
@@ -385,7 +387,7 @@ export default function VendorsClient({ vendors, categories }: Props) {
                         type="button"
                         onClick={() => setDeleting(vendor)}
                         className="rounded-lg bg-zinc-800/60 p-1.5 text-rose-400"
-                        aria-label="Excluir"
+                        aria-label={tc("actions.delete")}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -398,9 +400,9 @@ export default function VendorsClient({ vendors, categories }: Props) {
                   disabled={isPendingTransition}
                   className="mt-3 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-200 outline-none"
                 >
-                  <option value="NEGOTIATION">Em Negociação</option>
-                  <option value="CONTRACTED">Contratado</option>
-                  <option value="FINALIZED">Finalizado</option>
+                  <option value="NEGOTIATION">{t("status.negotiation")}</option>
+                  <option value="CONTRACTED">{t("status.contracted")}</option>
+                  <option value="FINALIZED">{t("status.finalized")}</option>
                 </select>
               </div>
             );
@@ -440,11 +442,9 @@ export default function VendorsClient({ vendors, categories }: Props) {
 
       <ConfirmDialog
         open={!!deleting}
-        title={deleting ? `Excluir ${deleting.name}?` : "Excluir fornecedor?"}
-        description={
-          "Essa ação fará exclusão lógica do fornecedor, seus orçamentos e pagamentos associados.\nVocê não verá mais esses registros nas listagens."
-        }
-        confirmLabel="Excluir"
+        title={deleting ? t("delete.titleNamed", { name: deleting.name }) : t("delete.title")}
+        description={t("delete.description")}
+        confirmLabel={tc("actions.delete")}
         tone="danger"
         busy={isPendingTransition}
         onConfirm={handleDelete}
@@ -469,6 +469,8 @@ function VendorFormModal({
   formAction: (formData: FormData) => void;
   onClose: () => void;
 }) {
+  const t = useTranslations("dashboard.vendors");
+  const tc = useTranslations("common");
   const budget = vendor?.budgetItems[0];
   const defaultEstimated = budget?.estimatedValue ?? 0;
   const defaultActual = budget?.actualValue ?? "";
@@ -483,13 +485,13 @@ function VendorFormModal({
       <div className="my-4 w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
         <form action={formAction} className="space-y-4 p-6">
           <h2 className="text-xl font-bold text-white">
-            {mode === "create" ? "Novo Fornecedor" : `Editar ${vendor?.name ?? ""}`}
+            {mode === "create" ? t("form.createTitle") : t("form.editTitle", { name: vendor?.name ?? "" })}
           </h2>
 
           {mode === "edit" && vendor ? <input type="hidden" name="id" value={vendor.id} /> : null}
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Nome</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.name")}</label>
             <input
               type="text"
               name="name"
@@ -497,20 +499,20 @@ function VendorFormModal({
               maxLength={120}
               defaultValue={vendor?.name ?? ""}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
-              placeholder="Ex: Buffet Colonial"
+              placeholder={t("form.namePlaceholder")}
             />
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Categoria</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.category")}</label>
               <select
                 name="categoryKey"
                 value={categoryKey}
                 onChange={(e) => setCategoryKey(e.target.value)}
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
               >
-                <option value="">— escolher —</option>
+                <option value="">{t("form.categoryChoose")}</option>
                 {categories.map((c) => (
                   <option key={c.key} value={c.key}>
                     {c.label}
@@ -519,7 +521,7 @@ function VendorFormModal({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Rótulo livre</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.freeLabel")}</label>
               <input
                 type="text"
                 name="category"
@@ -528,7 +530,7 @@ function VendorFormModal({
                 defaultValue={categoryLabel}
                 key={categoryKey}
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
-                placeholder="Ex: Alimentação"
+                placeholder={t("form.freeLabelPlaceholder")}
               />
             </div>
           </div>
@@ -536,7 +538,7 @@ function VendorFormModal({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-400">
-                Valor {mode === "create" ? "estimado" : "estimado"} (R$)
+                {t("form.estimatedValue")}
               </label>
               <input
                 type="number"
@@ -545,39 +547,39 @@ function VendorFormModal({
                 required={mode === "create"}
                 defaultValue={defaultEstimated ? String(defaultEstimated) : ""}
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
-                placeholder="Ex: 15000.00"
+                placeholder={t("form.estimatedValuePlaceholder")}
               />
             </div>
             {mode === "edit" ? (
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-400">Valor real (R$)</label>
+                <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.actualValue")}</label>
                 <input
                   type="number"
                   step="0.01"
                   name="actualValue"
                   defaultValue={defaultActual ? String(defaultActual) : ""}
                   className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
-                  placeholder="Vazio = ainda não fechado"
+                  placeholder={t("form.actualValuePlaceholder")}
                 />
               </div>
             ) : null}
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Status</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{tc("labels.status")}</label>
             <select
               name="status"
               defaultValue={vendor?.status ?? "NEGOTIATION"}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
             >
-              <option value="NEGOTIATION">Em Negociação</option>
-              <option value="CONTRACTED">Contratado</option>
-              <option value="FINALIZED">Finalizado</option>
+              <option value="NEGOTIATION">{t("status.negotiation")}</option>
+              <option value="CONTRACTED">{t("status.contracted")}</option>
+              <option value="FINALIZED">{t("status.finalized")}</option>
             </select>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Link do contrato (opcional)</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.contractLink")}</label>
             <input
               type="url"
               name="contractLink"
@@ -588,14 +590,14 @@ function VendorFormModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Notas</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.notes")}</label>
             <textarea
               name="notes"
               rows={3}
               maxLength={2000}
               defaultValue={vendor?.notes ?? ""}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-zinc-200 outline-none focus:border-rose-500/50"
-              placeholder="Observações, contatos, condições..."
+              placeholder={t("form.notesPlaceholder")}
             />
           </div>
 
@@ -605,14 +607,14 @@ function VendorFormModal({
               onClick={onClose}
               className="flex-1 rounded-xl bg-zinc-800 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
             >
-              Cancelar
+              {tc("actions.cancel")}
             </button>
             <button
               type="submit"
               disabled={isBusy}
               className="flex flex-1 items-center justify-center rounded-xl bg-rose-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-rose-500 disabled:opacity-50"
             >
-              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "create" ? "Salvar" : "Salvar alterações"}
+              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "create" ? tc("actions.save") : t("form.saveChanges")}
             </button>
           </div>
         </form>

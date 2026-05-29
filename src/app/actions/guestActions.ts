@@ -3,9 +3,11 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import { denyIfNoEdit } from "@/lib/finance-access";
 import { notifyRsvpResponse } from "@/lib/notifications/rsvp";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
@@ -61,12 +63,13 @@ export async function createGuest(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.guest");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = GuestCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const created = await prisma.guest.create({
@@ -92,7 +95,7 @@ export async function createGuest(
     return { success: true };
   } catch (err) {
     console.error("[createGuest]", err);
-    return { success: false, error: "Erro ao criar convidado" };
+    return { success: false, error: t("errorCreating") };
   }
 }
 
@@ -100,12 +103,13 @@ export async function updateGuest(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.guest");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = GuestUpdateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const result = await prisma.guest.updateMany({
@@ -127,17 +131,18 @@ export async function updateGuest(
         notes: parsed.data.notes,
       },
     });
-    if (result.count === 0) return { success: false, error: "Convidado não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     await audit("Guest", parsed.data.id, "UPDATE", { name: parsed.data.name });
     revalidatePath("/dashboard/guests");
     return { success: true };
   } catch (err) {
     console.error("[updateGuest]", err);
-    return { success: false, error: "Erro ao atualizar convidado" };
+    return { success: false, error: t("errorUpdating") };
   }
 }
 
 export async function deleteGuest(guestId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.guest");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
@@ -145,17 +150,18 @@ export async function deleteGuest(guestId: string): Promise<ActionResult> {
       where: { id: guestId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Convidado não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     await audit("Guest", guestId, "DELETE");
     revalidatePath("/dashboard/guests");
     return { success: true };
   } catch (err) {
     console.error("[deleteGuest]", err);
-    return { success: false, error: "Erro ao excluir convidado" };
+    return { success: false, error: t("errorDeleting") };
   }
 }
 
 export async function toggleCheckin(guestId: string, present: boolean): Promise<ActionResult> {
+  const t = await getTranslations("actions.guest");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
@@ -163,14 +169,14 @@ export async function toggleCheckin(guestId: string, present: boolean): Promise<
       where: { id: guestId, deletedAt: null },
       data: { checkedInAt: present ? new Date() : null },
     });
-    if (result.count === 0) return { success: false, error: "Convidado não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     await audit("Guest", guestId, "STATUS_CHANGE", { checkedIn: present });
     revalidatePath("/dashboard/guests");
     revalidatePath("/dashboard/wedding-day");
     return { success: true };
   } catch (err) {
     console.error("[toggleCheckin]", err);
-    return { success: false, error: "Erro ao registrar presença" };
+    return { success: false, error: t("errorCheckin") };
   }
 }
 
@@ -192,19 +198,20 @@ export async function bulkImportGuests(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult<{ created: number; skipped: number; groupsCreated: number }>> {
+  const t = await getTranslations("actions.guest");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = ImportSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   const lines = parsed.data.raw
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean);
-  if (lines.length === 0) return { success: false, error: "Nenhuma linha encontrada" };
+  if (lines.length === 0) return { success: false, error: t("noLinesFound") };
 
   const sep =
     parsed.data.separator === "TAB"
@@ -294,7 +301,7 @@ export async function bulkImportGuests(
     return { success: true, data: { created: createdCount, skipped, groupsCreated } };
   } catch (err) {
     console.error("[bulkImportGuests]", err);
-    return { success: false, error: "Erro ao importar" };
+    return { success: false, error: t("errorImporting") };
   }
 }
 
@@ -310,23 +317,24 @@ export async function publicRsvpRespond(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult<{ name: string; status: string }>> {
+  const t = await getTranslations("actions.guest");
   const ip = getClientIp(await headers());
   const rl = rateLimit(`rsvp:${ip}`, 10, 60_000);
   if (!rl.ok) {
-    return { success: false, error: "Muitas tentativas. Tente novamente em alguns minutos." };
+    return { success: false, error: t("tooManyAttempts") };
   }
   const data = Object.fromEntries(formData.entries());
   const parsed = RsvpPublicSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const guest = await prisma.guest.findFirst({
       where: { rsvpToken: parsed.data.token, deletedAt: null },
     });
-    if (!guest) return { success: false, error: "Convite não encontrado" };
+    if (!guest) return { success: false, error: t("inviteNotFound") };
     if (guest.rsvpTokenExpiresAt && guest.rsvpTokenExpiresAt.getTime() < Date.now()) {
-      return { success: false, error: "Link expirado. Solicite um novo convite." };
+      return { success: false, error: t("linkExpired") };
     }
 
     const plus = Math.min(parsed.data.plusOnesConfirmed, guest.plusOnesAllowed);
@@ -353,7 +361,7 @@ export async function publicRsvpRespond(
     return { success: true, data: { name: updated.name, status: updated.rsvpStatus } };
   } catch (err) {
     console.error("[publicRsvpRespond]", err);
-    return { success: false, error: "Erro ao registrar resposta" };
+    return { success: false, error: t("errorRsvp") };
   }
 }
 
@@ -421,29 +429,31 @@ export async function previewGuestImport(
   _state: ActionResult<PreviewData> | undefined,
   formData: FormData,
 ): Promise<ActionResult<PreviewData>> {
+  const t = await getTranslations("actions.guest");
+  const tc = await getTranslations("actions.common");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
 
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  if (!userId) return { success: false, error: "Não autorizado" };
+  if (!userId) return { success: false, error: tc("unauthorized") };
 
   const ip = getClientIp(await headers());
   if (!rateLimit(`guest-import:${userId}`, 5, 60_000).ok) {
-    return { success: false, error: "Muitos uploads em sequência. Aguarde 1 minuto." };
+    return { success: false, error: t("tooManyUploads") };
   }
   if (!rateLimit(`guest-import:ip:${ip}`, 15, 60_000).ok) {
-    return { success: false, error: "Limite de uploads excedido." };
+    return { success: false, error: t("uploadLimitExceeded") };
   }
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return { success: false, error: "Arquivo obrigatório" };
+    return { success: false, error: t("fileRequired") };
   }
 
   const sourceParam = SourceParamSchema.safeParse(formData.get("source") ?? "AUTO");
   if (!sourceParam.success) {
-    return { success: false, error: "Origem desconhecida" };
+    return { success: false, error: t("unknownSource") };
   }
 
   try {
@@ -463,9 +473,7 @@ export async function previewGuestImport(
     } else if (detectedMagic === "xlsx") {
       sheet = await extractXlsxRecords(bytes);
     } else {
-      throw new FileValidationError(
-        "Formato não suportado. Use .xlsx (Wedy) ou .csv (exportação do próprio sistema).",
-      );
+      throw new FileValidationError(t("unsupportedFormat"));
     }
 
     let importer: Importer | null = null;
@@ -474,8 +482,7 @@ export async function previewGuestImport(
       if (!importer) {
         return {
           success: false,
-          error:
-            "Não foi possível identificar o formato. Suportados: Wedy (.xlsx) ou CSV exportado pelo próprio sistema.",
+          error: t("unrecognizedFormat"),
         };
       }
     } else {
@@ -484,12 +491,12 @@ export async function previewGuestImport(
 
     const rows = importer.parseRecords(sheet.records);
     if (rows.length === 0) {
-      return { success: false, error: "Nenhuma linha válida encontrada na planilha." };
+      return { success: false, error: t("noValidRows") };
     }
     if (rows.length > MAX_IMPORT_ROWS) {
       return {
         success: false,
-        error: `Limite de ${MAX_IMPORT_ROWS} linhas por importação.`,
+        error: t("rowLimit", { max: MAX_IMPORT_ROWS }),
       };
     }
 
@@ -580,7 +587,7 @@ export async function previewGuestImport(
       return { success: false, error: err.message };
     }
     console.error("[previewGuestImport]", err);
-    return { success: false, error: "Erro ao processar arquivo" };
+    return { success: false, error: t("errorProcessingFile") };
   }
 }
 
@@ -593,23 +600,25 @@ export async function commitGuestImport(input: {
   importToken: string;
   mode: CommitMode;
 }): Promise<ActionResult<CommitData>> {
+  const t = await getTranslations("actions.guest");
+  const tc = await getTranslations("actions.common");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
 
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  if (!userId) return { success: false, error: "Não autorizado" };
+  if (!userId) return { success: false, error: tc("unauthorized") };
 
   const parsed = CommitSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   const entry = consumeImport(userId, parsed.data.importToken);
   if (!entry) {
     return {
       success: false,
-      error: "Sessão de importação expirou. Reenvie o arquivo.",
+      error: t("importSessionExpired"),
     };
   }
 
@@ -887,6 +896,6 @@ export async function commitGuestImport(input: {
     return { success: true, data: result };
   } catch (err) {
     console.error("[commitGuestImport]", err);
-    return { success: false, error: "Erro ao gravar importação" };
+    return { success: false, error: t("errorCommittingImport") };
   }
 }

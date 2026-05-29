@@ -1,6 +1,7 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
+import { useTranslations } from "next-intl";
 import { Crown, Baby, User } from "lucide-react";
 
 export type GuestChipData = {
@@ -14,6 +15,7 @@ export type GuestChipData = {
 };
 
 export function GuestChip({ guest, compact = false }: { guest: GuestChipData; compact?: boolean }) {
+  const t = useTranslations("dashboard.weddingDay.seating");
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `guest:${guest.id}`,
     data: { type: "guest", guestId: guest.id, plusOnes: guest.plusOnesConfirmed },
@@ -28,7 +30,7 @@ export function GuestChip({ guest, compact = false }: { guest: GuestChipData; co
       {...attributes}
       {...listeners}
       type="button"
-      aria-label={`Arrastar ${guest.name}`}
+      aria-label={t("chip.dragAria", { name: guest.name })}
       className={`flex w-full items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/60 px-2.5 py-1.5 text-left text-xs text-zinc-100 hover:border-rose-500/40 hover:bg-zinc-800 ${
         isDragging ? "opacity-40" : ""
       } ${compact ? "py-1" : ""}`}

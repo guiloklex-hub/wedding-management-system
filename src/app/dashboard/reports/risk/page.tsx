@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, AlertCircle, AlertTriangle, ShieldCheck } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { loadDashboardData } from "@/lib/reports/dashboard-data";
 import { canViewSensitiveFinance } from "@/lib/permissions";
@@ -33,6 +34,7 @@ const SEVERITY_STYLES: Record<
 
 export default async function RiskRadarPage() {
   const session = await auth();
+  const t = await getTranslations("dashboard.reports.risk");
   const role = (session?.user as { role?: string } | undefined)?.role;
   const canSeeFinance = canViewSensitiveFinance(role);
 
@@ -47,26 +49,23 @@ export default async function RiskRadarPage() {
           className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300"
         >
           <ChevronLeft className="h-3 w-3" />
-          Voltar para relatórios
+          {t("back")}
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">Risk Radar</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Sinais consolidados que merecem atenção: liquidez, contratos no prazo, tarefas
-          atrasadas e fornecedores que estouraram o orçamento estimado.
-        </p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="mt-1 text-sm text-zinc-500">{t("subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Tile label="Críticos" count={visible.filter((r) => r.severity === "red").length} color="text-rose-400" />
-        <Tile label="Atenção" count={visible.filter((r) => r.severity === "amber").length} color="text-amber-400" />
-        <Tile label="Ok" count={visible.filter((r) => r.severity === "green").length} color="text-emerald-400" />
+        <Tile label={t("tiles.critical")} count={visible.filter((r) => r.severity === "red").length} color="text-rose-400" />
+        <Tile label={t("tiles.warning")} count={visible.filter((r) => r.severity === "amber").length} color="text-amber-400" />
+        <Tile label={t("tiles.ok")} count={visible.filter((r) => r.severity === "green").length} color="text-emerald-400" />
       </div>
 
       <div className="space-y-3">
         {visible.length === 0 ? (
           <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-emerald-200">
             <ShieldCheck className="h-6 w-6" />
-            <p className="mt-2 text-sm">Sem sinais vermelhos no momento. Bom trabalho.</p>
+            <p className="mt-2 text-sm">{t("empty")}</p>
           </div>
         ) : (
           visible.map((alert: RiskAlert) => {

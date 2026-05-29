@@ -331,9 +331,13 @@ Todo body/form **deve** ser validado com Zod com limites explícitos:
   [src/i18n/request.ts](src/i18n/request.ts).
 - **Idiomas suportados:** `pt-BR` (default/fallback), `en`, `es`. Constante
   em [src/i18n/config.ts](src/i18n/config.ts).
-- **Sem prefixo de URL.** Locale resolvido na ordem: (1) `?lang=` em rotas
-  públicas (RSVP, login) → (2) cookie `NEXT_LOCALE` → (3) JWT `user.locale`
-  → (4) header `Accept-Language` → (5) default `pt-BR`.
+- **Sem prefixo de URL.** Ordem-alvo de resolução: (1) `?lang=` em rotas
+  públicas → (2) cookie `NEXT_LOCALE` → (3) JWT `user.locale` → (4) header
+  `Accept-Language` → (5) default `pt-BR`.
+  - **Divergência conhecida (estado atual):** o passo (1) `?lang=` é honrado
+    **apenas no fluxo de RSVP** — não é aplicado globalmente (login e demais
+    rotas públicas ignoram `?lang=` hoje). A resolução global efetiva começa
+    no cookie `NEXT_LOCALE`.
 - **Onde está a preferência:**
   - `User.locale` (`String @default("pt-BR")`) — propagado pelo JWT do
     Auth.js. Pode ser alterado em `/dashboard/profile`.
@@ -373,17 +377,21 @@ Todo body/form **deve** ser validado com Zod com limites explícitos:
   reemitir o JWT.
 - **Adicionar nova chave:** adicione nos **3** catálogos no mesmo PR. Não
   deixe `en`/`es` com placeholders — traduza ou peça revisão.
-- **Status atual da cobertura:**
-  - 100%: login, forgot-password, reset-password, RSVP individual e
-    grupo, sidebar/mobile-nav, onboarding wizard, profile, templates de
-    notificação (9 kinds × 3 idiomas), Server Actions críticas (auth,
-    passwordReset, onboarding, profile).
-  - **Pendente** (rotam pt-BR via shim de `formatCurrency`/`formatDate`,
-    sem tradução de UI nesta entrega): páginas internas do dashboard
-    (`vendors`, `venues`, `tasks`, `payments`, `income`, `assets`,
-    `goals`, `guests`, `gifts`, `wedding-day`, `honeymoon`, `trousseau`,
-    `insights`, `reports`, `settings`) e demais Server Actions. Conteúdo
-    detalhado do help center continua em pt-BR até traduções de
+- **Status atual da cobertura (estado real, não meta):**
+  - Traduzido (usa next-intl): login, forgot-password, reset-password, RSVP
+    individual e grupo, sidebar/mobile-nav, profile, templates de notificação
+    (9 kinds × 3 idiomas) e as Server Actions de auth/passwordReset.
+  - **Onboarding NÃO está 100%.** O wizard ainda tem toasts e `placeholder`s
+    hardcoded (não migrados para catálogo).
+  - **Dashboard quase não traduzido.** Apenas ~4 das ~80 páginas/telas do
+    dashboard consomem next-intl; as demais têm strings de UI hardcoded em
+    pt-BR (rotam pt-BR via shim de `formatCurrency`/`formatDate`).
+  - **Server Actions majoritariamente hardcoded.** ~44 das ~48 Server Actions
+    ainda retornam erros em pt-BR hardcoded (`return { error: "..." }`); só as
+    críticas de auth foram migradas.
+  - **`formatCurrency` ignora `EventSettings.currency`** hoje — o símbolo/moeda
+    exibido não respeita a configuração do evento. Limitação conhecida.
+  - Conteúdo detalhado do help center continua em pt-BR até traduções de
     comunidade.
 
 ### 6.5 Logs

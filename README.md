@@ -66,7 +66,7 @@ npm run dev
 ### 🪟 Windows (PowerShell)
 
 ```powershell
-git clone https://github.com/guiloklex_hub/wedding-management-system.git
+git clone https://github.com/guiloklex-hub/wedding-management-system.git
 cd wedding-management-system
 .\setup.ps1
 npm run dev

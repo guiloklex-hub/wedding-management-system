@@ -10,6 +10,7 @@ Guia para colocar o Wedding Finance Planner online de forma estável.
 - PM2 para manter o processo Node vivo.
 - Cron diário para backup.
 - Cron a cada 30 min para `/api/cron/reminders`.
+- Cron diário para `/api/cron/cleanup-files` (limpa anexos órfãos/soft-deletados).
 
 ## 1. Preparar o servidor
 
@@ -163,7 +164,21 @@ crontab -e
 0 3 * * * /usr/bin/cp /var/lib/wedding/dev.db /var/backups/wedding/wedding-$(date +\%F).db && find /var/backups/wedding -name "wedding-*.db" -mtime +30 -delete
 ```
 
-## 8. Conectar WhatsApp
+## 8. Cron de limpeza de arquivos
+
+Remove definitivamente anexos soft-deletados há mais de 30 dias e arquivos
+órfãos em disco (sem registro correspondente). Sem ele, o diretório de
+uploads cresce indefinidamente — risco de encher o disco.
+
+```bash
+crontab -e
+```
+
+```cron
+0 4 * * * curl -fsS -H "Authorization: Bearer SEU_CRON_SECRET" http://localhost:3005/api/cron/cleanup-files >> /var/log/wedding-cron.log 2>&1
+```
+
+## 9. Conectar WhatsApp
 
 Acesse <https://casamento.seudominio.com/dashboard/settings>, aba **WhatsApp**,
 escaneie o QR Code. A sessão fica em `.whatsapp-auth/` dentro do diretório
@@ -172,7 +187,7 @@ do projeto.
 > ⚠️ Esse diretório precisa ser persistido entre deploys. Se você costuma
 > `rm -rf` o projeto antes de fazer `git pull`, mova-o para fora antes.
 
-## 9. Atualização (deploy de nova versão)
+## 10. Atualização (deploy de nova versão)
 
 ```bash
 cd /var/www/wedding
@@ -184,7 +199,7 @@ pm2 reload wedding-management-system
 PM2 reinicia o processo Node com graceful reload — zero downtime na maioria
 dos casos.
 
-## 10. Monitoramento
+## 11. Monitoramento
 
 ```bash
 pm2 status                          # estado geral

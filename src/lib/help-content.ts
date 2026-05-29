@@ -587,6 +587,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         body: "Veja docs/instalacao-windows.md seção 'Cron de lembretes'.",
       },
     ],
+    tips: [
+      "O dia do vencimento no lembrete é exibido sempre como a data cadastrada (em UTC) — sem 'voltar um dia' por causa do fuso horário.",
+    ],
   },
 
   // ============ security ============
@@ -781,6 +784,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "Cada convidado pode estar em apenas um grupo.",
       "Importou um CSV com a coluna 'Grupo' preenchida? Os grupos são criados automaticamente (e os existentes reaproveitados pelo nome) — basta abrir o grupo depois para preencher contato e copiar o link.",
     ],
+    warnings: [
+      "Convidados ou grupos arquivados não aparecem mais no RSVP de grupo — ninguém confirma em nome de quem já saiu da lista.",
+      "A página tem limite de tentativas por IP: links de grupo divulgados em excesso podem ser temporariamente barrados como proteção anti-abuso.",
+    ],
   },
   {
     id: "guest-import-wedy",
@@ -835,6 +842,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
     warnings: [
       "Pix estático não valida o valor — confira o extrato antes de marcar como recebido.",
+      "Dar baixa em um presente exige permissão adequada e fica registrado na auditoria (quem confirmou o recebimento e quando).",
     ],
   },
   {

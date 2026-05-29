@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { DEFAULT_VENUE_CHECKLIST } from "@/lib/venue-checklist";
 import { denyIfNoEdit } from "@/lib/finance-access";
+import { money } from "@/lib/validation";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -22,7 +23,7 @@ const VenueBaseSchema = z.object({
   mapsUrl: optStr(500),
   capacitySeated: z.coerce.number().int().min(0).optional().transform((v) => (Number.isFinite(v) ? v : null)),
   capacityStanding: z.coerce.number().int().min(0).optional().transform((v) => (Number.isFinite(v) ? v : null)),
-  baseRate: z.coerce.number().min(0).optional().transform((v) => (Number.isFinite(v) ? v : null)),
+  baseRate: money.optional().transform((v) => (Number.isFinite(v) ? v : null)),
   pricingNotes: optStr(2000),
   restrictions: optStr(2000),
   pros: optStr(2000),

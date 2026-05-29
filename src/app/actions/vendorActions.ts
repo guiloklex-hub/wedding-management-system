@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoEdit } from "@/lib/finance-access";
+import { money } from "@/lib/validation";
 import type { ActionResult } from "@/types";
 
 const VendorCreateSchema = z.object({
@@ -24,7 +25,7 @@ const VendorCreateSchema = z.object({
     .max(2000)
     .optional()
     .transform((v) => (v && v.length > 0 ? v : undefined)),
-  estimatedValue: z.coerce.number().min(0, "Valor estimado deve ser positivo"),
+  estimatedValue: money,
 });
 
 const VendorUpdateSchema = z.object({
@@ -45,8 +46,8 @@ const VendorUpdateSchema = z.object({
     .max(2000)
     .optional()
     .transform((v) => (v && v.length > 0 ? v : undefined)),
-  estimatedValue: z.coerce.number().min(0).optional(),
-  actualValue: z.coerce.number().min(0).optional().nullable(),
+  estimatedValue: money.optional(),
+  actualValue: money.optional().nullable(),
 });
 
 export async function createVendor(

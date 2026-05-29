@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { denyIfNoEdit } from "@/lib/finance-access";
+import { money } from "@/lib/validation";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -23,8 +24,8 @@ const BaseSchema = z.object({
   room: RoomSchema.default("OTHER"),
   priority: PrioritySchema.default("NICE_TO_HAVE"),
   status: StatusSchema.default("TO_BUY"),
-  estimatedPrice: z.coerce.number().min(0).optional().transform((v) => (Number.isFinite(v) ? v : null)),
-  actualPrice: z.coerce.number().min(0).optional().transform((v) => (Number.isFinite(v) ? v : null)),
+  estimatedPrice: money.optional().transform((v) => (Number.isFinite(v) ? v : null)),
+  actualPrice: money.optional().transform((v) => (Number.isFinite(v) ? v : null)),
   store: optStr(120),
   link: optStr(500),
   notes: optStr(500),

@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { denyIfNoEdit } from "@/lib/finance-access";
+import { audit } from "@/lib/audit";
+import { denyIfNoEdit, denyIfNoFinance } from "@/lib/finance-access";
+import { money } from "@/lib/validation";
 import type { ActionResult } from "@/types";
 
 type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
@@ -20,7 +22,7 @@ const GiftBaseSchema = z.object({
   guestId: z.string().optional().transform((v) => (v && v.length > 0 ? v : null)),
   giverName: optStr(160),
   type: z.enum(["CASH", "ITEM"]).default("CASH"),
-  amount: z.coerce.number().min(0).optional().transform((v) => (Number.isFinite(v) ? v : null)),
+  amount: money.optional().transform((v) => (Number.isFinite(v) ? v : null)),
   description: optStr(500),
   notes: optStr(500),
   isHoneymoonShare: z.preprocess(
@@ -143,7 +145,7 @@ export async function markGiftAsPixReceived(
   giftId: string,
   alsoCreateAsset = false,
 ): Promise<ActionResult> {
-  const denied = await denyIfNoEdit();
+  const denied = await denyIfNoFinance();
   if (denied) return denied;
   try {
     const gift = await prisma.gift.findFirst({
@@ -172,6 +174,11 @@ export async function markGiftAsPixReceived(
           },
         });
       }
+    });
+
+    await audit("Gift", giftId, "MARK_PIX_RECEIVED", {
+      amount: gift.amount,
+      alsoCreateAsset,
     });
 
     revalidatePath("/dashboard/gifts");

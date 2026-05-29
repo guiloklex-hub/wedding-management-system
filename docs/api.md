@@ -183,6 +183,46 @@ Authorization: Bearer <CRON_SECRET>
 
 ---
 
+## Cron de limpeza de arquivos
+
+```
+GET /api/cron/cleanup-files
+Authorization: Bearer <CRON_SECRET>
+```
+
+**Requer:** Bearer token (`CRON_SECRET` do `.env`), comparado timing-safe.
+Tem rate limit por IP (5/min).
+
+**O que faz:**
+1. Remove definitivamente os `Attachment` com `deletedAt` há mais de 30 dias
+   (apaga o arquivo em disco e o registro).
+2. Varre o diretório de uploads e remove arquivos órfãos (sem `Attachment`
+   correspondente).
+
+> ⚠️ Sem este cron os anexos soft-deletados nunca são apagados do disco —
+> o diretório de uploads cresce indefinidamente. Agende-o (ex.: diário).
+> Veja [deploy.md](deploy.md).
+
+**Retorna:**
+
+```json
+{
+  "ok": true,
+  "summary": {
+    "softDeletedHardRemoved": 3,
+    "orphanFilesRemoved": 1,
+    "errors": 0
+  }
+}
+```
+
+**Erros:**
+- `401` se Bearer inválido ou ausente.
+- `429` se o rate limit por IP for excedido.
+- `500` se `CRON_SECRET` não estiver configurado ou falha geral no cleanup.
+
+---
+
 ## Upload e download de arquivos
 
 ```

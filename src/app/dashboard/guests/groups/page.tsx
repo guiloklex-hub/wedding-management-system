@@ -13,6 +13,7 @@ export default async function GuestGroupsPage() {
     prisma.guestGroup.findMany({
       include: {
         guests: {
+          where: { deletedAt: null },
           orderBy: { name: "asc" },
           select: { id: true, name: true, rsvpStatus: true },
         },

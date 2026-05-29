@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoFinance } from "@/lib/finance-access";
+import { money } from "@/lib/validation";
 import type { ActionResult } from "@/types";
 
 const SourceSchema = z.enum(["SALARY", "BONUS", "GIFT", "FREELANCE", "SALE", "RESTITUTION", "OTHER"]);
@@ -22,7 +23,7 @@ const optStr = (max: number) =>
 const IncomeBaseSchema = z.object({
   title: z.string().trim().min(1).max(160),
   source: SourceSchema.default("SALARY"),
-  amount: z.coerce.number().min(0.01),
+  amount: money.min(0.01),
   expectedDate: z
     .string()
     .optional()

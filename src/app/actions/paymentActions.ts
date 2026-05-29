@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoFinance } from "@/lib/finance-access";
+import { money } from "@/lib/validation";
 import { splitAmountCents } from "@/lib/installment-math";
 import type { ActionResult } from "@/types";
 
@@ -30,9 +31,7 @@ const optionalPercent = z.preprocess(
 );
 
 const PaymentBaseSchema = z.object({
-  amount: z.coerce
-    .number({ message: "Valor inválido" })
-    .min(0.01, "Valor deve ser maior que zero"),
+  amount: money.min(0.01, "Valor deve ser maior que zero"),
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
   status: z.enum(["PENDING", "PAID"]),
   method: PaymentMethodSchema,
@@ -80,9 +79,9 @@ const PaymentUpdateSchema = PaymentBaseSchema.extend({
 });
 
 const SplitPaymentSchema = z.object({
-  depositAmount: z.coerce.number().min(0.01),
+  depositAmount: money.min(0.01),
   depositMethod: PaymentMethodSchema,
-  finalAmount: z.coerce.number().min(0.01),
+  finalAmount: money.min(0.01),
   finalDueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   finalMethod: PaymentMethodSchema.default("PIX"),
   vendorId: z.string().min(1),

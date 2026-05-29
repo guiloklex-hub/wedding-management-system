@@ -6,6 +6,17 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.6.6",
+    date: "2026-05-29",
+    highlights: [
+      "📅 Lembretes de vencimento voltaram a mostrar o dia certo: datas só-de-dia agora são exibidas em UTC, sem 'voltar um dia' por causa do fuso horário no e-mail/WhatsApp de cobrança.",
+      "🔒 RSVP em grupo mais seguro: a página pública agora tem limite de tentativas por IP (anti-abuso) e ignora convidados/grupos arquivados, evitando confirmação em nome de quem já saiu da lista.",
+      "💰 Valores monetários ganharam teto explícito na validação (até 1.000.000) em pagamentos, receitas e presentes — bloqueia digitação acidental de cifras gigantes.",
+      "🎁 Receber um presente em Pix agora exige permissão adequada e fica registrado na auditoria (quem deu baixa e quando), além de respeitar o dono dos dados.",
+      "⚡ Correção no modo WAL do SQLite: o banco volta a ativar o write-ahead log corretamente, reduzindo travamentos sob escrita concorrente.",
+    ],
+  },
+  {
     version: "0.6.5",
     date: "2026-05-27",
     highlights: [

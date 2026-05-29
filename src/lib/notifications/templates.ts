@@ -279,6 +279,7 @@ ${input.loginUrl}`;
       const vendor = escapeHtml(input.vendorName);
       const value = formatCurrency(input.amount, moneyCurrency, locale);
       const date = formatDate(input.dueDate, locale, {
+        timeZone: "UTC",
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -332,6 +333,7 @@ ${whenWa}
       const vendor = escapeHtml(input.vendorName);
       const value = formatCurrency(input.amount, moneyCurrency, locale);
       const date = formatDate(input.dueDate, locale, {
+        timeZone: "UTC",
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -372,6 +374,7 @@ ${tk("waSubtitle", { days: input.daysOverdue })}
       const tk = (key: string, values?: Record<string, string | number | Date>) => t(`TASK_DUE.${key}`, values);
       const title = escapeHtml(input.taskTitle);
       const date = formatDate(input.deadline, locale, {
+        timeZone: "UTC",
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -420,6 +423,7 @@ ${tk("waDeadline", { date })}`;
       const tk = (key: string, values?: Record<string, string | number | Date>) => t(`TASK_OVERDUE.${key}`, values);
       const title = escapeHtml(input.taskTitle);
       const date = formatDate(input.deadline, locale, {
+        timeZone: "UTC",
         day: "2-digit",
         month: "2-digit",
         year: "numeric",

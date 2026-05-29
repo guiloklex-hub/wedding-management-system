@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoFinance } from "@/lib/finance-access";
+import { money } from "@/lib/validation";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -17,7 +18,7 @@ const optStr = (max: number) =>
 
 const GoalBaseSchema = z.object({
   name: z.string().trim().min(1).max(120),
-  targetAmount: z.coerce.number().min(0.01),
+  targetAmount: money.min(0.01),
   targetDate: z
     .string()
     .optional()

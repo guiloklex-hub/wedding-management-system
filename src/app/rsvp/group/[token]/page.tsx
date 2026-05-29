@@ -21,10 +21,12 @@ export default async function PublicGroupRsvpPage({
   const group = await prisma.guestGroup.findFirst({
     where: {
       rsvpToken: token,
+      deletedAt: null,
       OR: [{ rsvpTokenExpiresAt: null }, { rsvpTokenExpiresAt: { gt: now } }],
     },
     include: {
       guests: {
+        where: { deletedAt: null },
         orderBy: { name: "asc" },
         select: {
           id: true,

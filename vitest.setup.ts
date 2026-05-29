@@ -3,6 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { mockDeep, mockReset } from "vitest-mock-extended";
 import type { PrismaClient } from "@prisma/client";
+import type { Locale } from "./src/i18n/config";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: mockDeep<PrismaClient>(),
@@ -34,9 +35,8 @@ vi.mock("next/headers", () => ({
 }));
 
 vi.mock("next-intl/server", async () => {
-  const { LOCALES, DEFAULT_LOCALE } = await import("./src/i18n/config");
+  const { DEFAULT_LOCALE } = await import("./src/i18n/config");
 
-  type Locale = (typeof LOCALES)[number];
   const cache = new Map<Locale, Record<string, unknown>>();
 
   async function loadLocale(locale: Locale): Promise<Record<string, unknown>> {

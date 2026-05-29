@@ -5,11 +5,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoFinance } from "@/lib/finance-access";
+import { money } from "@/lib/validation";
 import type { ActionResult } from "@/types";
 
 const AssetCreateSchema = z.object({
   title: z.string().trim().min(1, "Título é obrigatório").max(120),
-  amount: z.coerce.number().min(0.01, "Valor deve ser positivo"),
+  amount: money.min(0.01, "Valor deve ser positivo"),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
   goalId: z.string().optional().transform((v) => (v && v.length > 0 ? v : null)),
   notes: z

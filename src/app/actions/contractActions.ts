@@ -17,6 +17,7 @@ import {
 } from "@/lib/file-validation";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { canSignContract, canUploadContract } from "@/lib/permissions";
+import { money } from "@/lib/validation";
 import type { ActionResult } from "@/types";
 
 const ContractStatusSchema = z.enum([
@@ -34,7 +35,7 @@ const ContractBaseSchema = z.object({
   status: ContractStatusSchema.default("DRAFT"),
   signedAt: z.string().optional().transform((v) => (v && v.length > 0 ? new Date(v) : null)),
   expiresAt: z.string().optional().transform((v) => (v && v.length > 0 ? new Date(v) : null)),
-  totalValue: z.coerce.number().min(0).optional().transform((v) => (v != null && !Number.isNaN(v) ? v : null)),
+  totalValue: money.optional().transform((v) => (v != null && !Number.isNaN(v) ? v : null)),
   paymentTerms: z.string().trim().max(2000).optional().transform((v) => (v && v.length > 0 ? v : null)),
   cancellationPolicy: z.string().trim().max(2000).optional().transform((v) => (v && v.length > 0 ? v : null)),
   includedItems: z.string().trim().max(4000).optional().transform((v) => (v && v.length > 0 ? v : null)),

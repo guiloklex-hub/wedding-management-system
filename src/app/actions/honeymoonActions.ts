@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { denyIfNoEdit } from "@/lib/finance-access";
+import { money } from "@/lib/validation";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -18,12 +19,14 @@ const HoneymoonSchema = z.object({
   destination: optStr(160),
   startDate: z.string().optional().transform((v) => (v && v.length > 0 ? new Date(v) : null)),
   endDate: z.string().optional().transform((v) => (v && v.length > 0 ? new Date(v) : null)),
-  budget: z.coerce.number().min(0).optional().transform((v) => (Number.isFinite(v) ? v : null)),
+  budget: money.optional().transform((v) => (Number.isFinite(v) ? v : null)),
   currency: z.enum(["BRL", "USD", "EUR"]).default("BRL"),
   notes: optStr(2000),
 });
 
 export async function ensureHoneymoon() {
+  const denied = await denyIfNoEdit();
+  if (denied) return null;
   return prisma.honeymoon.upsert({
     where: { id: "singleton" },
     update: {},
@@ -72,7 +75,7 @@ const ItemBaseSchema = z.object({
   vendor: optStr(120),
   startAt: z.string().optional().transform((v) => (v && v.length > 0 ? new Date(v) : null)),
   endAt: z.string().optional().transform((v) => (v && v.length > 0 ? new Date(v) : null)),
-  amount: z.coerce.number().min(0).optional().transform((v) => (Number.isFinite(v) ? v : null)),
+  amount: money.optional().transform((v) => (Number.isFinite(v) ? v : null)),
   currency: z.enum(["BRL", "USD", "EUR"]).default("BRL"),
   status: ItemStatusSchema.default("PLANNED"),
   confirmationNumber: optStr(80),

@@ -1,11 +1,9 @@
 "use client";
 
-// i18n: tela ainda pendente de migração para next-intl (AGENTS.md §6.7).
-// Strings em pt-BR direto na JSX seguem o padrão do guests-client.tsx.
-
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -26,34 +24,19 @@ import { IMPORTER_OPTIONS } from "@/lib/guest-importers";
 import { PreviewTable } from "./_components/preview-table";
 import { PasteImportModal } from "./_components/paste-modal";
 
-const MODE_OPTIONS: Array<{
-  id: CommitMode;
-  label: string;
-  description: string;
-}> = [
-  {
-    id: "CREATE_NEW_ONLY",
-    label: "Pular linhas que já existem no mesmo grupo",
-    description: "Mais seguro. Só cria os convidados novos; nada é alterado.",
-  },
-  {
-    id: "UPSERT_BY_NAME",
-    label: "Atualizar dados de quem já existe no mesmo grupo",
-    description:
-      "Sobrescreve telefone, e-mail, status e tags dos convidados que já existem. Cria os novos.",
-  },
-  {
-    id: "CREATE_ALL_DUPLICATES",
-    label: "Criar tudo, mesmo que já exista",
-    description:
-      "Use quando houver homônimos em famílias diferentes que não devem ser fundidos.",
-  },
+const MODE_OPTION_IDS: CommitMode[] = [
+  "CREATE_NEW_ONLY",
+  "UPSERT_BY_NAME",
+  "CREATE_ALL_DUPLICATES",
 ];
 
 type Step = "upload" | "preview" | "done";
 
 export function GuestImportClient() {
   const router = useRouter();
+  const t = useTranslations("dashboard.guests.import");
+  const tc = useTranslations("common");
+  const b = (chunks: React.ReactNode) => <strong className="text-zinc-100">{chunks}</strong>;
   const toast = useToast();
   const [step, setStep] = useState<Step>("upload");
   const [source, setSource] = useState<string>("AUTO");
@@ -71,7 +54,7 @@ export function GuestImportClient() {
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!file) {
-      toast.error("Selecione um arquivo .xlsx");
+      toast.error(t("toast.selectFile"));
       return;
     }
     setBusy(true);
@@ -81,11 +64,11 @@ export function GuestImportClient() {
       fd.set("source", source);
       const r = await previewGuestImport(undefined, fd);
       if (!r.success) {
-        toast.error("Falha", r.error);
+        toast.error(tc("common.errorGeneric"), r.error);
         return;
       }
       if (!r.data) {
-        toast.error("Resposta inesperada do servidor");
+        toast.error(t("toast.unexpectedResponse"));
         return;
       }
       setPreview(r.data);
@@ -110,11 +93,11 @@ export function GuestImportClient() {
         mode,
       });
       if (!r.success) {
-        toast.error("Falha ao importar", r.error);
+        toast.error(t("toast.importFailed"), r.error);
         return;
       }
       if (!r.data) {
-        toast.error("Resposta inesperada do servidor");
+        toast.error(t("toast.unexpectedResponse"));
         return;
       }
       setResult(r.data);
@@ -132,15 +115,13 @@ export function GuestImportClient() {
           href="/dashboard/guests"
           className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-300"
         >
-          <ArrowLeft className="h-4 w-4" /> Voltar para convidados
+          <ArrowLeft className="h-4 w-4" /> {t("backToGuests")}
         </Link>
         <h1 className="mt-2 text-xl font-semibold text-zinc-100 md:text-2xl">
-          Importar lista de convidados
+          {t("title")}
         </h1>
         <p className="text-sm text-zinc-400">
-          Suba o arquivo exportado de outro sistema (hoje:{" "}
-          {IMPORTER_OPTIONS.map((o) => o.label).join(", ")}). Você verá um preview antes de
-          confirmar.
+          {t("subtitle", { sources: IMPORTER_OPTIONS.map((o) => o.label).join(", ") })}
         </p>
       </div>
 
@@ -151,7 +132,7 @@ export function GuestImportClient() {
         >
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-400">
-              Arquivo (.xlsx ou .csv)
+              {t("upload.fileLabel")}
             </label>
             <input
               type="file"
@@ -160,20 +141,17 @@ export function GuestImportClient() {
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 file:mr-3 file:rounded-lg file:border-0 file:bg-rose-500/20 file:px-3 file:py-1.5 file:text-rose-200 hover:file:bg-rose-500/30"
             />
-            <p className="mt-1 text-xs text-zinc-500">
-              Tamanho máximo: 5 MB. Até 2000 linhas por importação. Wedy exporta em
-              .xlsx; o próprio sistema exporta em .csv (botão CSV em /dashboard/guests).
-            </p>
+            <p className="mt-1 text-xs text-zinc-500">{t("upload.fileHint")}</p>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Origem</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("upload.sourceLabel")}</label>
             <select
               value={source}
               onChange={(e) => setSource(e.target.value)}
               className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
             >
-              <option value="AUTO">Detectar automaticamente</option>
+              <option value="AUTO">{t("upload.autoDetect")}</option>
               {IMPORTER_OPTIONS.map((opt) => (
                 <option key={opt.id} value={opt.id}>
                   {opt.label}
@@ -188,7 +166,7 @@ export function GuestImportClient() {
               onClick={() => setShowPaste(true)}
               className="text-xs text-zinc-400 underline hover:text-zinc-200"
             >
-              Prefere colar texto bruto?
+              {t("upload.preferPaste")}
             </button>
             <button
               type="submit"
@@ -200,7 +178,7 @@ export function GuestImportClient() {
               ) : (
                 <Upload className="h-4 w-4" />
               )}
-              Analisar arquivo
+              {t("upload.analyze")}
             </button>
           </div>
         </form>
@@ -209,34 +187,34 @@ export function GuestImportClient() {
       {step === "preview" && preview ? (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-            <StatTile label="Linhas no arquivo" value={preview.totalRows} accent="rose" />
-            <StatTile label="Novos" value={preview.breakdown.new} accent="emerald" />
+            <StatTile label={t("preview.rowsInFile")} value={preview.totalRows} accent="rose" />
+            <StatTile label={t("preview.new")} value={preview.breakdown.new} accent="emerald" />
             <StatTile
-              label="Já existem (mesmo grupo)"
+              label={t("preview.existingSameGroup")}
               value={preview.breakdown.duplicateSame}
               accent="zinc"
             />
             <StatTile
-              label="Divergentes"
+              label={t("preview.divergent")}
               value={preview.breakdown.duplicateDiff}
               accent="amber"
             />
           </div>
 
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
-            <h2 className="text-sm font-semibold text-zinc-100">Origem detectada</h2>
+            <h2 className="text-sm font-semibold text-zinc-100">{t("preview.detectedSource")}</h2>
             <p className="text-sm text-zinc-400">
               {preview.sourceLabel} —{" "}
-              <span className="text-zinc-500">arquivo válido, headers reconhecidos.</span>
+              <span className="text-zinc-500">{t("preview.fileValid")}</span>
             </p>
           </section>
 
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
             <h2 className="mb-2 text-sm font-semibold text-zinc-100">
-              Grupos detectados ({preview.groupsPreview.length})
+              {t("preview.detectedGroups", { count: preview.groupsPreview.length })}
             </h2>
             {preview.groupsPreview.length === 0 ? (
-              <p className="text-sm text-zinc-500">Nenhum grupo na planilha.</p>
+              <p className="text-sm text-zinc-500">{t("preview.noGroups")}</p>
             ) : (
               <ul className="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
                 {preview.groupsPreview.map((g) => (
@@ -246,11 +224,11 @@ export function GuestImportClient() {
                   >
                     <span>{g.name}</span>
                     <span className="text-zinc-500">·</span>
-                    <span className="text-zinc-500">{g.count} pessoa(s)</span>
+                    <span className="text-zinc-500">{t("preview.peopleCount", { count: g.count })}</span>
                     {g.pin ? (
                       <>
                         <span className="text-zinc-500">·</span>
-                        <span className="text-rose-300">PIN {g.pin}</span>
+                        <span className="text-rose-300">{t("preview.pin", { pin: g.pin })}</span>
                       </>
                     ) : null}
                   </li>
@@ -261,10 +239,10 @@ export function GuestImportClient() {
 
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
             <h2 className="mb-2 text-sm font-semibold text-zinc-100">
-              Tags detectadas ({preview.tagsPreview.length})
+              {t("preview.detectedTags", { count: preview.tagsPreview.length })}
             </h2>
             {preview.tagsPreview.length === 0 ? (
-              <p className="text-sm text-zinc-500">Nenhuma tag.</p>
+              <p className="text-sm text-zinc-500">{t("preview.noTags")}</p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
                 {preview.tagsPreview.map((t) => (
@@ -277,23 +255,20 @@ export function GuestImportClient() {
                 ))}
               </div>
             )}
-            <p className="mt-2 text-xs text-zinc-500">
-              Tags novas serão criadas. Tags com o nome &ldquo;Padrinhos&rdquo;,
-              &ldquo;Madrinha&rdquo; etc. também marcam a flag de padrinho do convidado.
-            </p>
+            <p className="mt-2 text-xs text-zinc-500">{t("preview.tagsNote")}</p>
           </section>
 
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-zinc-100">
-                Amostra (até {preview.sample.length} linhas)
+                {t("preview.sampleTitle", { count: preview.sample.length })}
               </h2>
               <div className="flex gap-1 text-xs">
                 {([
-                  ["all", "Todas"],
-                  ["new", "Novas"],
-                  ["duplicate_same", "Já existem"],
-                  ["duplicate_diff", "Divergentes"],
+                  ["all", t("preview.filterAll")],
+                  ["new", t("preview.filterNew")],
+                  ["duplicate_same", t("preview.filterExisting")],
+                  ["duplicate_diff", t("preview.filterDivergent")],
                 ] as const).map(([id, label]) => (
                   <button
                     type="button"
@@ -315,14 +290,14 @@ export function GuestImportClient() {
 
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
             <h2 className="mb-3 text-sm font-semibold text-zinc-100">
-              Como tratar duplicatas
+              {t("mode.heading")}
             </h2>
             <div className="space-y-2">
-              {MODE_OPTIONS.map((opt) => (
+              {MODE_OPTION_IDS.map((id) => (
                 <label
-                  key={opt.id}
+                  key={id}
                   className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 ${
-                    mode === opt.id
+                    mode === id
                       ? "border-rose-500/40 bg-rose-500/5"
                       : "border-zinc-800 hover:bg-zinc-900"
                   }`}
@@ -330,14 +305,14 @@ export function GuestImportClient() {
                   <input
                     type="radio"
                     name="mode"
-                    value={opt.id}
-                    checked={mode === opt.id}
-                    onChange={() => setMode(opt.id)}
+                    value={id}
+                    checked={mode === id}
+                    onChange={() => setMode(id)}
                     className="mt-1"
                   />
                   <div>
-                    <div className="text-sm font-medium text-zinc-100">{opt.label}</div>
-                    <div className="text-xs text-zinc-500">{opt.description}</div>
+                    <div className="text-sm font-medium text-zinc-100">{t(`mode.${id}.label`)}</div>
+                    <div className="text-xs text-zinc-500">{t(`mode.${id}.description`)}</div>
                   </div>
                 </label>
               ))}
@@ -351,7 +326,7 @@ export function GuestImportClient() {
               disabled={busy}
               className="inline-flex items-center gap-1 rounded-xl bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-700"
             >
-              <X className="h-4 w-4" /> Cancelar
+              <X className="h-4 w-4" /> {tc("actions.cancel")}
             </button>
             <button
               type="button"
@@ -364,7 +339,7 @@ export function GuestImportClient() {
               ) : (
                 <ChevronRight className="h-4 w-4" />
               )}
-              Confirmar importação
+              {t("preview.confirmImport")}
             </button>
           </div>
         </div>
@@ -374,25 +349,23 @@ export function GuestImportClient() {
         <div className="space-y-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
           <div className="flex items-center gap-2 text-emerald-200">
             <CheckCircle2 className="h-5 w-5" />
-            <h2 className="text-base font-semibold">Importação concluída</h2>
+            <h2 className="text-base font-semibold">{t("done.title")}</h2>
           </div>
           <ul className="text-sm text-zinc-300">
             <li>
-              <strong className="text-zinc-100">{result.created}</strong> convidado(s) criados.
+              {t.rich("done.created", { count: result.created, b })}
             </li>
             <li>
-              <strong className="text-zinc-100">{result.updated}</strong> convidado(s)
-              atualizados.
+              {t.rich("done.updated", { count: result.updated, b })}
             </li>
             <li>
-              <strong className="text-zinc-100">{result.skipped}</strong> linha(s) puladas.
+              {t.rich("done.skipped", { count: result.skipped, b })}
             </li>
             <li>
-              <strong className="text-zinc-100">{result.groupsCreated}</strong> grupo(s)
-              criados.
+              {t.rich("done.groupsCreated", { count: result.groupsCreated, b })}
             </li>
             <li>
-              <strong className="text-zinc-100">{result.tagsCreated}</strong> tag(s) criadas.
+              {t.rich("done.tagsCreated", { count: result.tagsCreated, b })}
             </li>
           </ul>
           <div className="flex flex-wrap gap-2">
@@ -400,7 +373,7 @@ export function GuestImportClient() {
               href="/dashboard/guests"
               className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500"
             >
-              Ver lista de convidados
+              {t("done.viewList")}
             </Link>
             <button
               type="button"
@@ -412,7 +385,7 @@ export function GuestImportClient() {
               }}
               className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-700"
             >
-              Importar outra
+              {t("done.importAnother")}
             </button>
           </div>
         </div>

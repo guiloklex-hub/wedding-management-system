@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoFinance } from "@/lib/finance-access";
 import { money } from "@/lib/validation";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -35,12 +37,13 @@ export async function createGoal(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.goal");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = GoalCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const created = await prisma.savingsGoal.create({
@@ -59,7 +62,7 @@ export async function createGoal(
     return { success: true };
   } catch (err) {
     console.error("[createGoal]", err);
-    return { success: false, error: "Erro ao criar meta" };
+    return { success: false, error: t("errorCreate") };
   }
 }
 
@@ -67,12 +70,13 @@ export async function updateGoal(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.goal");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = GoalUpdateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const result = await prisma.savingsGoal.updateMany({
@@ -86,18 +90,19 @@ export async function updateGoal(
         isActive: parsed.data.isActive,
       },
     });
-    if (result.count === 0) return { success: false, error: "Meta não encontrada" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     await audit("SavingsGoal", parsed.data.id, "UPDATE", { name: parsed.data.name });
     revalidatePath("/dashboard/goals");
     revalidatePath("/dashboard");
     return { success: true };
   } catch (err) {
     console.error("[updateGoal]", err);
-    return { success: false, error: "Erro ao atualizar meta" };
+    return { success: false, error: t("errorUpdate") };
   }
 }
 
 export async function deleteGoal(goalId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.goal");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   try {
@@ -105,7 +110,7 @@ export async function deleteGoal(goalId: string): Promise<ActionResult> {
       where: { id: goalId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Meta não encontrada" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     await prisma.asset.updateMany({
       where: { goalId, deletedAt: null },
       data: { goalId: null },
@@ -116,6 +121,6 @@ export async function deleteGoal(goalId: string): Promise<ActionResult> {
     return { success: true };
   } catch (err) {
     console.error("[deleteGoal]", err);
-    return { success: false, error: "Erro ao excluir meta" };
+    return { success: false, error: t("errorDelete") };
   }
 }

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { removeUpload, saveUpload } from "@/lib/storage";
@@ -45,17 +46,19 @@ export async function uploadAttachment(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.attachment");
+  const tc = await getTranslations("actions.common");
   const session = await auth();
-  if (!session?.user) return { success: false, error: "Não autorizado" };
+  if (!session?.user) return { success: false, error: tc("unauthorized") };
   const role = (session.user as { role?: string }).role;
   const userId = (session.user as { id?: string }).id;
 
   const ip = getClientIp(await headers());
   if (!rateLimit(`upload:${userId ?? "anon"}`, 10, 60_000).ok) {
-    return { success: false, error: "Muitos uploads em sequência. Tente novamente em 1 minuto." };
+    return { success: false, error: t("rateLimitUser") };
   }
   if (!rateLimit(`upload:ip:${ip}`, 30, 60_000).ok) {
-    return { success: false, error: "Limite de uploads excedido." };
+    return { success: false, error: t("rateLimitIp") };
   }
 
   const file = formData.get("file");
@@ -65,19 +68,19 @@ export async function uploadAttachment(
     kind: formData.get("kind") ?? "OTHER",
   });
   if (!parsed.success) {
-    return { success: false, error: "Destino inválido" };
+    return { success: false, error: t("invalidTarget") };
   }
   const { ownerType, ownerId, kind } = parsed.data;
 
   if (!(file instanceof File) || file.size === 0) {
-    return { success: false, error: "Arquivo obrigatório" };
+    return { success: false, error: t("fileRequired") };
   }
 
   if (!canUploadAttachmentKind(role, kind)) {
-    return { success: false, error: "Sem permissão para este tipo de anexo" };
+    return { success: false, error: t("noPermissionKind") };
   }
   if (!canEdit(role)) {
-    return { success: false, error: "Sem permissão para editar" };
+    return { success: false, error: t("noPermissionEdit") };
   }
 
   let vendorId: string | null = null;
@@ -86,16 +89,16 @@ export async function uploadAttachment(
 
   if (ownerType === "VENDOR") {
     const v = await prisma.vendor.findFirst({ where: { id: ownerId, deletedAt: null } });
-    if (!v) return { success: false, error: "Fornecedor não encontrado" };
+    if (!v) return { success: false, error: t("vendorNotFound") };
     vendorId = v.id;
   } else if (ownerType === "CONTRACT") {
     const c = await prisma.contract.findFirst({ where: { id: ownerId, deletedAt: null } });
-    if (!c) return { success: false, error: "Contrato não encontrado" };
+    if (!c) return { success: false, error: t("contractNotFound") };
     contractId = c.id;
     vendorId = c.vendorId;
   } else if (ownerType === "VENUE") {
     const v = await prisma.venue.findFirst({ where: { id: ownerId, deletedAt: null } });
-    if (!v) return { success: false, error: "Local não encontrado" };
+    if (!v) return { success: false, error: t("venueNotFound") };
     venueId = v.id;
   }
 
@@ -147,36 +150,38 @@ export async function uploadAttachment(
     console.error("[uploadAttachment]", err);
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Erro ao enviar arquivo",
+      error: err instanceof Error ? err.message : t("errorUpload"),
     };
   }
 }
 
 export async function deleteAttachment(attachmentId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.attachment");
+  const tc = await getTranslations("actions.common");
   const session = await auth();
-  if (!session?.user) return { success: false, error: "Não autorizado" };
+  if (!session?.user) return { success: false, error: tc("unauthorized") };
   const role = (session.user as { role?: string }).role;
   const userId = (session.user as { id?: string }).id;
 
   if (!canEdit(role)) {
-    return { success: false, error: "Sem permissão" };
+    return { success: false, error: t("noPermission") };
   }
 
   try {
     const existing = await prisma.attachment.findFirst({
       where: { id: attachmentId, deletedAt: null },
     });
-    if (!existing) return { success: false, error: "Anexo não encontrado" };
+    if (!existing) return { success: false, error: t("notFound") };
 
     if (existing.kind === "CONTRACT" && !canManageContract(role)) {
       return {
         success: false,
-        error: "Apenas administrador, noivo ou noiva podem remover contratos.",
+        error: t("onlyAdminCoupleRemoveContract"),
       };
     }
 
     if (!canViewAttachmentKind(role, existing.kind)) {
-      return { success: false, error: "Sem permissão para este anexo" };
+      return { success: false, error: t("noPermissionView") };
     }
 
     await prisma.attachment.update({
@@ -197,7 +202,7 @@ export async function deleteAttachment(attachmentId: string): Promise<ActionResu
     return { success: true };
   } catch (err) {
     console.error("[deleteAttachment]", err);
-    return { success: false, error: "Erro ao excluir anexo" };
+    return { success: false, error: t("errorDelete") };
   }
 }
 

@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoFinance } from "@/lib/finance-access";
 import { money } from "@/lib/validation";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 const SourceSchema = z.enum(["SALARY", "BONUS", "GIFT", "FREELANCE", "SALE", "RESTITUTION", "OTHER"]);
@@ -41,12 +43,13 @@ export async function createIncome(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.income");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = IncomeCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const now = new Date();
@@ -69,7 +72,7 @@ export async function createIncome(
     return { success: true };
   } catch (err) {
     console.error("[createIncome]", err);
-    return { success: false, error: "Erro ao criar receita" };
+    return { success: false, error: t("errorCreate") };
   }
 }
 
@@ -77,18 +80,19 @@ export async function updateIncome(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.income");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = IncomeUpdateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const existing = await prisma.income.findFirst({
       where: { id: parsed.data.id, deletedAt: null },
     });
-    if (!existing) return { success: false, error: "Receita não encontrada" };
+    if (!existing) return { success: false, error: t("notFound") };
 
     const receivedAt =
       parsed.data.status === "RECEIVED" ? existing.receivedAt ?? new Date() : null;
@@ -113,11 +117,12 @@ export async function updateIncome(
     return { success: true };
   } catch (err) {
     console.error("[updateIncome]", err);
-    return { success: false, error: "Erro ao atualizar receita" };
+    return { success: false, error: t("errorUpdate") };
   }
 }
 
 export async function markIncomeReceived(incomeId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.income");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   try {
@@ -125,18 +130,19 @@ export async function markIncomeReceived(incomeId: string): Promise<ActionResult
       where: { id: incomeId, deletedAt: null },
       data: { status: "RECEIVED", receivedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Receita não encontrada" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     await audit("Income", incomeId, "STATUS_CHANGE", { status: "RECEIVED" });
     revalidatePath("/dashboard/income");
     revalidatePath("/dashboard");
     return { success: true };
   } catch (err) {
     console.error("[markIncomeReceived]", err);
-    return { success: false, error: "Erro ao marcar como recebida" };
+    return { success: false, error: t("errorMarkReceived") };
   }
 }
 
 export async function deleteIncome(incomeId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.income");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   try {
@@ -144,13 +150,13 @@ export async function deleteIncome(incomeId: string): Promise<ActionResult> {
       where: { id: incomeId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Receita não encontrada" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     await audit("Income", incomeId, "DELETE");
     revalidatePath("/dashboard/income");
     revalidatePath("/dashboard");
     return { success: true };
   } catch (err) {
     console.error("[deleteIncome]", err);
-    return { success: false, error: "Erro ao excluir receita" };
+    return { success: false, error: t("errorDelete") };
   }
 }

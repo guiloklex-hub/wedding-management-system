@@ -18,6 +18,7 @@ import {
 import { SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
 import { GripVertical, Plus, Users, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
@@ -74,6 +75,8 @@ const seatingCollision: CollisionDetection = (args) => {
 };
 
 export default function SeatingClient({ initialTables, initialGuests }: Props) {
+  const t = useTranslations("dashboard.weddingDay.seating");
+  const tc = useTranslations("common");
   const router = useRouter();
   const toast = useToast();
   const [, startTransition] = useTransition();
@@ -133,9 +136,9 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
     setTables(reordered);
 
     startTransition(async () => {
-      const res = await reorderSeatingTables(reordered.map((t) => t.id));
+      const res = await reorderSeatingTables(reordered.map((tbl) => tbl.id));
       if (!res.success) {
-        toast.error("Falha", res.error);
+        toast.error(t("toast.error"), res.error);
         setTables(previous);
       } else {
         router.refresh();
@@ -175,8 +178,8 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
       const needed = 1 + (guest.plusOnesConfirmed ?? 0);
       if (seatsUsed + needed > table.capacity) {
         toast.error(
-          "Mesa cheia",
-          `Capacidade ${table.capacity}, ocupados ${seatsUsed}, necessário ${needed}`,
+          t("toast.tableFull"),
+          t("toast.tableFullDetail", { capacity: table.capacity, used: seatsUsed, needed }),
         );
         return;
       }
@@ -188,7 +191,7 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
     startTransition(async () => {
       const res = await assignGuestToTable(guestId, targetTableId);
       if (!res.success) {
-        toast.error("Falha", res.error);
+        toast.error(t("toast.error"), res.error);
         setGuests((cur) => cur.map((g) => (g.id === guestId ? { ...g, tableId: previousTableId } : g)));
       } else {
         router.refresh();
@@ -201,10 +204,10 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
     const res = await createSeatingTable(undefined, formData);
     setBusy(false);
     if (!res.success) {
-      toast.error("Erro", res.error);
+      toast.error(t("toast.errorTitle"), res.error);
       return;
     }
-    toast.success("Mesa criada");
+    toast.success(t("toast.created"));
     setShowCreate(false);
     router.refresh();
   }
@@ -216,10 +219,10 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
     const res = await updateSeatingTable(undefined, formData);
     setBusy(false);
     if (!res.success) {
-      toast.error("Erro", res.error);
+      toast.error(t("toast.errorTitle"), res.error);
       return;
     }
-    toast.success("Mesa atualizada");
+    toast.success(t("toast.updated"));
     setEditing(null);
     router.refresh();
   }
@@ -230,10 +233,10 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
     const res = await deleteSeatingTable(confirmDelete.id);
     setBusy(false);
     if (!res.success) {
-      toast.error("Erro", res.error);
+      toast.error(t("toast.errorTitle"), res.error);
       return;
     }
-    toast.success("Mesa excluída");
+    toast.success(t("toast.deleted"));
     setConfirmDelete(null);
     router.refresh();
   }
@@ -248,9 +251,9 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
       <div className="space-y-4 p-4 md:p-6">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-100 md:text-2xl">Mapa de assentos</h1>
+            <h1 className="text-xl font-semibold text-zinc-100 md:text-2xl">{t("title")}</h1>
             <p className="text-sm text-zinc-400">
-              Arraste convidados confirmados para as mesas. Capacidade considera +1.
+              {t("subtitle")}
             </p>
           </div>
           <button
@@ -259,14 +262,14 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
             className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500"
           >
             <Plus className="h-4 w-4" />
-            Nova mesa
+            {t("newTable")}
           </button>
         </header>
 
         <div className="grid grid-cols-1 gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3 sm:grid-cols-3">
-          <Stat label="Mesas" value={tables.length} />
-          <Stat label="Assentos totais" value={totalSeats} />
-          <Stat label="Convidados alocados" value={totalAllocated} suffix={`/${guests.reduce((s, g) => s + 1 + g.plusOnesConfirmed, 0)}`} />
+          <Stat label={t("stats.tables")} value={tables.length} />
+          <Stat label={t("stats.totalSeats")} value={totalSeats} />
+          <Stat label={t("stats.allocatedGuests")} value={totalAllocated} suffix={`/${guests.reduce((s, g) => s + 1 + g.plusOnesConfirmed, 0)}`} />
         </div>
 
         <div className="flex flex-col gap-4 lg:flex-row">
@@ -276,28 +279,28 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
             <div className="mb-3 flex items-center gap-2 text-xs text-zinc-400">
               <Info className="h-3.5 w-3.5" />
               {tables.length === 0
-                ? "Crie a primeira mesa para começar."
-                : "Solte um convidado numa mesa para alocar; arraste pela alça para reordenar."}
+                ? t("hint.empty")
+                : t("hint.help")}
             </div>
             <SortableContext items={tables.map((t) => t.id)} strategy={rectSortingStrategy}>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {tables.map((t) => {
-                  const tableGuests = guests.filter((g) => g.tableId === t.id);
-                  const seatsUsed = computeSeatsUsed(guests, t.id);
+                {tables.map((tbl) => {
+                  const tableGuests = guests.filter((g) => g.tableId === tbl.id);
+                  const seatsUsed = computeSeatsUsed(guests, tbl.id);
                   return (
                     <TableCard
-                      key={t.id}
-                      id={t.id}
-                      name={t.name}
-                      capacity={t.capacity}
-                      shape={t.shape as "ROUND" | "RECT" | "SQUARE"}
+                      key={tbl.id}
+                      id={tbl.id}
+                      name={tbl.name}
+                      capacity={tbl.capacity}
+                      shape={tbl.shape as "ROUND" | "RECT" | "SQUARE"}
                       seatsUsed={seatsUsed}
-                      onEdit={() => setEditing(t)}
-                      onDelete={() => setConfirmDelete(t)}
+                      onEdit={() => setEditing(tbl)}
+                      onDelete={() => setConfirmDelete(tbl)}
                     >
                       {tableGuests.length === 0 ? (
                         <p className="rounded-lg border border-dashed border-zinc-700 px-2 py-3 text-center text-[11px] text-zinc-500">
-                          Solte convidados aqui
+                          {t("table.dropGuests")}
                         </p>
                       ) : (
                         tableGuests.map((g) => <GuestChip key={g.id} guest={g} compact />)
@@ -312,7 +315,7 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
 
         {showCreate ? (
           <TableForm
-            title="Nova mesa"
+            title={t("form.createTitle")}
             busy={busy}
             onCancel={() => setShowCreate(false)}
             onSubmit={handleCreate}
@@ -321,7 +324,7 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
 
         {editing ? (
           <TableForm
-            title="Editar mesa"
+            title={t("form.editTitle")}
             initial={{ name: editing.name, capacity: editing.capacity, shape: editing.shape, notes: editing.notes }}
             busy={busy}
             onCancel={() => setEditing(null)}
@@ -331,14 +334,14 @@ export default function SeatingClient({ initialTables, initialGuests }: Props) {
 
         <ConfirmDialog
           open={confirmDelete !== null}
-          title="Excluir mesa?"
+          title={t("delete.title")}
           description={
             confirmDelete
-              ? `A mesa "${confirmDelete.name}" será removida e os convidados ficarão sem alocação.`
+              ? t("delete.description", { name: confirmDelete.name })
               : ""
           }
           tone="danger"
-          confirmLabel="Excluir"
+          confirmLabel={tc("actions.delete")}
           busy={busy}
           onConfirm={handleDelete}
           onCancel={() => setConfirmDelete(null)}
@@ -378,6 +381,7 @@ function Stat({ label, value, suffix }: { label: string; value: number; suffix?:
 }
 
 function GuestPool({ guests }: { guests: GuestChipData[] }) {
+  const t = useTranslations("dashboard.weddingDay.seating");
   const { setNodeRef, isOver } = useDroppable({
     id: "pool",
     data: { type: "pool" },
@@ -391,7 +395,7 @@ function GuestPool({ guests }: { guests: GuestChipData[] }) {
     >
       <header className="mb-3 flex items-center gap-2">
         <Users className="h-4 w-4 text-zinc-400" />
-        <h2 className="text-sm font-medium text-zinc-100">Pool de convidados</h2>
+        <h2 className="text-sm font-medium text-zinc-100">{t("pool.title")}</h2>
         <span className="ml-auto rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-400">
           {guests.length}
         </span>
@@ -399,7 +403,7 @@ function GuestPool({ guests }: { guests: GuestChipData[] }) {
       <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
         {guests.length === 0 ? (
           <p className="rounded-lg border border-dashed border-zinc-700 px-3 py-6 text-center text-xs text-zinc-500">
-            Todos os confirmados estão alocados. Solte aqui para desalocar.
+            {t("pool.empty")}
           </p>
         ) : (
           guests.map((g) => <GuestChip key={g.id} guest={g} />)
@@ -422,6 +426,8 @@ function TableForm({
   onCancel: () => void;
   onSubmit: (fd: FormData) => void;
 }) {
+  const t = useTranslations("dashboard.weddingDay.seating");
+  const tc = useTranslations("common");
   return (
     <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:items-center">
       <form
@@ -429,7 +435,7 @@ function TableForm({
         className="my-4 w-full max-w-md space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl"
       >
         <h2 className="text-base font-semibold text-zinc-100">{title}</h2>
-        <Field label="Nome">
+        <Field label={tc("labels.name")}>
           <input
             name="name"
             defaultValue={initial?.name ?? ""}
@@ -439,7 +445,7 @@ function TableForm({
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Capacidade">
+          <Field label={t("form.capacity")}>
             <input
               type="number"
               name="capacity"
@@ -450,19 +456,19 @@ function TableForm({
               className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-rose-500 focus:outline-none"
             />
           </Field>
-          <Field label="Formato">
+          <Field label={t("form.shape")}>
             <select
               name="shape"
               defaultValue={initial?.shape ?? "ROUND"}
               className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-rose-500 focus:outline-none"
             >
-              <option value="ROUND">Redonda</option>
-              <option value="RECT">Retangular</option>
-              <option value="SQUARE">Quadrada</option>
+              <option value="ROUND">{t("shape.round")}</option>
+              <option value="RECT">{t("shape.rect")}</option>
+              <option value="SQUARE">{t("shape.square")}</option>
             </select>
           </Field>
         </div>
-        <Field label="Observações">
+        <Field label={tc("labels.notes")}>
           <textarea
             name="notes"
             defaultValue={initial?.notes ?? ""}
@@ -478,14 +484,14 @@ function TableForm({
             disabled={busy}
             className="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
           >
-            Cancelar
+            {tc("actions.cancel")}
           </button>
           <button
             type="submit"
             disabled={busy}
             className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-60"
           >
-            {busy ? "Salvando..." : "Salvar"}
+            {busy ? t("form.saving") : tc("actions.save")}
           </button>
         </div>
       </form>

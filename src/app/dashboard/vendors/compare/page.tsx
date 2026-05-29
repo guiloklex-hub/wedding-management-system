@@ -1,16 +1,11 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { resolveCategoryLabel } from "@/lib/categories";
 import { formatCurrency, formatDateBR } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_LABEL: Record<string, string> = {
-  NEGOTIATION: "Em Negociação",
-  CONTRACTED: "Contratado",
-  FINALIZED: "Finalizado",
-};
 
 type SearchParams = { ids?: string };
 
@@ -19,6 +14,12 @@ export default async function ComparePage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
+  const t = await getTranslations("dashboard.vendors.compare");
+  const STATUS_LABEL: Record<string, string> = {
+    NEGOTIATION: t("status.negotiation"),
+    CONTRACTED: t("status.contracted"),
+    FINALIZED: t("status.finalized"),
+  };
   const params = await searchParams;
   const ids = (params.ids ?? "")
     .split(",")
@@ -75,16 +76,16 @@ export default async function ComparePage({
           href="/dashboard/vendors"
           className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-300"
         >
-          <ArrowLeft className="h-4 w-4" /> Voltar para fornecedores
+          <ArrowLeft className="h-4 w-4" /> {t("back")}
         </Link>
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Comparar propostas</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-white">{t("title")}</h1>
         <p className="text-sm text-zinc-500">
           {computed.length === 0
-            ? "Marque 2 a 4 fornecedores na lista e clique em \"Comparar\"."
-            : `Comparando ${computed.length} fornecedor(es).`}
+            ? t("hint")
+            : t("comparing", { count: computed.length })}
         </p>
       </div>
 
@@ -96,7 +97,7 @@ export default async function ComparePage({
             <thead>
               <tr>
                 <th className="sticky left-0 z-10 w-44 bg-zinc-900/80 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  Critério
+                  {t("criterion")}
                 </th>
                 {computed.map(({ vendor }) => (
                   <th key={vendor.id} className="min-w-[220px] px-4 py-3 text-left">
@@ -114,19 +115,19 @@ export default async function ComparePage({
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/60">
-              <Row label="Status">
+              <Row label={t("row.status")}>
                 {computed.map(({ vendor }) => (
                   <Cell key={vendor.id}>{STATUS_LABEL[vendor.status] ?? vendor.status}</Cell>
                 ))}
               </Row>
-              <Row label="Rating">
+              <Row label={t("row.rating")}>
                 {computed.map(({ vendor }) => (
                   <Cell key={vendor.id} highlight={!!vendor.rating && vendor.rating === maxRating}>
                     {vendor.rating ? `${vendor.rating} ★` : "—"}
                   </Cell>
                 ))}
               </Row>
-              <Row label="Valor total">
+              <Row label={t("row.totalValue")}>
                 {computed.map((c) => (
                   <Cell
                     key={c.vendor.id}
@@ -137,26 +138,26 @@ export default async function ComparePage({
                   </Cell>
                 ))}
               </Row>
-              <Row label="Já pago">
+              <Row label={t("row.paid")}>
                 {computed.map((c) => (
                   <Cell key={c.vendor.id} accent="emerald">
                     {formatCurrency(c.paid)}
                   </Cell>
                 ))}
               </Row>
-              <Row label="Saldo">
+              <Row label={t("row.balance")}>
                 {computed.map((c) => (
                   <Cell key={c.vendor.id} accent={c.balance > 0 ? "rose" : "emerald"}>
                     {formatCurrency(c.balance)}
                   </Cell>
                 ))}
               </Row>
-              <Row label="Indicado por">
+              <Row label={t("row.indicatedBy")}>
                 {computed.map(({ vendor }) => (
                   <Cell key={vendor.id}>{vendor.indicatedBy ?? "—"}</Cell>
                 ))}
               </Row>
-              <Row label="Tags">
+              <Row label={t("row.tags")}>
                 {computed.map(({ vendor }) => (
                   <Cell key={vendor.id}>
                     {vendor.tags ? (
@@ -180,14 +181,14 @@ export default async function ComparePage({
                   </Cell>
                 ))}
               </Row>
-              <Row label="Contatos / Contratos / Anexos">
+              <Row label={t("row.counts")}>
                 {computed.map(({ vendor }) => (
                   <Cell key={vendor.id}>
                     {vendor.contacts.length} / {vendor.contracts.length} / {vendor.attachments.length}
                   </Cell>
                 ))}
               </Row>
-              <Row label="Notas">
+              <Row label={t("row.notes")}>
                 {computed.map(({ vendor }) => (
                   <Cell key={vendor.id}>
                     {vendor.notes ? (
@@ -198,7 +199,7 @@ export default async function ComparePage({
                   </Cell>
                 ))}
               </Row>
-              <Row label="Última interação">
+              <Row label={t("row.lastInteraction")}>
                 {computed.map(({ vendor }) => {
                   const last = vendor.vendorNotes[0];
                   return (
@@ -215,7 +216,7 @@ export default async function ComparePage({
                   );
                 })}
               </Row>
-              <Row label="Link contrato">
+              <Row label={t("row.contractLink")}>
                 {computed.map(({ vendor }) =>
                   vendor.contractLink ? (
                     <Cell key={vendor.id}>
@@ -225,7 +226,7 @@ export default async function ComparePage({
                         rel="noopener noreferrer"
                         className="text-rose-300 hover:text-rose-200"
                       >
-                        Abrir →
+                        {t("open")}
                       </a>
                     </Cell>
                   ) : (
@@ -239,7 +240,7 @@ export default async function ComparePage({
       )}
 
       <p className="text-xs text-zinc-600">
-        💡 Cor verde no preço marca o mais barato; ⭐ no rating marca o melhor avaliado.
+        {t("legend")}
       </p>
     </div>
   );
@@ -281,18 +282,19 @@ function Cell({
   );
 }
 
-function EmptyState() {
+async function EmptyState() {
+  const t = await getTranslations("dashboard.vendors.compare");
   return (
     <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 p-10 text-center">
-      <p className="text-zinc-300">Nenhum fornecedor selecionado.</p>
+      <p className="text-zinc-300">{t("empty.title")}</p>
       <p className="mt-2 text-sm text-zinc-500">
-        Volte para a lista, marque os checkboxes dos fornecedores que quer comparar e clique em &quot;Comparar&quot;.
+        {t("empty.description")}
       </p>
       <Link
         href="/dashboard/vendors"
         className="mt-4 inline-flex items-center gap-1 text-sm text-rose-300 hover:text-rose-200"
       >
-        Ir para fornecedores →
+        {t("empty.cta")}
       </Link>
     </div>
   );

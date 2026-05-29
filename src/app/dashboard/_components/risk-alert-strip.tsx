@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AlertCircle, AlertTriangle, ShieldCheck } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import type { RiskAlert } from "@/lib/reports/types";
 
 const SEVERITY_STYLES = {
@@ -23,7 +24,7 @@ const SEVERITY_STYLES = {
   },
 } as const;
 
-export function RiskAlertStrip({
+export async function RiskAlertStrip({
   risks,
   canSeeFinance,
 }: {
@@ -33,11 +34,13 @@ export function RiskAlertStrip({
   const visible = risks.filter((r) => (r.finance ? canSeeFinance : true));
   if (visible.length === 0) return null;
 
+  const t = await getTranslations("dashboard.home");
+
   return (
     <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 shadow-sm">
       <div className="mb-3 flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 text-amber-400" />
-        <h2 className="text-sm font-semibold text-zinc-200">Sinais de atenção</h2>
+        <h2 className="text-sm font-semibold text-zinc-200">{t("risks.title")}</h2>
         <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">
           {visible.length}
         </span>

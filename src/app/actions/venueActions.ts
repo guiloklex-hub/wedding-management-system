@@ -2,11 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { DEFAULT_VENUE_CHECKLIST } from "@/lib/venue-checklist";
 import { denyIfNoEdit } from "@/lib/finance-access";
 import { money } from "@/lib/validation";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -44,12 +46,13 @@ export async function createVenue(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
+  const t = await getTranslations("actions.venue");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = VenueCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const created = await prisma.$transaction(async (tx) => {
@@ -91,7 +94,7 @@ export async function createVenue(
     return { success: true, data: { id: created.id } };
   } catch (err) {
     console.error("[createVenue]", err);
-    return { success: false, error: "Erro ao criar local" };
+    return { success: false, error: t("errorCreate") };
   }
 }
 
@@ -99,12 +102,13 @@ export async function updateVenue(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.venue");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = VenueUpdateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const result = await prisma.venue.updateMany({
@@ -127,17 +131,18 @@ export async function updateVenue(
         notes: parsed.data.notes,
       },
     });
-    if (result.count === 0) return { success: false, error: "Local não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     revalidatePath(`/dashboard/venues/${parsed.data.id}`);
     revalidatePath("/dashboard/venues");
     return { success: true };
   } catch (err) {
     console.error("[updateVenue]", err);
-    return { success: false, error: "Erro ao atualizar local" };
+    return { success: false, error: t("errorUpdate") };
   }
 }
 
 export async function deleteVenue(venueId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.venue");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
@@ -145,12 +150,12 @@ export async function deleteVenue(venueId: string): Promise<ActionResult> {
       where: { id: venueId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Local não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     revalidatePath("/dashboard/venues");
     return { success: true };
   } catch (err) {
     console.error("[deleteVenue]", err);
-    return { success: false, error: "Erro ao excluir local" };
+    return { success: false, error: t("errorDelete") };
   }
 }
 
@@ -163,12 +168,13 @@ export async function addChecklistItem(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.venue");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = ChecklistAddSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const lastItem = await prisma.venueChecklistItem.findFirst({
@@ -183,7 +189,7 @@ export async function addChecklistItem(
     return { success: true };
   } catch (err) {
     console.error("[addChecklistItem]", err);
-    return { success: false, error: "Erro ao adicionar item" };
+    return { success: false, error: t("errorAddItem") };
   }
 }
 
@@ -192,6 +198,7 @@ export async function toggleChecklistItem(
   checked: boolean,
   value?: string,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.venue");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
@@ -203,21 +210,22 @@ export async function toggleChecklistItem(
     return { success: true };
   } catch (err) {
     console.error("[toggleChecklistItem]", err);
-    return { success: false, error: "Erro ao atualizar item" };
+    return { success: false, error: t("errorUpdateItem") };
   }
 }
 
 export async function deleteChecklistItem(itemId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.venue");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
     const item = await prisma.venueChecklistItem.findUnique({ where: { id: itemId } });
-    if (!item) return { success: false, error: "Item não encontrado" };
+    if (!item) return { success: false, error: t("itemNotFound") };
     await prisma.venueChecklistItem.delete({ where: { id: itemId } });
     revalidatePath(`/dashboard/venues/${item.venueId}`);
     return { success: true };
   } catch (err) {
     console.error("[deleteChecklistItem]", err);
-    return { success: false, error: "Erro ao excluir item" };
+    return { success: false, error: t("errorDeleteItem") };
   }
 }

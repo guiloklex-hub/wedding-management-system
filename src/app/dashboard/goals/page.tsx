@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { requireFinanceAccess } from "@/lib/finance-access";
 import GoalsClient from "./goals-client";
@@ -6,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function GoalsPage() {
   await requireFinanceAccess();
+  const t = await getTranslations("dashboard.goals");
 
   const goals = await prisma.savingsGoal.findMany({
     where: { deletedAt: null },
@@ -31,10 +33,8 @@ export default async function GoalsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Metas de poupança</h1>
-        <p className="text-sm text-zinc-500">
-          Defina quanto guardar até quando. Os aportes (caixa) podem ser vinculados a uma meta.
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight text-white">{t("page.title")}</h1>
+        <p className="text-sm text-zinc-500">{t("page.subtitle")}</p>
       </div>
       <GoalsClient goals={decorated} />
     </div>

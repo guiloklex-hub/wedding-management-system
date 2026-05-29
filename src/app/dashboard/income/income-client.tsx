@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { CheckCircle2, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   createIncome,
@@ -26,17 +27,19 @@ type IncomeRow = {
   notes: string | null;
 };
 
-const SOURCE_LABEL: Record<string, string> = {
-  SALARY: "Salário",
-  BONUS: "Bônus / 13º",
-  GIFT: "Presente em dinheiro",
-  FREELANCE: "Freela",
-  SALE: "Venda",
-  RESTITUTION: "Restituição IR",
-  OTHER: "Outro",
-};
+const SOURCE_KEYS = [
+  "SALARY",
+  "BONUS",
+  "GIFT",
+  "FREELANCE",
+  "SALE",
+  "RESTITUTION",
+  "OTHER",
+] as const;
 
 export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
+  const t = useTranslations("dashboard.income");
+  const tc = useTranslations("common");
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<IncomeRow | null>(null);
@@ -58,15 +61,21 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
 
   const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(incomes, 20);
 
+  function sourceLabel(source: string): string {
+    return SOURCE_KEYS.includes(source as (typeof SOURCE_KEYS)[number])
+      ? t(`source.${source}`)
+      : source;
+  }
+
   function handleCreate(formData: FormData) {
     setBusy(true);
     startTransition(async () => {
       try {
         const r = await createIncome(undefined, formData);
         if (r.success) {
-          toast.success("Receita registrada");
+          toast.success(t("toast.created"));
           setOpen(false);
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.fail"), r.error);
       } finally {
         setBusy(false);
       }
@@ -79,9 +88,9 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
       try {
         const r = await updateIncome(undefined, formData);
         if (r.success) {
-          toast.success("Receita atualizada");
+          toast.success(t("toast.updated"));
           setEditing(null);
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.fail"), r.error);
       } finally {
         setUpdatingBusy(false);
       }
@@ -91,8 +100,8 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
   function handleReceived(row: IncomeRow) {
     startTransition(async () => {
       const r = await markIncomeReceived(row.id);
-      if (r.success) toast.success("Marcada como recebida");
-      else toast.error("Falha", r.error);
+      if (r.success) toast.success(t("toast.marked"));
+      else toast.error(t("toast.fail"), r.error);
     });
   }
 
@@ -102,18 +111,18 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
     startTransition(async () => {
       const r = await deleteIncome(id);
       if (r.success) {
-        toast.success("Receita removida");
+        toast.success(t("toast.deleted"));
         setDeleting(null);
-      } else toast.error("Falha", r.error);
+      } else toast.error(t("toast.fail"), r.error);
     });
   }
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <SummaryCard label="Total estimado" value={totals.total} accent="zinc" />
-        <SummaryCard label="A receber" value={totals.expected} accent="amber" />
-        <SummaryCard label="Recebido" value={totals.received} accent="emerald" />
+        <SummaryCard label={t("summary.total")} value={totals.total} accent="zinc" />
+        <SummaryCard label={t("summary.expected")} value={totals.expected} accent="amber" />
+        <SummaryCard label={t("summary.received")} value={totals.received} accent="emerald" />
       </div>
 
       <div className="flex justify-end">
@@ -122,7 +131,7 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
           onClick={() => setOpen(true)}
           className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg hover:bg-rose-500"
         >
-          <Plus className="h-4 w-4" /> Nova receita
+          <Plus className="h-4 w-4" /> {t("actions.new")}
         </button>
       </div>
 
@@ -131,19 +140,19 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
           <table className="w-full text-left text-sm text-zinc-400">
             <thead className="border-b border-zinc-800 bg-zinc-900/80 text-xs uppercase text-zinc-500">
               <tr>
-                <th className="px-6 py-4 font-medium">Título</th>
-                <th className="px-6 py-4 font-medium">Origem</th>
-                <th className="px-6 py-4 font-medium">Valor</th>
-                <th className="px-6 py-4 font-medium">Data prevista</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 text-right font-medium">Ações</th>
+                <th className="px-6 py-4 font-medium">{t("table.title")}</th>
+                <th className="px-6 py-4 font-medium">{t("table.source")}</th>
+                <th className="px-6 py-4 font-medium">{t("table.amount")}</th>
+                <th className="px-6 py-4 font-medium">{t("table.expectedDate")}</th>
+                <th className="px-6 py-4 font-medium">{t("table.status")}</th>
+                <th className="px-6 py-4 text-right font-medium">{t("table.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {incomes.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
-                    Nenhuma receita cadastrada.
+                    {t("table.empty")}
                   </td>
                 </tr>
               ) : (
@@ -152,13 +161,13 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
                     <td className="px-6 py-4">
                       <div className="text-zinc-200">{row.title}</div>
                       {row.givenByName ? (
-                        <div className="text-xs text-zinc-500">de {row.givenByName}</div>
+                        <div className="text-xs text-zinc-500">{t("row.givenBy", { name: row.givenByName })}</div>
                       ) : null}
                       {row.frequency === "MONTHLY" ? (
-                        <div className="text-[10px] uppercase tracking-wider text-sky-400">Mensal</div>
+                        <div className="text-[10px] uppercase tracking-wider text-sky-400">{t("frequency.MONTHLY")}</div>
                       ) : null}
                     </td>
-                    <td className="px-6 py-4">{SOURCE_LABEL[row.source] ?? row.source}</td>
+                    <td className="px-6 py-4">{sourceLabel(row.source)}</td>
                     <td className="px-6 py-4 font-medium text-emerald-400">{formatCurrency(row.amount)}</td>
                     <td className="px-6 py-4">{row.expectedDate ? formatDateBR(row.expectedDate) : "—"}</td>
                     <td className="px-6 py-4">
@@ -171,7 +180,11 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
                               : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                         }`}
                       >
-                        {row.status === "RECEIVED" ? "Recebida" : row.status === "CANCELLED" ? "Cancelada" : "Prevista"}
+                        {row.status === "RECEIVED"
+                          ? t("status.RECEIVED")
+                          : row.status === "CANCELLED"
+                            ? t("status.CANCELLED")
+                            : t("status.EXPECTED")}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -183,13 +196,13 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
                             className="flex items-center gap-1 rounded-lg px-2 py-1 text-emerald-400 hover:bg-emerald-500/10"
                           >
                             <CheckCircle2 className="h-4 w-4" />
-                            <span className="text-xs">Recebi</span>
+                            <span className="text-xs">{t("actions.received")}</span>
                           </button>
                         ) : null}
                         <button
                           type="button"
                           onClick={() => setEditing(row)}
-                          aria-label="Editar"
+                          aria-label={tc("actions.edit")}
                           className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
                         >
                           <Pencil className="h-4 w-4" />
@@ -197,7 +210,7 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
                         <button
                           type="button"
                           onClick={() => setDeleting(row)}
-                          aria-label="Excluir"
+                          aria-label={tc("actions.delete")}
                           className="rounded-lg p-1.5 text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -236,8 +249,8 @@ export default function IncomeClient({ incomes }: { incomes: IncomeRow[] }) {
 
       <ConfirmDialog
         open={!!deleting}
-        title="Excluir receita?"
-        confirmLabel="Excluir"
+        title={t("confirmDelete.title")}
+        confirmLabel={tc("actions.delete")}
         tone="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleting(null)}
@@ -282,33 +295,35 @@ function IncomeFormModal({
   onClose: () => void;
   formAction: (formData: FormData) => void;
 }) {
+  const t = useTranslations("dashboard.income");
+  const tc = useTranslations("common");
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
       <div className="my-4 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
         <h2 className="text-lg font-semibold text-white">
-          {mode === "create" ? "Nova receita" : "Editar receita"}
+          {mode === "create" ? t("form.titleCreate") : t("form.titleEdit")}
         </h2>
         <form action={formAction} className="mt-4 space-y-3">
           {income ? <input type="hidden" name="id" value={income.id} /> : null}
-          <Field name="title" label="Título" required defaultValue={income?.title ?? ""} />
+          <Field name="title" label={t("form.title")} required defaultValue={income?.title ?? ""} />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Origem</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.source")}</label>
               <select
                 name="source"
                 defaultValue={income?.source ?? "SALARY"}
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
               >
-                {Object.entries(SOURCE_LABEL).map(([k, v]) => (
+                {SOURCE_KEYS.map((k) => (
                   <option key={k} value={k}>
-                    {v}
+                    {t(`source.${k}`)}
                   </option>
                 ))}
               </select>
             </div>
             <Field
               name="amount"
-              label="Valor (R$)"
+              label={t("form.amount")}
               type="number"
               step="0.01"
               required
@@ -318,45 +333,45 @@ function IncomeFormModal({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field
               name="expectedDate"
-              label="Data prevista"
+              label={t("form.expectedDate")}
               type="date"
               defaultValue={
                 income?.expectedDate ? toIsoDate(new Date(income.expectedDate)) : ""
               }
             />
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Frequência</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.frequency")}</label>
               <select
                 name="frequency"
                 defaultValue={income?.frequency ?? "ONE_TIME"}
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
               >
-                <option value="ONE_TIME">Avulsa</option>
-                <option value="MONTHLY">Mensal</option>
+                <option value="ONE_TIME">{t("frequency.ONE_TIME")}</option>
+                <option value="MONTHLY">{t("frequency.MONTHLY")}</option>
               </select>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Status</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.status")}</label>
               <select
                 name="status"
                 defaultValue={income?.status ?? "EXPECTED"}
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
               >
-                <option value="EXPECTED">Prevista</option>
-                <option value="RECEIVED">Recebida</option>
-                <option value="CANCELLED">Cancelada</option>
+                <option value="EXPECTED">{t("status.EXPECTED")}</option>
+                <option value="RECEIVED">{t("status.RECEIVED")}</option>
+                <option value="CANCELLED">{t("status.CANCELLED")}</option>
               </select>
             </div>
             <Field
               name="givenByName"
-              label="Dado por (presente)"
+              label={t("form.givenByName")}
               defaultValue={income?.givenByName ?? ""}
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Notas</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.notes")}</label>
             <textarea
               name="notes"
               rows={2}
@@ -371,14 +386,14 @@ function IncomeFormModal({
               onClick={onClose}
               className="flex-1 rounded-xl bg-zinc-800 py-2 text-sm font-medium text-white hover:bg-zinc-700"
             >
-              Cancelar
+              {tc("actions.cancel")}
             </button>
             <button
               type="submit"
               disabled={isBusy}
               className="flex flex-1 items-center justify-center rounded-xl bg-rose-600 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
-              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : tc("actions.save")}
             </button>
           </div>
         </form>

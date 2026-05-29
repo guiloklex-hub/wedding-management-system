@@ -1,6 +1,7 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { useTranslations } from "next-intl";
 import { formatCurrency } from "@/lib/format";
 
 export type ChartDatum = {
@@ -22,10 +23,11 @@ const FALLBACK_COLORS = [
 ];
 
 export default function DashboardCharts({ data }: { data: ChartDatum[] }) {
+  const t = useTranslations("dashboard.home");
   if (!data || data.length === 0) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-zinc-500">
-        Sem dados suficientes para o gráfico
+        {t("charts.noData")}
       </div>
     );
   }

@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { denyIfNoFinance } from "@/lib/finance-access";
 import { money } from "@/lib/validation";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import { splitAmountCents } from "@/lib/installment-math";
 import type { ActionResult } from "@/types";
 
@@ -91,12 +93,13 @@ export async function createPayment(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.payment");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = PaymentCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   const dueDate = new Date(parsed.data.dueDate);
@@ -105,7 +108,7 @@ export async function createPayment(
     const vendor = await prisma.vendor.findFirst({
       where: { id: parsed.data.vendorId, deletedAt: null },
     });
-    if (!vendor) return { success: false, error: "Fornecedor não encontrado" };
+    if (!vendor) return { success: false, error: t("vendorNotFound") };
 
     const created = await prisma.payment.create({
       data: {
@@ -129,7 +132,7 @@ export async function createPayment(
     return { success: true };
   } catch (err) {
     console.error("[createPayment]", err);
-    return { success: false, error: "Erro ao criar pagamento" };
+    return { success: false, error: t("errorCreate") };
   }
 }
 
@@ -137,12 +140,13 @@ export async function updatePayment(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.payment");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = PaymentUpdateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   const dueDate = new Date(parsed.data.dueDate);
@@ -151,7 +155,7 @@ export async function updatePayment(
     const existing = await prisma.payment.findFirst({
       where: { id: parsed.data.id, deletedAt: null },
     });
-    if (!existing) return { success: false, error: "Pagamento não encontrado" };
+    if (!existing) return { success: false, error: t("notFound") };
 
     const wasPaid = existing.status === "PAID";
     const nowPaid = parsed.data.status === "PAID";
@@ -179,11 +183,12 @@ export async function updatePayment(
     return { success: true };
   } catch (err) {
     console.error("[updatePayment]", err);
-    return { success: false, error: "Erro ao atualizar pagamento" };
+    return { success: false, error: t("errorUpdate") };
   }
 }
 
 export async function markPaymentAsPaid(paymentId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.payment");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   try {
@@ -191,7 +196,7 @@ export async function markPaymentAsPaid(paymentId: string): Promise<ActionResult
       where: { id: paymentId, deletedAt: null, status: "PENDING" },
       data: { status: "PAID", paidAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Pagamento não encontrado ou já pago" };
+    if (result.count === 0) return { success: false, error: t("notFoundOrPaid") };
 
     await audit("Payment", paymentId, "MARK_PAID");
     revalidatePath("/dashboard");
@@ -199,11 +204,12 @@ export async function markPaymentAsPaid(paymentId: string): Promise<ActionResult
     return { success: true };
   } catch (err) {
     console.error("[markPaymentAsPaid]", err);
-    return { success: false, error: "Erro ao quitar pagamento" };
+    return { success: false, error: t("errorMarkPaid") };
   }
 }
 
 export async function undoPaymentPaid(paymentId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.payment");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   try {
@@ -211,7 +217,7 @@ export async function undoPaymentPaid(paymentId: string): Promise<ActionResult> 
       where: { id: paymentId, deletedAt: null, status: "PAID" },
       data: { status: "PENDING", paidAt: null },
     });
-    if (result.count === 0) return { success: false, error: "Não é possível estornar este pagamento" };
+    if (result.count === 0) return { success: false, error: t("cannotUndo") };
 
     await audit("Payment", paymentId, "UNDO_PAID");
     revalidatePath("/dashboard");
@@ -219,11 +225,12 @@ export async function undoPaymentPaid(paymentId: string): Promise<ActionResult> 
     return { success: true };
   } catch (err) {
     console.error("[undoPaymentPaid]", err);
-    return { success: false, error: "Erro ao estornar pagamento" };
+    return { success: false, error: t("errorUndo") };
   }
 }
 
 export async function deletePayment(paymentId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.payment");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   try {
@@ -231,7 +238,7 @@ export async function deletePayment(paymentId: string): Promise<ActionResult> {
       where: { id: paymentId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Pagamento não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
 
     await audit("Payment", paymentId, "DELETE");
     revalidatePath("/dashboard");
@@ -239,7 +246,7 @@ export async function deletePayment(paymentId: string): Promise<ActionResult> {
     return { success: true };
   } catch (err) {
     console.error("[deletePayment]", err);
-    return { success: false, error: "Erro ao excluir pagamento" };
+    return { success: false, error: t("errorDelete") };
   }
 }
 
@@ -247,12 +254,13 @@ export async function createSplitPayment(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.payment");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = SplitPaymentSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos para split" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   const finalDue = new Date(parsed.data.finalDueDate);
@@ -261,7 +269,7 @@ export async function createSplitPayment(
     const vendor = await prisma.vendor.findFirst({
       where: { id: parsed.data.vendorId, deletedAt: null },
     });
-    if (!vendor) return { success: false, error: "Fornecedor não encontrado" };
+    if (!vendor) return { success: false, error: t("vendorNotFound") };
 
     const now = new Date();
     const [deposit, balance] = await prisma.$transaction([
@@ -298,7 +306,7 @@ export async function createSplitPayment(
     return { success: true };
   } catch (err) {
     console.error("[createSplitPayment]", err);
-    return { success: false, error: "Erro ao criar pagamentos divididos" };
+    return { success: false, error: t("errorSplit") };
   }
 }
 
@@ -330,17 +338,18 @@ export async function generateInstallments(input: {
   interestPercentPerMonth?: number;
   notes?: string;
 }): Promise<ActionResult<{ count: number }>> {
+  const t = await getTranslations("actions.payment");
   const denied = await denyIfNoFinance();
   if (denied) return denied;
   const parsed = InstallmentsSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const vendor = await prisma.vendor.findFirst({
       where: { id: parsed.data.vendorId, deletedAt: null },
     });
-    if (!vendor) return { success: false, error: "Fornecedor não encontrado" };
+    if (!vendor) return { success: false, error: t("vendorNotFound") };
 
     const totalCents = Math.round(parsed.data.totalAmount * 100);
     const amountsCents = splitAmountCents(totalCents, parsed.data.installmentsCount);
@@ -380,6 +389,6 @@ export async function generateInstallments(input: {
     return { success: true, data: { count: created.length } };
   } catch (err) {
     console.error("[generateInstallments]", err);
-    return { success: false, error: "Erro ao gerar parcelas" };
+    return { success: false, error: t("errorInstallments") };
   }
 }

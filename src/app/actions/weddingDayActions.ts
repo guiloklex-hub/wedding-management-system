@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { denyIfNoEdit } from "@/lib/finance-access";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 const Schema = z.object({
@@ -31,12 +33,13 @@ export async function updateWeddingDay(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.weddingDay");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = Schema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     await prisma.eventSettings.update({
@@ -51,6 +54,6 @@ export async function updateWeddingDay(
     return { success: true };
   } catch (err) {
     console.error("[updateWeddingDay]", err);
-    return { success: false, error: "Erro ao salvar" };
+    return { success: false, error: t("errorSaving") };
   }
 }

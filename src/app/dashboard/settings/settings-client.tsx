@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import {
   Archive,
   ArchiveRestore,
@@ -126,6 +127,7 @@ export default function SettingsClient({
   securitySettings: SecuritySettings;
   notificationLogs: NotificationLogEntry[];
 }) {
+  const t = useTranslations("dashboard.settings");
   const toast = useToast();
   const [tab, setTab] = useState<Tab>("event");
   const manageUsers = canManageUsers(me?.role);
@@ -135,29 +137,29 @@ export default function SettingsClient({
     <div className="space-y-4">
       <nav className="flex flex-wrap gap-2 rounded-2xl bg-zinc-900/50 p-1 border border-zinc-800 max-w-fit">
         <TabBtn current={tab} value="event" onClick={() => setTab("event")}>
-          Casamento
+          {t("tabs.event")}
         </TabBtn>
         <TabBtn current={tab} value="security" onClick={() => setTab("security")}>
-          Segurança
+          {t("tabs.security")}
         </TabBtn>
         <TabBtn current={tab} value="team" onClick={() => setTab("team")}>
-          Time
+          {t("tabs.team")}
         </TabBtn>
         {manageUsers ? (
           <TabBtn current={tab} value="notifications" onClick={() => setTab("notifications")}>
-            Notificações
+            {t("tabs.notifications")}
           </TabBtn>
         ) : null}
         {isAdmin ? (
           <TabBtn current={tab} value="whatsapp" onClick={() => setTab("whatsapp")}>
-            WhatsApp
+            {t("tabs.whatsapp")}
           </TabBtn>
         ) : null}
         <TabBtn current={tab} value="profile" onClick={() => setTab("profile")}>
-          Perfil
+          {t("tabs.profile")}
         </TabBtn>
         <TabBtn current={tab} value="backup" onClick={() => setTab("backup")}>
-          Backup
+          {t("tabs.backup")}
         </TabBtn>
       </nav>
 
@@ -187,32 +189,30 @@ export default function SettingsClient({
 }
 
 function NotificationsTab({ logs }: { logs: NotificationLogEntry[] }) {
+  const t = useTranslations("dashboard.settings");
   const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(logs, 20);
   return (
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-xl">
       <div className="flex items-center gap-2">
         <Mail className="h-5 w-5 text-rose-400" />
-        <h2 className="text-lg font-semibold text-white">Envios recentes</h2>
+        <h2 className="text-lg font-semibold text-white">{t("notifications.title")}</h2>
       </div>
-      <p className="mt-1 text-sm text-zinc-500">
-        Últimos envios de e-mail/WhatsApp. Use esta lista para diagnosticar falhas de SMTP ou
-        destinatário inválido (ex.: o admin@admin.com padrão do seed).
-      </p>
+      <p className="mt-1 text-sm text-zinc-500">{t("notifications.subtitle")}</p>
       {logs.length === 0 ? (
         <p className="mt-4 rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
-          Nenhum envio registrado ainda.
+          {t("notifications.empty")}
         </p>
       ) : (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500">
-                <th className="py-2 pr-3 font-medium">Quando</th>
-                <th className="py-2 pr-3 font-medium">Tipo</th>
-                <th className="py-2 pr-3 font-medium">Canal</th>
-                <th className="py-2 pr-3 font-medium">Destinatário</th>
-                <th className="py-2 pr-3 font-medium">Status</th>
-                <th className="py-2 font-medium">Erro</th>
+                <th className="py-2 pr-3 font-medium">{t("notifications.col.when")}</th>
+                <th className="py-2 pr-3 font-medium">{t("notifications.col.type")}</th>
+                <th className="py-2 pr-3 font-medium">{t("notifications.col.channel")}</th>
+                <th className="py-2 pr-3 font-medium">{t("notifications.col.recipient")}</th>
+                <th className="py-2 pr-3 font-medium">{t("notifications.col.status")}</th>
+                <th className="py-2 font-medium">{t("notifications.col.error")}</th>
               </tr>
             </thead>
             <tbody>
@@ -297,6 +297,7 @@ function EventTab({
   pixSettings: PixSettings;
   toast: ReturnType<typeof useToast>;
 }) {
+  const t = useTranslations("dashboard.settings");
   const [, startTransition] = useTransition();
   const [isPending, setPending] = useState(false);
   const [pixPending, setPixPending] = useState(false);
@@ -308,8 +309,8 @@ function EventTab({
     startTransition(async () => {
       try {
         const r = await updateSettings(undefined, formData);
-        if (r.success) toast.success("Configurações salvas");
-        else toast.error("Falha ao salvar", r.error);
+        if (r.success) toast.success(t("event.toast.saved"));
+        else toast.error(t("event.toast.saveFailed"), r.error);
       } finally {
         setPending(false);
       }
@@ -321,8 +322,8 @@ function EventTab({
     startTransition(async () => {
       try {
         const r = await updatePixSettings(undefined, formData);
-        if (r.success) toast.success("Pix atualizado");
-        else toast.error("Falha ao salvar", r.error);
+        if (r.success) toast.success(t("event.toast.pixSaved"));
+        else toast.error(t("event.toast.saveFailed"), r.error);
       } finally {
         setPixPending(false);
       }
@@ -332,26 +333,26 @@ function EventTab({
   return (
     <div className="space-y-4">
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-zinc-100">Dados do casamento</h2>
+        <h2 className="text-lg font-semibold text-zinc-100">{t("event.title")}</h2>
         <form action={handleSubmit} className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Field name="coupleNames" label="Nomes do casal" defaultValue={initial.coupleNames} />
-          <Field name="eventDate" label="Data do evento" type="date" required defaultValue={initial.eventDate} />
+          <Field name="coupleNames" label={t("event.coupleNames")} defaultValue={initial.coupleNames} />
+          <Field name="eventDate" label={t("event.eventDate")} type="date" required defaultValue={initial.eventDate} />
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Moeda</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("event.currency")}</label>
             <select
               name="currency"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
             >
-              <option value="BRL">Real (BRL)</option>
-              <option value="USD">Dólar (USD)</option>
-              <option value="EUR">Euro (EUR)</option>
+              <option value="BRL">{t("event.currencyBRL")}</option>
+              <option value="USD">{t("event.currencyUSD")}</option>
+              <option value="EUR">{t("event.currencyEUR")}</option>
             </select>
           </div>
           <Field
             name="contingencyPercent"
-            label="Contingência (%)"
+            label={t("event.contingency")}
             type="number"
             step="0.1"
             defaultValue={String(initial.contingencyPercent)}
@@ -363,21 +364,19 @@ function EventTab({
               className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
               {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Salvar
+              {t("event.save")}
             </button>
           </div>
         </form>
       </section>
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-zinc-100">Pix (cota lua de mel)</h2>
-        <p className="mt-1 text-xs text-zinc-500">
-          Configure a chave Pix do casal para gerar QR Code estático nos presentes em dinheiro.
-        </p>
+        <h2 className="text-lg font-semibold text-zinc-100">{t("pix.title")}</h2>
+        <p className="mt-1 text-xs text-zinc-500">{t("pix.subtitle")}</p>
         <form action={handlePixSubmit} className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Field name="pixKey" label="Chave Pix" defaultValue={pixSettings.pixKey} />
+          <Field name="pixKey" label={t("pix.key")} defaultValue={pixSettings.pixKey} />
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Tipo de chave</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("pix.keyType")}</label>
             <select
               name="pixKeyType"
               value={pixKeyType}
@@ -385,21 +384,21 @@ function EventTab({
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
             >
               <option value="">—</option>
-              <option value="CPF">CPF</option>
-              <option value="CNPJ">CNPJ</option>
-              <option value="EMAIL">Email</option>
-              <option value="PHONE">Telefone</option>
-              <option value="RANDOM">Aleatória</option>
+              <option value="CPF">{t("pix.typeCPF")}</option>
+              <option value="CNPJ">{t("pix.typeCNPJ")}</option>
+              <option value="EMAIL">{t("pix.typeEmail")}</option>
+              <option value="PHONE">{t("pix.typePhone")}</option>
+              <option value="RANDOM">{t("pix.typeRandom")}</option>
             </select>
           </div>
           <Field
             name="pixHolderName"
-            label="Nome do recebedor (máx. 25)"
+            label={t("pix.holderName")}
             defaultValue={pixSettings.pixHolderName}
           />
           <Field
             name="pixCity"
-            label="Cidade do recebedor (máx. 15)"
+            label={t("pix.city")}
             defaultValue={pixSettings.pixCity}
           />
           <div className="sm:col-span-2">
@@ -409,7 +408,7 @@ function EventTab({
               className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
               {pixPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Salvar Pix
+              {t("pix.save")}
             </button>
           </div>
         </form>
@@ -427,6 +426,7 @@ function SecurityTab({
   toast: ReturnType<typeof useToast>;
   securitySettings: SecuritySettings;
 }) {
+  const t = useTranslations("dashboard.settings");
   const [, startTransition] = useTransition();
   const [setup, setSetup] = useState<{ secret: string; qrCodeSvg: string } | null>(null);
   const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
@@ -441,7 +441,7 @@ function SecurityTab({
       try {
         const r = await startTwoFactorSetup();
         if (r.success && r.data) setSetup({ secret: r.data.secret, qrCodeSvg: r.data.qrCodeSvg });
-        else if (!r.success) toast.error("Falha", r.error);
+        else if (!r.success) toast.error(t("toast.failed"), r.error);
       } finally {
         setBusy(false);
       }
@@ -456,8 +456,8 @@ function SecurityTab({
         if (r.success && r.data) {
           setBackupCodes(r.data.backupCodes);
           setSetup(null);
-          toast.success("2FA ativado");
-        } else if (!r.success) toast.error("Falha", r.error);
+          toast.success(t("security.toast.enabled"));
+        } else if (!r.success) toast.error(t("toast.failed"), r.error);
       } finally {
         setBusy(false);
       }
@@ -469,8 +469,8 @@ function SecurityTab({
     startTransition(async () => {
       try {
         const r = await disableTwoFactor(undefined, formData);
-        if (r.success) toast.success("2FA desativado");
-        else toast.error("Falha", r.error);
+        if (r.success) toast.success(t("security.toast.disabled"));
+        else toast.error(t("toast.failed"), r.error);
       } finally {
         setBusy(false);
       }
@@ -480,7 +480,7 @@ function SecurityTab({
   if (!me) {
     return (
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <p className="text-sm text-zinc-400">Faça login para gerenciar segurança.</p>
+        <p className="text-sm text-zinc-400">{t("security.loginRequired")}</p>
       </section>
     );
   }
@@ -491,19 +491,19 @@ function SecurityTab({
         <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-100">
           <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            <strong>2FA obrigatório para sua função ({ROLE_LABEL[me.role as Role] ?? me.role})</strong>
-            . Configure agora para manter acesso garantido.
+            <strong>{t("security.requiredWarningStrong", { role: ROLE_LABEL[me.role as Role] ?? me.role })}</strong>
+            {t("security.requiredWarningRest")}
           </p>
         </div>
       ) : null}
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-100">Autenticação em dois fatores (2FA)</h2>
+          <h2 className="text-lg font-semibold text-zinc-100">{t("security.title")}</h2>
           <p className="text-sm text-zinc-500">
             {me.twoFactorEnabled
-              ? "Ativada — login pede código do app autenticador."
-              : "Adicione uma camada extra usando Google Authenticator, 1Password ou similar."}
+              ? t("security.descEnabled")
+              : t("security.descDisabled")}
           </p>
         </div>
         <span
@@ -515,11 +515,11 @@ function SecurityTab({
         >
           {me.twoFactorEnabled ? (
             <>
-              <ShieldCheck className="h-3 w-3" /> Ativa
+              <ShieldCheck className="h-3 w-3" /> {t("security.badgeActive")}
             </>
           ) : (
             <>
-              <ShieldOff className="h-3 w-3" /> Inativa
+              <ShieldOff className="h-3 w-3" /> {t("security.badgeInactive")}
             </>
           )}
         </span>
@@ -533,30 +533,28 @@ function SecurityTab({
           className="mt-4 inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-          Ativar 2FA
+          {t("security.enable")}
         </button>
       ) : null}
 
       {setup ? (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div>
-            <p className="mb-2 text-sm text-zinc-300">
-              1. Escaneie o QR Code com seu app autenticador (Google Authenticator, 1Password, Authy).
-            </p>
+            <p className="mb-2 text-sm text-zinc-300">{t("security.step1")}</p>
             <div
               className="rounded-2xl border border-zinc-800 bg-zinc-950 p-2"
               dangerouslySetInnerHTML={{ __html: setup.qrCodeSvg }}
             />
             <p className="mt-2 text-[11px] text-zinc-500">
-              Se não conseguir escanear, digite manualmente:{" "}
+              {t("security.manualHint")}{" "}
               <code className="rounded bg-zinc-800 px-1 text-zinc-300">{setup.secret}</code>
             </p>
           </div>
           <form action={handleConfirm} className="space-y-3">
             <input type="hidden" name="secret" value={setup.secret} />
-            <p className="text-sm text-zinc-300">2. Confirme com o código atual mostrado no app.</p>
+            <p className="text-sm text-zinc-300">{t("security.step2")}</p>
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-400">Código de 6 dígitos</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-400">{t("security.codeLabel")}</label>
               <input
                 type="text"
                 name="token"
@@ -573,14 +571,14 @@ function SecurityTab({
               disabled={busy}
               className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar e ativar"}
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("security.confirmEnable")}
             </button>
             <button
               type="button"
               onClick={() => setSetup(null)}
               className="ml-2 text-xs text-zinc-400 hover:text-zinc-200"
             >
-              Cancelar
+              {t("security.cancel")}
             </button>
           </form>
         </div>
@@ -588,10 +586,8 @@ function SecurityTab({
 
       {backupCodes ? (
         <div className="mt-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-          <p className="text-sm font-semibold text-amber-200">🔑 Guarde estes códigos de backup</p>
-          <p className="mt-1 text-xs text-amber-100/70">
-            Use no lugar do código TOTP se perder acesso ao app. Cada um só funciona uma vez.
-          </p>
+          <p className="text-sm font-semibold text-amber-200">{t("security.backupTitle")}</p>
+          <p className="mt-1 text-xs text-amber-100/70">{t("security.backupHint")}</p>
           <ul className="mt-3 grid grid-cols-2 gap-2 font-mono text-sm">
             {backupCodes.map((c) => (
               <li key={c} className="rounded-md bg-zinc-950 px-3 py-1 text-zinc-200">
@@ -604,7 +600,7 @@ function SecurityTab({
             onClick={() => setBackupCodes(null)}
             className="mt-3 text-xs text-amber-200 hover:text-amber-100"
           >
-            Já anotei, ocultar
+            {t("security.backupDismiss")}
           </button>
         </div>
       ) : null}
@@ -615,9 +611,7 @@ function SecurityTab({
           className="mt-4 flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-950/50 p-4 sm:flex-row sm:items-end"
         >
           <div className="flex-1">
-            <label className="mb-1 block text-sm font-medium text-zinc-400">
-              Para desativar, digite um código TOTP ou de backup
-            </label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("security.disableLabel")}</label>
             <input
               type="text"
               name="token"
@@ -631,7 +625,7 @@ function SecurityTab({
             disabled={busy}
             className="rounded-xl bg-rose-500/10 px-4 py-2 text-sm font-medium text-rose-200 hover:bg-rose-500/20 disabled:opacity-50"
           >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Desativar 2FA"}
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("security.disable")}
           </button>
         </form>
       ) : null}
@@ -652,6 +646,7 @@ function TeamTab({
   manageUsers: boolean;
   toast: ReturnType<typeof useToast>;
 }) {
+  const t = useTranslations("dashboard.settings");
   const isAdmin = me?.role === "ADMIN";
   const [, startTransition] = useTransition();
   const [createOpen, setCreateOpen] = useState(false);
@@ -687,7 +682,7 @@ function TeamTab({
     startTransition(async () => {
       const r = await run();
       if (r.success) toast.success(label);
-      else toast.error("Falha", r.error);
+      else toast.error(t("toast.failed"), r.error);
     });
   }
 
@@ -696,11 +691,11 @@ function TeamTab({
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-100">Membros</h2>
+            <h2 className="text-lg font-semibold text-zinc-100">{t("team.title")}</h2>
             <p className="text-sm text-zinc-500">
               {manageUsers
-                ? "Crie usuários direto. O sistema envia as credenciais por email e/ou WhatsApp."
-                : "Apenas administradores e os noivos podem gerenciar membros."}
+                ? t("team.subtitleManage")
+                : t("team.subtitleReadonly")}
             </p>
           </div>
           {manageUsers ? (
@@ -709,7 +704,7 @@ function TeamTab({
               onClick={() => setCreateOpen(true)}
               className="inline-flex items-center gap-2 self-start rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 sm:self-auto"
             >
-              <UserPlus className="h-4 w-4" /> Novo usuário
+              <UserPlus className="h-4 w-4" /> {t("team.newUser")}
             </button>
           ) : null}
         </div>
@@ -720,7 +715,7 @@ function TeamTab({
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nome ou email"
+              placeholder={t("team.searchPlaceholder")}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
             />
           </div>
@@ -729,7 +724,7 @@ function TeamTab({
             onChange={(e) => setRoleFilter(e.target.value as "ALL" | Role)}
             className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
           >
-            <option value="ALL">Todas as funções</option>
+            <option value="ALL">{t("team.allRoles")}</option>
             {ROLE_OPTIONS.map((r) => (
               <option key={r} value={r}>
                 {ROLE_LABEL[r]}
@@ -743,14 +738,14 @@ function TeamTab({
               onChange={(e) => setShowArchived(e.target.checked)}
               className="h-4 w-4 accent-rose-500"
             />
-            Mostrar arquivados
+            {t("team.showArchived")}
           </label>
         </div>
 
         <ul className="mt-4 space-y-2">
           {filtered.length === 0 ? (
             <li className="rounded-xl border border-dashed border-zinc-800 px-4 py-6 text-center text-sm text-zinc-500">
-              Nenhum membro encontrado com os filtros atuais.
+              {t("team.noMembers")}
             </li>
           ) : null}
           {filtered.map((m) => (
@@ -763,12 +758,12 @@ function TeamTab({
               onResetPassword={() => setResetting(m)}
               onResetTwoFactor={() =>
                 setConfirm({
-                  title: `Redefinir 2FA de ${m.name ?? m.email}?`,
-                  description: "Os códigos atuais deixarão de funcionar. O usuário precisará configurar novamente.",
-                  confirmLabel: "Redefinir",
+                  title: t("team.confirm.reset2faTitle", { name: m.name ?? m.email }),
+                  description: t("team.confirm.reset2faDesc"),
+                  confirmLabel: t("team.confirm.reset2faLabel"),
                   tone: "danger",
                   action: async () => {
-                    runAction("2FA redefinido", () => resetUserTwoFactor(m.id));
+                    runAction(t("team.toast.reset2fa"), () => resetUserTwoFactor(m.id));
                     setConfirm(null);
                   },
                 })
@@ -776,17 +771,19 @@ function TeamTab({
               onToggleActive={() => {
                 const next = !m.isActive;
                 setConfirm({
-                  title: next ? `Reativar ${m.name ?? m.email}?` : `Desativar ${m.name ?? m.email}?`,
+                  title: next
+                    ? t("team.confirm.activateTitle", { name: m.name ?? m.email })
+                    : t("team.confirm.deactivateTitle", { name: m.name ?? m.email }),
                   description: next
-                    ? "O usuário voltará a poder fazer login."
-                    : "O usuário não poderá entrar até ser reativado.",
-                  confirmLabel: next ? "Reativar" : "Desativar",
+                    ? t("team.confirm.activateDesc")
+                    : t("team.confirm.deactivateDesc"),
+                  confirmLabel: next ? t("team.confirm.activateLabel") : t("team.confirm.deactivateLabel"),
                   tone: next ? "default" : "danger",
                   action: async () => {
                     const fd = new FormData();
                     fd.append("id", m.id);
                     fd.append("isActive", next ? "true" : "false");
-                    runAction(next ? "Usuário reativado" : "Usuário desativado", () =>
+                    runAction(next ? t("team.toast.activated") : t("team.toast.deactivated"), () =>
                       updateUser(undefined, fd),
                     );
                     setConfirm(null);
@@ -795,23 +792,23 @@ function TeamTab({
               }}
               onArchive={() =>
                 setConfirm({
-                  title: `Arquivar ${m.name ?? m.email}?`,
-                  description: "O usuário é desativado e some da lista (pode ser restaurado depois).",
-                  confirmLabel: "Arquivar",
+                  title: t("team.confirm.archiveTitle", { name: m.name ?? m.email }),
+                  description: t("team.confirm.archiveDesc"),
+                  confirmLabel: t("team.confirm.archiveLabel"),
                   tone: "danger",
                   action: async () => {
-                    runAction("Usuário arquivado", () => archiveUser(m.id));
+                    runAction(t("team.toast.archived"), () => archiveUser(m.id));
                     setConfirm(null);
                   },
                 })
               }
               onRestore={() =>
                 setConfirm({
-                  title: `Restaurar ${m.name ?? m.email}?`,
-                  description: "O usuário volta para a lista ativa.",
-                  confirmLabel: "Restaurar",
+                  title: t("team.confirm.restoreTitle", { name: m.name ?? m.email }),
+                  description: t("team.confirm.restoreDesc"),
+                  confirmLabel: t("team.confirm.restoreLabel"),
                   action: async () => {
-                    runAction("Usuário restaurado", () => restoreUser(m.id));
+                    runAction(t("team.toast.restored"), () => restoreUser(m.id));
                     setConfirm(null);
                   },
                 })
@@ -885,6 +882,7 @@ function MemberRow({
   onArchive: () => void;
   onRestore: () => void;
 }) {
+  const t = useTranslations("dashboard.settings");
   const [menuOpen, setMenuOpen] = useState(false);
   const isSelf = member.id === meId;
   const archived = !!member.archivedAt;
@@ -908,11 +906,11 @@ function MemberRow({
         <div>
           <p className="text-sm text-zinc-100">
             {member.name ?? member.email}
-            {isSelf ? <span className="ml-1 text-[11px] text-rose-300">(você)</span> : null}
+            {isSelf ? <span className="ml-1 text-[11px] text-rose-300">{t("team.row.you")}</span> : null}
           </p>
           <p className="text-[11px] text-zinc-500">
-            {member.email} · entrou {formatDateBR(member.createdAt)}
-            {member.lastLoginAt ? ` · último login ${formatDateBR(member.lastLoginAt)}` : ""}
+            {member.email} · {t("team.row.joined", { date: formatDateBR(member.createdAt) })}
+            {member.lastLoginAt ? ` · ${t("team.row.lastLogin", { date: formatDateBR(member.lastLoginAt) })}` : ""}
           </p>
         </div>
       </div>
@@ -923,25 +921,25 @@ function MemberRow({
         </span>
         {archived ? (
           <span className="rounded-full border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[11px] text-zinc-400">
-            Arquivado
+            {t("team.row.archived")}
           </span>
         ) : member.isActive ? (
           <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-300">
-            Ativo
+            {t("team.row.active")}
           </span>
         ) : (
           <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-300">
-            Inativo
+            {t("team.row.inactive")}
           </span>
         )}
         {member.twoFactorEnabled ? (
           <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-300">
-            <ShieldCheck className="h-3 w-3" /> 2FA
+            <ShieldCheck className="h-3 w-3" /> {t("team.row.twoFactor")}
           </span>
         ) : null}
         {member.mustChangePassword ? (
           <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-300">
-            <KeyRound className="h-3 w-3" /> Senha provisória
+            <KeyRound className="h-3 w-3" /> {t("team.row.tempPassword")}
           </span>
         ) : null}
 
@@ -952,7 +950,7 @@ function MemberRow({
               onClick={() => setMenuOpen((v) => !v)}
               onBlur={() => setTimeout(() => setMenuOpen(false), 150)}
               className="rounded-lg p-1.5 text-zinc-300 hover:bg-zinc-800"
-              aria-label="Ações"
+              aria-label={t("team.row.actions")}
             >
               <MoreVertical className="h-4 w-4" />
             </button>
@@ -960,7 +958,7 @@ function MemberRow({
               <div className="absolute right-0 z-10 mt-1 w-56 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 shadow-xl">
                 <MenuItem
                   icon={<Pencil className="h-4 w-4" />}
-                  label="Editar"
+                  label={t("team.menu.edit")}
                   onClick={() => {
                     setMenuOpen(false);
                     onEdit();
@@ -969,7 +967,7 @@ function MemberRow({
                 />
                 <MenuItem
                   icon={<KeyRound className="h-4 w-4" />}
-                  label="Redefinir senha"
+                  label={t("team.menu.resetPassword")}
                   onClick={() => {
                     setMenuOpen(false);
                     onResetPassword();
@@ -978,7 +976,7 @@ function MemberRow({
                 />
                 <MenuItem
                   icon={<RefreshCw className="h-4 w-4" />}
-                  label="Redefinir 2FA"
+                  label={t("team.menu.reset2fa")}
                   onClick={() => {
                     setMenuOpen(false);
                     onResetTwoFactor();
@@ -987,7 +985,7 @@ function MemberRow({
                 />
                 <MenuItem
                   icon={member.isActive ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
-                  label={member.isActive ? "Desativar" : "Reativar"}
+                  label={member.isActive ? t("team.menu.deactivate") : t("team.menu.activate")}
                   onClick={() => {
                     setMenuOpen(false);
                     onToggleActive();
@@ -997,7 +995,7 @@ function MemberRow({
                 {archived ? (
                   <MenuItem
                     icon={<ArchiveRestore className="h-4 w-4" />}
-                    label="Restaurar"
+                    label={t("team.menu.restore")}
                     onClick={() => {
                       setMenuOpen(false);
                       onRestore();
@@ -1006,7 +1004,7 @@ function MemberRow({
                 ) : (
                   <MenuItem
                     icon={<Archive className="h-4 w-4" />}
-                    label="Arquivar"
+                    label={t("team.menu.archive")}
                     onClick={() => {
                       setMenuOpen(false);
                       onArchive();
@@ -1066,6 +1064,7 @@ function CreateUserModal({
   toast: ReturnType<typeof useToast>;
   minPasswordLength: number;
 }) {
+  const t = useTranslations("dashboard.settings");
   const [, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
@@ -1088,9 +1087,9 @@ function CreateUserModal({
       try {
         const r = await createUser(undefined, formData);
         if (r.success) {
-          toast.success("Usuário criado");
+          toast.success(t("team.toast.created"));
           onClose();
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.failed"), r.error);
       } finally {
         setBusy(false);
       }
@@ -1098,22 +1097,20 @@ function CreateUserModal({
   }
 
   return (
-    <Modal onClose={onClose} title="Novo usuário">
+    <Modal onClose={onClose} title={t("team.create.title")}>
       <form action={handle} className="space-y-3">
-        <Field name="name" label="Nome" required />
-        <Field name="email" label="Email" type="email" required />
+        <Field name="name" label={t("team.create.name")} required />
+        <Field name="email" label={t("team.create.email")} type="email" required />
         <Field
           name="phone"
-          label="Telefone (WhatsApp, opcional)"
+          label={t("team.create.phone")}
           placeholder="+5511999999999"
           pattern="^\+\d{10,15}$"
         />
-        <p className="-mt-2 text-[11px] text-zinc-500">
-          Formato E.164 (com + e DDI). Usado para enviar credenciais e lembretes.
-        </p>
+        <p className="-mt-2 text-[11px] text-zinc-500">{t("team.create.phoneHint")}</p>
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-400">
-            Senha provisória (mínimo {minPasswordLength} caracteres)
+            {t("team.create.tempPassword", { min: minPasswordLength })}
           </label>
           <div className="flex gap-2">
             <input
@@ -1130,22 +1127,20 @@ function CreateUserModal({
               onClick={() => setShowPwd((v) => !v)}
               className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 text-xs text-zinc-300 hover:bg-zinc-800"
             >
-              {showPwd ? "Ocultar" : "Mostrar"}
+              {showPwd ? t("team.password.hide") : t("team.password.show")}
             </button>
             <button
               type="button"
               onClick={generate}
               className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 text-xs text-zinc-300 hover:bg-zinc-800"
             >
-              Gerar
+              {t("team.password.generate")}
             </button>
           </div>
-          <p className="mt-1 text-[11px] text-zinc-500">
-            O usuário será obrigado a trocar a senha no primeiro login.
-          </p>
+          <p className="mt-1 text-[11px] text-zinc-500">{t("team.create.mustChangeHint")}</p>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-400">Função</label>
+          <label className="mb-1 block text-sm font-medium text-zinc-400">{t("team.create.role")}</label>
           <select
             name="role"
             defaultValue="PLANNER"
@@ -1164,7 +1159,7 @@ function CreateUserModal({
             onClick={onClose}
             className="rounded-xl px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
           >
-            Cancelar
+            {t("team.create.cancel")}
           </button>
           <button
             type="submit"
@@ -1172,7 +1167,7 @@ function CreateUserModal({
             className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}
-            Criar usuário
+            {t("team.create.submit")}
           </button>
         </div>
       </form>
@@ -1191,6 +1186,7 @@ function EditUserModal({
   onClose: () => void;
   toast: ReturnType<typeof useToast>;
 }) {
+  const t = useTranslations("dashboard.settings");
   const [, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
   const isSelf = member.id === meId;
@@ -1202,9 +1198,9 @@ function EditUserModal({
       try {
         const r = await updateUser(undefined, formData);
         if (r.success) {
-          toast.success("Usuário atualizado");
+          toast.success(t("team.toast.updated"));
           onClose();
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.failed"), r.error);
       } finally {
         setBusy(false);
       }
@@ -1212,19 +1208,19 @@ function EditUserModal({
   }
 
   return (
-    <Modal onClose={onClose} title={`Editar ${member.name ?? member.email}`}>
+    <Modal onClose={onClose} title={t("team.edit.title", { name: member.name ?? member.email })}>
       <form action={handle} className="space-y-3">
-        <Field name="name" label="Nome" required defaultValue={member.name ?? ""} />
-        <Field name="email" label="E-mail" type="email" required defaultValue={member.email} />
+        <Field name="name" label={t("team.edit.name")} required defaultValue={member.name ?? ""} />
+        <Field name="email" label={t("team.edit.email")} type="email" required defaultValue={member.email} />
         <Field
           name="phone"
-          label="Telefone (WhatsApp, opcional)"
+          label={t("team.edit.phone")}
           placeholder="+5511999999999"
           pattern="^\+\d{10,15}$"
           defaultValue={member.phone ?? ""}
         />
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-400">Função</label>
+          <label className="mb-1 block text-sm font-medium text-zinc-400">{t("team.edit.role")}</label>
           <select
             name="role"
             defaultValue={member.role}
@@ -1238,7 +1234,7 @@ function EditUserModal({
             ))}
           </select>
           {isSelf ? (
-            <p className="mt-1 text-[11px] text-zinc-500">Você não pode alterar a própria função.</p>
+            <p className="mt-1 text-[11px] text-zinc-500">{t("team.edit.selfRoleHint")}</p>
           ) : null}
         </div>
         <div className="flex justify-end gap-2 pt-2">
@@ -1247,7 +1243,7 @@ function EditUserModal({
             onClick={onClose}
             className="rounded-xl px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
           >
-            Cancelar
+            {t("team.edit.cancel")}
           </button>
           <button
             type="submit"
@@ -1255,7 +1251,7 @@ function EditUserModal({
             className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Salvar
+            {t("team.edit.submit")}
           </button>
         </div>
       </form>
@@ -1274,6 +1270,7 @@ function ResetPasswordModal({
   toast: ReturnType<typeof useToast>;
   minPasswordLength: number;
 }) {
+  const t = useTranslations("dashboard.settings");
   const [, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
   const [password, setPassword] = useState("");
@@ -1297,9 +1294,9 @@ function ResetPasswordModal({
       try {
         const r = await resetUserPassword(undefined, formData);
         if (r.success) {
-          toast.success("Senha redefinida — compartilhe a nova com o usuário");
+          toast.success(t("team.toast.passwordReset"));
           onClose();
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.failed"), r.error);
       } finally {
         setBusy(false);
       }
@@ -1307,13 +1304,11 @@ function ResetPasswordModal({
   }
 
   return (
-    <Modal onClose={onClose} title={`Redefinir senha de ${member.name ?? member.email}`}>
+    <Modal onClose={onClose} title={t("team.reset.title", { name: member.name ?? member.email })}>
       <form action={handle} className="space-y-3">
-        <p className="text-sm text-zinc-400">
-          O usuário será obrigado a trocar a senha no próximo login.
-        </p>
+        <p className="text-sm text-zinc-400">{t("team.reset.hint")}</p>
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-400">Nova senha provisória</label>
+          <label className="mb-1 block text-sm font-medium text-zinc-400">{t("team.reset.newPassword")}</label>
           <div className="flex gap-2">
             <input
               name="newPassword"
@@ -1329,14 +1324,14 @@ function ResetPasswordModal({
               onClick={() => setShow((v) => !v)}
               className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 text-xs text-zinc-300 hover:bg-zinc-800"
             >
-              {show ? "Ocultar" : "Mostrar"}
+              {show ? t("team.password.hide") : t("team.password.show")}
             </button>
             <button
               type="button"
               onClick={generate}
               className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 text-xs text-zinc-300 hover:bg-zinc-800"
             >
-              Gerar
+              {t("team.password.generate")}
             </button>
           </div>
         </div>
@@ -1346,7 +1341,7 @@ function ResetPasswordModal({
             onClick={onClose}
             className="rounded-xl px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
           >
-            Cancelar
+            {t("team.reset.cancel")}
           </button>
           <button
             type="submit"
@@ -1354,7 +1349,7 @@ function ResetPasswordModal({
             className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-            Redefinir
+            {t("team.reset.submit")}
           </button>
         </div>
       </form>
@@ -1369,6 +1364,7 @@ function SecuritySettingsCard({
   initial: SecuritySettings;
   toast: ReturnType<typeof useToast>;
 }) {
+  const t = useTranslations("dashboard.settings");
   const [, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<Role[]>(initial.require2FARoles);
@@ -1386,8 +1382,8 @@ function SecuritySettingsCard({
     startTransition(async () => {
       try {
         const r = await updateSecuritySettings(undefined, fd);
-        if (r.success) toast.success("Política de segurança salva");
-        else toast.error("Falha", r.error);
+        if (r.success) toast.success(t("policy.toast.saved"));
+        else toast.error(t("toast.failed"), r.error);
       } finally {
         setBusy(false);
       }
@@ -1396,14 +1392,12 @@ function SecuritySettingsCard({
 
   return (
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-      <h2 className="text-lg font-semibold text-zinc-100">Política de segurança</h2>
-      <p className="text-sm text-zinc-500">
-        Defina quem precisa de 2FA obrigatório e o tamanho mínimo de senha.
-      </p>
+      <h2 className="text-lg font-semibold text-zinc-100">{t("policy.title")}</h2>
+      <p className="text-sm text-zinc-500">{t("policy.subtitle")}</p>
 
       <div className="mt-4 space-y-4">
         <div>
-          <p className="mb-2 text-sm font-medium text-zinc-300">2FA obrigatório nas funções:</p>
+          <p className="mb-2 text-sm font-medium text-zinc-300">{t("policy.require2faLabel")}</p>
           <div className="flex flex-wrap gap-2">
             {ROLE_OPTIONS.map((r) => {
               const active = selected.includes(r);
@@ -1427,9 +1421,7 @@ function SecuritySettingsCard({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-400">
-            Tamanho mínimo da senha
-          </label>
+          <label className="mb-1 block text-sm font-medium text-zinc-400">{t("policy.minPasswordLength")}</label>
           <input
             type="number"
             min={6}
@@ -1447,7 +1439,7 @@ function SecuritySettingsCard({
           className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Salvar política
+          {t("policy.save")}
         </button>
       </div>
     </section>
@@ -1461,6 +1453,7 @@ function ProfileTab({
   me: Me;
   toast: ReturnType<typeof useToast>;
 }) {
+  const t = useTranslations("dashboard.settings");
   const [, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
 
@@ -1469,8 +1462,8 @@ function ProfileTab({
     startTransition(async () => {
       try {
         const r = await updateOwnProfile(undefined, formData);
-        if (r.success) toast.success("Nome atualizado");
-        else toast.error("Falha", r.error);
+        if (r.success) toast.success(t("profile.toast.nameUpdated"));
+        else toast.error(t("toast.failed"), r.error);
       } finally {
         setBusy(false);
       }
@@ -1483,9 +1476,9 @@ function ProfileTab({
       try {
         const r = await changeOwnPassword(undefined, formData);
         if (r.success) {
-          toast.success("Senha atualizada");
+          toast.success(t("profile.toast.passwordUpdated"));
           (document.getElementById("own-password-form") as HTMLFormElement | null)?.reset();
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.failed"), r.error);
       } finally {
         setBusy(false);
       }
@@ -1495,7 +1488,7 @@ function ProfileTab({
   if (!me) {
     return (
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <p className="text-sm text-zinc-400">Faça login para gerenciar o perfil.</p>
+        <p className="text-sm text-zinc-400">{t("profile.loginRequired")}</p>
       </section>
     );
   }
@@ -1503,36 +1496,34 @@ function ProfileTab({
   return (
     <div className="space-y-4">
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-zinc-100">Meu perfil</h2>
+        <h2 className="text-lg font-semibold text-zinc-100">{t("profile.title")}</h2>
         <p className="text-sm text-zinc-500">
-          Email: <span className="text-zinc-300">{me.email}</span> · Função:{" "}
+          {t("profile.emailLabel")} <span className="text-zinc-300">{me.email}</span> · {t("profile.roleLabel")}{" "}
           <span className="text-zinc-300">{ROLE_LABEL[me.role as Role] ?? me.role}</span>
         </p>
         <p className="mt-1 text-[11px] text-zinc-500">
-          {me.lastLoginAt ? `Último login: ${formatDateTimeBR(me.lastLoginAt)} · ` : ""}
-          {me.passwordUpdatedAt ? `Senha atualizada em ${formatDateBR(me.passwordUpdatedAt)}` : "Senha nunca trocada"}
+          {me.lastLoginAt ? `${t("profile.lastLogin", { date: formatDateTimeBR(me.lastLoginAt) })} · ` : ""}
+          {me.passwordUpdatedAt ? t("profile.passwordUpdatedAt", { date: formatDateBR(me.passwordUpdatedAt) }) : t("profile.passwordNeverChanged")}
         </p>
         <form action={handleName} className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-          <Field name="name" label="Nome de exibição" required defaultValue={me.name ?? ""} />
+          <Field name="name" label={t("profile.displayName")} required defaultValue={me.name ?? ""} />
           <button
             type="submit"
             disabled={busy}
             className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Salvar nome
+            {t("profile.saveName")}
           </button>
         </form>
       </section>
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-zinc-100">Trocar minha senha</h2>
-        <p className="text-sm text-zinc-500">
-          Digite a senha atual e a nova. A nova precisa ser diferente da atual.
-        </p>
+        <h2 className="text-lg font-semibold text-zinc-100">{t("profile.changePasswordTitle")}</h2>
+        <p className="text-sm text-zinc-500">{t("profile.changePasswordHint")}</p>
         <form id="own-password-form" action={handlePassword} className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Field name="currentPassword" label="Senha atual" type="password" required />
-          <Field name="newPassword" label="Nova senha" type="password" required />
+          <Field name="currentPassword" label={t("profile.currentPassword")} type="password" required />
+          <Field name="newPassword" label={t("profile.newPassword")} type="password" required />
           <div className="sm:col-span-2">
             <button
               type="submit"
@@ -1540,22 +1531,22 @@ function ProfileTab({
               className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-              Atualizar senha
+              {t("profile.updatePassword")}
             </button>
           </div>
         </form>
       </section>
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-zinc-100">Autenticação em dois fatores</h2>
+        <h2 className="text-lg font-semibold text-zinc-100">{t("profile.twoFactorTitle")}</h2>
         <p className="text-sm text-zinc-500">
           {me.twoFactorEnabled
-            ? "Ativada. Você pode desativar na aba Segurança."
-            : "Inativa. Ative na aba Segurança para reforçar sua conta."}
+            ? t("profile.twoFactorEnabled")
+            : t("profile.twoFactorDisabled")}
         </p>
         <p className="mt-3 inline-flex items-center gap-1 text-sm text-rose-300">
           <Users className="h-4 w-4" />
-          Veja a aba “Segurança” para configurar.
+          {t("profile.twoFactorSeeTab")}
         </p>
       </section>
     </div>
@@ -1597,6 +1588,7 @@ function BackupTab({
   isAdmin: boolean;
   toast: ReturnType<typeof useToast>;
 }) {
+  const t = useTranslations("dashboard.settings");
   const [file, setFile] = useState<File | null>(null);
   const [validation, setValidation] = useState<BackupValidationResponse | null>(null);
   const [validating, setValidating] = useState(false);
@@ -1615,7 +1607,7 @@ function BackupTab({
 
   async function handleValidate() {
     if (!file) {
-      toast.error("Selecione um arquivo de backup primeiro.");
+      toast.error(t("backup.toast.selectFirst"));
       return;
     }
     setValidating(true);
@@ -1628,12 +1620,12 @@ function BackupTab({
       const body = (await res.json()) as BackupValidationResponse;
       setValidation(body);
       if (!res.ok || !body.ok) {
-        toast.error(body.error ?? "Arquivo de backup inválido.");
+        toast.error(body.error ?? t("backup.toast.invalidFile"));
       } else {
-        toast.success("Arquivo de backup validado.");
+        toast.success(t("backup.toast.validated"));
       }
     } catch (err) {
-      toast.error("Falha ao validar arquivo", (err as Error).message);
+      toast.error(t("backup.toast.validateFailed"), (err as Error).message);
     } finally {
       setValidating(false);
     }
@@ -1652,13 +1644,13 @@ function BackupTab({
       const body = (await res.json()) as BackupRestoreResponse;
       setLastRestore(body);
       if (!res.ok || !body.ok) {
-        toast.error(body.error ?? "Falha ao restaurar backup.");
+        toast.error(body.error ?? t("backup.toast.restoreFailed"));
       } else {
-        toast.success("Backup restaurado com sucesso. Recarregando…");
+        toast.success(t("backup.toast.restored"));
         setTimeout(() => window.location.reload(), 1500);
       }
     } catch (err) {
-      toast.error("Falha ao restaurar", (err as Error).message);
+      toast.error(t("backup.toast.restoreError"), (err as Error).message);
     } finally {
       setRestoring(false);
     }
@@ -1675,36 +1667,30 @@ function BackupTab({
   return (
     <div className="space-y-4">
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-zinc-100">Exportar backup</h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          Baixa um JSON com fornecedores, pagamentos, aportes, configurações, convidados e tudo
-          mais. Inclui checksum SHA-256 para validação.
-        </p>
+        <h2 className="text-lg font-semibold text-zinc-100">{t("backup.exportTitle")}</h2>
+        <p className="mt-1 text-sm text-zinc-500">{t("backup.exportSubtitle")}</p>
         <a
           href="/api/backup"
           download
           className="mt-4 inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-700"
         >
-          <Download className="h-4 w-4" /> Exportar backup JSON
+          <Download className="h-4 w-4" /> {t("backup.exportButton")}
         </a>
-        <p className="mt-3 text-xs text-zinc-500">
-          Faça um backup mensal e antes/depois do casamento. Guarde em local seguro — o arquivo
-          contém dados sensíveis.
-        </p>
+        <p className="mt-3 text-xs text-zinc-500">{t("backup.exportHint")}</p>
       </section>
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-100">Restaurar backup</h2>
+          <h2 className="text-lg font-semibold text-zinc-100">{t("backup.restoreTitle")}</h2>
           <p className="mt-1 text-sm text-zinc-500">
             {isAdmin
-              ? "Carregue um JSON exportado por este sistema. O restore apaga e recria todos os dados na transação. Só admins."
-              : "Apenas administradores podem restaurar backups. Você pode validar o arquivo aqui, mas o restore exige role ADMIN."}
+              ? t("backup.restoreSubtitleAdmin")
+              : t("backup.restoreSubtitleReadonly")}
           </p>
         </div>
 
         <label className="block">
-          <span className="text-xs font-medium text-zinc-400">Arquivo .json</span>
+          <span className="text-xs font-medium text-zinc-400">{t("backup.fileLabel")}</span>
           <input
             type="file"
             accept="application/json,.json"
@@ -1736,7 +1722,7 @@ function BackupTab({
             ) : (
               <ShieldCheck className="h-4 w-4" />
             )}
-            Validar arquivo
+            {t("backup.validateButton")}
           </button>
           {file ? (
             <button
@@ -1744,7 +1730,7 @@ function BackupTab({
               onClick={reset}
               className="text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
             >
-              Limpar
+              {t("backup.clear")}
             </button>
           ) : null}
         </div>
@@ -1756,13 +1742,13 @@ function BackupTab({
             <div className="flex items-start gap-2 text-sm text-amber-200">
               <ShieldAlert className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <span>
-                <strong>O restore apaga TODOS os dados atuais</strong> e os substitui pelos do
-                arquivo. Esta operação não pode ser desfeita. Faça um backup antes.
+                <strong>{t("backup.warnStrong")}</strong>
+                {t("backup.warnRest")}
               </span>
             </div>
 
             <label className="block">
-              <span className="text-xs font-medium text-zinc-400">Sua senha (confirmação)</span>
+              <span className="text-xs font-medium text-zinc-400">{t("backup.passwordLabel")}</span>
               <input
                 type="password"
                 value={password}
@@ -1781,8 +1767,8 @@ function BackupTab({
                 className="mt-1"
               />
               <span>
-                Entendo que esta ação <strong>apaga todos os dados</strong> do sistema e os
-                substitui pelos do arquivo. Já fiz um backup antes.
+                {t("backup.acknowledgeStart")} <strong>{t("backup.acknowledgeStrong")}</strong>
+                {t("backup.acknowledgeEnd")}
               </span>
             </label>
 
@@ -1797,25 +1783,23 @@ function BackupTab({
               ) : (
                 <ArchiveRestore className="h-4 w-4" />
               )}
-              Restaurar agora
+              {t("backup.restoreNow")}
             </button>
           </div>
         ) : null}
 
         {lastRestore?.ok && lastRestore.counts ? (
           <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-4 text-sm text-emerald-200">
-            <p className="font-medium">Restore concluído.</p>
+            <p className="font-medium">{t("backup.restoreDone")}</p>
             <p className="mt-1 text-xs text-emerald-200/80">
-              Total restaurado:{" "}
+              {t("backup.totalRestored")}{" "}
               {Object.entries(lastRestore.counts)
                 .filter(([, c]) => c > 0)
                 .map(([k, c]) => `${k}: ${c}`)
-                .join(" · ") || "0 registros"}
+                .join(" · ") || t("backup.zeroRecords")}
             </p>
             {lastRestore.protectedCurrentUser ? (
-              <p className="mt-1 text-xs text-emerald-200/80">
-                Sua conta foi preservada pois não estava no backup.
-              </p>
+              <p className="mt-1 text-xs text-emerald-200/80">{t("backup.accountPreserved")}</p>
             ) : null}
           </div>
         ) : null}
@@ -1823,10 +1807,10 @@ function BackupTab({
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Confirmar restauração"
-        description="Esta ação é IRREVERSÍVEL. Todos os dados atuais serão substituídos pelos do arquivo. Continuar?"
-        confirmLabel={restoring ? "Restaurando…" : "Sim, restaurar"}
-        cancelLabel="Cancelar"
+        title={t("backup.confirm.title")}
+        description={t("backup.confirm.description")}
+        confirmLabel={restoring ? t("backup.confirm.restoring") : t("backup.confirm.confirmLabel")}
+        cancelLabel={t("backup.confirm.cancel")}
         onConfirm={handleRestore}
         onCancel={() => setConfirmOpen(false)}
         tone="danger"
@@ -1837,19 +1821,20 @@ function BackupTab({
 }
 
 function ValidationSummary({ v }: { v: BackupValidationResponse }) {
+  const t = useTranslations("dashboard.settings");
   if (!v.ok) {
     return (
       <div className="rounded-xl border border-rose-500/40 bg-rose-500/5 p-3 text-sm text-rose-200">
-        <p className="font-medium">{v.error ?? "Arquivo inválido"}</p>
+        <p className="font-medium">{v.error ?? t("backup.validation.invalid")}</p>
         {v.issues && v.issues.length > 0 ? (
           <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-rose-200/80">
             {v.issues.slice(0, 8).map((i, idx) => (
               <li key={idx}>
-                <code className="text-rose-300">{i.path || "(raiz)"}</code>: {i.message}
+                <code className="text-rose-300">{i.path || t("backup.validation.root")}</code>: {i.message}
               </li>
             ))}
             {v.issues.length > 8 ? (
-              <li>...e mais {v.issues.length - 8} problemas.</li>
+              <li>{t("backup.validation.moreIssues", { count: v.issues.length - 8 })}</li>
             ) : null}
           </ul>
         ) : null}
@@ -1865,8 +1850,11 @@ function ValidationSummary({ v }: { v: BackupValidationResponse }) {
   return (
     <div className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-950/40 p-3 text-xs text-zinc-300">
       <p className="text-sm text-zinc-100">
-        ✓ Backup v{v.version} válido — {totalRows} registros, exportado em{" "}
-        {v.exportedAt ? formatDateTimeBR(new Date(v.exportedAt)) : "—"}.
+        {t("backup.validation.summary", {
+          version: v.version ?? 0,
+          rows: totalRows,
+          date: v.exportedAt ? formatDateTimeBR(new Date(v.exportedAt)) : "—",
+        })}
       </p>
       <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 sm:grid-cols-3">
         {v.counts
@@ -1881,14 +1869,14 @@ function ValidationSummary({ v }: { v: BackupValidationResponse }) {
       </div>
       {v.meta?.hostname || v.meta?.appVersion ? (
         <p className="text-zinc-500">
-          {v.meta?.hostname ? `host: ${v.meta.hostname}` : ""}
+          {v.meta?.hostname ? t("backup.validation.host", { host: v.meta.hostname }) : ""}
           {v.meta?.hostname && v.meta?.appVersion ? " · " : ""}
-          {v.meta?.appVersion ? `app: v${v.meta.appVersion}` : ""}
+          {v.meta?.appVersion ? t("backup.validation.app", { version: v.meta.appVersion }) : ""}
         </p>
       ) : null}
       {v.checksum ? (
         <p className="text-zinc-500">
-          checksum:{" "}
+          {t("backup.validation.checksum")}{" "}
           <code className="text-zinc-300">{v.checksum.value.slice(0, 16)}…</code>{" "}
           {v.checksumValid ? "✓" : "✗"}
         </p>
@@ -1913,6 +1901,7 @@ function Modal({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const t = useTranslations("dashboard.settings");
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/60 p-4 sm:items-center">
       <div className="my-4 max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
@@ -1922,7 +1911,7 @@ function Modal({
             type="button"
             onClick={onClose}
             className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-            aria-label="Fechar"
+            aria-label={t("modal.close")}
           >
             ×
           </button>
@@ -1938,6 +1927,7 @@ function WhatsAppTab({
 }: {
   toast: ReturnType<typeof useToast>;
 }) {
+  const t = useTranslations("dashboard.settings");
   const [status, setStatus] = useState<WhatsAppStatusPayload | null>(null);
   const [busy, setBusy] = useState(false);
   const [testNumber, setTestNumber] = useState("");
@@ -1969,8 +1959,8 @@ function WhatsAppTab({
     setBusy(true);
     try {
       const r = await connectWhatsApp();
-      if (!r.success) toast.error("Falha", r.error);
-      else toast.success("Iniciando conexão. Escaneie o QR Code.");
+      if (!r.success) toast.error(t("toast.failed"), r.error);
+      else toast.success(t("whatsapp.toast.connecting"));
       await refresh();
     } finally {
       setBusy(false);
@@ -1981,8 +1971,8 @@ function WhatsAppTab({
     setBusy(true);
     try {
       const r = await disconnectWhatsAppAction();
-      if (!r.success) toast.error("Falha", r.error);
-      else toast.success("WhatsApp desconectado");
+      if (!r.success) toast.error(t("toast.failed"), r.error);
+      else toast.success(t("whatsapp.toast.disconnected"));
       await refresh();
     } finally {
       setBusy(false);
@@ -1991,7 +1981,7 @@ function WhatsAppTab({
 
   async function handleTest() {
     if (!testNumber) {
-      toast.error("Informe um número");
+      toast.error(t("whatsapp.toast.numberRequired"));
       return;
     }
     setBusy(true);
@@ -1999,8 +1989,8 @@ function WhatsAppTab({
       const fd = new FormData();
       fd.append("phone", testNumber);
       const r = await sendWhatsAppTest(undefined, fd);
-      if (r.success) toast.success("Mensagem de teste enviada");
-      else toast.error("Falha", r.error);
+      if (r.success) toast.success(t("whatsapp.toast.testSent"));
+      else toast.error(t("toast.failed"), r.error);
     } finally {
       setBusy(false);
     }
@@ -2009,24 +1999,23 @@ function WhatsAppTab({
   const state = status?.state ?? "DISCONNECTED";
   const label =
     state === "CONNECTED"
-      ? `Conectado${status?.phoneNumber ? ` (${status.phoneNumber})` : ""}`
+      ? status?.phoneNumber
+        ? t("whatsapp.status.connectedWithPhone", { phone: status.phoneNumber })
+        : t("whatsapp.status.connected")
       : state === "WAITING_QR"
-        ? "Aguardando leitura do QR Code"
+        ? t("whatsapp.status.waitingQr")
         : state === "CONNECTING"
-          ? "Conectando..."
-          : "Desconectado";
+          ? t("whatsapp.status.connecting")
+          : t("whatsapp.status.disconnected");
 
   return (
     <section className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <Smartphone className="h-5 w-5 text-rose-400" />
-          <h2 className="text-lg font-semibold text-zinc-100">WhatsApp</h2>
+          <h2 className="text-lg font-semibold text-zinc-100">{t("whatsapp.title")}</h2>
         </div>
-        <p className="text-sm text-zinc-500">
-          Conecte um número para enviar credenciais, lembretes e redefinições
-          de senha pelo WhatsApp.
-        </p>
+        <p className="text-sm text-zinc-500">{t("whatsapp.subtitle")}</p>
       </div>
 
       <div className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950/40 px-4 py-3">
@@ -2047,30 +2036,26 @@ function WhatsAppTab({
 
       {state === "DISCONNECTED" && status?.needsManualAction ? (
         <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-          Ação necessária: a sessão expirou ou foi desvinculada. Clique em
-          &quot;Conectar&quot; para gerar um novo QR Code.
+          {t("whatsapp.needsManualAction")}
         </div>
       ) : null}
 
       {state === "DISCONNECTED" && !status?.needsManualAction && (status?.attempts ?? 0) > 0 ? (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
-          Tentando reconectar automaticamente · tentativas: {status?.attempts}
+          {t("whatsapp.reconnecting", { attempts: status?.attempts ?? 0 })}
           {status?.lastDisconnectAt
-            ? ` · caiu em ${new Date(status.lastDisconnectAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`
+            ? ` · ${t("whatsapp.lastDisconnect", { date: new Date(status.lastDisconnectAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) })}`
             : ""}
         </div>
       ) : null}
 
       {state === "WAITING_QR" && status?.qrDataUrl ? (
         <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
-          <p className="mb-3 text-sm text-zinc-300">
-            Abra o WhatsApp no celular → Configurações → Aparelhos conectados →
-            Conectar um aparelho. Escaneie:
-          </p>
+          <p className="mb-3 text-sm text-zinc-300">{t("whatsapp.qrInstructions")}</p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={status.qrDataUrl}
-            alt="QR Code do WhatsApp"
+            alt={t("whatsapp.qrAlt")}
             className="mx-auto h-64 w-64 rounded-lg bg-white p-2"
           />
         </div>
@@ -2085,7 +2070,7 @@ function WhatsAppTab({
             className="inline-flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-200 hover:bg-rose-500/20 disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PowerOff className="h-4 w-4" />}
-            Desconectar
+            {t("whatsapp.disconnect")}
           </button>
         ) : (
           <button
@@ -2099,7 +2084,7 @@ function WhatsAppTab({
             ) : (
               <Smartphone className="h-4 w-4" />
             )}
-            {state === "WAITING_QR" ? "Reabrir QR" : "Conectar"}
+            {state === "WAITING_QR" ? t("whatsapp.reopenQr") : t("whatsapp.connect")}
           </button>
         )}
 
@@ -2108,13 +2093,13 @@ function WhatsAppTab({
           onClick={refresh}
           className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800"
         >
-          <RefreshCw className="h-4 w-4" /> Atualizar
+          <RefreshCw className="h-4 w-4" /> {t("whatsapp.refresh")}
         </button>
       </div>
 
       {state === "CONNECTED" ? (
         <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
-          <p className="mb-2 text-sm font-medium text-zinc-300">Enviar mensagem de teste</p>
+          <p className="mb-2 text-sm font-medium text-zinc-300">{t("whatsapp.testTitle")}</p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <input
               type="text"
@@ -2130,7 +2115,7 @@ function WhatsAppTab({
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Enviar teste
+              {t("whatsapp.sendTest")}
             </button>
           </div>
         </div>

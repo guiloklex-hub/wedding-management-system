@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ListTodo, Clock } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { formatDateBR } from "@/lib/format";
 
 const PRIORITY_STYLES: Record<string, string> = {
@@ -9,22 +10,30 @@ const PRIORITY_STYLES: Record<string, string> = {
   LOW: "bg-zinc-800 text-zinc-400 border-zinc-700",
 };
 
-export function UpcomingTasks({
+const PRIORITY_KEYS: Record<string, string> = {
+  URGENT: "urgent",
+  HIGH: "high",
+  MEDIUM: "medium",
+  LOW: "low",
+};
+
+export async function UpcomingTasks({
   tasks,
   compact,
 }: {
   tasks: Array<{ id: string; title: string; priority: string; deadline: Date | null }>;
   compact?: boolean;
 }) {
+  const tr = await getTranslations("dashboard.home");
   return (
     <div className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm${compact ? " flex flex-col lg:max-h-[380px]" : ""}`}>
       <div className="mb-3 flex shrink-0 items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-200">Próximas Tarefas</h2>
+        <h2 className="text-sm font-semibold text-zinc-200">{tr("upcomingTasks.title")}</h2>
         <ListTodo className="h-4 w-4 text-zinc-500" />
       </div>
       <div className={`custom-scrollbar space-y-3 overflow-y-auto pr-2${compact ? " min-h-0 flex-1" : " max-h-[300px]"}`}>
         {tasks.length === 0 ? (
-          <p className="text-sm text-zinc-500">Nenhuma tarefa pendente.</p>
+          <p className="text-sm text-zinc-500">{tr("upcomingTasks.empty")}</p>
         ) : (
           tasks.map((t) => (
             <Link
@@ -40,13 +49,13 @@ export function UpcomingTasks({
                     {formatDateBR(t.deadline)}
                   </p>
                 ) : (
-                  <p className="mt-1 text-xs text-zinc-600">Sem prazo</p>
+                  <p className="mt-1 text-xs text-zinc-600">{tr("upcomingTasks.noDeadline")}</p>
                 )}
               </div>
               <span
                 className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${PRIORITY_STYLES[t.priority] ?? PRIORITY_STYLES.MEDIUM}`}
               >
-                {t.priority}
+                {tr(`upcomingTasks.priority.${PRIORITY_KEYS[t.priority] ?? "medium"}`)}
               </span>
             </Link>
           ))

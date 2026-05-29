@@ -3,6 +3,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useTranslations } from "next-intl";
 import { Circle, GripVertical, RectangleVertical, Square, Trash2, Edit3 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -27,6 +28,7 @@ export function TableCard({
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
+  const t = useTranslations("dashboard.weddingDay.seating");
   const {
     setNodeRef: setSortableRef,
     setActivatorNodeRef,
@@ -73,7 +75,7 @@ export function TableCard({
             ref={setActivatorNodeRef}
             {...attributes}
             {...listeners}
-            aria-label="Reordenar mesa"
+            aria-label={t("card.reorderAria")}
             className="flex-none cursor-grab touch-none rounded p-0.5 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 active:cursor-grabbing"
           >
             <GripVertical className="h-4 w-4" />
@@ -97,7 +99,7 @@ export function TableCard({
             <button
               type="button"
               onClick={onEdit}
-              aria-label="Editar mesa"
+              aria-label={t("card.editAria")}
               className="rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
             >
               <Edit3 className="h-3.5 w-3.5" />
@@ -107,7 +109,7 @@ export function TableCard({
             <button
               type="button"
               onClick={onDelete}
-              aria-label="Excluir mesa"
+              aria-label={t("card.deleteAria")}
               className="rounded p-1 text-zinc-400 hover:bg-rose-500/20 hover:text-rose-400"
             >
               <Trash2 className="h-3.5 w-3.5" />

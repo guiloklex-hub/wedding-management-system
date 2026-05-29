@@ -1,4 +1,31 @@
 {
+  "asset": {
+    "notFound": "Contribution not found",
+    "errorCreate": "Failed to create contribution",
+    "errorUpdate": "Failed to update contribution",
+    "errorDelete": "Failed to delete contribution"
+  },
+  "attachment": {
+    "notFound": "Attachment not found",
+    "vendorNotFound": "Vendor not found",
+    "contractNotFound": "Contract not found",
+    "venueNotFound": "Venue not found",
+    "noPermission": "No permission",
+    "noPermissionEdit": "No permission to edit",
+    "noPermissionKind": "No permission for this attachment type",
+    "noPermissionView": "No permission for this attachment",
+    "onlyAdminCoupleRemoveContract": "Only the admin, groom or bride can remove contracts.",
+    "rateLimitUser": "Too many uploads in a row. Try again in 1 minute.",
+    "rateLimitIp": "Upload limit exceeded.",
+    "invalidTarget": "Invalid target",
+    "fileRequired": "File required",
+    "errorUpload": "Error uploading file",
+    "errorDelete": "Error deleting attachment"
+  },
+  "auth": {
+    "invalidCredentials": "Invalid credentials.",
+    "loginGenericError": "Something went wrong while signing in."
+  },
   "common": {
     "unauthorized": "Not authorized",
     "forbidden": "Access denied",
@@ -6,9 +33,96 @@
     "notFound": "Not found",
     "generic": "Something went wrong. Please try again."
   },
-  "auth": {
-    "invalidCredentials": "Invalid credentials.",
-    "loginGenericError": "Something went wrong while signing in."
+  "contract": {
+    "notFound": "Contract not found",
+    "noPermissionSign": "No permission to sign",
+    "noPermissionUpload": "No permission to upload contract",
+    "rateLimitUser": "Too many uploads in a row. Try again in 1 minute.",
+    "rateLimitIp": "Upload limit exceeded.",
+    "invalidTarget": "Invalid target",
+    "fileRequired": "File required",
+    "errorCreate": "Error creating contract",
+    "errorUpdate": "Error updating contract",
+    "errorDelete": "Error deleting contract",
+    "errorSign": "Error recording signature",
+    "errorUpload": "Error uploading contract"
+  },
+  "gift": {
+    "notFound": "Gift not found",
+    "errorCreating": "Error recording gift",
+    "errorUpdating": "Error updating gift",
+    "errorUpdatingShort": "Error updating",
+    "errorDeleting": "Error deleting gift",
+    "errorMarkingPix": "Error marking Pix as received",
+    "pixAlreadyReceived": "Pix already marked as received",
+    "assetTitle": "Pix from {giver}{honeymoon}",
+    "assetGuestFallback": "guest",
+    "assetHoneymoonSuffix": " (honeymoon contribution)",
+    "assetNotes": "Generated from gift #{id}"
+  },
+  "goal": {
+    "notFound": "Goal not found",
+    "errorCreate": "Error creating goal",
+    "errorUpdate": "Error updating goal",
+    "errorDelete": "Error deleting goal"
+  },
+  "guest": {
+    "errorCreating": "Failed to create guest",
+    "notFound": "Guest not found",
+    "errorUpdating": "Failed to update guest",
+    "errorDeleting": "Failed to delete guest",
+    "errorCheckin": "Failed to record attendance",
+    "noLinesFound": "No lines found",
+    "errorImporting": "Failed to import",
+    "tooManyAttempts": "Too many attempts. Try again in a few minutes.",
+    "inviteNotFound": "Invitation not found",
+    "linkExpired": "Link expired. Request a new invitation.",
+    "errorRsvp": "Failed to record response",
+    "tooManyUploads": "Too many uploads in a row. Wait 1 minute.",
+    "uploadLimitExceeded": "Upload limit exceeded.",
+    "fileRequired": "File required",
+    "unknownSource": "Unknown source",
+    "unsupportedFormat": "Unsupported format. Use .xlsx (Wedy) or .csv (export from this system).",
+    "unrecognizedFormat": "Could not identify the format. Supported: Wedy (.xlsx) or CSV exported by this system.",
+    "noValidRows": "No valid rows found in the spreadsheet.",
+    "rowLimit": "Limit of {max} rows per import.",
+    "errorProcessingFile": "Failed to process file",
+    "importSessionExpired": "Import session expired. Resend the file.",
+    "errorCommittingImport": "Failed to save import"
+  },
+  "guestGroup": {
+    "errorCreating": "Failed to create group",
+    "notFound": "Group not found",
+    "errorUpdating": "Failed to update group",
+    "invalidId": "Invalid ID",
+    "errorDeleting": "Failed to delete group",
+    "errorUpdatingMembers": "Failed to update members",
+    "tooManyAttempts": "Too many attempts. Try again in a few minutes.",
+    "groupInviteNotFound": "Group invitation not found",
+    "linkExpired": "Link expired. Request a new invitation.",
+    "guestOutsideGroup": "Invalid response (guest outside the group)",
+    "errorRsvp": "Failed to record responses"
+  },
+  "honeymoon": {
+    "itemNotFound": "Item not found",
+    "errorSaving": "Error saving",
+    "errorAdding": "Error adding",
+    "errorUpdating": "Error updating",
+    "errorDeleting": "Error deleting"
+  },
+  "income": {
+    "notFound": "Income not found",
+    "errorCreate": "Error creating income",
+    "errorUpdate": "Error updating income",
+    "errorMarkReceived": "Error marking as received",
+    "errorDelete": "Error deleting income"
+  },
+  "onboarding": {
+    "coupleNameRequired": "Enter the couple's name",
+    "invalidDate": "Invalid date",
+    "errorCouple": "Error saving couple data",
+    "errorBudget": "Error saving budget",
+    "errorFinish": "Error finishing onboarding"
   },
   "passwordReset": {
     "invalidEmail": "Invalid email",
@@ -19,12 +133,18 @@
     "userNotFoundOrInactive": "User not found or inactive",
     "errorResetting": "Error resetting password"
   },
-  "onboarding": {
-    "coupleNameRequired": "Enter the couple's name",
-    "invalidDate": "Invalid date",
-    "errorCouple": "Error saving couple data",
-    "errorBudget": "Error saving budget",
-    "errorFinish": "Error finishing onboarding"
+  "payment": {
+    "vendorNotFound": "Vendor not found",
+    "notFound": "Payment not found",
+    "notFoundOrPaid": "Payment not found or already paid",
+    "cannotUndo": "This payment cannot be reverted",
+    "errorCreate": "Error creating payment",
+    "errorUpdate": "Error updating payment",
+    "errorMarkPaid": "Error settling payment",
+    "errorUndo": "Error reverting payment",
+    "errorDelete": "Error deleting payment",
+    "errorSplit": "Error creating split payments",
+    "errorInstallments": "Error generating installments"
   },
   "profile": {
     "invalidLocale": "Invalid language",
@@ -34,5 +154,109 @@
     "wrongPassword": "Current password is incorrect",
     "emailTaken": "A user with this email already exists",
     "emailUpdated": "Email updated. Use it on your next login."
+  },
+  "seatingTable": {
+    "errorCreate": "Failed to create table",
+    "tableNotFound": "Table not found",
+    "errorUpdate": "Failed to update table",
+    "invalidId": "Invalid ID",
+    "errorDelete": "Failed to delete table",
+    "invalidOrder": "Invalid order",
+    "errorReorder": "Failed to reorder tables",
+    "invalidCoords": "Invalid coordinates",
+    "errorMove": "Failed to move table",
+    "invalidGuestId": "Invalid guest ID",
+    "invalidTableId": "Invalid table ID",
+    "guestNotFound": "Guest not found",
+    "tableFull": "Table \"{name}\" doesn't have enough seats (capacity {capacity}, occupied {used}, required {needed})",
+    "errorAssign": "Failed to assign guest"
+  },
+  "security": {
+    "errorGenerating": "Error generating 2FA setup",
+    "invalidCode": "Invalid code",
+    "invalidTotp": "Invalid TOTP code",
+    "errorEnabling": "Error enabling 2FA",
+    "codeRequired": "Code required",
+    "notActive": "2FA is not active",
+    "errorDisabling": "Error disabling 2FA"
+  },
+  "settings": {
+    "errorSaving": "Error saving settings",
+    "errorSavingPix": "Error saving Pix settings"
+  },
+  "task": {
+    "notFound": "Task not found",
+    "errorCreate": "Failed to create task",
+    "errorUpdate": "Failed to update task",
+    "errorStatus": "Failed to update status",
+    "errorDelete": "Failed to delete task",
+    "errorTemplates": "Failed to load template",
+    "eventDateRequired": "Set the event date in Settings to use the templates."
+  },
+  "trousseau": {
+    "notFound": "Item not found",
+    "errorAdding": "Failed to add",
+    "errorUpdating": "Failed to update",
+    "errorUpdatingStatus": "Failed to update status",
+    "errorDeleting": "Failed to delete"
+  },
+  "user": {
+    "noPermission": "No permission",
+    "invalidSession": "Invalid session",
+    "emailTaken": "A user with this email already exists",
+    "passwordTooShort": "Password must be at least {min} characters",
+    "passwordTooLong": "Password too long",
+    "errorCreating": "Error creating user",
+    "notFound": "User not found",
+    "cannotChangeOwnRole": "You can't change your own role",
+    "cannotDeactivateSelf": "You can't deactivate yourself",
+    "keepOneAdmin": "Keep at least one active administrator",
+    "errorUpdating": "Error updating user",
+    "errorResettingPassword": "Error resetting password",
+    "invalidId": "Invalid ID",
+    "errorResetting2FA": "Error resetting 2FA",
+    "cannotArchiveSelf": "You can't archive yourself",
+    "errorArchiving": "Error archiving user",
+    "errorRestoring": "Error restoring user",
+    "newPasswordMustDiffer": "The new password must be different from the current one",
+    "wrongCurrentPassword": "Current password is incorrect",
+    "errorChangingPassword": "Error changing password",
+    "errorUpdatingProfile": "Error updating profile",
+    "securityPolicyAdminOnly": "Only administrators can change the security policy",
+    "errorSavingSecurityPolicy": "Error saving security policy"
+  },
+  "vendor": {
+    "errorCreate": "Error creating vendor",
+    "errorUpdate": "Error updating vendor",
+    "errorStatus": "Error updating status",
+    "errorDelete": "Error deleting vendor"
+  },
+  "vendorContact": {
+    "notFound": "Contact not found",
+    "errorCreate": "Error adding contact",
+    "errorUpdate": "Error updating contact",
+    "errorDelete": "Error deleting contact"
+  },
+  "vendorNote": {
+    "notFound": "Note not found",
+    "errorCreate": "Error adding note",
+    "errorDelete": "Error deleting note"
+  },
+  "venue": {
+    "errorCreate": "Failed to create venue",
+    "notFound": "Venue not found",
+    "errorUpdate": "Failed to update venue",
+    "errorDelete": "Failed to delete venue",
+    "errorAddItem": "Failed to add item",
+    "errorUpdateItem": "Failed to update item",
+    "itemNotFound": "Item not found",
+    "errorDeleteItem": "Failed to delete item"
+  },
+  "weddingDay": {
+    "errorSaving": "Failed to save"
+  },
+  "whatsapp": {
+    "adminOnly": "Administrators only",
+    "testMessageBody": "*Wedding Finance*\n\nTest message sent successfully. Your WhatsApp integration is working. ✅"
   }
 }

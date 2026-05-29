@@ -2,9 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { denyIfNoEdit } from "@/lib/finance-access";
 import { money } from "@/lib/validation";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 const optStr = (max: number) =>
@@ -40,10 +42,11 @@ export async function updateHoneymoon(
 ): Promise<ActionResult> {
   const denied = await denyIfNoEdit();
   if (denied) return denied;
+  const t = await getTranslations("actions.honeymoon");
   const data = Object.fromEntries(formData.entries());
   const parsed = HoneymoonSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     await ensureHoneymoon();
@@ -62,7 +65,7 @@ export async function updateHoneymoon(
     return { success: true };
   } catch (err) {
     console.error("[updateHoneymoon]", err);
-    return { success: false, error: "Erro ao salvar" };
+    return { success: false, error: t("errorSaving") };
   }
 }
 
@@ -90,9 +93,10 @@ export async function createHoneymoonItem(
 ): Promise<ActionResult> {
   const denied = await denyIfNoEdit();
   if (denied) return denied;
+  const t = await getTranslations("actions.honeymoon");
   const parsed = ItemCreateSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     await ensureHoneymoon();
@@ -115,7 +119,7 @@ export async function createHoneymoonItem(
     return { success: true };
   } catch (err) {
     console.error("[createHoneymoonItem]", err);
-    return { success: false, error: "Erro ao adicionar" };
+    return { success: false, error: t("errorAdding") };
   }
 }
 
@@ -125,9 +129,10 @@ export async function updateHoneymoonItem(
 ): Promise<ActionResult> {
   const denied = await denyIfNoEdit();
   if (denied) return denied;
+  const t = await getTranslations("actions.honeymoon");
   const parsed = ItemUpdateSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const result = await prisma.honeymoonItem.updateMany({
@@ -145,28 +150,29 @@ export async function updateHoneymoonItem(
         notes: parsed.data.notes,
       },
     });
-    if (result.count === 0) return { success: false, error: "Item não encontrado" };
+    if (result.count === 0) return { success: false, error: t("itemNotFound") };
     revalidatePath("/dashboard/honeymoon");
     return { success: true };
   } catch (err) {
     console.error("[updateHoneymoonItem]", err);
-    return { success: false, error: "Erro ao atualizar" };
+    return { success: false, error: t("errorUpdating") };
   }
 }
 
 export async function deleteHoneymoonItem(id: string): Promise<ActionResult> {
   const denied = await denyIfNoEdit();
   if (denied) return denied;
+  const t = await getTranslations("actions.honeymoon");
   try {
     const result = await prisma.honeymoonItem.updateMany({
       where: { id, deletedAt: null },
       data: { deletedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Item não encontrado" };
+    if (result.count === 0) return { success: false, error: t("itemNotFound") };
     revalidatePath("/dashboard/honeymoon");
     return { success: true };
   } catch (err) {
     console.error("[deleteHoneymoonItem]", err);
-    return { success: false, error: "Erro ao excluir" };
+    return { success: false, error: t("errorDeleting") };
   }
 }

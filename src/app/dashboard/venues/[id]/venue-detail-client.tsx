@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   CheckCircle2,
   Circle,
@@ -69,6 +70,8 @@ type VenueFull = {
 };
 
 export default function VenueDetailClient({ venue }: { venue: VenueFull }) {
+  const t = useTranslations("dashboard.venues");
+  const tc = useTranslations("common");
   const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -81,9 +84,9 @@ export default function VenueDetailClient({ venue }: { venue: VenueFull }) {
       try {
         const r = await updateVenue(undefined, formData);
         if (r.success) {
-          toast.success("Atualizado");
+          toast.success(t("toast.updated"));
           setEditing(false);
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.fail"), r.error);
       } finally {
         setBusy(false);
       }
@@ -94,9 +97,9 @@ export default function VenueDetailClient({ venue }: { venue: VenueFull }) {
     startTransition(async () => {
       const r = await deleteVenue(venue.id);
       if (r.success) {
-        toast.success("Local removido");
+        toast.success(t("toast.removed"));
         window.location.href = "/dashboard/venues";
-      } else toast.error("Falha", r.error);
+      } else toast.error(t("toast.fail"), r.error);
     });
   }
 
@@ -120,7 +123,7 @@ export default function VenueDetailClient({ venue }: { venue: VenueFull }) {
             ) : null}
             {venue.contactName || venue.contactPhone ? (
               <p className="mt-1 text-sm text-zinc-400">
-                Contato: {venue.contactName ?? "—"}
+                {t("detail.contactLabel")} {venue.contactName ?? "—"}
                 {venue.contactPhone ? (
                   <>
                     {" · "}
@@ -143,7 +146,7 @@ export default function VenueDetailClient({ venue }: { venue: VenueFull }) {
                 rel="noopener noreferrer"
                 className="mt-1 inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-200"
               >
-                <ExternalLink className="h-3.5 w-3.5" /> Abrir no Maps
+                <ExternalLink className="h-3.5 w-3.5" /> {t("detail.openMaps")}
               </a>
             ) : null}
           </div>
@@ -153,61 +156,63 @@ export default function VenueDetailClient({ venue }: { venue: VenueFull }) {
               onClick={() => setEditing(!editing)}
               className="rounded-xl bg-zinc-800 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700"
             >
-              {editing ? "Fechar edição" : "Editar"}
+              {editing ? t("detail.closeEdit") : tc("actions.edit")}
             </button>
             <button
               type="button"
               onClick={() => setDeleting(true)}
               className="rounded-xl bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-300 hover:bg-rose-500/20"
             >
-              Excluir local
+              {t("detail.deleteVenue")}
             </button>
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <Stat label="Sentados">{venue.capacitySeated ?? "—"}</Stat>
-          <Stat label="Em pé">{venue.capacityStanding ?? "—"}</Stat>
-          <Stat label="Locação">{venue.baseRate ? formatCurrency(venue.baseRate) : "—"}</Stat>
+          <Stat label={t("fields.seated")}>{venue.capacitySeated ?? "—"}</Stat>
+          <Stat label={t("fields.standing")}>{venue.capacityStanding ?? "—"}</Stat>
+          <Stat label={t("fields.rate")}>{venue.baseRate ? formatCurrency(venue.baseRate) : "—"}</Stat>
         </div>
 
         {venue.visitedAt ? (
-          <p className="mt-4 text-xs text-zinc-500">Visitado em {formatDateBR(venue.visitedAt)}</p>
+          <p className="mt-4 text-xs text-zinc-500">
+            {t("list.visitedOn", { date: formatDateBR(venue.visitedAt) })}
+          </p>
         ) : null}
       </div>
 
       {editing ? (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-          <h2 className="text-lg font-semibold text-white">Editar local</h2>
+          <h2 className="text-lg font-semibold text-white">{t("editForm.title")}</h2>
           <form action={handleUpdate} className="mt-4 grid gap-3 sm:grid-cols-2">
             <input type="hidden" name="id" value={venue.id} />
-            <Input name="name" label="Nome" defaultValue={venue.name} required />
-            <Input name="address" label="Endereço" defaultValue={venue.address ?? ""} />
-            <Input name="mapsUrl" label="Link Maps" defaultValue={venue.mapsUrl ?? ""} />
+            <Input name="name" label={t("fields.name")} defaultValue={venue.name} required />
+            <Input name="address" label={t("fields.address")} defaultValue={venue.address ?? ""} />
+            <Input name="mapsUrl" label={t("editForm.mapsUrl")} defaultValue={venue.mapsUrl ?? ""} />
             <Input
               name="baseRate"
-              label="Locação (R$)"
+              label={t("editForm.baseRate")}
               type="number"
               step="0.01"
               defaultValue={venue.baseRate?.toString() ?? ""}
             />
             <Input
               name="capacitySeated"
-              label="Sentados"
+              label={t("fields.seated")}
               type="number"
               defaultValue={venue.capacitySeated?.toString() ?? ""}
             />
             <Input
               name="capacityStanding"
-              label="Em pé"
+              label={t("fields.standing")}
               type="number"
               defaultValue={venue.capacityStanding?.toString() ?? ""}
             />
-            <Input name="contactName" label="Contato" defaultValue={venue.contactName ?? ""} />
-            <Input name="contactPhone" label="Telefone" defaultValue={venue.contactPhone ?? ""} />
+            <Input name="contactName" label={t("editForm.contactName")} defaultValue={venue.contactName ?? ""} />
+            <Input name="contactPhone" label={t("editForm.contactPhone")} defaultValue={venue.contactPhone ?? ""} />
             <Input
               name="visitedAt"
-              label="Visitado em"
+              label={t("editForm.visitedAt")}
               type="date"
               defaultValue={venue.visitedAt ? toIsoDate(new Date(venue.visitedAt)) : ""}
             />
@@ -218,25 +223,25 @@ export default function VenueDetailClient({ venue }: { venue: VenueFull }) {
                 defaultChecked={venue.isShortlisted}
                 className="accent-rose-500"
               />
-              <label className="text-sm text-zinc-300">Favorito</label>
+              <label className="text-sm text-zinc-300">{t("editForm.favorite")}</label>
             </div>
-            <Textarea name="pros" label="Prós" defaultValue={venue.pros ?? ""} className="sm:col-span-2" />
-            <Textarea name="cons" label="Contras" defaultValue={venue.cons ?? ""} className="sm:col-span-2" />
+            <Textarea name="pros" label={t("fields.pros")} defaultValue={venue.pros ?? ""} className="sm:col-span-2" />
+            <Textarea name="cons" label={t("fields.cons")} defaultValue={venue.cons ?? ""} className="sm:col-span-2" />
             <Textarea
               name="restrictions"
-              label="Restrições"
+              label={t("fields.restrictions")}
               defaultValue={venue.restrictions ?? ""}
               className="sm:col-span-2"
             />
             <Textarea
               name="pricingNotes"
-              label="Notas de preço"
+              label={t("editForm.pricingNotes")}
               defaultValue={venue.pricingNotes ?? ""}
               className="sm:col-span-2"
             />
             <Textarea
               name="notes"
-              label="Observações gerais"
+              label={t("fields.notes")}
               defaultValue={venue.notes ?? ""}
               className="sm:col-span-2"
             />
@@ -247,31 +252,31 @@ export default function VenueDetailClient({ venue }: { venue: VenueFull }) {
                 className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
               >
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Salvar
+                {tc("actions.save")}
               </button>
             </div>
           </form>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <ProsConsBlock title="Prós" body={venue.pros} accent="emerald" />
-          <ProsConsBlock title="Contras" body={venue.cons} accent="rose" />
+          <ProsConsBlock title={t("fields.pros")} body={venue.pros} accent="emerald" />
+          <ProsConsBlock title={t("fields.cons")} body={venue.cons} accent="rose" />
           {venue.restrictions ? (
-            <NotesCard title="Restrições" body={venue.restrictions} />
+            <NotesCard title={t("fields.restrictions")} body={venue.restrictions} />
           ) : null}
           {venue.pricingNotes ? (
-            <NotesCard title="Observações de preço" body={venue.pricingNotes} />
+            <NotesCard title={t("fields.pricingNotes")} body={venue.pricingNotes} />
           ) : null}
-          {venue.notes ? <NotesCard title="Observações gerais" body={venue.notes} /> : null}
+          {venue.notes ? <NotesCard title={t("fields.notes")} body={venue.notes} /> : null}
         </div>
       )}
 
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-100">Checklist da visita</h3>
+            <h3 className="text-lg font-semibold text-zinc-100">{t("checklist.title")}</h3>
             <p className="text-xs text-zinc-500">
-              {checklistDone}/{venue.checklistItems.length} respondidos
+              {t("checklist.answered", { done: checklistDone, total: venue.checklistItems.length })}
             </p>
           </div>
         </div>
@@ -287,9 +292,9 @@ export default function VenueDetailClient({ venue }: { venue: VenueFull }) {
 
       <ConfirmDialog
         open={deleting}
-        title={`Excluir ${venue.name}?`}
-        description="O local e o checklist serão marcados como excluídos."
-        confirmLabel="Excluir"
+        title={t("delete.confirmTitle", { name: venue.name })}
+        description={t("delete.confirmDescriptionDetail")}
+        confirmLabel={tc("actions.delete")}
         tone="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleting(false)}
@@ -307,13 +312,14 @@ function ChecklistRow({
   startTransition: React.TransitionStartFunction;
   toast: ReturnType<typeof useToast>;
 }) {
+  const t = useTranslations("dashboard.venues");
   const [value, setValue] = useState(item.value ?? "");
   const [checked, setChecked] = useState(item.checked);
 
   function persist(nextChecked: boolean, nextValue: string) {
     startTransition(async () => {
       const r = await toggleChecklistItem(item.id, nextChecked, nextValue);
-      if (!r.success) toast.error("Falha", r.error);
+      if (!r.success) toast.error(t("toast.fail"), r.error);
     });
   }
 
@@ -327,7 +333,7 @@ function ChecklistRow({
   function onDelete() {
     startTransition(async () => {
       const r = await deleteChecklistItem(item.id);
-      if (!r.success) toast.error("Falha", r.error);
+      if (!r.success) toast.error(t("toast.fail"), r.error);
     });
   }
 
@@ -352,13 +358,13 @@ function ChecklistRow({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onBlur={onBlurValue}
-        placeholder="Anote a resposta"
+        placeholder={t("checklist.answerPlaceholder")}
         className="sm:w-64 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
       />
       <button
         type="button"
         onClick={onDelete}
-        aria-label="Excluir item"
+        aria-label={t("checklist.deleteItemAria")}
         className="self-end rounded-lg p-1.5 text-zinc-500 hover:bg-rose-500/10 hover:text-rose-400 sm:self-auto"
       >
         <Trash2 className="h-4 w-4" />
@@ -376,6 +382,8 @@ function AddChecklistForm({
   startTransition: React.TransitionStartFunction;
   toast: ReturnType<typeof useToast>;
 }) {
+  const t = useTranslations("dashboard.venues");
+  const tc = useTranslations("common");
   const [busy, setBusy] = useState(false);
 
   function handleSubmit(formData: FormData) {
@@ -386,7 +394,7 @@ function AddChecklistForm({
         if (r.success) {
           const form = document.getElementById(`checklist-add-${venueId}`) as HTMLFormElement | null;
           form?.reset();
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.fail"), r.error);
       } finally {
         setBusy(false);
       }
@@ -401,7 +409,7 @@ function AddChecklistForm({
         name="label"
         required
         maxLength={200}
-        placeholder="Nova pergunta para o checklist..."
+        placeholder={t("checklist.addPlaceholder")}
         className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
       />
       <button
@@ -410,7 +418,7 @@ function AddChecklistForm({
         className="inline-flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-        <span>Adicionar</span>
+        <span>{tc("actions.add")}</span>
       </button>
     </form>
   );
@@ -425,6 +433,8 @@ function AttachmentsCard({
   startTransition: React.TransitionStartFunction;
   toast: ReturnType<typeof useToast>;
 }) {
+  const t = useTranslations("dashboard.venues");
+  const tcCommon = useTranslations("common");
   const [busy, setBusy] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -436,7 +446,7 @@ function AttachmentsCard({
         if (r.success) {
           const form = document.getElementById(`venue-upload-${venue.id}`) as HTMLFormElement | null;
           form?.reset();
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.fail"), r.error);
       } finally {
         setBusy(false);
       }
@@ -449,9 +459,9 @@ function AttachmentsCard({
     startTransition(async () => {
       const r = await deleteAttachment(id);
       if (r.success) {
-        toast.success("Anexo removido");
+        toast.success(t("attachments.removed"));
         setDeleteId(null);
-      } else toast.error("Falha", r.error);
+      } else toast.error(t("toast.fail"), r.error);
     });
   }
 
@@ -459,7 +469,7 @@ function AttachmentsCard({
     <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
       <div className="mb-4 flex items-center gap-2 text-zinc-100">
         <Paperclip className="h-5 w-5" />
-        <h3 className="text-lg font-semibold">Anexos</h3>
+        <h3 className="text-lg font-semibold">{t("attachments.title")}</h3>
       </div>
       <form
         id={`venue-upload-${venue.id}`}
@@ -469,7 +479,7 @@ function AttachmentsCard({
         <input type="hidden" name="ownerType" value="VENUE" />
         <input type="hidden" name="ownerId" value={venue.id} />
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-zinc-400">Arquivo</span>
+          <span className="mb-1 block text-sm font-medium text-zinc-400">{t("attachments.file")}</span>
           <input
             type="file"
             name="file"
@@ -479,16 +489,16 @@ function AttachmentsCard({
           />
         </label>
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-400">Tipo</label>
+          <label className="mb-1 block text-sm font-medium text-zinc-400">{t("attachments.kind")}</label>
           <select
             name="kind"
             defaultValue="PHOTO"
             className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
           >
-            <option value="PHOTO">Foto da visita</option>
-            <option value="CONTRACT">Contrato</option>
-            <option value="PROPOSAL">Proposta</option>
-            <option value="OTHER">Outro</option>
+            <option value="PHOTO">{t("attachments.kinds.PHOTO")}</option>
+            <option value="CONTRACT">{t("attachments.kinds.CONTRACT")}</option>
+            <option value="PROPOSAL">{t("attachments.kinds.PROPOSAL")}</option>
+            <option value="OTHER">{t("attachments.kinds.OTHER")}</option>
           </select>
         </div>
         <button
@@ -497,12 +507,12 @@ function AttachmentsCard({
           className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-          <span>Enviar</span>
+          <span>{t("attachments.upload")}</span>
         </button>
       </form>
 
       {venue.attachments.length === 0 ? (
-        <p className="text-sm text-zinc-500">Sem anexos ainda.</p>
+        <p className="text-sm text-zinc-500">{t("attachments.empty")}</p>
       ) : (
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {venue.attachments.map((a) => (
@@ -526,14 +536,14 @@ function AttachmentsCard({
                   {a.filename}
                 </Link>
                 <p className="text-[11px] text-zinc-500">
-                  {a.kind} · {(a.size / 1024).toFixed(1)} KB · {formatDateBR(a.createdAt)}
+                  {attachmentKindLabel(t, a.kind)} · {(a.size / 1024).toFixed(1)} KB · {formatDateBR(a.createdAt)}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setDeleteId(a.id)}
                 className="rounded-lg p-1.5 text-zinc-500 hover:bg-rose-500/10 hover:text-rose-400"
-                aria-label="Excluir anexo"
+                aria-label={t("attachments.deleteAria")}
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -544,14 +554,19 @@ function AttachmentsCard({
 
       <ConfirmDialog
         open={!!deleteId}
-        title="Excluir anexo?"
-        confirmLabel="Excluir"
+        title={t("attachments.deleteTitle")}
+        confirmLabel={tcCommon("actions.delete")}
         tone="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
       />
     </div>
   );
+}
+
+function attachmentKindLabel(t: ReturnType<typeof useTranslations>, kind: string): string {
+  const known = ["PHOTO", "CONTRACT", "PROPOSAL", "OTHER"];
+  return known.includes(kind) ? t(`attachments.kinds.${kind}`) : kind;
 }
 
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -10,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function VendorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const t = await getTranslations("dashboard.vendors.detail");
   const session = await auth();
   const role = (session?.user as { role?: string } | undefined)?.role;
   const showFinance = canViewSensitiveFinance(role);
@@ -57,7 +59,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
           className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-300"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Voltar para fornecedores</span>
+          <span>{t("back")}</span>
         </Link>
       </div>
       <VendorDetailClient vendor={sanitized} role={role ?? null} />

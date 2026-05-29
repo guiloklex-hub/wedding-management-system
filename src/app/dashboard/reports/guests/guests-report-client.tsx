@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Donut, type DonutDatum } from "@/components/charts/donut";
 import { StackedBar, type StackSeries } from "@/components/charts/stacked-bar";
 import type { GuestsAnalytics } from "@/lib/reports/guests-analytics";
@@ -11,19 +12,21 @@ const RSVP_COLORS: Record<string, string> = {
   INVITED: "#71717a",
 };
 
-const STACK_SERIES: StackSeries[] = [
-  { key: "CONFIRMED", label: "Confirmados", color: "#22c55e" },
-  { key: "MAYBE", label: "Talvez", color: "#f59e0b" },
-  { key: "INVITED", label: "Pendentes", color: "#71717a" },
-  { key: "DECLINED", label: "Recusas", color: "#f43f5e" },
-];
-
 export function GuestsReportClient({ result }: { result: GuestsAnalytics }) {
+  const t = useTranslations("dashboard.reports.guests");
+
+  const STACK_SERIES: StackSeries[] = [
+    { key: "CONFIRMED", label: t("status.confirmed"), color: "#22c55e" },
+    { key: "MAYBE", label: t("status.maybe"), color: "#f59e0b" },
+    { key: "INVITED", label: t("status.pending"), color: "#71717a" },
+    { key: "DECLINED", label: t("status.declined"), color: "#f43f5e" },
+  ];
+
   const donutData: DonutDatum[] = [
-    { name: "Confirmados", value: result.byStatus.CONFIRMED, color: RSVP_COLORS.CONFIRMED },
-    { name: "Talvez", value: result.byStatus.MAYBE, color: RSVP_COLORS.MAYBE },
-    { name: "Recusas", value: result.byStatus.DECLINED, color: RSVP_COLORS.DECLINED },
-    { name: "Pendentes", value: result.byStatus.INVITED, color: RSVP_COLORS.INVITED },
+    { name: t("status.confirmed"), value: result.byStatus.CONFIRMED, color: RSVP_COLORS.CONFIRMED },
+    { name: t("status.maybe"), value: result.byStatus.MAYBE, color: RSVP_COLORS.MAYBE },
+    { name: t("status.declined"), value: result.byStatus.DECLINED, color: RSVP_COLORS.DECLINED },
+    { name: t("status.pending"), value: result.byStatus.INVITED, color: RSVP_COLORS.INVITED },
   ].filter((d) => d.value > 0);
 
   const groupData = result.byGroup.map((g) => ({
@@ -37,23 +40,24 @@ export function GuestsReportClient({ result }: { result: GuestsAnalytics }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-        <Tile label="Convidados" value={result.totalInvited} />
-        <Tile label="Confirmados" value={result.totalConfirmed} color="text-emerald-400" />
-        <Tile label="+ Acompanhantes" value={result.plusOnesConfirmed} color="text-violet-400" />
-        <Tile label="Crianças" value={result.children} />
+        <Tile label={t("tiles.invited")} value={result.totalInvited} />
+        <Tile label={t("tiles.confirmed")} value={result.totalConfirmed} color="text-emerald-400" />
+        <Tile label={t("tiles.plusOnes")} value={result.plusOnesConfirmed} color="text-violet-400" />
+        <Tile label={t("tiles.children")} value={result.children} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-100">Status do RSVP</h2>
-          <Donut data={donutData} valueFormatter={(n) => `${n} pessoa(s)`} />
+          <h2 className="mb-4 text-lg font-semibold text-zinc-100">{t("rsvp.title")}</h2>
+          <Donut data={donutData} valueFormatter={(n) => t("rsvp.peopleCount", { count: n })} />
           <p className="mt-2 text-center text-xs text-zinc-500">
-            Total efetivo (com +1s): <span className="font-semibold text-zinc-200">{result.effectiveConfirmed}</span>
+            {t("rsvp.effectiveLabel")}{" "}
+            <span className="font-semibold text-zinc-200">{result.effectiveConfirmed}</span>
           </p>
         </div>
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-100">Por grupo</h2>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-100">{t("byGroup.title")}</h2>
           {groupData.length > 0 ? (
             <StackedBar
               data={groupData}
@@ -62,24 +66,24 @@ export function GuestsReportClient({ result }: { result: GuestsAnalytics }) {
               height={Math.max(220, groupData.length * 36 + 60)}
             />
           ) : (
-            <p className="text-sm text-zinc-500">Nenhum grupo de convidados cadastrado.</p>
+            <p className="text-sm text-zinc-500">{t("byGroup.empty")}</p>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-100">VIPs & Padrinhos</h2>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-100">{t("vips.title")}</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Tile label="VIPs confirmados" value={result.vipsConfirmed} color="text-amber-400" />
-            <Tile label="Padrinhos confirmados" value={result.padrinhosConfirmed} color="text-violet-400" />
+            <Tile label={t("vips.vipsConfirmed")} value={result.vipsConfirmed} color="text-amber-400" />
+            <Tile label={t("vips.padrinhosConfirmed")} value={result.padrinhosConfirmed} color="text-violet-400" />
           </div>
         </div>
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-100">Top cidades</h2>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-100">{t("cities.title")}</h2>
           {result.byCity.length === 0 ? (
-            <p className="text-sm text-zinc-500">Nenhuma cidade informada.</p>
+            <p className="text-sm text-zinc-500">{t("cities.empty")}</p>
           ) : (
             <ul className="space-y-2">
               {result.byCity.slice(0, 8).map((c) => (

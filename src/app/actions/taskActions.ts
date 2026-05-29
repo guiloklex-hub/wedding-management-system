@@ -2,11 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { getEventConfig } from "@/lib/event-config";
 import { TASK_TEMPLATES, templateDeadline } from "@/lib/task-templates";
 import { denyIfNoEdit } from "@/lib/finance-access";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 const TaskStatusSchema = z.enum(["TODO", "IN_PROGRESS", "DONE", "BLOCKED"]);
@@ -43,10 +45,11 @@ export async function createTask(
 ): Promise<ActionResult> {
   const denied = await denyIfNoEdit();
   if (denied) return denied;
+  const t = await getTranslations("actions.task");
   const data = Object.fromEntries(formData.entries());
   const parsed = TaskCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const created = await prisma.task.create({
@@ -67,7 +70,7 @@ export async function createTask(
     return { success: true, data: { id: created.id } } as ActionResult<{ id: string }>;
   } catch (err) {
     console.error("[createTask]", err);
-    return { success: false, error: "Erro ao criar tarefa" };
+    return { success: false, error: t("errorCreate") };
   }
 }
 
@@ -77,16 +80,17 @@ export async function updateTask(
 ): Promise<ActionResult> {
   const denied = await denyIfNoEdit();
   if (denied) return denied;
+  const t = await getTranslations("actions.task");
   const data = Object.fromEntries(formData.entries());
   const parsed = TaskUpdateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const existing = await prisma.task.findFirst({
       where: { id: parsed.data.id, deletedAt: null },
     });
-    if (!existing) return { success: false, error: "Tarefa não encontrada" };
+    if (!existing) return { success: false, error: t("notFound") };
 
     const completedAt =
       parsed.data.status === "DONE" ? existing.completedAt ?? new Date() : null;
@@ -110,7 +114,7 @@ export async function updateTask(
     return { success: true };
   } catch (err) {
     console.error("[updateTask]", err);
-    return { success: false, error: "Erro ao atualizar tarefa" };
+    return { success: false, error: t("errorUpdate") };
   }
 }
 
@@ -120,6 +124,7 @@ export async function setTaskStatus(
 ): Promise<ActionResult> {
   const denied = await denyIfNoEdit();
   if (denied) return denied;
+  const t = await getTranslations("actions.task");
   try {
     const result = await prisma.task.updateMany({
       where: { id: taskId, deletedAt: null },
@@ -128,43 +133,45 @@ export async function setTaskStatus(
         completedAt: status === "DONE" ? new Date() : null,
       },
     });
-    if (result.count === 0) return { success: false, error: "Tarefa não encontrada" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     await audit("Task", taskId, "STATUS_CHANGE", { status });
     revalidatePath("/dashboard/tasks");
     return { success: true };
   } catch (err) {
     console.error("[setTaskStatus]", err);
-    return { success: false, error: "Erro ao atualizar status" };
+    return { success: false, error: t("errorStatus") };
   }
 }
 
 export async function deleteTask(taskId: string): Promise<ActionResult> {
   const denied = await denyIfNoEdit();
   if (denied) return denied;
+  const t = await getTranslations("actions.task");
   try {
     const result = await prisma.task.updateMany({
       where: { id: taskId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Tarefa não encontrada" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     await audit("Task", taskId, "DELETE");
     revalidatePath("/dashboard/tasks");
     return { success: true };
   } catch (err) {
     console.error("[deleteTask]", err);
-    return { success: false, error: "Erro ao excluir tarefa" };
+    return { success: false, error: t("errorDelete") };
   }
 }
 
 export async function loadTaskTemplates(skipExisting = true): Promise<ActionResult<{ created: number }>> {
   const denied = await denyIfNoEdit();
   if (denied) return denied;
+  const t = await getTranslations("actions.task");
   try {
     const cfg = await getEventConfig();
     if (!cfg.eventDate) {
       return {
         success: false,
-        error: "Configure a data do evento em Ajustes para usar os templates.",
+        error: t("eventDateRequired"),
       };
     }
     const eventDate = cfg.eventDate;
@@ -199,6 +206,6 @@ export async function loadTaskTemplates(skipExisting = true): Promise<ActionResu
     return { success: true, data: { created: result.count } };
   } catch (err) {
     console.error("[loadTaskTemplates]", err);
-    return { success: false, error: "Erro ao carregar template" };
+    return { success: false, error: t("errorTemplates") };
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Download, Sparkles, X, Share } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -17,6 +18,7 @@ interface NavigatorStandalone {
 }
 
 export function InstallPrompt() {
+  const t = useTranslations("dashboard.home");
   const [show, setShow] = useState(false);
   const [platform, setPlatform] = useState<"android" | "ios" | "other">("other");
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -98,7 +100,7 @@ export function InstallPrompt() {
         type="button"
         onClick={handleDismiss}
         className="absolute right-4 top-4 rounded-lg p-1 text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
-        aria-label="Ignorar"
+        aria-label={t("install.dismiss")}
       >
         <X className="h-4 w-4" />
       </button>
@@ -109,31 +111,27 @@ export function InstallPrompt() {
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-semibold text-rose-100 font-serif flex items-center gap-1.5">
-            Instale como aplicativo <Sparkles className="h-4 w-4 text-rose-400 animate-pulse" />
+            {t("install.title")} <Sparkles className="h-4 w-4 text-rose-400 animate-pulse" />
           </h3>
 
           {platform === "ios" ? (
             <div className="mt-2 text-xs text-zinc-300 space-y-2">
-              <p>
-                Adicione o Wedding Finance Planner diretamente na tela de início do seu iPhone para uma experiência em tela cheia idêntica a um app nativo:
-              </p>
+              <p>{t("install.iosBody")}</p>
               <div className="inline-flex items-center gap-1 rounded-lg bg-zinc-950 px-2.5 py-1 text-zinc-200 border border-zinc-800/80">
-                <span>Toque em</span>
+                <span>{t("install.iosTap")}</span>
                 <Share className="h-3.5 w-3.5 mx-0.5 text-sky-400 inline" />
-                <span>Compartilhar &rarr; <strong>Adicionar à Tela de Início</strong></span>
+                <span>{t("install.iosShare")} &rarr; <strong>{t("install.iosAddToHome")}</strong></span>
               </div>
             </div>
           ) : (
             <div className="mt-2 text-xs text-zinc-300">
-              <p>
-                Adicione o aplicativo Wedding Finance Planner à sua tela de início para acompanhar suas finanças e tarefas de forma ágil, com acesso rápido e notificações.
-              </p>
+              <p>{t("install.androidBody")}</p>
               <button
                 type="button"
                 onClick={handleInstallClick}
                 className="mt-3 inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-500 transition-colors active:scale-[0.98]"
               >
-                Instalar Aplicativo
+                {t("install.installButton")}
               </button>
             </div>
           )}

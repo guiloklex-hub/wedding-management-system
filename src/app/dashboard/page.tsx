@@ -11,6 +11,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { loadDashboardData } from "@/lib/reports/dashboard-data";
 import { canViewSensitiveFinance } from "@/lib/permissions";
@@ -31,14 +32,15 @@ export default async function DashboardPage() {
   const session = await auth();
   const role = (session?.user as { role?: string } | undefined)?.role;
   const finance = canViewSensitiveFinance(role);
+  const t = await getTranslations("dashboard.home");
 
   const data = await loadDashboardData(role);
 
   const subtitle = data.eventDate
     ? data.coupleNames
       ? `${data.coupleNames} · ${formatDateBR(data.eventDate)}`
-      : `Casamento em ${formatDateBR(data.eventDate)}`
-    : "Configure seu evento para começar";
+      : t("header.weddingOn", { date: formatDateBR(data.eventDate) })
+    : t("header.configurePrompt");
 
   const trendData = data.paidMonthly.map((m) => ({ label: m.label, value: m.value }));
 
@@ -57,7 +59,7 @@ export default async function DashboardPage() {
       <InstallPrompt />
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight">Visão Geral</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t("header.title")}</h1>
           <p className="break-words text-sm text-zinc-500">{subtitle}</p>
         </div>
         {data.daysToEvent !== null ? <CountdownPill days={data.daysToEvent} /> : null}
@@ -71,11 +73,8 @@ export default async function DashboardPage() {
         >
           <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-rose-300" />
           <div>
-            <h3 className="font-semibold text-rose-100">Vamos configurar seu casamento?</h3>
-            <p className="mt-1 text-sm text-zinc-300">
-              Em menos de 2 minutos você define a data, os nomes do casal e como as
-              notificações vão funcionar. Clique aqui para iniciar o assistente.
-            </p>
+            <h3 className="font-semibold text-rose-100">{t("onboarding.title")}</h3>
+            <p className="mt-1 text-sm text-zinc-300">{t("onboarding.body")}</p>
           </div>
         </Link>
       ) : null}
@@ -84,10 +83,14 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-400 shadow-sm backdrop-blur-sm">
           <AlertCircle className="h-5 w-5" />
           <div>
-            <h3 className="font-semibold">Alerta de Quitação!</h3>
+            <h3 className="font-semibold">{t("quitAlert.title")}</h3>
             <p className="text-sm">
-              Faltam {data.daysToEvent} dia(s) e ainda há saldo devedor de{" "}
-              {finance ? formatCurrency(data.remainingBalance) : "valores pendentes"}.
+              {t("quitAlert.body", {
+                days: data.daysToEvent ?? 0,
+                balance: finance
+                  ? formatCurrency(data.remainingBalance)
+                  : t("quitAlert.pendingValues"),
+              })}
             </p>
           </div>
         </div>
@@ -97,68 +100,73 @@ export default async function DashboardPage() {
         {finance ? (
           <>
             <KpiCard
-              title="Orçamento Total"
+              title={t("kpi.totalBudget.title")}
               value={formatCurrency(data.totalBudget)}
               icon={<Wallet className="h-5 w-5" />}
-              hint={`Contingência: ${formatCurrency(data.contingencyFund)}`}
+              hint={t("kpi.totalBudget.hint", { value: formatCurrency(data.contingencyFund) })}
             />
             <KpiCard
-              title="Total Já Pago"
+              title={t("kpi.totalPaid.title")}
               value={formatCurrency(data.totalPaid)}
               icon={<CreditCard className="h-5 w-5" />}
               accent="emerald"
               trend={trendData}
-              hint={`${Math.round(data.paidPct * 100)}% do orçamento`}
+              hint={t("kpi.totalPaid.hint", { pct: Math.round(data.paidPct * 100) })}
             />
             <KpiCard
-              title="Saldo Devedor"
+              title={t("kpi.remainingBalance.title")}
               value={formatCurrency(data.remainingBalance)}
               icon={<TrendingDown className="h-5 w-5" />}
               accent="rose"
             />
             <KpiCard
-              title="Cobertura de Caixa"
+              title={t("kpi.cashCoverage.title")}
               value={formatCurrency(data.totalAssets)}
               icon={<Wallet className="h-5 w-5" />}
               accent="emerald"
               hint={
                 data.remainingBalance > 0
-                  ? `${Math.min(100, Math.round((data.totalAssets / data.remainingBalance) * 100))}% do saldo devedor`
-                  : "Saldo quitado"
+                  ? t("kpi.cashCoverage.hintPct", {
+                      pct: Math.min(100, Math.round((data.totalAssets / data.remainingBalance) * 100)),
+                    })
+                  : t("kpi.cashCoverage.hintPaid")
               }
             />
           </>
         ) : (
           <>
             <KpiCard
-              title="Fornecedores"
+              title={t("kpi.vendors.title")}
               value={`${data.vendorFunnel.CONTRACTED + data.vendorFunnel.FINALIZED}/${
                 data.vendorFunnel.NEGOTIATION + data.vendorFunnel.CONTRACTED + data.vendorFunnel.FINALIZED
               }`}
               icon={<Users className="h-5 w-5" />}
               accent="violet"
-              hint={`${Math.round(data.contractedPct * 100)}% contratados`}
+              hint={t("kpi.vendors.hint", { pct: Math.round(data.contractedPct * 100) })}
             />
             <KpiCard
-              title="Tarefas"
+              title={t("kpi.tasks.title")}
               value={`${data.tasksStats.done}/${data.tasksStats.total}`}
               icon={<CheckCircle2 className="h-5 w-5" />}
               accent="emerald"
               hint={
                 data.tasksStats.overdue > 0
-                  ? `${data.tasksStats.overdue} atrasada(s)`
-                  : "Tudo em dia"
+                  ? t("kpi.tasks.hintOverdue", { count: data.tasksStats.overdue })
+                  : t("kpi.tasks.hintUpToDate")
               }
             />
             <KpiCard
-              title="Convidados"
+              title={t("kpi.guests.title")}
               value={`${data.rsvp.confirmed}`}
               icon={<Users className="h-5 w-5" />}
               accent="emerald"
-              hint={`${data.guestsTotal} no total · ${data.rsvp.confirmed} confirmados`}
+              hint={t("kpi.guests.hint", {
+                total: data.guestsTotal,
+                confirmed: data.rsvp.confirmed,
+              })}
             />
             <KpiCard
-              title="Dias para o evento"
+              title={t("kpi.daysToEvent.title")}
               value={data.daysToEvent !== null ? String(data.daysToEvent) : "—"}
               icon={<CalendarHeart className="h-5 w-5" />}
               accent="rose"
@@ -173,10 +181,13 @@ export default async function DashboardPage() {
         <FunnelCard funnel={data.vendorFunnel} />
         {finance ? (
           <KpiCard
-            title="Resumo do Orçamento"
+            title={t("kpi.budgetSummary.title")}
             value={formatCurrency(data.totalBudget)}
             icon={<Wallet className="h-5 w-5" />}
-            hint={`Contratado: ${formatCurrency(data.totalContracted)} · Pago: ${formatCurrency(data.totalPaid)}`}
+            hint={t("kpi.budgetSummary.hint", {
+              contracted: formatCurrency(data.totalContracted),
+              paid: formatCurrency(data.totalPaid),
+            })}
             href="/dashboard/insights"
           />
         ) : (
@@ -189,7 +200,7 @@ export default async function DashboardPage() {
           <>
             <div className="flex flex-col rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm lg:max-h-[380px]">
               <div className="mb-3 flex shrink-0 items-center justify-between">
-                <h2 className="text-sm font-semibold text-zinc-200">Distribuição do Orçamento</h2>
+                <h2 className="text-sm font-semibold text-zinc-200">{t("budgetDistribution.title")}</h2>
                 <PieChartIcon className="h-4 w-4 text-zinc-500" />
               </div>
               <div className="h-[260px] lg:h-auto lg:min-h-0 lg:flex-1">
@@ -199,12 +210,12 @@ export default async function DashboardPage() {
 
             <div className="flex flex-col rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm lg:max-h-[380px]">
               <div className="mb-3 flex shrink-0 items-center justify-between">
-                <h2 className="text-sm font-semibold text-zinc-200">Próximos Vencimentos</h2>
+                <h2 className="text-sm font-semibold text-zinc-200">{t("upcomingPayments.title")}</h2>
                 <CalendarClock className="h-4 w-4 text-zinc-500" />
               </div>
               <div className="custom-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
                 {data.upcomingPayments.length === 0 ? (
-                  <p className="text-sm text-zinc-500">Nenhum pagamento para os próximos 30 dias.</p>
+                  <p className="text-sm text-zinc-500">{t("upcomingPayments.empty")}</p>
                 ) : (
                   data.upcomingPayments.map((p) => (
                     <div
@@ -214,7 +225,7 @@ export default async function DashboardPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium text-zinc-200">{p.vendorName}</p>
                         <p className="mt-0.5 text-xs text-zinc-500">
-                          Venc.: {formatDateBR(p.dueDate)}
+                          {t("upcomingPayments.dueLabel", { date: formatDateBR(p.dueDate) })}
                         </p>
                       </div>
                       <span className="shrink-0 pl-3 font-semibold text-rose-400">{formatCurrency(p.amount)}</span>
@@ -257,17 +268,18 @@ export default async function DashboardPage() {
   );
 }
 
-function CountdownPill({ days }: { days: number }) {
+async function CountdownPill({ days }: { days: number }) {
+  const t = await getTranslations("dashboard.home");
   const status =
     days < 0
-      ? { text: "Evento já passou", tone: "bg-zinc-800 text-zinc-400 border-zinc-700" }
+      ? { text: t("countdown.past"), tone: "bg-zinc-800 text-zinc-400 border-zinc-700" }
       : days === 0
-        ? { text: "Hoje é o dia!", tone: "bg-rose-500/15 text-rose-300 border-rose-500/30" }
+        ? { text: t("countdown.today"), tone: "bg-rose-500/15 text-rose-300 border-rose-500/30" }
         : days <= 30
-          ? { text: `Faltam ${days} dias`, tone: "bg-rose-500/10 text-rose-300 border-rose-500/30" }
+          ? { text: t("countdown.remaining", { days }), tone: "bg-rose-500/10 text-rose-300 border-rose-500/30" }
           : days <= 90
-            ? { text: `Faltam ${days} dias`, tone: "bg-amber-500/10 text-amber-300 border-amber-500/30" }
-            : { text: `Faltam ${days} dias`, tone: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" };
+            ? { text: t("countdown.remaining", { days }), tone: "bg-amber-500/10 text-amber-300 border-amber-500/30" }
+            : { text: t("countdown.remaining", { days }), tone: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" };
 
   return (
     <span className={`inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-sm font-medium ${status.tone}`}>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { auth } from "@/auth";
@@ -18,6 +19,7 @@ import {
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { canSignContract, canUploadContract } from "@/lib/permissions";
 import { money } from "@/lib/validation";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 const ContractStatusSchema = z.enum([
@@ -53,12 +55,13 @@ export async function createContract(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
+  const t = await getTranslations("actions.contract");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = ContractCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const existingVersionCount = await prisma.contract.count({
@@ -85,7 +88,7 @@ export async function createContract(
     return { success: true, data: { id: created.id } };
   } catch (err) {
     console.error("[createContract]", err);
-    return { success: false, error: "Erro ao criar contrato" };
+    return { success: false, error: t("errorCreate") };
   }
 }
 
@@ -93,12 +96,13 @@ export async function updateContract(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.contract");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   const data = Object.fromEntries(formData.entries());
   const parsed = ContractUpdateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const result = await prisma.contract.updateMany({
@@ -117,16 +121,17 @@ export async function updateContract(
         version: parsed.data.version ?? undefined,
       },
     });
-    if (result.count === 0) return { success: false, error: "Contrato não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     revalidatePath(`/dashboard/vendors/${parsed.data.vendorId}`);
     return { success: true };
   } catch (err) {
     console.error("[updateContract]", err);
-    return { success: false, error: "Erro ao atualizar contrato" };
+    return { success: false, error: t("errorUpdate") };
   }
 }
 
 export async function deleteContract(contractId: string, vendorId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.contract");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   try {
@@ -134,12 +139,12 @@ export async function deleteContract(contractId: string, vendorId: string): Prom
       where: { id: contractId, vendorId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
-    if (result.count === 0) return { success: false, error: "Contrato não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     revalidatePath(`/dashboard/vendors/${vendorId}`);
     return { success: true };
   } catch (err) {
     console.error("[deleteContract]", err);
-    return { success: false, error: "Erro ao excluir contrato" };
+    return { success: false, error: t("errorDelete") };
   }
 }
 
@@ -157,11 +162,13 @@ export async function signContract(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.contract");
+  const tc = await getTranslations("actions.common");
   const session = await auth();
-  if (!session?.user) return { success: false, error: "Não autorizado" };
+  if (!session?.user) return { success: false, error: tc("unauthorized") };
   const role = (session.user as { role?: string }).role;
   const userId = (session.user as { id?: string }).id;
-  if (!canSignContract(role)) return { success: false, error: "Sem permissão para assinar" };
+  if (!canSignContract(role)) return { success: false, error: t("noPermissionSign") };
 
   const parsed = SignContractSchema.safeParse({
     contractId: formData.get("contractId"),
@@ -170,7 +177,7 @@ export async function signContract(
     signedAt: formData.get("signedAt") || undefined,
   });
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   const status = parsed.data.method === "DIGITAL" ? "SIGNED_DIGITAL" : "SIGNED_PHYSICAL";
@@ -185,7 +192,7 @@ export async function signContract(
       },
       data: { status, signedAt },
     });
-    if (result.count === 0) return { success: false, error: "Contrato não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
 
     await audit(
       "Contract",
@@ -198,7 +205,7 @@ export async function signContract(
     return { success: true };
   } catch (err) {
     console.error("[signContract]", err);
-    return { success: false, error: "Erro ao registrar assinatura" };
+    return { success: false, error: t("errorSign") };
   }
 }
 
@@ -211,20 +218,22 @@ export async function replaceContractFile(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.contract");
+  const tc = await getTranslations("actions.common");
   const session = await auth();
-  if (!session?.user) return { success: false, error: "Não autorizado" };
+  if (!session?.user) return { success: false, error: tc("unauthorized") };
   const role = (session.user as { role?: string }).role;
   const userId = (session.user as { id?: string }).id;
   if (!canUploadContract(role)) {
-    return { success: false, error: "Sem permissão para enviar contrato" };
+    return { success: false, error: t("noPermissionUpload") };
   }
 
   const ip = getClientIp(await headers());
   if (!rateLimit(`upload:${userId ?? "anon"}`, 10, 60_000).ok) {
-    return { success: false, error: "Muitos uploads em sequência. Tente novamente em 1 minuto." };
+    return { success: false, error: t("rateLimitUser") };
   }
   if (!rateLimit(`upload:ip:${ip}`, 30, 60_000).ok) {
-    return { success: false, error: "Limite de uploads excedido." };
+    return { success: false, error: t("rateLimitIp") };
   }
 
   const file = formData.get("file");
@@ -233,16 +242,16 @@ export async function replaceContractFile(
     vendorId: formData.get("vendorId"),
   });
   if (!parsed.success) {
-    return { success: false, error: "Destino inválido" };
+    return { success: false, error: t("invalidTarget") };
   }
   if (!(file instanceof File) || file.size === 0) {
-    return { success: false, error: "Arquivo obrigatório" };
+    return { success: false, error: t("fileRequired") };
   }
 
   const contract = await prisma.contract.findFirst({
     where: { id: parsed.data.contractId, vendorId: parsed.data.vendorId, deletedAt: null },
   });
-  if (!contract) return { success: false, error: "Contrato não encontrado" };
+  if (!contract) return { success: false, error: t("notFound") };
 
   try {
     const bytes = Buffer.from(await file.arrayBuffer());
@@ -320,6 +329,6 @@ export async function replaceContractFile(
       return { success: false, error: err.message };
     }
     console.error("[replaceContractFile]", err);
-    return { success: false, error: "Erro ao enviar contrato" };
+    return { success: false, error: t("errorUpload") };
   }
 }

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { CheckCircle2, Gift as GiftIcon, Heart, Loader2, Pencil, Plus, QrCode, Trash2 } from "lucide-react";
 import {
   createGift,
@@ -33,6 +34,8 @@ type GiftRow = {
 type GuestRef = { id: string; name: string };
 
 export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guests: GuestRef[] }) {
+  const t = useTranslations("dashboard.gifts");
+  const tc = useTranslations("common");
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<GiftRow | null>(null);
@@ -62,9 +65,9 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
       try {
         const r = await createGift(undefined, formData);
         if (r.success) {
-          toast.success("Presente registrado");
+          toast.success(t("toast.created"));
           setOpen(false);
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.failed"), r.error);
       } finally {
         setBusy(false);
       }
@@ -76,9 +79,9 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
       try {
         const r = await updateGift(undefined, formData);
         if (r.success) {
-          toast.success("Presente atualizado");
+          toast.success(t("toast.updated"));
           setEditing(null);
-        } else toast.error("Falha", r.error);
+        } else toast.error(t("toast.failed"), r.error);
       } finally {
         setUpdatingBusy(false);
       }
@@ -87,8 +90,8 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
   function handleThanked(g: GiftRow) {
     startTransition(async () => {
       const r = await markGiftThanked(g.id, g.status !== "THANKED");
-      if (r.success) toast.success(g.status === "THANKED" ? "Desmarcado" : "Marcado como agradecido");
-      else toast.error("Falha", r.error);
+      if (r.success) toast.success(g.status === "THANKED" ? t("toast.unthanked") : t("toast.thanked"));
+      else toast.error(t("toast.failed"), r.error);
     });
   }
   function handleDelete() {
@@ -97,18 +100,18 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
     startTransition(async () => {
       const r = await deleteGift(id);
       if (r.success) {
-        toast.success("Presente removido");
+        toast.success(t("toast.removed"));
         setDeleting(null);
-      } else toast.error("Falha", r.error);
+      } else toast.error(t("toast.failed"), r.error);
     });
   }
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatCard label="Total em dinheiro" value={formatCurrency(totals.cash)} accent="emerald" />
-        <StatCard label="Itens recebidos" value={String(totals.items)} />
-        <StatCard label="Aguardando agradecer" value={String(totals.pending)} accent="amber" />
+        <StatCard label={t("stats.cashTotal")} value={formatCurrency(totals.cash)} accent="emerald" />
+        <StatCard label={t("stats.itemsReceived")} value={String(totals.items)} />
+        <StatCard label={t("stats.pendingThank")} value={String(totals.pending)} accent="amber" />
       </div>
 
       <div className="flex items-center justify-between">
@@ -120,21 +123,21 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
           }}
           className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
         >
-          <option value="ALL">Todos</option>
-          <option value="PENDING_THANK">Aguardando agradecer</option>
+          <option value="ALL">{t("filter.all")}</option>
+          <option value="PENDING_THANK">{t("filter.pendingThank")}</option>
         </select>
         <button
           type="button"
           onClick={() => setOpen(true)}
           className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500"
         >
-          <Plus className="h-4 w-4" /> Novo presente
+          <Plus className="h-4 w-4" /> {t("actions.new")}
         </button>
       </div>
 
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 p-8 text-center text-sm text-zinc-500">
-          Nenhum presente registrado.
+          {t("list.empty")}
         </div>
       ) : (
         <ul className="space-y-2">
@@ -146,14 +149,14 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium text-zinc-100">
-                    {g.guest?.name ?? g.giverName ?? "Anônimo"}
+                    {g.guest?.name ?? g.giverName ?? t("anonymous")}
                   </span>
                   <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
-                    {g.type === "CASH" ? "Dinheiro" : "Item"}
+                    {g.type === "CASH" ? t("type.cash") : t("type.item")}
                   </span>
                   {g.status === "THANKED" ? (
                     <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-300">
-                      <CheckCircle2 className="h-3 w-3" /> Agradecido
+                      <CheckCircle2 className="h-3 w-3" /> {t("badge.thanked")}
                     </span>
                   ) : null}
                 </div>
@@ -169,12 +172,12 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
                     <div className="flex items-center gap-1">
                       {g.isHoneymoonShare ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-1.5 py-0.5 text-[10px] text-rose-300">
-                          <Heart className="h-2.5 w-2.5" /> lua de mel
+                          <Heart className="h-2.5 w-2.5" /> {t("badge.honeymoon")}
                         </span>
                       ) : null}
                       {g.pixPaidAt ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-300">
-                          Pix recebido
+                          {t("badge.pixReceived")}
                         </span>
                       ) : null}
                     </div>
@@ -184,8 +187,8 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
                   {g.type === "CASH" ? (
                     <Link
                       href={`/dashboard/gifts/${g.id}/pix`}
-                      aria-label="Gerar QR Pix"
-                      title="Gerar QR Pix"
+                      aria-label={t("actions.generatePix")}
+                      title={t("actions.generatePix")}
                       className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
                     >
                       <QrCode className="h-4 w-4" />
@@ -199,15 +202,15 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
                         ? "bg-emerald-500/10 text-emerald-300"
                         : "bg-zinc-800/70 text-zinc-300 hover:bg-zinc-700"
                     }`}
-                    aria-label="Alternar agradecimento"
-                    title={g.status === "THANKED" ? "Desmarcar agradecido" : "Marcar como agradecido"}
+                    aria-label={t("actions.toggleThank")}
+                    title={g.status === "THANKED" ? t("actions.unmarkThanked") : t("actions.markThanked")}
                   >
                     <CheckCircle2 className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditing(g)}
-                    aria-label="Editar"
+                    aria-label={tc("actions.edit")}
                     className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
                   >
                     <Pencil className="h-4 w-4" />
@@ -215,7 +218,7 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
                   <button
                     type="button"
                     onClick={() => setDeleting(g)}
-                    aria-label="Excluir"
+                    aria-label={tc("actions.delete")}
                     className="rounded-lg p-1.5 text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -252,8 +255,9 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
 
       <ConfirmDialog
         open={!!deleting}
-        title="Excluir presente?"
-        confirmLabel="Excluir"
+        title={t("delete.title")}
+        confirmLabel={tc("actions.delete")}
+        cancelLabel={tc("actions.cancel")}
         tone="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleting(null)}
@@ -295,29 +299,31 @@ function GiftFormModal({
   onClose: () => void;
   formAction: (formData: FormData) => void;
 }) {
+  const t = useTranslations("dashboard.gifts");
+  const tc = useTranslations("common");
   const [type, setType] = useState(gift?.type ?? "CASH");
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
       <div className="my-4 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
         <h2 className="text-lg font-semibold text-white">
-          {mode === "create" ? "Novo presente" : "Editar presente"}
+          {mode === "create" ? t("form.titleCreate") : t("form.titleEdit")}
         </h2>
         <form action={formAction} className="mt-4 space-y-3">
           {gift ? <input type="hidden" name="id" value={gift.id} /> : null}
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Tipo</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.type")}</label>
             <select
               name="type"
               value={type}
               onChange={(e) => setType(e.target.value)}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
             >
-              <option value="CASH">Dinheiro</option>
-              <option value="ITEM">Item</option>
+              <option value="CASH">{t("type.cash")}</option>
+              <option value="ITEM">{t("type.item")}</option>
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Convidado (opcional)</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.guest")}</label>
             <select
               name="guestId"
               defaultValue={gift?.guestId ?? ""}
@@ -331,19 +337,19 @@ function GiftFormModal({
               ))}
             </select>
           </div>
-          <Field name="giverName" label="Nome de quem deu (se não tiver convidado)" defaultValue={gift?.giverName ?? ""} />
+          <Field name="giverName" label={t("form.giverName")} defaultValue={gift?.giverName ?? ""} />
           {type === "CASH" ? (
-            <Field name="amount" label="Valor (R$)" type="number" step="0.01" defaultValue={gift?.amount?.toString() ?? ""} />
+            <Field name="amount" label={t("form.amount")} type="number" step="0.01" defaultValue={gift?.amount?.toString() ?? ""} />
           ) : (
             <Field
               name="description"
-              label="Descrição"
+              label={t("form.description")}
               defaultValue={gift?.description ?? ""}
             />
           )}
           <Field
             name="receivedAt"
-            label="Recebido em"
+            label={t("form.receivedAt")}
             type="date"
             defaultValue={gift ? toIsoDate(new Date(gift.receivedAt)) : toIsoDate(new Date())}
           />
@@ -355,11 +361,11 @@ function GiftFormModal({
                 defaultChecked={gift?.isHoneymoonShare ?? false}
                 className="h-4 w-4 rounded border-zinc-700 bg-zinc-800"
               />
-              Cota da lua de mel (mostrar QR Pix dedicado)
+              {t("form.honeymoonShare")}
             </label>
           ) : null}
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-400">Notas</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.notes")}</label>
             <textarea
               name="notes"
               rows={2}
@@ -374,14 +380,14 @@ function GiftFormModal({
               onClick={onClose}
               className="flex-1 rounded-xl bg-zinc-800 py-2 text-sm font-medium text-white hover:bg-zinc-700"
             >
-              Cancelar
+              {tc("actions.cancel")}
             </button>
             <button
               type="submit"
               disabled={isBusy}
               className="flex flex-1 items-center justify-center rounded-xl bg-rose-600 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
             >
-              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : tc("actions.save")}
             </button>
           </div>
         </form>

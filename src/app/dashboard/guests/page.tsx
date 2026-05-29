@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import GuestsClient from "./guests-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function GuestsPage() {
+  const t = await getTranslations("dashboard.guests");
   const guests = await prisma.guest.findMany({
     where: { deletedAt: null },
     orderBy: [{ rsvpStatus: "asc" }, { name: "asc" }],
@@ -18,10 +20,8 @@ export default async function GuestsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Convidados</h1>
-        <p className="text-sm text-zinc-500">
-          Gerencie a lista, envie links únicos de RSVP e acompanhe confirmações.
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight text-white">{t("page.title")}</h1>
+        <p className="text-sm text-zinc-500">{t("page.subtitle")}</p>
       </div>
       <GuestsClient guests={guests} baseUrl={baseUrl} />
     </div>

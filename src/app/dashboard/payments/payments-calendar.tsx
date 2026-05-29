@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
@@ -26,22 +27,15 @@ type Props = {
   onDelete: (payment: PaymentWithVendor) => void;
 };
 
-const MONTH_NAMES = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
-
-const WEEKDAY_NAMES = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const WEEKDAY_KEYS = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+] as const;
 
 export default function PaymentsCalendar({
   payments,
@@ -50,6 +44,10 @@ export default function PaymentsCalendar({
   onEdit,
   onDelete,
 }: Props) {
+  const t = useTranslations("dashboard.payments");
+  const tc = useTranslations("common");
+  const monthName = (index: number) => t(`calendar.month.${index}`);
+  const weekdayNames = WEEKDAY_KEYS.map((k) => tc(`weekday.short.${k}`));
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -208,7 +206,12 @@ export default function PaymentsCalendar({
     return (
       <span
         className="font-medium text-rose-400"
-        title={`Base ${formatCurrency(adj.amount)} + multa ${formatCurrency(adj.lateFee)} + juros ${formatCurrency(adj.interest)} (${adj.lateDays} dia(s) em atraso)`}
+        title={t("amount.adjustedTooltip", {
+          base: formatCurrency(adj.amount),
+          lateFee: formatCurrency(adj.lateFee),
+          interest: formatCurrency(adj.interest),
+          days: adj.lateDays,
+        })}
       >
         <span className="text-zinc-500 line-through text-xs mr-1">{formatCurrency(adj.amount)}</span>{" "}
         <span>{formatCurrency(adj.adjusted)}</span>
@@ -233,13 +236,13 @@ export default function PaymentsCalendar({
               className="group flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 px-3.5 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-900 transition-colors hover:text-white"
             >
               <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-              <span>Visão Anual</span>
+              <span>{t("calendar.annualView")}</span>
             </button>
           )}
           <h2 className="text-xl font-bold text-white tracking-tight">
             {selectedMonth === null
-              ? `Calendário Financeiro de ${currentYear}`
-              : `${MONTH_NAMES[selectedMonth]} de ${currentYear}`}
+              ? t("calendar.yearTitle", { year: currentYear })
+              : t("calendar.monthTitle", { month: monthName(selectedMonth), year: currentYear })}
           </h2>
         </div>
 
@@ -250,7 +253,7 @@ export default function PaymentsCalendar({
               <button
                 onClick={handlePrevYear}
                 className="rounded-xl border border-zinc-800 bg-zinc-950 p-2 text-zinc-400 hover:bg-zinc-900 hover:text-white transition-colors"
-                aria-label="Ano anterior"
+                aria-label={t("calendar.prevYear")}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -258,7 +261,7 @@ export default function PaymentsCalendar({
               <button
                 onClick={handleNextYear}
                 className="rounded-xl border border-zinc-800 bg-zinc-950 p-2 text-zinc-400 hover:bg-zinc-900 hover:text-white transition-colors"
-                aria-label="Próximo ano"
+                aria-label={t("calendar.nextYear")}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -268,17 +271,17 @@ export default function PaymentsCalendar({
               <button
                 onClick={handlePrevMonth}
                 className="rounded-xl border border-zinc-800 bg-zinc-950 p-2 text-zinc-400 hover:bg-zinc-900 hover:text-white transition-colors"
-                aria-label="Mês anterior"
+                aria-label={t("calendar.prevMonth")}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <span className="px-3 text-sm font-semibold text-zinc-200">
-                {MONTH_NAMES[selectedMonth]}
+                {monthName(selectedMonth)}
               </span>
               <button
                 onClick={handleNextMonth}
                 className="rounded-xl border border-zinc-800 bg-zinc-950 p-2 text-zinc-400 hover:bg-zinc-900 hover:text-white transition-colors"
-                aria-label="Próximo mês"
+                aria-label={t("calendar.nextMonth")}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -305,12 +308,12 @@ export default function PaymentsCalendar({
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-lg font-bold text-zinc-100 group-hover:text-rose-400 transition-colors">
-                      {MONTH_NAMES[monthIndex]}
+                      {monthName(monthIndex)}
                     </h3>
                     <p className="text-xs text-zinc-500">
                       {totalCount === 0
-                        ? "Sem gastos agendados"
-                        : `${totalCount} ${totalCount === 1 ? "pagamento" : "pagamentos"}`}
+                        ? t("calendar.noScheduled")
+                        : t("calendar.paymentCount", { count: totalCount })}
                     </p>
                   </div>
                   <CalendarIcon className="h-4 w-4 text-zinc-600 group-hover:text-rose-500/60 transition-colors" />
@@ -319,17 +322,17 @@ export default function PaymentsCalendar({
                 {/* Valores Resumidos */}
                 <div className="mt-5 space-y-1">
                   <div className="flex justify-between text-xs text-zinc-400">
-                    <span>Total Planejado:</span>
+                    <span>{t("calendar.totalPlanned")}</span>
                     <span className="font-semibold text-zinc-200">{formatCurrency(total)}</span>
                   </div>
                   {hasPayments && (
                     <>
                       <div className="flex justify-between text-[11px] text-zinc-500">
-                        <span>Pago ({paidCount}):</span>
+                        <span>{t("calendar.paidWithCount", { count: paidCount })}</span>
                         <span className="text-emerald-400">{formatCurrency(paid)}</span>
                       </div>
                       <div className="flex justify-between text-[11px] text-zinc-500">
-                        <span>Pendente ({pendingCount}):</span>
+                        <span>{t("calendar.pendingWithCount", { count: pendingCount })}</span>
                         <span className="text-amber-400">{formatCurrency(pending)}</span>
                       </div>
                     </>
@@ -346,8 +349,8 @@ export default function PaymentsCalendar({
                       />
                     </div>
                     <div className="flex justify-between text-[9px] text-zinc-500 font-mono">
-                      <span>PROGRESsO</span>
-                      <span>{Math.round(progress)}% pago</span>
+                      <span>{t("calendar.progress")}</span>
+                      <span>{t("calendar.percentPaid", { percent: Math.round(progress) })}</span>
                     </div>
                   </div>
                 )}
@@ -362,7 +365,7 @@ export default function PaymentsCalendar({
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4 backdrop-blur-md shadow-xl">
             {/* Dias da Semana */}
             <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold uppercase tracking-wider text-zinc-500 pb-3 border-b border-zinc-800/50 mb-2">
-              {WEEKDAY_NAMES.map((name) => (
+              {weekdayNames.map((name) => (
                 <div key={name} className="py-1">
                   {name}
                 </div>
@@ -432,7 +435,7 @@ export default function PaymentsCalendar({
                       ))}
                       {dayPayments.length > 2 && (
                         <div className="text-center text-[9px] font-mono text-zinc-500 py-0.5">
-                          +{dayPayments.length - 2} outros
+                          {t("calendar.moreOthers", { count: dayPayments.length - 2 })}
                         </div>
                       )}
                     </div>
@@ -449,8 +452,8 @@ export default function PaymentsCalendar({
                 <TrendingUp className="h-4 w-4 text-rose-500" />
                 <span>
                   {selectedDay === null
-                    ? `Todos os Gastos de ${MONTH_NAMES[selectedMonth]}`
-                    : `Gastos de ${selectedDay} de ${MONTH_NAMES[selectedMonth]}`}
+                    ? t("calendar.allExpensesOf", { month: monthName(selectedMonth) })
+                    : t("calendar.expensesOfDay", { day: selectedDay, month: monthName(selectedMonth) })}
                 </span>
                 <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
                   {detailedPayments.length}
@@ -461,7 +464,7 @@ export default function PaymentsCalendar({
                   onClick={() => setSelectedDay(null)}
                   className="text-xs text-rose-400 hover:text-rose-300 font-medium"
                 >
-                  Ver todos do mês
+                  {t("calendar.viewAllMonth")}
                 </button>
               )}
             </div>
@@ -472,19 +475,19 @@ export default function PaymentsCalendar({
                 <table className="w-full text-left text-sm text-zinc-400">
                   <thead className="border-b border-zinc-800 bg-zinc-950/40 text-xs uppercase tracking-wider text-zinc-500">
                     <tr>
-                      <th className="px-6 py-4 font-medium">Vencimento</th>
-                      <th className="px-6 py-4 font-medium">Fornecedor</th>
-                      <th className="px-6 py-4 font-medium">Valor</th>
-                      <th className="px-6 py-4 font-medium">Parcela</th>
-                      <th className="px-6 py-4 font-medium">Status</th>
-                      <th className="px-6 py-4 text-right font-medium">Ações</th>
+                      <th className="px-6 py-4 font-medium">{t("table.dueDate")}</th>
+                      <th className="px-6 py-4 font-medium">{t("table.vendor")}</th>
+                      <th className="px-6 py-4 font-medium">{tc("labels.amount")}</th>
+                      <th className="px-6 py-4 font-medium">{t("table.installment")}</th>
+                      <th className="px-6 py-4 font-medium">{tc("labels.status")}</th>
+                      <th className="px-6 py-4 text-right font-medium">{tc("labels.actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-850">
                     {detailedPayments.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
-                          Nenhum gasto registrado para este período.
+                          {t("calendar.noExpenses")}
                         </td>
                       </tr>
                     ) : (
@@ -515,7 +518,7 @@ export default function PaymentsCalendar({
                                   : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                               }`}
                             >
-                              {payment.status === "PAID" ? "Pago" : "Pendente"}
+                              {payment.status === "PAID" ? tc("status.paid") : tc("status.pending")}
                             </span>
                           </td>
                           <td className="px-6 py-4">
@@ -525,27 +528,27 @@ export default function PaymentsCalendar({
                                   type="button"
                                   onClick={() => onMarkPaid(payment)}
                                   className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-emerald-400 transition-colors hover:bg-emerald-500/10"
-                                  aria-label="Quitar"
+                                  aria-label={t("actions.markPaid")}
                                 >
                                   <CheckCircle2 className="h-4 w-4" />
-                                  <span className="text-xs font-semibold">Quitar</span>
+                                  <span className="text-xs font-semibold">{t("actions.markPaid")}</span>
                                 </button>
                               ) : (
                                 <button
                                   type="button"
                                   onClick={() => onUndoPaid(payment)}
                                   className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-amber-400 transition-colors hover:bg-amber-500/10"
-                                  aria-label="Estornar"
+                                  aria-label={t("actions.revert")}
                                 >
                                   <RotateCcw className="h-4 w-4" />
-                                  <span className="text-xs font-semibold">Estornar</span>
+                                  <span className="text-xs font-semibold">{t("actions.revert")}</span>
                                 </button>
                               )}
                               <button
                                 type="button"
                                 onClick={() => onEdit(payment)}
                                 className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
-                                aria-label="Editar"
+                                aria-label={tc("actions.edit")}
                               >
                                 <Pencil className="h-4 w-4" />
                               </button>
@@ -553,7 +556,7 @@ export default function PaymentsCalendar({
                                 type="button"
                                 onClick={() => onDelete(payment)}
                                 className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
-                                aria-label="Excluir"
+                                aria-label={tc("actions.delete")}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>

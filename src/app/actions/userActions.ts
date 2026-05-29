@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
@@ -10,6 +11,7 @@ import { ROLES, canManageUsers, type Role } from "@/lib/permissions";
 import { getSecuritySettings, setSecuritySettings } from "@/lib/security-settings";
 import { notify } from "@/lib/notifications";
 import { coerceLocale } from "@/i18n/config";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import type { ActionResult } from "@/types";
 
 function buildLoginUrl(): string {
@@ -23,30 +25,29 @@ const PhoneSchema = z
   .trim()
   .transform((v) => (v.length === 0 ? null : v))
   .nullable()
-  .refine(
-    (v) => v === null || /^\+\d{10,15}$/.test(v),
-    "Telefone deve estar no formato +5511999999999",
-  );
+  .refine((v) => v === null || /^\+\d{10,15}$/.test(v));
 
 async function requireManager(): Promise<
   | { ok: true; me: { id: string; email: string; role: string } }
   | { ok: false; error: string }
 > {
+  const t = await getTranslations("actions.user");
+  const tc = await getTranslations("actions.common");
   const session = await auth();
   const email = session?.user?.email;
   const id = (session?.user as { id?: string } | undefined)?.id;
   const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!email || !id) return { ok: false, error: "Não autorizado" };
-  if (!canManageUsers(role)) return { ok: false, error: "Sem permissão" };
+  if (!email || !id) return { ok: false, error: tc("unauthorized") };
+  if (!canManageUsers(role)) return { ok: false, error: t("noPermission") };
 
   const fresh = await prisma.user.findUnique({
     where: { id },
     select: { id: true, email: true, role: true, isActive: true, archivedAt: true },
   });
   if (!fresh || !fresh.isActive || fresh.archivedAt) {
-    return { ok: false, error: "Sessão inválida" };
+    return { ok: false, error: t("invalidSession") };
   }
-  if (!canManageUsers(fresh.role)) return { ok: false, error: "Sem permissão" };
+  if (!canManageUsers(fresh.role)) return { ok: false, error: t("noPermission") };
   return { ok: true, me: { id: fresh.id, email: fresh.email, role: fresh.role } };
 }
 
@@ -54,15 +55,17 @@ async function requireSession(): Promise<
   | { ok: true; me: { id: string; email: string; role: string } }
   | { ok: false; error: string }
 > {
+  const t = await getTranslations("actions.user");
+  const tc = await getTranslations("actions.common");
   const session = await auth();
   const id = (session?.user as { id?: string } | undefined)?.id;
-  if (!id) return { ok: false, error: "Não autorizado" };
+  if (!id) return { ok: false, error: tc("unauthorized") };
   const fresh = await prisma.user.findUnique({
     where: { id },
     select: { id: true, email: true, role: true, isActive: true, archivedAt: true },
   });
   if (!fresh || !fresh.isActive || fresh.archivedAt) {
-    return { ok: false, error: "Sessão inválida" };
+    return { ok: false, error: t("invalidSession") };
   }
   return { ok: true, me: { id: fresh.id, email: fresh.email, role: fresh.role } };
 }
@@ -83,23 +86,29 @@ function emailSchema() {
     .string()
     .trim()
     .toLowerCase()
-    .email("Email inválido")
+    .email()
     .max(160);
 }
 
-async function passwordSchema() {
+async function passwordPolicy() {
   const settings = await getSecuritySettings();
-  const min = settings.passwordMinLength;
-  return z
-    .string()
-    .min(min, `Senha deve ter ao menos ${min} caracteres`)
-    .max(128, "Senha muito longa");
+  return settings.passwordMinLength;
+}
+
+function validatePassword(
+  password: string,
+  min: number,
+  t: Awaited<ReturnType<typeof getTranslations>>,
+): string | null {
+  if (password.length < min) return t("passwordTooShort", { min });
+  if (password.length > 128) return t("passwordTooLong");
+  return null;
 }
 
 const RoleSchema = z.enum(ROLES);
 
 const CreateSchema = z.object({
-  name: z.string().trim().min(1, "Nome obrigatório").max(120),
+  name: z.string().trim().min(1).max(120),
   email: emailSchema(),
   phone: PhoneSchema.optional(),
   password: z.string().min(6).max(128),
@@ -110,22 +119,23 @@ export async function createUser(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
+  const t = await getTranslations("actions.user");
   const guard = await requireManager();
   if (!guard.ok) return { success: false, error: guard.error };
 
   const parsed = CreateSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
-  const pwSchema = await passwordSchema();
-  const pwCheck = pwSchema.safeParse(parsed.data.password);
-  if (!pwCheck.success) {
-    return { success: false, error: pwCheck.error.issues[0]?.message ?? "Senha inválida" };
+  const min = await passwordPolicy();
+  const pwError = validatePassword(parsed.data.password, min, t);
+  if (pwError) {
+    return { success: false, error: pwError };
   }
 
   try {
     const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-    if (existing) return { success: false, error: "Já existe um usuário com este email" };
+    if (existing) return { success: false, error: t("emailTaken") };
 
     const hashed = await bcrypt.hash(parsed.data.password, 10);
     const created = await prisma.user.create({
@@ -163,7 +173,7 @@ export async function createUser(
     return { success: true, data: { id: created.id } };
   } catch (err) {
     console.error("[createUser]", err);
-    return { success: false, error: "Erro ao criar usuário" };
+    return { success: false, error: t("errorCreating") };
   }
 }
 
@@ -188,12 +198,13 @@ export async function updateUser(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.user");
   const guard = await requireManager();
   if (!guard.ok) return { success: false, error: guard.error };
 
   const parsed = UpdateSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   const { id, name, email, phone, role, isActive } = parsed.data;
 
@@ -202,28 +213,28 @@ export async function updateUser(
       where: { id },
       select: { id: true, email: true, role: true, isActive: true, archivedAt: true },
     });
-    if (!target || target.archivedAt) return { success: false, error: "Usuário não encontrado" };
+    if (!target || target.archivedAt) return { success: false, error: t("notFound") };
 
     if (id === guard.me.id) {
       if (role && role !== guard.me.role) {
-        return { success: false, error: "Você não pode alterar sua própria função" };
+        return { success: false, error: t("cannotChangeOwnRole") };
       }
       if (isActive === false) {
-        return { success: false, error: "Você não pode desativar a si mesmo" };
+        return { success: false, error: t("cannotDeactivateSelf") };
       }
     }
 
     if (target.role === "ADMIN" && (role && role !== "ADMIN" || isActive === false)) {
       const others = await countActiveAdmins(target.id);
       if (others < 1) {
-        return { success: false, error: "Mantenha pelo menos um administrador ativo" };
+        return { success: false, error: t("keepOneAdmin") };
       }
     }
 
     if (email && email !== target.email) {
       const owner = await prisma.user.findUnique({ where: { email }, select: { id: true } });
       if (owner && owner.id !== target.id) {
-        return { success: false, error: "Já existe um usuário com este email" };
+        return { success: false, error: t("emailTaken") };
       }
     }
 
@@ -241,10 +252,10 @@ export async function updateUser(
     return { success: true };
   } catch (err) {
     if (typeof err === "object" && err !== null && (err as { code?: string }).code === "P2002") {
-      return { success: false, error: "Já existe um usuário com este email" };
+      return { success: false, error: t("emailTaken") };
     }
     console.error("[updateUser]", err);
-    return { success: false, error: "Erro ao atualizar usuário" };
+    return { success: false, error: t("errorUpdating") };
   }
 }
 
@@ -257,22 +268,23 @@ export async function resetUserPassword(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.user");
   const guard = await requireManager();
   if (!guard.ok) return { success: false, error: guard.error };
 
   const parsed = ResetPasswordSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
-  const pwSchema = await passwordSchema();
-  const pwCheck = pwSchema.safeParse(parsed.data.newPassword);
-  if (!pwCheck.success) {
-    return { success: false, error: pwCheck.error.issues[0]?.message ?? "Senha inválida" };
+  const min = await passwordPolicy();
+  const pwError = validatePassword(parsed.data.newPassword, min, t);
+  if (pwError) {
+    return { success: false, error: pwError };
   }
 
   try {
     const target = await prisma.user.findUnique({ where: { id: parsed.data.id } });
-    if (!target) return { success: false, error: "Usuário não encontrado" };
+    if (!target) return { success: false, error: t("notFound") };
 
     const hashed = await bcrypt.hash(parsed.data.newPassword, 10);
     await prisma.user.update({
@@ -300,20 +312,21 @@ export async function resetUserPassword(
     return { success: true };
   } catch (err) {
     console.error("[resetUserPassword]", err);
-    return { success: false, error: "Erro ao redefinir senha" };
+    return { success: false, error: t("errorResettingPassword") };
   }
 }
 
 export async function resetUserTwoFactor(targetId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.user");
   const guard = await requireManager();
   if (!guard.ok) return { success: false, error: guard.error };
   if (!targetId || typeof targetId !== "string") {
-    return { success: false, error: "ID inválido" };
+    return { success: false, error: t("invalidId") };
   }
 
   try {
     const target = await prisma.user.findUnique({ where: { id: targetId } });
-    if (!target) return { success: false, error: "Usuário não encontrado" };
+    if (!target) return { success: false, error: t("notFound") };
 
     await prisma.user.update({
       where: { id: target.id },
@@ -329,26 +342,27 @@ export async function resetUserTwoFactor(targetId: string): Promise<ActionResult
     return { success: true };
   } catch (err) {
     console.error("[resetUserTwoFactor]", err);
-    return { success: false, error: "Erro ao redefinir 2FA" };
+    return { success: false, error: t("errorResetting2FA") };
   }
 }
 
 export async function archiveUser(targetId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.user");
   const guard = await requireManager();
   if (!guard.ok) return { success: false, error: guard.error };
 
   try {
     if (targetId === guard.me.id) {
-      return { success: false, error: "Você não pode arquivar a si mesmo" };
+      return { success: false, error: t("cannotArchiveSelf") };
     }
     const target = await prisma.user.findUnique({ where: { id: targetId } });
     if (!target || target.archivedAt) {
-      return { success: false, error: "Usuário não encontrado" };
+      return { success: false, error: t("notFound") };
     }
     if (target.role === "ADMIN") {
       const others = await countActiveAdmins(target.id);
       if (others < 1) {
-        return { success: false, error: "Mantenha pelo menos um administrador ativo" };
+        return { success: false, error: t("keepOneAdmin") };
       }
     }
     await prisma.user.update({
@@ -360,17 +374,18 @@ export async function archiveUser(targetId: string): Promise<ActionResult> {
     return { success: true };
   } catch (err) {
     console.error("[archiveUser]", err);
-    return { success: false, error: "Erro ao arquivar usuário" };
+    return { success: false, error: t("errorArchiving") };
   }
 }
 
 export async function restoreUser(targetId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.user");
   const guard = await requireManager();
   if (!guard.ok) return { success: false, error: guard.error };
 
   try {
     const target = await prisma.user.findUnique({ where: { id: targetId } });
-    if (!target) return { success: false, error: "Usuário não encontrado" };
+    if (!target) return { success: false, error: t("notFound") };
     await prisma.user.update({
       where: { id: target.id },
       data: { archivedAt: null, isActive: true },
@@ -380,7 +395,7 @@ export async function restoreUser(targetId: string): Promise<ActionResult> {
     return { success: true };
   } catch (err) {
     console.error("[restoreUser]", err);
-    return { success: false, error: "Erro ao restaurar usuário" };
+    return { success: false, error: t("errorRestoring") };
   }
 }
 
@@ -393,27 +408,28 @@ export async function changeOwnPassword(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.user");
   const guard = await requireSession();
   if (!guard.ok) return { success: false, error: guard.error };
 
   const parsed = ChangeOwnSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
-  const pwSchema = await passwordSchema();
-  const pwCheck = pwSchema.safeParse(parsed.data.newPassword);
-  if (!pwCheck.success) {
-    return { success: false, error: pwCheck.error.issues[0]?.message ?? "Senha inválida" };
+  const min = await passwordPolicy();
+  const pwError = validatePassword(parsed.data.newPassword, min, t);
+  if (pwError) {
+    return { success: false, error: pwError };
   }
   if (parsed.data.currentPassword === parsed.data.newPassword) {
-    return { success: false, error: "A nova senha deve ser diferente da atual" };
+    return { success: false, error: t("newPasswordMustDiffer") };
   }
 
   try {
     const user = await prisma.user.findUnique({ where: { id: guard.me.id } });
-    if (!user) return { success: false, error: "Usuário não encontrado" };
+    if (!user) return { success: false, error: t("notFound") };
     const ok = await bcrypt.compare(parsed.data.currentPassword, user.password);
-    if (!ok) return { success: false, error: "Senha atual incorreta" };
+    if (!ok) return { success: false, error: t("wrongCurrentPassword") };
 
     const hashed = await bcrypt.hash(parsed.data.newPassword, 10);
     await prisma.user.update({
@@ -430,24 +446,25 @@ export async function changeOwnPassword(
     return { success: true };
   } catch (err) {
     console.error("[changeOwnPassword]", err);
-    return { success: false, error: "Erro ao trocar senha" };
+    return { success: false, error: t("errorChangingPassword") };
   }
 }
 
 const UpdateOwnProfileSchema = z.object({
-  name: z.string().trim().min(1, "Nome obrigatório").max(120),
+  name: z.string().trim().min(1).max(120),
 });
 
 export async function updateOwnProfile(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.user");
   const guard = await requireSession();
   if (!guard.ok) return { success: false, error: guard.error };
 
   const parsed = UpdateOwnProfileSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   try {
@@ -460,7 +477,7 @@ export async function updateOwnProfile(
     return { success: true };
   } catch (err) {
     console.error("[updateOwnProfile]", err);
-    return { success: false, error: "Erro ao atualizar perfil" };
+    return { success: false, error: t("errorUpdatingProfile") };
   }
 }
 
@@ -485,15 +502,16 @@ export async function updateSecuritySettings(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.user");
   const guard = await requireManager();
   if (!guard.ok) return { success: false, error: guard.error };
   if (guard.me.role !== "ADMIN") {
-    return { success: false, error: "Apenas administradores podem alterar política de segurança" };
+    return { success: false, error: t("securityPolicyAdminOnly") };
   }
 
   const parsed = SecuritySettingsSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   try {
@@ -510,6 +528,6 @@ export async function updateSecuritySettings(
     return { success: true };
   } catch (err) {
     console.error("[updateSecuritySettings]", err);
-    return { success: false, error: "Erro ao salvar política de segurança" };
+    return { success: false, error: t("errorSavingSecurityPolicy") };
   }
 }

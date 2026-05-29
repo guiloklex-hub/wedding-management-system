@@ -3,8 +3,10 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { zodErrorMessage } from "@/lib/zod-i18n";
 import { denyIfNoEdit } from "@/lib/finance-access";
 import { notifyRsvpResponse } from "@/lib/notifications/rsvp";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
@@ -34,13 +36,14 @@ export async function createGuestGroup(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.guestGroup");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
 
   const data = Object.fromEntries(formData.entries());
   const parsed = GroupCreateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const created = await prisma.guestGroup.create({ data: parsed.data });
@@ -50,7 +53,7 @@ export async function createGuestGroup(
     return { success: true };
   } catch (err) {
     console.error("[createGuestGroup]", err);
-    return { success: false, error: "Erro ao criar grupo" };
+    return { success: false, error: t("errorCreating") };
   }
 }
 
@@ -58,13 +61,14 @@ export async function updateGuestGroup(
   _state: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const t = await getTranslations("actions.guestGroup");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
 
   const data = Object.fromEntries(formData.entries());
   const parsed = GroupUpdateSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     const { id, ...rest } = parsed.data;
@@ -72,22 +76,23 @@ export async function updateGuestGroup(
       where: { id },
       data: rest,
     });
-    if (result.count === 0) return { success: false, error: "Grupo não encontrado" };
+    if (result.count === 0) return { success: false, error: t("notFound") };
     await audit("GuestGroup", id, "UPDATE", { name: rest.name });
     revalidatePath("/dashboard/guests/groups");
     revalidatePath("/dashboard/guests");
     return { success: true };
   } catch (err) {
     console.error("[updateGuestGroup]", err);
-    return { success: false, error: "Erro ao atualizar grupo" };
+    return { success: false, error: t("errorUpdating") };
   }
 }
 
 export async function deleteGuestGroup(groupId: string): Promise<ActionResult> {
+  const t = await getTranslations("actions.guestGroup");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
   if (typeof groupId !== "string" || groupId.length === 0 || groupId.length > 64) {
-    return { success: false, error: "ID inválido" };
+    return { success: false, error: t("invalidId") };
   }
   try {
     await prisma.$transaction([
@@ -100,7 +105,7 @@ export async function deleteGuestGroup(groupId: string): Promise<ActionResult> {
     return { success: true };
   } catch (err) {
     console.error("[deleteGuestGroup]", err);
-    return { success: false, error: "Erro ao excluir grupo" };
+    return { success: false, error: t("errorDeleting") };
   }
 }
 
@@ -113,12 +118,13 @@ export async function setGroupMembers(input: {
   groupId: string;
   guestIds: string[];
 }): Promise<ActionResult> {
+  const t = await getTranslations("actions.guestGroup");
   const denied = await denyIfNoEdit();
   if (denied) return denied;
 
   const parsed = GroupMembershipSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
     await prisma.$transaction([
@@ -143,7 +149,7 @@ export async function setGroupMembers(input: {
     return { success: true };
   } catch (err) {
     console.error("[setGroupMembers]", err);
-    return { success: false, error: "Erro ao atualizar membros" };
+    return { success: false, error: t("errorUpdatingMembers") };
   }
 }
 
@@ -173,10 +179,11 @@ export async function publicRsvpRespondForGroup(input: {
   }>;
   notes?: string | null;
 }): Promise<ActionResult<{ groupName: string; count: number }>> {
+  const t = await getTranslations("actions.guestGroup");
   const ip = getClientIp(await headers());
   const rl = rateLimit(`rsvp:${ip}`, 10, 60_000);
   if (!rl.ok) {
-    return { success: false, error: "Muitas tentativas. Tente novamente em alguns minutos." };
+    return { success: false, error: t("tooManyAttempts") };
   }
   const normalized = {
     token: input.token,
@@ -190,7 +197,7 @@ export async function publicRsvpRespondForGroup(input: {
   };
   const parsed = GroupResponseSchema.safeParse(normalized);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
 
   try {
@@ -203,9 +210,9 @@ export async function publicRsvpRespondForGroup(input: {
         },
       },
     });
-    if (!group) return { success: false, error: "Convite de grupo não encontrado" };
+    if (!group) return { success: false, error: t("groupInviteNotFound") };
     if (group.rsvpTokenExpiresAt && group.rsvpTokenExpiresAt.getTime() < Date.now()) {
-      return { success: false, error: "Link expirado. Solicite um novo convite." };
+      return { success: false, error: t("linkExpired") };
     }
 
     const groupGuestIds = new Set(group.guests.map((g: { id: string }) => g.id));
@@ -216,7 +223,7 @@ export async function publicRsvpRespondForGroup(input: {
     // Anti-IDOR: reject responses containing guestId outside this group
     for (const r of parsed.data.responses) {
       if (!groupGuestIds.has(r.guestId)) {
-        return { success: false, error: "Resposta inválida (convidado fora do grupo)" };
+        return { success: false, error: t("guestOutsideGroup") };
       }
     }
 
@@ -263,6 +270,6 @@ export async function publicRsvpRespondForGroup(input: {
     };
   } catch (err) {
     console.error("[publicRsvpRespondForGroup]", err);
-    return { success: false, error: "Erro ao registrar respostas" };
+    return { success: false, error: t("errorRsvp") };
   }
 }

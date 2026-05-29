@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Plus, Link2, Trash2, Edit3, Users, CheckCircle2, X } from "lucide-react";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -39,6 +40,8 @@ export default function GroupsClient({
   allGuests: GuestRef[];
 }) {
   const router = useRouter();
+  const t = useTranslations("dashboard.guests.groups");
+  const tc = useTranslations("common");
   const toast = useToast();
   const [groups, setGroups] = useState(initialGroups);
   const [guests, setGuests] = useState(allGuests);
@@ -63,8 +66,8 @@ export default function GroupsClient({
   function copyLink(token: string) {
     const url = `${window.location.origin}/rsvp/group/${token}`;
     navigator.clipboard.writeText(url).then(
-      () => toast.success("Link copiado", url),
-      () => toast.error("Erro", "Não foi possível copiar"),
+      () => toast.success(t("toast.linkCopied"), url),
+      () => toast.error(tc("common.errorGeneric"), t("toast.copyFailed")),
     );
   }
 
@@ -73,10 +76,10 @@ export default function GroupsClient({
     const res = await createGuestGroup(undefined, formData);
     setBusy(false);
     if (!res.success) {
-      toast.error("Erro", res.error);
+      toast.error(tc("common.errorGeneric"), res.error);
       return;
     }
-    toast.success("Grupo criado");
+    toast.success(t("toast.created"));
     setShowCreate(false);
     startTransition(() => router.refresh());
   }
@@ -88,10 +91,10 @@ export default function GroupsClient({
     const res = await updateGuestGroup(undefined, formData);
     setBusy(false);
     if (!res.success) {
-      toast.error("Erro", res.error);
+      toast.error(tc("common.errorGeneric"), res.error);
       return;
     }
-    toast.success("Grupo atualizado");
+    toast.success(t("toast.updated"));
     setEditing(null);
     startTransition(() => router.refresh());
   }
@@ -102,10 +105,10 @@ export default function GroupsClient({
     const res = await deleteGuestGroup(confirmDelete.id);
     setBusy(false);
     if (!res.success) {
-      toast.error("Erro", res.error);
+      toast.error(tc("common.errorGeneric"), res.error);
       return;
     }
-    toast.success("Grupo excluído");
+    toast.success(t("toast.deleted"));
     setConfirmDelete(null);
     startTransition(() => router.refresh());
   }
@@ -116,10 +119,10 @@ export default function GroupsClient({
     const res = await setGroupMembers({ groupId: managingMembersOf.id, guestIds });
     setBusy(false);
     if (!res.success) {
-      toast.error("Erro", res.error);
+      toast.error(tc("common.errorGeneric"), res.error);
       return;
     }
-    toast.success("Membros atualizados");
+    toast.success(t("toast.membersUpdated"));
     setManagingMembersOf(null);
     startTransition(() => router.refresh());
   }
@@ -130,14 +133,12 @@ export default function GroupsClient({
         href="/dashboard/guests"
         className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-300"
       >
-        <ArrowLeft className="h-4 w-4" /> Voltar para convidados
+        <ArrowLeft className="h-4 w-4" /> {t("backToGuests")}
       </Link>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-100 md:text-2xl">Grupos / Famílias</h1>
-          <p className="text-sm text-zinc-400">
-            Crie grupos para gerar um único link de RSVP por família.
-          </p>
+          <h1 className="text-xl font-semibold text-zinc-100 md:text-2xl">{t("title")}</h1>
+          <p className="text-sm text-zinc-400">{t("subtitle")}</p>
         </div>
         <button
           type="button"
@@ -145,14 +146,14 @@ export default function GroupsClient({
           className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500"
         >
           <Plus className="h-4 w-4" />
-          Novo grupo
+          {t("newGroup")}
         </button>
       </header>
 
       {groups.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-700 p-8 text-center">
           <Users className="mx-auto mb-3 h-8 w-8 text-zinc-500" />
-          <p className="text-sm text-zinc-400">Nenhum grupo cadastrado.</p>
+          <p className="text-sm text-zinc-400">{t("empty")}</p>
         </div>
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -169,22 +170,22 @@ export default function GroupsClient({
                   <div className="min-w-0">
                     <h2 className="truncate text-base font-semibold text-zinc-100">{g.name}</h2>
                     {g.contactName ? (
-                      <p className="text-xs text-zinc-500">Contato: {g.contactName}</p>
+                      <p className="text-xs text-zinc-500">{t("card.contact", { name: g.contactName })}</p>
                     ) : null}
                   </div>
                   <span className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
-                    {g.guests.length} pessoas
+                    {t("card.people", { count: g.guests.length })}
                   </span>
                 </header>
                 <div className="mb-3 grid grid-cols-3 gap-1 text-center text-[10px]">
                   <span className="rounded bg-emerald-500/10 px-1.5 py-1 text-emerald-300">
-                    {confirmed} sim
+                    {t("card.yes", { count: confirmed })}
                   </span>
                   <span className="rounded bg-amber-500/10 px-1.5 py-1 text-amber-300">
-                    {pending} pendente
+                    {t("card.pending", { count: pending })}
                   </span>
                   <span className="rounded bg-rose-500/10 px-1.5 py-1 text-rose-300">
-                    {declined} não
+                    {t("card.no", { count: declined })}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
@@ -194,7 +195,7 @@ export default function GroupsClient({
                     className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
                   >
                     <Link2 className="h-3.5 w-3.5" />
-                    Copiar link
+                    {t("card.copyLink")}
                   </button>
                   <button
                     type="button"
@@ -202,7 +203,7 @@ export default function GroupsClient({
                     className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
                   >
                     <Users className="h-3.5 w-3.5" />
-                    Membros
+                    {t("card.members")}
                   </button>
                   <button
                     type="button"
@@ -210,7 +211,7 @@ export default function GroupsClient({
                     className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
                   >
                     <Edit3 className="h-3.5 w-3.5" />
-                    Editar
+                    {tc("actions.edit")}
                   </button>
                   <button
                     type="button"
@@ -218,7 +219,7 @@ export default function GroupsClient({
                     className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-rose-300 hover:bg-rose-500/10"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    Excluir
+                    {tc("actions.delete")}
                   </button>
                 </div>
               </li>
@@ -229,7 +230,7 @@ export default function GroupsClient({
 
       {showCreate ? (
         <GroupForm
-          title="Novo grupo"
+          title={t("form.createTitle")}
           busy={busy}
           onCancel={() => setShowCreate(false)}
           onSubmit={handleCreate}
@@ -238,7 +239,7 @@ export default function GroupsClient({
 
       {editing ? (
         <GroupForm
-          title="Editar grupo"
+          title={t("form.editTitle")}
           initial={editing}
           busy={busy}
           onCancel={() => setEditing(null)}
@@ -258,15 +259,15 @@ export default function GroupsClient({
 
       <ConfirmDialog
         open={confirmDelete !== null}
-        title="Excluir grupo?"
+        title={t("delete.title")}
         description={
           confirmDelete
-            ? `O grupo "${confirmDelete.name}" será removido. Os convidados não serão excluídos.`
+            ? t("delete.description", { name: confirmDelete.name })
             : ""
         }
         tone="danger"
         busy={busy}
-        confirmLabel="Excluir"
+        confirmLabel={tc("actions.delete")}
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(null)}
       />
@@ -287,6 +288,8 @@ function GroupForm({
   onCancel: () => void;
   onSubmit: (fd: FormData) => void;
 }) {
+  const t = useTranslations("dashboard.guests.groups");
+  const tc = useTranslations("common");
   return (
     <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:items-center">
       <form
@@ -294,31 +297,31 @@ function GroupForm({
         className="my-4 w-full max-w-md space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl"
       >
         <h2 className="text-base font-semibold text-zinc-100">{title}</h2>
-        <FieldInput name="name" label="Nome do grupo" defaultValue={initial?.name} required maxLength={120} />
+        <FieldInput name="name" label={t("form.name")} defaultValue={initial?.name} required maxLength={120} />
         <FieldInput
           name="contactName"
-          label="Contato (opcional)"
+          label={t("form.contactName")}
           defaultValue={initial?.contactName ?? ""}
           maxLength={120}
         />
         <div className="grid grid-cols-2 gap-3">
           <FieldInput
             name="contactEmail"
-            label="Email"
+            label={t("form.email")}
             defaultValue={initial?.contactEmail ?? ""}
             type="email"
             maxLength={160}
           />
           <FieldInput
             name="contactPhone"
-            label="Telefone"
+            label={t("form.phone")}
             defaultValue={initial?.contactPhone ?? ""}
             maxLength={40}
           />
         </div>
         <FieldTextarea
           name="notes"
-          label="Observações"
+          label={t("form.notes")}
           defaultValue={initial?.notes ?? ""}
           rows={2}
           maxLength={500}
@@ -330,14 +333,14 @@ function GroupForm({
             disabled={busy}
             className="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
           >
-            Cancelar
+            {tc("actions.cancel")}
           </button>
           <button
             type="submit"
             disabled={busy}
             className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-60"
           >
-            {busy ? "Salvando..." : "Salvar"}
+            {busy ? t("form.saving") : tc("actions.save")}
           </button>
         </div>
       </form>
@@ -358,6 +361,8 @@ function MembersDialog({
   onCancel: () => void;
   onSave: (ids: string[]) => void;
 }) {
+  const t = useTranslations("dashboard.guests.groups");
+  const tc = useTranslations("common");
   const [selected, setSelected] = useState<Set<string>>(
     new Set(group.guests.map((g) => g.id)),
   );
@@ -384,15 +389,13 @@ function MembersDialog({
       <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
         <header className="flex items-center justify-between border-b border-zinc-800 p-4">
           <div>
-            <h2 className="text-base font-semibold text-zinc-100">Membros de {group.name}</h2>
-            <p className="text-xs text-zinc-500">
-              Selecione os convidados que pertencem a este grupo.
-            </p>
+            <h2 className="text-base font-semibold text-zinc-100">{t("members.title", { name: group.name })}</h2>
+            <p className="text-xs text-zinc-500">{t("members.subtitle")}</p>
           </div>
           <button
             type="button"
             onClick={onCancel}
-            aria-label="Fechar"
+            aria-label={tc("actions.close")}
             className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800"
           >
             <X className="h-4 w-4" />
@@ -403,13 +406,13 @@ function MembersDialog({
             type="search"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="Buscar convidado..."
+            placeholder={t("members.searchPlaceholder")}
             className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-rose-500 focus:outline-none"
           />
         </div>
         <ul className="flex-1 overflow-y-auto p-2">
           {visible.length === 0 ? (
-            <p className="p-4 text-center text-sm text-zinc-500">Nenhum convidado disponível.</p>
+            <p className="p-4 text-center text-sm text-zinc-500">{t("members.noneAvailable")}</p>
           ) : (
             visible.map((g) => {
               const isSelected = selected.has(g.id);
@@ -437,7 +440,7 @@ function MembersDialog({
           )}
         </ul>
         <footer className="flex items-center justify-between border-t border-zinc-800 p-3">
-          <span className="text-xs text-zinc-500">{selected.size} selecionado(s)</span>
+          <span className="text-xs text-zinc-500">{t("members.selectedCount", { count: selected.size })}</span>
           <div className="flex gap-2">
             <button
               type="button"
@@ -445,7 +448,7 @@ function MembersDialog({
               disabled={busy}
               className="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
             >
-              Cancelar
+              {tc("actions.cancel")}
             </button>
             <button
               type="button"
@@ -453,7 +456,7 @@ function MembersDialog({
               disabled={busy}
               className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-60"
             >
-              {busy ? "Salvando..." : "Salvar"}
+              {busy ? t("form.saving") : tc("actions.save")}
             </button>
           </div>
         </footer>

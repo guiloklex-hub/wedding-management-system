@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { requireFinanceAccess } from "@/lib/finance-access";
 import PaymentsClient from "./payments-client";
@@ -7,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PaymentsPage() {
   await requireFinanceAccess();
+  const t = await getTranslations("dashboard.payments");
 
   const [payments, vendors] = await Promise.all([
     prisma.payment.findMany({
@@ -23,7 +25,7 @@ export default async function PaymentsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-white">Pagamentos</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-white">{t("title")}</h1>
       </div>
       <PaymentsClient payments={payments} vendors={vendors} />
     </div>

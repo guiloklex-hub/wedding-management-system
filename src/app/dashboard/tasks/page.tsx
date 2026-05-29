@@ -1,9 +1,11 @@
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import TasksClient from "./tasks-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function TasksPage() {
+  const t = await getTranslations("dashboard.tasks");
   const [tasks, vendors, venues] = await Promise.all([
     prisma.task.findMany({
       where: { deletedAt: null },
@@ -28,10 +30,8 @@ export default async function TasksPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Tarefas</h1>
-        <p className="text-sm text-zinc-500">
-          Use o template pronto de 12 meses ou crie tarefas avulsas. Exporta para o calendário.
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight text-white">{t("page.title")}</h1>
+        <p className="text-sm text-zinc-500">{t("page.subtitle")}</p>
       </div>
       <TasksClient tasks={tasks} vendors={vendors} venues={venues} />
     </div>

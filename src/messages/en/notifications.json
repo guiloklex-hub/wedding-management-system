@@ -128,5 +128,15 @@
     "downtimeMinutes": "Downtime: {minutes, plural, one {# minute} other {# minutes}}.",
     "openSettings": "Open settings",
     "text": "✅ WhatsApp is back\n\nThe connection has been restored."
+  },
+  "SAVE_THE_DATE": {
+    "subject": "Save the Date — {names}",
+    "greeting": "Hi, {guests}!",
+    "announce": "{names} are getting married and you're part of this story! 💍",
+    "when": "Save the date: {date}.",
+    "whenWhere": "Save the date: {date}, at {venue}.",
+    "signoff": "The formal invitation is coming soon. With love, {names}.",
+    "websiteLabel": "Wedding website",
+    "registryLabel": "Gift registry"
   }
 }

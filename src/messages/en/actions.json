@@ -258,5 +258,23 @@
   "whatsapp": {
     "adminOnly": "Administrators only",
     "testMessageBody": "*Wedding Finance*\n\nTest message sent successfully. Your WhatsApp integration is working. ✅"
+  },
+  "saveTheDate": {
+    "unauthorized": "Unauthorized",
+    "tooManyAttempts": "Too many attempts. Please wait a moment.",
+    "fileTooLarge": "File exceeds 10 MB.",
+    "fileTypeInvalid": "Format not allowed. Use PNG, JPG, WEBP or PDF.",
+    "errorSaving": "Could not save.",
+    "noUserPhone": "You don't have a phone number in your profile.",
+    "noUserEmail": "You don't have an email in your profile.",
+    "eventNotConfigured": "Set the wedding date and the couple's names first.",
+    "errorSending": "Sending failed.",
+    "alreadySending": "There is already a broadcast in progress.",
+    "noRecipients": "No guests registered.",
+    "noEligibleRecipients": "No guests with a phone or email to send to.",
+    "broadcastNotFound": "Broadcast not found.",
+    "noFailedRecipients": "No failures to resend.",
+    "invalidPhone": "Invalid phone. Use +5511999990000.",
+    "invalidEmail": "Invalid email."
   }
 }

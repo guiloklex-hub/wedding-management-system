@@ -2029,5 +2029,93 @@
         "deleteAria": "Excluir mesa"
       }
     }
+  },
+  "saveTheDate": {
+    "page": {
+      "title": "Save the Date",
+      "subtitle": "Avise os convidados da data antes do convite oficial."
+    },
+    "notConfigured": {
+      "body": "Defina a data e os nomes do casal para liberar o envio.",
+      "cta": "Concluir configuração do evento"
+    },
+    "config": {
+      "title": "Conteúdo do Save the Date",
+      "artLabel": "Arte (imagem ou PDF)",
+      "artHint": "PNG, JPG, WEBP ou PDF — até 10 MB. Enviada como anexo.",
+      "removeArt": "Remover a arte atual",
+      "websiteLabel": "Site dos noivos (opcional)",
+      "registryLabel": "Lista de presentes (opcional)",
+      "messageLabel": "Mensagem",
+      "messagePlaceholder": "Olá, {convidados}! {nomes} vão se casar...",
+      "mergeTagsHint": "Variáveis: {nomes}, {convidados}, {data}, {local}. Use {site} e {site-presentes} para escolher onde os links aparecem; sem elas, os links entram no fim quando preenchidos.",
+      "save": "Salvar",
+      "excludeLabel": "Não enviar para (por tag)",
+      "excludeHint": "Marque tags para excluir esses convidados (ex.: padrinhos). Um grupo é removido se qualquer integrante tiver a tag.",
+      "excludePadrinhos": "Excluir padrinhos e madrinhas",
+      "noTags": "Nenhuma tag cadastrada."
+    },
+    "test": {
+      "title": "Enviar teste para mim",
+      "subtitle": "Receba o Save the Date no seu próprio contato antes do disparo.",
+      "whatsapp": "Testar no WhatsApp",
+      "email": "Testar por e-mail",
+      "whatsappOffline": "WhatsApp não conectado. Conecte em Ajustes para testar por WhatsApp.",
+      "toPlaceholder": "Número (+55...) ou e-mail (opcional)",
+      "toHint": "Vazio = envia para o seu próprio contato. Telefone precisa do código do país."
+    },
+    "preview": {
+      "title": "Pré-visualização"
+    },
+    "broadcast": {
+      "title": "Envio aos convidados",
+      "eligible": "Prontos para envio",
+      "skipped": "Sem contato / ignorados",
+      "start": "Iniciar envio",
+      "resendFailed": "Reenviar falhas",
+      "cancel": "Cancelar envio",
+      "statusLabel": "Status",
+      "sent": "Enviados",
+      "failed": "Falhas",
+      "pending": "Na fila",
+      "doneNote": "Envio concluído.",
+      "confirmStart": "Enviar o Save the Date para {count, plural, one {# destinatário} other {# destinatários}}? Isso dispara mensagens reais.",
+      "confirmCancel": "Cancelar o envio dos destinatários ainda na fila?",
+      "status": {
+        "DRAFT": "Rascunho",
+        "SENDING": "Enviando",
+        "PAUSED": "Pausado",
+        "DONE": "Concluído",
+        "CANCELLED": "Cancelado"
+      },
+      "skipAlreadySent": "Pular quem já recebeu",
+      "viewList": "Ver lista de envio",
+      "detailTitle": "Resultado por destinatário",
+      "exportCsv": "Exportar CSV"
+    },
+    "toasts": {
+      "configSaved": "Save the Date salvo.",
+      "testSent": "Teste enviado.",
+      "broadcastStarted": "Envio iniciado.",
+      "resendStarted": "Reenvio das falhas iniciado.",
+      "broadcastCancelled": "Envio cancelado."
+    },
+    "preList": {
+      "title": "Quem vai receber",
+      "channelWhatsapp": "WhatsApp",
+      "channelEmail": "E-mail",
+      "willReceive": "Receberá",
+      "colName": "Destinatário",
+      "colChannel": "Canal",
+      "colStatus": "Status",
+      "empty": "Nenhum destinatário.",
+      "reason": {
+        "NO_CONTACT": "Sem contato",
+        "DUPLICATE_PHONE": "Telefone duplicado",
+        "EXCLUDED_TAG": "Excluído",
+        "ALREADY_SENT": "Já recebeu",
+        "SKIPPED": "Ignorado"
+      }
+    }
   }
 }

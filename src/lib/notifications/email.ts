@@ -27,11 +27,19 @@ function getTransporter(): Transporter | null {
   return g._emailTransporter;
 }
 
+export type EmailAttachment = {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+  cid?: string;
+};
+
 export type SendEmailInput = {
   to: string;
   subject: string;
   html: string;
   text: string;
+  attachments?: EmailAttachment[];
 };
 
 export type SendEmailResult =
@@ -52,6 +60,12 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       subject: input.subject,
       html: input.html,
       text: input.text,
+      attachments: input.attachments?.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+        contentType: a.contentType,
+        ...(a.cid ? { cid: a.cid } : {}),
+      })),
     });
     return { ok: true, messageId: info.messageId };
   } catch (err) {

@@ -6,6 +6,18 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.1",
+    date: "2026-06-02",
+    highlights: [
+      "🚫 Save the Date agora deixa **excluir convidados por tag** (ex.: padrinhos) e por marcação de padrinho/madrinha — um grupo sai do envio se qualquer integrante tiver a tag.",
+      "🔗 Novas variáveis **{site}** e **{site-presentes}** para você escolher onde o site dos noivos e a lista de presentes aparecem na mensagem (sem elas, continuam no fim).",
+      "🧪 No teste, dá para enviar para **um número ou e-mail diferente do seu**.",
+      "✉️ O e-mail do Save the Date saiu com a cara dos noivos: **sem o nome do sistema** e sem rodapé automático.",
+      "👀 **Pré-lista** mostrando quem vai receber (canal e status) antes de disparar.",
+      "📋 Lista de envio detalhada com **exportação CSV**, opção de **não reenviar a quem já recebeu** e **normalização automática de telefone** (+55) — preservando números internacionais como +1 e +34.",
+    ],
+  },
+  {
     version: "0.7.0",
     date: "2026-06-01",
     highlights: [

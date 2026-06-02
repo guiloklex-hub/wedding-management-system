@@ -18,6 +18,8 @@ export type EventConfig = {
   saveTheDateFilePath: string | null;
   saveTheDateFileMime: string | null;
   saveTheDateFileName: string | null;
+  saveTheDateExcludeTagIds: string | null;
+  saveTheDateExcludePadrinhos: boolean;
 };
 
 export async function getEventConfig(): Promise<EventConfig> {
@@ -48,6 +50,8 @@ export async function getEventConfig(): Promise<EventConfig> {
     saveTheDateFilePath: settings.saveTheDateFilePath,
     saveTheDateFileMime: settings.saveTheDateFileMime,
     saveTheDateFileName: settings.saveTheDateFileName,
+    saveTheDateExcludeTagIds: settings.saveTheDateExcludeTagIds,
+    saveTheDateExcludePadrinhos: settings.saveTheDateExcludePadrinhos,
   };
 }
 
@@ -87,6 +91,12 @@ export async function updateEventConfig(
         input.saveTheDateFileMime === undefined ? undefined : input.saveTheDateFileMime,
       saveTheDateFileName:
         input.saveTheDateFileName === undefined ? undefined : input.saveTheDateFileName,
+      saveTheDateExcludeTagIds:
+        input.saveTheDateExcludeTagIds === undefined ? undefined : input.saveTheDateExcludeTagIds,
+      saveTheDateExcludePadrinhos:
+        input.saveTheDateExcludePadrinhos === undefined
+          ? undefined
+          : input.saveTheDateExcludePadrinhos,
     },
   });
 
@@ -107,6 +117,8 @@ export async function updateEventConfig(
     saveTheDateFilePath: updated.saveTheDateFilePath,
     saveTheDateFileMime: updated.saveTheDateFileMime,
     saveTheDateFileName: updated.saveTheDateFileName,
+    saveTheDateExcludeTagIds: updated.saveTheDateExcludeTagIds,
+    saveTheDateExcludePadrinhos: updated.saveTheDateExcludePadrinhos,
   };
 }
 

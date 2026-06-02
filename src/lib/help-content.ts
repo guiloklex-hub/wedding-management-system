@@ -507,19 +507,24 @@ export const HELP_ARTICLES: HelpArticle[] = [
       },
       {
         title: "Use as variáveis",
-        body: "Na mensagem, {nomes}, {convidados}, {data} e {local} são preenchidos automaticamente por destinatário. Se ficar em branco, uma mensagem padrão é usada. Os links de site/presentes aparecem sozinhos quando preenchidos.",
+        body: "Na mensagem, {nomes}, {convidados}, {data} e {local} são preenchidos por destinatário. Use {site} e {site-presentes} para escolher onde o site dos noivos e a lista de presentes aparecem — sem elas, os links entram no fim quando preenchidos. Botões inserem as variáveis no cursor.",
+      },
+      {
+        title: "Escolha quem NÃO recebe",
+        body: "Em 'Não enviar para', marque tags (ex.: padrinhos) ou 'Excluir padrinhos e madrinhas'. Um grupo é removido se qualquer integrante tiver a tag. A pré-lista 'Quem vai receber' mostra o resultado.",
       },
       {
         title: "Faça um teste",
-        body: "Clique em 'Testar no WhatsApp' ou 'Testar por e-mail' para receber o Save the Date no seu próprio contato antes do disparo.",
+        body: "Clique em 'Testar no WhatsApp' ou 'Testar por e-mail'. Deixe o campo vazio para receber no seu próprio contato, ou informe outro número (+55...) / e-mail.",
       },
       {
         title: "Dispare para todos",
-        body: "'Iniciar envio' manda uma mensagem por grupo (no telefone do grupo, citando os integrantes) e uma por convidado avulso. A fila respeita um intervalo entre mensagens para não ser bloqueada pelo WhatsApp; acompanhe a barra de progresso e reenvie as falhas.",
+        body: "'Iniciar envio' manda uma mensagem por grupo (no telefone do grupo, citando os integrantes) e uma por avulso. Marque 'Pular quem já recebeu' para não duplicar em disparos seguintes. Acompanhe o progresso, veja a lista detalhada e exporte CSV.",
       },
     ],
     tips: [
-      "Telefones devem ter código do país (ex.: +5511999990000) para o WhatsApp. Sem telefone válido, cai no e-mail; sem nenhum dos dois, o destinatário é ignorado.",
+      "Telefones sem código de país são completados com +55 automaticamente; números internacionais (ex.: +1, +34) são preservados como estão.",
+      "O e-mail do Save the Date sai sem o nome do sistema — com a cara dos noivos.",
       "O ritmo do envio é configurável via `BROADCAST_INTERVAL_MS` no .env (padrão 4000ms).",
     ],
     warnings: [

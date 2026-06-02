@@ -59,7 +59,7 @@ Arquivo: [prisma/schema.prisma](../prisma/schema.prisma).
 | `PasswordResetToken` | Tokens de reset (hash sha256, expira em 60min). |
 | `NotificationLog` | Histórico de envios (email + WhatsApp), idempotência por dia. |
 | `SecuritySettings` | Singleton: lista de roles que exigem 2FA, tamanho mínimo de senha. |
-| `EventSettings` | Singleton: dados do casamento (data, contingência, moeda, nomes, plano B, `defaultLocale`). Inclui Save the Date: `weddingWebsiteUrl`, `giftRegistryUrl`, `saveTheDateMessage`, `saveTheDateFilePath/Mime/Name` (a arte). |
+| `EventSettings` | Singleton: dados do casamento (data, contingência, moeda, nomes, plano B, `defaultLocale`). Inclui Save the Date: `weddingWebsiteUrl`, `giftRegistryUrl`, `saveTheDateMessage`, `saveTheDateFilePath/Mime/Name` (a arte) e a exclusão de destinatários `saveTheDateExcludeTagIds` (JSON de IDs de tag) + `saveTheDateExcludePadrinhos`. |
 | `Vendor` | Fornecedores com status, categoria, notas, contratos, anexos. |
 | `VendorContact` | Múltiplos contatos por fornecedor (com isPrimary). |
 | `VendorNote` | Histórico de notas livre por fornecedor. |

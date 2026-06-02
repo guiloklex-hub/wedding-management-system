@@ -2048,15 +2048,21 @@
       "registryLabel": "Lista de regalos (opcional)",
       "messageLabel": "Mensaje",
       "messagePlaceholder": "¡Hola, {convidados}! {nomes} se van a casar...",
-      "mergeTagsHint": "Usa {nomes}, {convidados}, {data} y {local} — se reemplazan automáticamente. Los enlaces de arriba se agregan cuando se completan.",
-      "save": "Guardar"
+      "mergeTagsHint": "Variables: {nomes}, {convidados}, {data}, {local}. Usa {site} y {site-presentes} para elegir dónde van los enlaces; sin ellas, se agregan al final cuando se completan.",
+      "save": "Guardar",
+      "excludeLabel": "No enviar a (por etiqueta)",
+      "excludeHint": "Marca etiquetas para excluir a esos invitados (ej.: padrinos). Un grupo se quita si algún integrante tiene la etiqueta.",
+      "excludePadrinhos": "Excluir padrinos y madrinas",
+      "noTags": "Sin etiquetas."
     },
     "test": {
       "title": "Enviar una prueba a mí",
       "subtitle": "Recibe el Save the Date en tu propio contacto antes del envío.",
       "whatsapp": "Probar en WhatsApp",
       "email": "Probar por correo",
-      "whatsappOffline": "WhatsApp no conectado. Conéctalo en Ajustes para probar por WhatsApp."
+      "whatsappOffline": "WhatsApp no conectado. Conéctalo en Ajustes para probar por WhatsApp.",
+      "toPlaceholder": "Teléfono (+55...) o correo (opcional)",
+      "toHint": "Vacío = envía a tu propio contacto. El teléfono necesita el código de país."
     },
     "preview": {
       "title": "Vista previa"
@@ -2081,7 +2087,11 @@
         "PAUSED": "Pausado",
         "DONE": "Completado",
         "CANCELLED": "Cancelado"
-      }
+      },
+      "skipAlreadySent": "Saltar a quien ya recibió",
+      "viewList": "Ver lista de envío",
+      "detailTitle": "Resultado por destinatario",
+      "exportCsv": "Exportar CSV"
     },
     "toasts": {
       "configSaved": "Save the Date guardado.",
@@ -2089,6 +2099,23 @@
       "broadcastStarted": "Envío iniciado.",
       "resendStarted": "Reenviando fallidos.",
       "broadcastCancelled": "Envío cancelado."
+    },
+    "preList": {
+      "title": "Quién va a recibir",
+      "channelWhatsapp": "WhatsApp",
+      "channelEmail": "Correo",
+      "willReceive": "Recibirá",
+      "colName": "Destinatario",
+      "colChannel": "Canal",
+      "colStatus": "Estado",
+      "empty": "Sin destinatarios.",
+      "reason": {
+        "NO_CONTACT": "Sin contacto",
+        "DUPLICATE_PHONE": "Teléfono duplicado",
+        "EXCLUDED_TAG": "Excluido",
+        "ALREADY_SENT": "Ya recibió",
+        "SKIPPED": "Omitido"
+      }
     }
   }
 }

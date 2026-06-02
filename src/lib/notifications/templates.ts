@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 import { formatCurrency, formatDate } from "@/i18n/format";
+import { interpolateBaseTags } from "./std-message";
 
 export type NotificationKind =
   | "ACCOUNT_CREATED"
@@ -131,6 +132,12 @@ export function escapeWaMarkdown(value: string): string {
 }
 
 function wrapHtml(title: string, body: string, locale: Locale, footer: string, header: string): string {
+  const headerHtml = header
+    ? `<h1 style="margin:0 0 16px;font-size:20px;color:#f4f4f5;">${escapeHtml(header)}</h1>`
+    : "";
+  const footerHtml = footer
+    ? `<p style="margin-top:32px;font-size:12px;color:#71717a;">${escapeHtml(footer)}</p>`
+    : "";
   return `<!doctype html>
 <html lang="${locale}">
 <head>
@@ -142,9 +149,9 @@ function wrapHtml(title: string, body: string, locale: Locale, footer: string, h
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#18181b;border:1px solid #27272a;border-radius:16px;padding:32px;">
 <tr><td>
-<h1 style="margin:0 0 16px;font-size:20px;color:#f4f4f5;">${escapeHtml(header)}</h1>
+${headerHtml}
 ${body}
-<p style="margin-top:32px;font-size:12px;color:#71717a;">${escapeHtml(footer)}</p>
+${footerHtml}
 </td></tr>
 </table>
 </td></tr>
@@ -526,18 +533,18 @@ ${tk("intro", { guest: escapeWaMarkdown(input.guestName) })}
       const guests = input.recipientNames;
       const venue = input.venueName ?? null;
 
-      let bodyPlain: string;
+      const websiteUrl = input.websiteUrl ?? null;
+      const registryUrl = input.giftRegistryUrl ?? null;
+
+      let bodyCore: string;
       const custom = input.customMessage?.trim();
       if (custom) {
-        const tags: Record<string, string> = {
+        bodyCore = interpolateBaseTags(custom, {
           nomes: names,
           convidados: guests,
           data: dateStr,
           local: venue ?? "",
-        };
-        bodyPlain = custom.replace(/\{(\w+)\}/g, (m, k: string) =>
-          k in tags ? tags[k] : m,
-        );
+        });
       } else {
         const parts = [
           tk("greeting", { guests }),
@@ -547,40 +554,65 @@ ${tk("intro", { guest: escapeWaMarkdown(input.guestName) })}
           "",
           tk("signoff", { names }),
         ];
-        bodyPlain = parts.join("\n");
+        bodyCore = parts.join("\n");
       }
 
       const subject = tk("subject", { names });
 
+      // WhatsApp / texto: {site} e {site-presentes} entram inline; o que não foi
+      // usado inline é anexado no fim (compatível com mensagens antigas).
+      let usedSite = false;
+      let usedRegistry = false;
+      let bodyText = bodyCore.replace(/\{site-presentes\}/g, () => {
+        usedRegistry = true;
+        return registryUrl ?? "";
+      });
+      bodyText = bodyText.replace(/\{site\}/g, () => {
+        usedSite = true;
+        return websiteUrl ?? "";
+      });
       const waLinks: string[] = [];
-      if (input.websiteUrl) waLinks.push(`• ${tk("websiteLabel")}: ${input.websiteUrl}`);
-      if (input.giftRegistryUrl) waLinks.push(`• ${tk("registryLabel")}: ${input.giftRegistryUrl}`);
-      const waText = `${bodyPlain}${waLinks.length ? `\n\n${waLinks.join("\n")}` : ""}`.trim();
+      if (websiteUrl && !usedSite) waLinks.push(`• ${tk("websiteLabel")}: ${websiteUrl}`);
+      if (registryUrl && !usedRegistry) waLinks.push(`• ${tk("registryLabel")}: ${registryUrl}`);
+      const waText = `${bodyText}${waLinks.length ? `\n\n${waLinks.join("\n")}` : ""}`.trim();
       const text = waText;
 
-      const bodyHtml = escapeHtml(bodyPlain).replace(/\n/g, "<br>");
+      // HTML: escapa o corpo (com os tokens {site} ainda intactos) e troca os
+      // tokens por âncoras já depois do escape.
+      const anchor = (url: string) =>
+        `<a href="${escapeHtml(url)}" style="color:#fda4af;">${escapeHtml(url)}</a>`;
+      let usedSiteHtml = false;
+      let usedRegistryHtml = false;
+      let bodyHtmlCore = escapeHtml(bodyCore).replace(/\{site-presentes\}/g, () => {
+        usedRegistryHtml = true;
+        return registryUrl ? anchor(registryUrl) : "";
+      });
+      bodyHtmlCore = bodyHtmlCore.replace(/\{site\}/g, () => {
+        usedSiteHtml = true;
+        return websiteUrl ? anchor(websiteUrl) : "";
+      });
+      const bodyHtml = bodyHtmlCore.replace(/\n/g, "<br>");
       const linkRows: string[] = [];
-      if (input.websiteUrl) {
-        const u = escapeHtml(input.websiteUrl);
+      if (websiteUrl && !usedSiteHtml) {
         linkRows.push(
-          `<p style="margin:4px 0;"><strong>${escapeHtml(tk("websiteLabel"))}:</strong> <a href="${u}" style="color:#fda4af;">${u}</a></p>`,
+          `<p style="margin:4px 0;"><strong>${escapeHtml(tk("websiteLabel"))}:</strong> ${anchor(websiteUrl)}</p>`,
         );
       }
-      if (input.giftRegistryUrl) {
-        const u = escapeHtml(input.giftRegistryUrl);
+      if (registryUrl && !usedRegistryHtml) {
         linkRows.push(
-          `<p style="margin:4px 0;"><strong>${escapeHtml(tk("registryLabel"))}:</strong> <a href="${u}" style="color:#fda4af;">${u}</a></p>`,
+          `<p style="margin:4px 0;"><strong>${escapeHtml(tk("registryLabel"))}:</strong> ${anchor(registryUrl)}</p>`,
         );
       }
       const imageHtml = input.imageCid
         ? `<p style="text-align:center;margin:0 0 20px;"><img src="cid:${escapeHtml(input.imageCid)}" alt="Save the Date" style="max-width:100%;border-radius:12px;"></p>`
         : "";
+      // Sem o nome do sistema: cabeçalho = nomes do casal, sem rodapé automático.
       const html = wrapHtml(
         subject,
         `${imageHtml}<p style="font-size:16px;line-height:1.6;">${bodyHtml}</p>${linkRows.join("")}`,
         locale,
-        footer,
-        header,
+        "",
+        names,
       );
       return { subject, html, text, waText };
     }

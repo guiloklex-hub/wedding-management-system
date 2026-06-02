@@ -273,6 +273,8 @@
     "noRecipients": "Nenhum convidado cadastrado.",
     "noEligibleRecipients": "Nenhum convidado com telefone ou e-mail para envio.",
     "broadcastNotFound": "Envio não encontrado.",
-    "noFailedRecipients": "Não há falhas para reenviar."
+    "noFailedRecipients": "Não há falhas para reenviar.",
+    "invalidPhone": "Telefone inválido. Use +5511999990000.",
+    "invalidEmail": "E-mail inválido."
   }
 }

@@ -349,6 +349,12 @@ export type SendWaResult =
   | { ok: true }
   | { ok: false; error: string };
 
+export type WaMedia = {
+  data: Buffer;
+  mimeType: string;
+  filename: string;
+};
+
 async function waitForConnected(timeoutMs: number): Promise<boolean> {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
@@ -360,9 +366,15 @@ async function waitForConnected(timeoutMs: number): Promise<boolean> {
   return (getStateRef().state as State) === "CONNECTED";
 }
 
+type WaMessageContent =
+  | { text: string }
+  | { image: Buffer; caption?: string }
+  | { document: Buffer; mimetype: string; fileName: string; caption?: string };
+
 export async function sendWhatsApp(
   phone: string,
   text: string,
+  media?: WaMedia,
 ): Promise<SendWaResult> {
   const number = normalizePhone(phone);
   if (!number) return { ok: false, error: "Telefone inválido (use formato +5511999999999)" };
@@ -389,7 +401,7 @@ export async function sendWhatsApp(
 
   const sock = g._waSock as
     | {
-        sendMessage: (jid: string, content: { text: string }) => Promise<unknown>;
+        sendMessage: (jid: string, content: WaMessageContent) => Promise<unknown>;
       }
     | undefined;
 
@@ -397,7 +409,20 @@ export async function sendWhatsApp(
 
   try {
     const jid = `${number}@s.whatsapp.net`;
-    await sock.sendMessage(jid, { text });
+    let content: WaMessageContent;
+    if (media) {
+      content = media.mimeType.startsWith("image/")
+        ? { image: media.data, caption: text || undefined }
+        : {
+            document: media.data,
+            mimetype: media.mimeType,
+            fileName: media.filename,
+            caption: text || undefined,
+          };
+    } else {
+      content = { text };
+    }
+    await sock.sendMessage(jid, content);
     return { ok: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

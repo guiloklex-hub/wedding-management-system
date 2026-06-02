@@ -494,6 +494,45 @@ export const HELP_ARTICLES: HelpArticle[] = [
 
   // ============ communications ============
   {
+    id: "save-the-date",
+    title: "Enviar Save the Date aos convidados",
+    category: "communications",
+    keywords: ["save the date", "convite", "aviso", "site dos noivos", "lista de presentes", "whatsapp", "anexo"],
+    icon: MessageSquare,
+    summary: "Avise a data com uma arte (imagem/PDF) + mensagem, por WhatsApp/e-mail, antes do convite oficial.",
+    steps: [
+      {
+        title: "Monte o conteúdo",
+        body: "Em Save the Date, suba a arte (PNG, JPG, WEBP ou PDF, até 10 MB), preencha o Site dos noivos e a Lista de presentes (opcionais — links externos como Wedy) e escreva a mensagem.",
+      },
+      {
+        title: "Use as variáveis",
+        body: "Na mensagem, {nomes}, {convidados}, {data} e {local} são preenchidos por destinatário. Use {site} e {site-presentes} para escolher onde o site dos noivos e a lista de presentes aparecem — sem elas, os links entram no fim quando preenchidos. Botões inserem as variáveis no cursor.",
+      },
+      {
+        title: "Escolha quem NÃO recebe",
+        body: "Em 'Não enviar para', marque tags (ex.: padrinhos) ou 'Excluir padrinhos e madrinhas'. Um grupo é removido se qualquer integrante tiver a tag. A pré-lista 'Quem vai receber' mostra o resultado.",
+      },
+      {
+        title: "Faça um teste",
+        body: "Clique em 'Testar no WhatsApp' ou 'Testar por e-mail'. Deixe o campo vazio para receber no seu próprio contato, ou informe outro número (+55...) / e-mail.",
+      },
+      {
+        title: "Dispare para todos",
+        body: "'Iniciar envio' manda uma mensagem por grupo (no telefone do grupo, citando os integrantes) e uma por avulso. Marque 'Pular quem já recebeu' para não duplicar em disparos seguintes. Acompanhe o progresso, veja a lista detalhada e exporte CSV.",
+      },
+    ],
+    tips: [
+      "Telefones sem código de país são completados com +55 automaticamente; números internacionais (ex.: +1, +34) são preservados como estão.",
+      "O e-mail do Save the Date sai sem o nome do sistema — com a cara dos noivos.",
+      "O ritmo do envio é configurável via `BROADCAST_INTERVAL_MS` no .env (padrão 4000ms).",
+    ],
+    warnings: [
+      "Defina a data e os nomes do casal (no onboarding) antes de enviar.",
+      "Envios disparam mensagens reais — use sempre o teste primeiro.",
+    ],
+  },
+  {
     id: "smtp-config",
     title: "Configurar SMTP (email)",
     category: "communications",

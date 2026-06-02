@@ -2029,5 +2029,93 @@
         "deleteAria": "Delete table"
       }
     }
+  },
+  "saveTheDate": {
+    "page": {
+      "title": "Save the Date",
+      "subtitle": "Let guests know the date before the formal invitation."
+    },
+    "notConfigured": {
+      "body": "Set the wedding date and the couple's names to enable sending.",
+      "cta": "Finish event setup"
+    },
+    "config": {
+      "title": "Save the Date content",
+      "artLabel": "Artwork (image or PDF)",
+      "artHint": "PNG, JPG, WEBP or PDF — up to 10 MB. Sent as an attachment.",
+      "removeArt": "Remove current artwork",
+      "websiteLabel": "Wedding website (optional)",
+      "registryLabel": "Gift registry (optional)",
+      "messageLabel": "Message",
+      "messagePlaceholder": "Hi, {convidados}! {nomes} are getting married...",
+      "mergeTagsHint": "Variables: {nomes}, {convidados}, {data}, {local}. Use {site} and {site-presentes} to choose where the links go; without them, links are appended at the end when filled.",
+      "save": "Save",
+      "excludeLabel": "Don't send to (by tag)",
+      "excludeHint": "Check tags to exclude those guests (e.g. groomsmen). A group is removed if any member has the tag.",
+      "excludePadrinhos": "Exclude groomsmen and bridesmaids",
+      "noTags": "No tags yet."
+    },
+    "test": {
+      "title": "Send a test to myself",
+      "subtitle": "Get the Save the Date on your own contact before the broadcast.",
+      "whatsapp": "Test on WhatsApp",
+      "email": "Test by email",
+      "whatsappOffline": "WhatsApp not connected. Connect it in Settings to test via WhatsApp.",
+      "toPlaceholder": "Phone (+55...) or email (optional)",
+      "toHint": "Empty = sends to your own contact. Phone needs the country code."
+    },
+    "preview": {
+      "title": "Preview"
+    },
+    "broadcast": {
+      "title": "Send to guests",
+      "eligible": "Ready to send",
+      "skipped": "No contact / skipped",
+      "start": "Start sending",
+      "resendFailed": "Resend failures",
+      "cancel": "Cancel sending",
+      "statusLabel": "Status",
+      "sent": "Sent",
+      "failed": "Failed",
+      "pending": "Queued",
+      "doneNote": "Sending complete.",
+      "confirmStart": "Send the Save the Date to {count, plural, one {# recipient} other {# recipients}}? This sends real messages.",
+      "confirmCancel": "Cancel sending to the recipients still queued?",
+      "status": {
+        "DRAFT": "Draft",
+        "SENDING": "Sending",
+        "PAUSED": "Paused",
+        "DONE": "Done",
+        "CANCELLED": "Cancelled"
+      },
+      "skipAlreadySent": "Skip who already received",
+      "viewList": "View send list",
+      "detailTitle": "Result per recipient",
+      "exportCsv": "Export CSV"
+    },
+    "toasts": {
+      "configSaved": "Save the Date saved.",
+      "testSent": "Test sent.",
+      "broadcastStarted": "Sending started.",
+      "resendStarted": "Resending failures.",
+      "broadcastCancelled": "Sending cancelled."
+    },
+    "preList": {
+      "title": "Who will receive",
+      "channelWhatsapp": "WhatsApp",
+      "channelEmail": "Email",
+      "willReceive": "Will receive",
+      "colName": "Recipient",
+      "colChannel": "Channel",
+      "colStatus": "Status",
+      "empty": "No recipients.",
+      "reason": {
+        "NO_CONTACT": "No contact",
+        "DUPLICATE_PHONE": "Duplicate phone",
+        "EXCLUDED_TAG": "Excluded",
+        "ALREADY_SENT": "Already sent",
+        "SKIPPED": "Skipped"
+      }
+    }
   }
 }

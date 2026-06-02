@@ -6,6 +6,30 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.1",
+    date: "2026-06-02",
+    highlights: [
+      "🚫 Save the Date agora deixa **excluir convidados por tag** (ex.: padrinhos) e por marcação de padrinho/madrinha — um grupo sai do envio se qualquer integrante tiver a tag.",
+      "🔗 Novas variáveis **{site}** e **{site-presentes}** para você escolher onde o site dos noivos e a lista de presentes aparecem na mensagem (sem elas, continuam no fim).",
+      "🧪 No teste, dá para enviar para **um número ou e-mail diferente do seu**.",
+      "✉️ O e-mail do Save the Date saiu com a cara dos noivos: **sem o nome do sistema** e sem rodapé automático.",
+      "👀 **Pré-lista** mostrando quem vai receber (canal e status) antes de disparar.",
+      "📋 Lista de envio detalhada com **exportação CSV**, opção de **não reenviar a quem já recebeu** e **normalização automática de telefone** (+55) — preservando números internacionais como +1 e +34.",
+    ],
+  },
+  {
+    version: "0.7.0",
+    date: "2026-06-01",
+    highlights: [
+      "💌 Novo módulo **Save the Date**: avise os convidados da data antes do convite oficial. Suba uma arte (imagem ou PDF) e escreva a mensagem com variáveis ({nomes}, {convidados}, {data}, {local}) preenchidas automaticamente.",
+      "🔗 Agora dá para cadastrar o **Site dos noivos** e a **Lista de presentes** (links externos, ex.: Wedy) — quando preenchidos, aparecem sozinhos na mensagem do Save the Date.",
+      "📎 O WhatsApp e o e-mail passam a **enviar a arte como anexo** (imagem inline ou PDF).",
+      "👨‍👩‍👧 Envio inteligente: **uma mensagem por grupo** (no telefone do grupo, citando os integrantes) e uma por convidado avulso, sem duplicar quem compartilha o mesmo número.",
+      "🚦 Disparo em massa com **fila e ritmo controlado** (anti-bloqueio do WhatsApp), barra de progresso ao vivo, retomada após reinício e reenvio das falhas.",
+      "🧪 Botão **'Enviar teste para mim'** (WhatsApp ou e-mail) para conferir o Save the Date antes do disparo real.",
+    ],
+  },
+  {
     version: "0.6.6",
     date: "2026-05-29",
     highlights: [

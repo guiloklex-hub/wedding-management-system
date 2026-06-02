@@ -55,7 +55,8 @@ export type AuditEntity =
   | "Venue"
   | "Honeymoon"
   | "HoneymoonItem"
-  | "TrousseauItem";
+  | "TrousseauItem"
+  | "Broadcast";
 
 export async function audit(
   entity: AuditEntity,

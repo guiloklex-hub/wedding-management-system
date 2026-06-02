@@ -31,6 +31,7 @@ confirmou a presença.
 - 🏦 **Caixa e metas de poupança**
 - ✅ **Tarefas** com ~40 templates pré-prontos baseados na data do casamento
 - 👥 **Convidados** com **RSVP por link público**, +1s, dietary, padrinhos
+- 💌 **Save the Date** — arte (imagem/PDF) + mensagem com variáveis, site dos noivos e lista de presentes, envio em massa por WhatsApp/e-mail com fila e throttle
 - 🎁 **Presentes** (cash/item) com controle de agradecimentos
 - 🌴 **Lua de mel** (destino, atividades, hospedagens, vôos)
 - 🛏️ **Enxoval** por cômodo

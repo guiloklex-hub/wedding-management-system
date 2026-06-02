@@ -128,5 +128,15 @@
     "downtimeMinutes": "Tiempo fuera: {minutes, plural, one {# minuto} other {# minutos}}.",
     "openSettings": "Abrir configuración",
     "text": "✅ WhatsApp volvió\n\nLa conexión fue restablecida."
+  },
+  "SAVE_THE_DATE": {
+    "subject": "Save the Date — {names}",
+    "greeting": "¡Hola, {guests}!",
+    "announce": "¡{names} se van a casar y tú eres parte de esta historia! 💍",
+    "when": "Reserva la fecha: {date}.",
+    "whenWhere": "Reserva la fecha: {date}, en {venue}.",
+    "signoff": "Pronto enviaremos la invitación oficial. Con cariño, {names}.",
+    "websiteLabel": "Sitio de los novios",
+    "registryLabel": "Lista de regalos"
   }
 }

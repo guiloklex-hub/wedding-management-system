@@ -11,6 +11,7 @@ export type NotificationKind =
   | "TASK_DUE"
   | "TASK_OVERDUE"
   | "GUEST_RSVP"
+  | "SAVE_THE_DATE"
   | "SYSTEM_WHATSAPP_DOWN"
   | "SYSTEM_WHATSAPP_RECOVERED";
 
@@ -81,6 +82,17 @@ export type RenderInput =
       groupName?: string | null;
     } & WithLocale)
   | ({
+      kind: "SAVE_THE_DATE";
+      coupleNames: string;
+      eventDate: Date;
+      venueName?: string | null;
+      recipientNames: string;
+      websiteUrl?: string | null;
+      giftRegistryUrl?: string | null;
+      customMessage?: string | null;
+      imageCid?: string | null;
+    } & WithLocale)
+  | ({
       kind: "SYSTEM_WHATSAPP_DOWN";
       userName: string;
       reason: WhatsAppDownReason;
@@ -148,12 +160,13 @@ export async function render(input: RenderInput): Promise<RenderedTemplate> {
 
   const header = t("common.header");
   const footer = t("common.automaticFooter");
-  const safeName = escapeHtml(input.userName);
+  const userNameRaw = (input as { userName?: string }).userName ?? "";
+  const safeName = escapeHtml(userNameRaw);
   const greetingHtml = t.markup("common.greeting", {
     name: safeName,
     strong: (chunks: string) => `<strong>${chunks}</strong>`,
   });
-  const greetingText = t("common.greetingText", { name: input.userName });
+  const greetingText = t("common.greetingText", { name: userNameRaw });
 
   switch (input.kind) {
     case "ACCOUNT_CREATED": {
@@ -497,6 +510,78 @@ ${tk("intro", { guest: escapeWaMarkdown(input.guestName) })}
 
 • ${tk("guestLabel")}: ${escapeWaMarkdown(input.guestName)}
 • ${tk("statusLabel")}: ${statusLabel}${waGroup}`;
+      return { subject, html, text, waText };
+    }
+
+    case "SAVE_THE_DATE": {
+      const tk = (key: string, values?: Record<string, string | number | Date>) =>
+        t(`SAVE_THE_DATE.${key}`, values);
+      const dateStr = formatDate(input.eventDate, locale, {
+        timeZone: "UTC",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+      const names = input.coupleNames;
+      const guests = input.recipientNames;
+      const venue = input.venueName ?? null;
+
+      let bodyPlain: string;
+      const custom = input.customMessage?.trim();
+      if (custom) {
+        const tags: Record<string, string> = {
+          nomes: names,
+          convidados: guests,
+          data: dateStr,
+          local: venue ?? "",
+        };
+        bodyPlain = custom.replace(/\{(\w+)\}/g, (m, k: string) =>
+          k in tags ? tags[k] : m,
+        );
+      } else {
+        const parts = [
+          tk("greeting", { guests }),
+          "",
+          tk("announce", { names }),
+          venue ? tk("whenWhere", { date: dateStr, venue }) : tk("when", { date: dateStr }),
+          "",
+          tk("signoff", { names }),
+        ];
+        bodyPlain = parts.join("\n");
+      }
+
+      const subject = tk("subject", { names });
+
+      const waLinks: string[] = [];
+      if (input.websiteUrl) waLinks.push(`• ${tk("websiteLabel")}: ${input.websiteUrl}`);
+      if (input.giftRegistryUrl) waLinks.push(`• ${tk("registryLabel")}: ${input.giftRegistryUrl}`);
+      const waText = `${bodyPlain}${waLinks.length ? `\n\n${waLinks.join("\n")}` : ""}`.trim();
+      const text = waText;
+
+      const bodyHtml = escapeHtml(bodyPlain).replace(/\n/g, "<br>");
+      const linkRows: string[] = [];
+      if (input.websiteUrl) {
+        const u = escapeHtml(input.websiteUrl);
+        linkRows.push(
+          `<p style="margin:4px 0;"><strong>${escapeHtml(tk("websiteLabel"))}:</strong> <a href="${u}" style="color:#fda4af;">${u}</a></p>`,
+        );
+      }
+      if (input.giftRegistryUrl) {
+        const u = escapeHtml(input.giftRegistryUrl);
+        linkRows.push(
+          `<p style="margin:4px 0;"><strong>${escapeHtml(tk("registryLabel"))}:</strong> <a href="${u}" style="color:#fda4af;">${u}</a></p>`,
+        );
+      }
+      const imageHtml = input.imageCid
+        ? `<p style="text-align:center;margin:0 0 20px;"><img src="cid:${escapeHtml(input.imageCid)}" alt="Save the Date" style="max-width:100%;border-radius:12px;"></p>`
+        : "";
+      const html = wrapHtml(
+        subject,
+        `${imageHtml}<p style="font-size:16px;line-height:1.6;">${bodyHtml}</p>${linkRows.join("")}`,
+        locale,
+        footer,
+        header,
+      );
       return { subject, html, text, waText };
     }
 

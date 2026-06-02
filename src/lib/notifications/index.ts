@@ -11,9 +11,18 @@ export type NotifyTarget = {
   locale?: Locale | null;
 };
 
+export type NotifyMedia = {
+  data: Buffer;
+  mimeType: string;
+  filename: string;
+  /** Quando definido e a mídia for imagem, embute inline no HTML do e-mail via cid. */
+  inlineCid?: string;
+};
+
 export type NotifyOptions = {
   refType?: string;
   refId?: string;
+  media?: NotifyMedia;
 };
 
 export type NotifyResult = {
@@ -36,19 +45,33 @@ export async function notify(
   const wantsEmail = Boolean(target.email && isEmailConfigured());
   const wantsWa = Boolean(target.phone && isValidPhone(target.phone));
 
+  const media = options.media;
+  const isImage = media ? media.mimeType.startsWith("image/") : false;
+  const emailAttachments = media
+    ? [
+        {
+          filename: media.filename,
+          content: media.data,
+          contentType: media.mimeType,
+          ...(isImage && media.inlineCid ? { cid: media.inlineCid } : {}),
+        },
+      ]
+    : undefined;
+
   const emailPromise = wantsEmail
     ? sendEmail({
         to: target.email!,
         subject: rendered.subject,
         html: rendered.html,
         text: rendered.text,
+        attachments: emailAttachments,
       })
     : Promise.resolve(null);
 
   const waStatus = getWhatsAppStatus();
   const waPromise =
     wantsWa && (waStatus.state === "CONNECTED" || waStatus.state === "DISCONNECTED")
-      ? sendWhatsApp(target.phone!, rendered.waText)
+      ? sendWhatsApp(target.phone!, rendered.waText, media)
       : Promise.resolve(
           wantsWa
             ? { ok: false as const, error: `WhatsApp em estado ${waStatus.state}` }

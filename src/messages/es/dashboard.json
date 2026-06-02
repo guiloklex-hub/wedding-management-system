@@ -2029,5 +2029,66 @@
         "deleteAria": "Eliminar mesa"
       }
     }
+  },
+  "saveTheDate": {
+    "page": {
+      "title": "Save the Date",
+      "subtitle": "Avisa a los invitados de la fecha antes de la invitación formal."
+    },
+    "notConfigured": {
+      "body": "Define la fecha y los nombres de la pareja para habilitar el envío.",
+      "cta": "Completar la configuración del evento"
+    },
+    "config": {
+      "title": "Contenido del Save the Date",
+      "artLabel": "Arte (imagen o PDF)",
+      "artHint": "PNG, JPG, WEBP o PDF — hasta 10 MB. Se envía como adjunto.",
+      "removeArt": "Quitar el arte actual",
+      "websiteLabel": "Sitio de los novios (opcional)",
+      "registryLabel": "Lista de regalos (opcional)",
+      "messageLabel": "Mensaje",
+      "messagePlaceholder": "¡Hola, {convidados}! {nomes} se van a casar...",
+      "mergeTagsHint": "Usa {nomes}, {convidados}, {data} y {local} — se reemplazan automáticamente. Los enlaces de arriba se agregan cuando se completan.",
+      "save": "Guardar"
+    },
+    "test": {
+      "title": "Enviar una prueba a mí",
+      "subtitle": "Recibe el Save the Date en tu propio contacto antes del envío.",
+      "whatsapp": "Probar en WhatsApp",
+      "email": "Probar por correo",
+      "whatsappOffline": "WhatsApp no conectado. Conéctalo en Ajustes para probar por WhatsApp."
+    },
+    "preview": {
+      "title": "Vista previa"
+    },
+    "broadcast": {
+      "title": "Enviar a los invitados",
+      "eligible": "Listos para enviar",
+      "skipped": "Sin contacto / omitidos",
+      "start": "Iniciar envío",
+      "resendFailed": "Reenviar fallidos",
+      "cancel": "Cancelar envío",
+      "statusLabel": "Estado",
+      "sent": "Enviados",
+      "failed": "Fallidos",
+      "pending": "En cola",
+      "doneNote": "Envío completado.",
+      "confirmStart": "¿Enviar el Save the Date a {count, plural, one {# destinatario} other {# destinatarios}}? Esto envía mensajes reales.",
+      "confirmCancel": "¿Cancelar el envío a los destinatarios aún en cola?",
+      "status": {
+        "DRAFT": "Borrador",
+        "SENDING": "Enviando",
+        "PAUSED": "Pausado",
+        "DONE": "Completado",
+        "CANCELLED": "Cancelado"
+      }
+    },
+    "toasts": {
+      "configSaved": "Save the Date guardado.",
+      "testSent": "Prueba enviada.",
+      "broadcastStarted": "Envío iniciado.",
+      "resendStarted": "Reenviando fallidos.",
+      "broadcastCancelled": "Envío cancelado."
+    }
   }
 }

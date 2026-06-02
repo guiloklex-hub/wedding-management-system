@@ -494,6 +494,40 @@ export const HELP_ARTICLES: HelpArticle[] = [
 
   // ============ communications ============
   {
+    id: "save-the-date",
+    title: "Enviar Save the Date aos convidados",
+    category: "communications",
+    keywords: ["save the date", "convite", "aviso", "site dos noivos", "lista de presentes", "whatsapp", "anexo"],
+    icon: MessageSquare,
+    summary: "Avise a data com uma arte (imagem/PDF) + mensagem, por WhatsApp/e-mail, antes do convite oficial.",
+    steps: [
+      {
+        title: "Monte o conteúdo",
+        body: "Em Save the Date, suba a arte (PNG, JPG, WEBP ou PDF, até 10 MB), preencha o Site dos noivos e a Lista de presentes (opcionais — links externos como Wedy) e escreva a mensagem.",
+      },
+      {
+        title: "Use as variáveis",
+        body: "Na mensagem, {nomes}, {convidados}, {data} e {local} são preenchidos automaticamente por destinatário. Se ficar em branco, uma mensagem padrão é usada. Os links de site/presentes aparecem sozinhos quando preenchidos.",
+      },
+      {
+        title: "Faça um teste",
+        body: "Clique em 'Testar no WhatsApp' ou 'Testar por e-mail' para receber o Save the Date no seu próprio contato antes do disparo.",
+      },
+      {
+        title: "Dispare para todos",
+        body: "'Iniciar envio' manda uma mensagem por grupo (no telefone do grupo, citando os integrantes) e uma por convidado avulso. A fila respeita um intervalo entre mensagens para não ser bloqueada pelo WhatsApp; acompanhe a barra de progresso e reenvie as falhas.",
+      },
+    ],
+    tips: [
+      "Telefones devem ter código do país (ex.: +5511999990000) para o WhatsApp. Sem telefone válido, cai no e-mail; sem nenhum dos dois, o destinatário é ignorado.",
+      "O ritmo do envio é configurável via `BROADCAST_INTERVAL_MS` no .env (padrão 4000ms).",
+    ],
+    warnings: [
+      "Defina a data e os nomes do casal (no onboarding) antes de enviar.",
+      "Envios disparam mensagens reais — use sempre o teste primeiro.",
+    ],
+  },
+  {
     id: "smtp-config",
     title: "Configurar SMTP (email)",
     category: "communications",

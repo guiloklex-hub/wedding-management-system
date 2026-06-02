@@ -12,6 +12,12 @@ export type EventConfig = {
   pixKeyType: string | null;
   pixHolderName: string | null;
   pixCity: string | null;
+  weddingWebsiteUrl: string | null;
+  giftRegistryUrl: string | null;
+  saveTheDateMessage: string | null;
+  saveTheDateFilePath: string | null;
+  saveTheDateFileMime: string | null;
+  saveTheDateFileName: string | null;
 };
 
 export async function getEventConfig(): Promise<EventConfig> {
@@ -36,6 +42,12 @@ export async function getEventConfig(): Promise<EventConfig> {
     pixKeyType: settings.pixKeyType,
     pixHolderName: settings.pixHolderName,
     pixCity: settings.pixCity,
+    weddingWebsiteUrl: settings.weddingWebsiteUrl,
+    giftRegistryUrl: settings.giftRegistryUrl,
+    saveTheDateMessage: settings.saveTheDateMessage,
+    saveTheDateFilePath: settings.saveTheDateFilePath,
+    saveTheDateFileMime: settings.saveTheDateFileMime,
+    saveTheDateFileName: settings.saveTheDateFileName,
   };
 }
 
@@ -63,6 +75,18 @@ export async function updateEventConfig(
       pixKeyType: input.pixKeyType === undefined ? undefined : input.pixKeyType,
       pixHolderName: input.pixHolderName === undefined ? undefined : input.pixHolderName,
       pixCity: input.pixCity === undefined ? undefined : input.pixCity,
+      weddingWebsiteUrl:
+        input.weddingWebsiteUrl === undefined ? undefined : input.weddingWebsiteUrl,
+      giftRegistryUrl:
+        input.giftRegistryUrl === undefined ? undefined : input.giftRegistryUrl,
+      saveTheDateMessage:
+        input.saveTheDateMessage === undefined ? undefined : input.saveTheDateMessage,
+      saveTheDateFilePath:
+        input.saveTheDateFilePath === undefined ? undefined : input.saveTheDateFilePath,
+      saveTheDateFileMime:
+        input.saveTheDateFileMime === undefined ? undefined : input.saveTheDateFileMime,
+      saveTheDateFileName:
+        input.saveTheDateFileName === undefined ? undefined : input.saveTheDateFileName,
     },
   });
 
@@ -77,6 +101,12 @@ export async function updateEventConfig(
     pixKeyType: updated.pixKeyType,
     pixHolderName: updated.pixHolderName,
     pixCity: updated.pixCity,
+    weddingWebsiteUrl: updated.weddingWebsiteUrl,
+    giftRegistryUrl: updated.giftRegistryUrl,
+    saveTheDateMessage: updated.saveTheDateMessage,
+    saveTheDateFilePath: updated.saveTheDateFilePath,
+    saveTheDateFileMime: updated.saveTheDateFileMime,
+    saveTheDateFileName: updated.saveTheDateFileName,
   };
 }
 

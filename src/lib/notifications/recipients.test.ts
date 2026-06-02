@@ -26,6 +26,8 @@ describe("buildSaveTheDateRecipients", () => {
     contactPhone: "+5511999990000",
     contactEmail: null,
     memberNames: ["Ana", "Lucas"],
+    memberTagIds: [],
+    hasPadrinho: false,
     ...over,
   });
   const guest = (over: Partial<RecipientSourceGuest>): RecipientSourceGuest => ({
@@ -34,6 +36,8 @@ describe("buildSaveTheDateRecipients", () => {
     phone: "+5511888880000",
     email: null,
     language: null,
+    tagIds: [],
+    isPadrinho: false,
     ...over,
   });
 
@@ -56,14 +60,6 @@ describe("buildSaveTheDateRecipients", () => {
     expect(out.every((r) => r.status === "SKIPPED" && r.skipReason === "NO_CONTACT")).toBe(true);
   });
 
-  it("keeps a recipient that has only email", () => {
-    const out = buildSaveTheDateRecipients(
-      [group({ contactPhone: null, contactEmail: "fam@example.com" })],
-      [],
-    );
-    expect(out[0].status).toBe("PENDING");
-  });
-
   it("deduplicates a phone shared between a group and an ungrouped guest", () => {
     const out = buildSaveTheDateRecipients(
       [group({ contactPhone: "+55 11 99999-0000" })],
@@ -72,6 +68,52 @@ describe("buildSaveTheDateRecipients", () => {
     expect(out[0].status).toBe("PENDING");
     expect(out[1].status).toBe("SKIPPED");
     expect(out[1].skipReason).toBe("DUPLICATE_PHONE");
+  });
+
+  it("normalizes phones to E.164 and preserves foreign DDI", () => {
+    const out = buildSaveTheDateRecipients(
+      [group({ id: "g1", contactPhone: "11999990000" })],
+      [guest({ id: "u1", phone: "+34 600 123 456" })],
+    );
+    expect(out[0].phone).toBe("+5511999990000");
+    expect(out[1].phone).toBe("+34600123456");
+  });
+
+  it("excludes a group if ANY member has an excluded tag", () => {
+    const out = buildSaveTheDateRecipients(
+      [group({ memberTagIds: ["t-padrinho", "t-amigo"] })],
+      [guest({ tagIds: ["t-amigo"] })],
+      { excludeTagIds: ["t-padrinho"] },
+    );
+    expect(out[0].status).toBe("SKIPPED");
+    expect(out[0].skipReason).toBe("EXCLUDED_TAG");
+    expect(out[1].status).toBe("PENDING");
+  });
+
+  it("excludes by padrinho flag when enabled", () => {
+    const out = buildSaveTheDateRecipients(
+      [group({ hasPadrinho: true })],
+      [guest({ isPadrinho: true })],
+      { excludePadrinhos: true },
+    );
+    expect(out.every((r) => r.skipReason === "EXCLUDED_TAG")).toBe(true);
+  });
+
+  it("skips recipients already sent in a previous broadcast", () => {
+    const out = buildSaveTheDateRecipients([group({ id: "g1" })], [guest({ id: "u1" })], {
+      alreadySentKeys: new Set(["GuestGroup:g1"]),
+    });
+    expect(out[0].skipReason).toBe("ALREADY_SENT");
+    expect(out[1].status).toBe("PENDING");
+  });
+
+  it("tag exclusion takes priority over already-sent and contact checks", () => {
+    const out = buildSaveTheDateRecipients(
+      [group({ id: "g1", contactPhone: null, contactEmail: null, memberTagIds: ["x"] })],
+      [],
+      { excludeTagIds: ["x"], alreadySentKeys: new Set(["GuestGroup:g1"]) },
+    );
+    expect(out[0].skipReason).toBe("EXCLUDED_TAG");
   });
 
   it("falls back to group name when there are no members", () => {

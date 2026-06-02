@@ -273,6 +273,8 @@
     "noRecipients": "No guests registered.",
     "noEligibleRecipients": "No guests with a phone or email to send to.",
     "broadcastNotFound": "Broadcast not found.",
-    "noFailedRecipients": "No failures to resend."
+    "noFailedRecipients": "No failures to resend.",
+    "invalidPhone": "Invalid phone. Use +5511999990000.",
+    "invalidEmail": "Invalid email."
   }
 }

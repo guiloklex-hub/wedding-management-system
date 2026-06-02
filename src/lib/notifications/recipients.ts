@@ -1,9 +1,13 @@
+import { normalizeMsisdn } from "./std-message";
+
 export type RecipientSourceGroup = {
   id: string;
   name: string;
   contactPhone: string | null;
   contactEmail: string | null;
   memberNames: string[];
+  memberTagIds: string[];
+  hasPadrinho: boolean;
 };
 
 export type RecipientSourceGuest = {
@@ -12,9 +16,11 @@ export type RecipientSourceGuest = {
   phone: string | null;
   email: string | null;
   language: string | null;
+  tagIds: string[];
+  isPadrinho: boolean;
 };
 
-export type SkipReason = "NO_CONTACT" | "DUPLICATE_PHONE";
+export type SkipReason = "NO_CONTACT" | "DUPLICATE_PHONE" | "EXCLUDED_TAG" | "ALREADY_SENT";
 
 export type BuiltRecipient = {
   refType: "GuestGroup" | "Guest";
@@ -26,6 +32,13 @@ export type BuiltRecipient = {
   locale: string | null;
   status: "PENDING" | "SKIPPED";
   skipReason: SkipReason | null;
+};
+
+export type RecipientExcludeOptions = {
+  excludeTagIds?: string[];
+  excludePadrinhos?: boolean;
+  /** Chaves `${refType}:${refId}` que já receberam (dedup entre disparos). */
+  alreadySentKeys?: Set<string>;
 };
 
 function digits(value?: string | null): string {
@@ -44,38 +57,66 @@ export function joinNames(names: string[]): string {
 /**
  * Monta a lista de destinatários do Save the Date: uma entrada por grupo
  * (telefone/e-mail do grupo, citando os integrantes) + uma por convidado avulso
- * (sem grupo). Quem não tem nenhum canal vira `SKIPPED`; telefones repetidos
- * entre grupo e avulso também são pulados para não duplicar o envio.
+ * (sem grupo). Telefones são normalizados (E.164, preservando DDI estrangeiro).
+ *
+ * Regras de `SKIPPED` (nesta ordem de prioridade):
+ *   EXCLUDED_TAG  → tem tag excluída ou é padrinho (quando ligado)
+ *   ALREADY_SENT  → já recebeu num disparo anterior
+ *   NO_CONTACT    → sem telefone e sem e-mail
+ *   DUPLICATE_PHONE → telefone repetido entre grupo e avulso
  */
 export function buildSaveTheDateRecipients(
   groups: RecipientSourceGroup[],
   guests: RecipientSourceGuest[],
+  opts: RecipientExcludeOptions = {},
 ): BuiltRecipient[] {
   const out: BuiltRecipient[] = [];
   const seenPhones = new Set<string>();
+  const excludeTags = new Set(opts.excludeTagIds ?? []);
+  const padrinhos = opts.excludePadrinhos ?? false;
+  const alreadySent = opts.alreadySentKeys ?? new Set<string>();
 
-  const classify = (phone: string | null, email: string | null): {
-    status: "PENDING" | "SKIPPED";
-    skipReason: SkipReason | null;
-  } => {
-    if (!phone && !email) return { status: "SKIPPED", skipReason: "NO_CONTACT" };
-    const key = digits(phone);
-    if (key && seenPhones.has(key)) {
-      return { status: "SKIPPED", skipReason: "DUPLICATE_PHONE" };
+  const isExcludedByTag = (tagIds: string[], hasPadrinho: boolean): boolean => {
+    if (padrinhos && hasPadrinho) return true;
+    if (excludeTags.size === 0) return false;
+    return tagIds.some((id) => excludeTags.has(id));
+  };
+
+  const classify = (
+    key: string,
+    phone: string | null,
+    email: string | null,
+    tagIds: string[],
+    hasPadrinho: boolean,
+  ): { status: "PENDING" | "SKIPPED"; skipReason: SkipReason | null } => {
+    if (isExcludedByTag(tagIds, hasPadrinho)) {
+      return { status: "SKIPPED", skipReason: "EXCLUDED_TAG" };
     }
-    if (key) seenPhones.add(key);
+    if (alreadySent.has(key)) return { status: "SKIPPED", skipReason: "ALREADY_SENT" };
+    if (!phone && !email) return { status: "SKIPPED", skipReason: "NO_CONTACT" };
+    const d = digits(phone);
+    if (d && seenPhones.has(d)) return { status: "SKIPPED", skipReason: "DUPLICATE_PHONE" };
+    if (d) seenPhones.add(d);
     return { status: "PENDING", skipReason: null };
   };
 
   for (const grp of groups) {
-    const { status, skipReason } = classify(grp.contactPhone, grp.contactEmail);
+    const phone = normalizeMsisdn(grp.contactPhone);
+    const key = `GuestGroup:${grp.id}`;
+    const { status, skipReason } = classify(
+      key,
+      phone,
+      grp.contactEmail,
+      grp.memberTagIds,
+      grp.hasPadrinho,
+    );
     const members = grp.memberNames.length > 0 ? grp.memberNames : [grp.name];
     out.push({
       refType: "GuestGroup",
       refId: grp.id,
       name: grp.name,
       memberNames: joinNames(members),
-      phone: grp.contactPhone,
+      phone,
       email: grp.contactEmail,
       locale: null,
       status,
@@ -84,13 +125,15 @@ export function buildSaveTheDateRecipients(
   }
 
   for (const gst of guests) {
-    const { status, skipReason } = classify(gst.phone, gst.email);
+    const phone = normalizeMsisdn(gst.phone);
+    const key = `Guest:${gst.id}`;
+    const { status, skipReason } = classify(key, phone, gst.email, gst.tagIds, gst.isPadrinho);
     out.push({
       refType: "Guest",
       refId: gst.id,
       name: gst.name,
       memberNames: gst.name,
-      phone: gst.phone,
+      phone,
       email: gst.email,
       locale: gst.language,
       status,

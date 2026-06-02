@@ -4,8 +4,10 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getEventConfig } from "@/lib/event-config";
 import { getWhatsAppStatus } from "@/lib/notifications/whatsapp";
-import { buildSaveTheDateRecipients } from "@/lib/notifications/recipients";
-import { getActiveSaveTheDateBroadcast } from "@/app/actions/saveTheDateActions";
+import {
+  getActiveSaveTheDateBroadcast,
+  getSaveTheDateRecipients,
+} from "@/app/actions/saveTheDateActions";
 import { coerceLocale } from "@/i18n/config";
 import { formatDate } from "@/lib/format";
 import SaveTheDateClient from "./save-the-date-client";
@@ -20,20 +22,11 @@ export default async function SaveTheDatePage() {
   const locale = coerceLocale(await getLocale());
   const cfg = await getEventConfig();
 
-  const [groups, guests, venue, user, active] = await Promise.all([
-    prisma.guestGroup.findMany({
+  const [tags, venue, user, active, recipients] = await Promise.all([
+    prisma.guestTag.findMany({
       where: { deletedAt: null },
-      select: {
-        id: true,
-        name: true,
-        contactPhone: true,
-        contactEmail: true,
-        guests: { where: { deletedAt: null }, select: { name: true }, orderBy: { name: "asc" } },
-      },
-    }),
-    prisma.guest.findMany({
-      where: { deletedAt: null, groupId: null },
-      select: { id: true, name: true, phone: true, email: true, language: true },
+      select: { id: true, name: true, color: true },
+      orderBy: { name: "asc" },
     }),
     prisma.venue.findFirst({
       where: { deletedAt: null },
@@ -45,28 +38,23 @@ export default async function SaveTheDatePage() {
       select: { phone: true, email: true },
     }),
     getActiveSaveTheDateBroadcast(),
+    getSaveTheDateRecipients(true),
   ]);
 
-  const recipients = buildSaveTheDateRecipients(
-    groups.map((g) => ({
-      id: g.id,
-      name: g.name,
-      contactPhone: g.contactPhone,
-      contactEmail: g.contactEmail,
-      memberNames: g.guests.map((m) => m.name),
-    })),
-    guests.map((g) => ({
-      id: g.id,
-      name: g.name,
-      phone: g.phone,
-      email: g.email,
-      language: g.language,
-    })),
-  );
+  const list = recipients ?? [];
+  const eligible = list.filter((r) => r.status === "PENDING").length;
+  const skipped = list.length - eligible;
+  const sampleNames = list.find((r) => r.status === "PENDING")?.memberNames ?? null;
 
-  const eligible = recipients.filter((r) => r.status === "PENDING").length;
-  const skipped = recipients.length - eligible;
-  const sampleNames = recipients.find((r) => r.status === "PENDING")?.memberNames ?? null;
+  let savedExcludeTagIds: string[] = [];
+  if (cfg.saveTheDateExcludeTagIds) {
+    try {
+      const parsed = JSON.parse(cfg.saveTheDateExcludeTagIds);
+      if (Array.isArray(parsed)) savedExcludeTagIds = parsed.filter((x): x is string => typeof x === "string");
+    } catch {
+      savedExcludeTagIds = [];
+    }
+  }
 
   const eventDateStr = cfg.eventDate
     ? formatDate(cfg.eventDate, locale, {
@@ -91,14 +79,17 @@ export default async function SaveTheDatePage() {
           hasArt: Boolean(cfg.saveTheDateFilePath),
           artName: cfg.saveTheDateFileName ?? null,
           artIsImage: (cfg.saveTheDateFileMime ?? "").startsWith("image/"),
+          excludeTagIds: savedExcludeTagIds,
+          excludePadrinhos: cfg.saveTheDateExcludePadrinhos,
         }}
+        tags={tags}
         event={{
           coupleNames: cfg.coupleNames ?? "",
           eventDateStr,
           venueName: venue?.name ?? null,
           configured: Boolean(cfg.eventDate && cfg.coupleNames),
         }}
-        recipients={{ eligible, skipped, sampleNames }}
+        recipients={{ eligible, skipped, sampleNames, list }}
         capabilities={{
           whatsappConnected: getWhatsAppStatus().state === "CONNECTED",
           hasUserPhone: Boolean(user?.phone),

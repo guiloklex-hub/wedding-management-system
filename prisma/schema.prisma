@@ -88,6 +88,8 @@ model EventSettings {
   saveTheDateFilePath    String?
   saveTheDateFileMime    String?
   saveTheDateFileName    String?
+  saveTheDateExcludeTagIds   String?
+  saveTheDateExcludePadrinhos Boolean @default(false)
   updatedAt              DateTime  @updatedAt
 }
 

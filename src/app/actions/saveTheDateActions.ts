@@ -10,7 +10,7 @@ import { audit } from "@/lib/audit";
 import { zodErrorMessage } from "@/lib/zod-i18n";
 import { denyIfNoManage } from "@/lib/finance-access";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
-import { updateEventConfig } from "@/lib/event-config";
+import { getEventConfig, updateEventConfig } from "@/lib/event-config";
 import { coerceLocale } from "@/i18n/config";
 import { saveUpload, removeUpload } from "@/lib/storage";
 import { detectMagic, assertMagicMatchesMime, FileValidationError } from "@/lib/file-validation";
@@ -19,7 +19,8 @@ import {
   sendSaveTheDate,
 } from "@/lib/notifications/save-the-date";
 import { armBroadcastWorker } from "@/lib/notifications/broadcast-worker";
-import { buildSaveTheDateRecipients } from "@/lib/notifications/recipients";
+import { buildSaveTheDateRecipients, type BuiltRecipient } from "@/lib/notifications/recipients";
+import { normalizeMsisdn } from "@/lib/notifications/std-message";
 import type { ActionResult } from "@/types";
 
 const ART_MIME = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp"]);
@@ -46,6 +47,10 @@ const ConfigSchema = z.object({
   removeArt: z
     .preprocess((v) => v === "on" || v === true || v === "true", z.boolean())
     .optional(),
+  excludeTagIds: z.array(z.string().min(1).max(64)).max(100).default([]),
+  excludePadrinhos: z
+    .preprocess((v) => v === "on" || v === true || v === "true", z.boolean())
+    .default(false),
 });
 
 export async function saveSaveTheDateConfig(
@@ -61,6 +66,8 @@ export async function saveSaveTheDateConfig(
     giftRegistryUrl: formData.get("giftRegistryUrl") ?? "",
     saveTheDateMessage: formData.get("saveTheDateMessage") ?? "",
     removeArt: formData.get("removeArt") ?? undefined,
+    excludeTagIds: formData.getAll("excludeTagIds").map(String),
+    excludePadrinhos: formData.get("excludePadrinhos") ?? undefined,
   });
   if (!parsed.success) {
     return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
@@ -117,6 +124,9 @@ export async function saveSaveTheDateConfig(
       weddingWebsiteUrl: parsed.data.weddingWebsiteUrl,
       giftRegistryUrl: parsed.data.giftRegistryUrl,
       saveTheDateMessage: parsed.data.saveTheDateMessage,
+      saveTheDateExcludeTagIds:
+        parsed.data.excludeTagIds.length > 0 ? JSON.stringify(parsed.data.excludeTagIds) : null,
+      saveTheDateExcludePadrinhos: parsed.data.excludePadrinhos,
       ...artUpdate,
     });
 
@@ -139,6 +149,12 @@ export async function saveSaveTheDateConfig(
 
 const TestSchema = z.object({
   channel: z.enum(["WHATSAPP", "EMAIL"]),
+  to: z
+    .string()
+    .trim()
+    .max(160)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null)),
 });
 
 export async function sendTestSaveTheDate(
@@ -158,7 +174,10 @@ export async function sendTestSaveTheDate(
     return { success: false, error: t("tooManyAttempts") };
   }
 
-  const parsed = TestSchema.safeParse({ channel: formData.get("channel") });
+  const parsed = TestSchema.safeParse({
+    channel: formData.get("channel"),
+    to: formData.get("to") ?? "",
+  });
   if (!parsed.success) {
     return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
@@ -169,11 +188,21 @@ export async function sendTestSaveTheDate(
   });
   if (!user) return { success: false, error: t("unauthorized") };
 
-  if (parsed.data.channel === "WHATSAPP" && !user.phone) {
-    return { success: false, error: t("noUserPhone") };
-  }
-  if (parsed.data.channel === "EMAIL" && !user.email) {
-    return { success: false, error: t("noUserEmail") };
+  // Destino: o informado (se houver) ou o próprio usuário.
+  let targetPhone: string | null = null;
+  let targetEmail: string | null = null;
+  if (parsed.data.channel === "WHATSAPP") {
+    const phone = parsed.data.to ? normalizeMsisdn(parsed.data.to) : user.phone;
+    if (!phone) return { success: false, error: t("noUserPhone") };
+    if (!/^\+\d{10,15}$/.test(phone)) return { success: false, error: t("invalidPhone") };
+    targetPhone = phone;
+  } else {
+    const email = parsed.data.to ?? user.email;
+    if (!email) return { success: false, error: t("noUserEmail") };
+    if (!z.string().email().safeParse(email).success) {
+      return { success: false, error: t("invalidEmail") };
+    }
+    targetEmail = email;
   }
 
   const loaded = await loadSaveTheDateContext();
@@ -185,8 +214,8 @@ export async function sendTestSaveTheDate(
     ctx: loaded.ctx,
     target: {
       userId,
-      phone: parsed.data.channel === "WHATSAPP" ? user.phone : null,
-      email: parsed.data.channel === "EMAIL" ? user.email : null,
+      phone: targetPhone,
+      email: targetEmail,
       locale: user.locale ? coerceLocale(user.locale) : loaded.ctx.defaultLocale,
     },
     recipientNames: user.name ?? loaded.ctx.coupleNames,
@@ -204,8 +233,29 @@ export async function sendTestSaveTheDate(
   return { success: true };
 }
 
-async function loadRecipients() {
-  const [groups, guests] = await Promise.all([
+async function loadAlreadySentKeys(): Promise<Set<string>> {
+  const sent = await prisma.broadcastRecipient.findMany({
+    where: { status: "SENT", broadcast: { kind: "SAVE_THE_DATE" } },
+    select: { refType: true, refId: true },
+  });
+  return new Set(sent.map((r) => `${r.refType}:${r.refId}`));
+}
+
+async function loadRecipients(
+  opts: { skipAlreadySent?: boolean } = {},
+): Promise<BuiltRecipient[]> {
+  const cfg = await getEventConfig();
+  let excludeTagIds: string[] = [];
+  if (cfg.saveTheDateExcludeTagIds) {
+    try {
+      const parsed = JSON.parse(cfg.saveTheDateExcludeTagIds);
+      if (Array.isArray(parsed)) excludeTagIds = parsed.filter((x): x is string => typeof x === "string");
+    } catch {
+      excludeTagIds = [];
+    }
+  }
+
+  const [groups, guests, alreadySentKeys] = await Promise.all([
     prisma.guestGroup.findMany({
       where: { deletedAt: null },
       select: {
@@ -215,16 +265,25 @@ async function loadRecipients() {
         contactEmail: true,
         guests: {
           where: { deletedAt: null },
-          select: { name: true },
+          select: { name: true, isPadrinho: true, tags: { select: { tagId: true } } },
           orderBy: { name: "asc" },
         },
       },
     }),
     prisma.guest.findMany({
       where: { deletedAt: null, groupId: null },
-      select: { id: true, name: true, phone: true, email: true, language: true },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        language: true,
+        isPadrinho: true,
+        tags: { select: { tagId: true } },
+      },
       orderBy: { name: "asc" },
     }),
+    opts.skipAlreadySent ? loadAlreadySentKeys() : Promise.resolve(new Set<string>()),
   ]);
 
   return buildSaveTheDateRecipients(
@@ -234,6 +293,8 @@ async function loadRecipients() {
       contactPhone: g.contactPhone,
       contactEmail: g.contactEmail,
       memberNames: g.guests.map((m) => m.name),
+      memberTagIds: g.guests.flatMap((m) => m.tags.map((t) => t.tagId)),
+      hasPadrinho: g.guests.some((m) => m.isPadrinho),
     })),
     guests.map((g) => ({
       id: g.id,
@@ -241,8 +302,47 @@ async function loadRecipients() {
       phone: g.phone,
       email: g.email,
       language: g.language,
+      tagIds: g.tags.map((t) => t.tagId),
+      isPadrinho: g.isPadrinho,
     })),
+    {
+      excludeTagIds,
+      excludePadrinhos: cfg.saveTheDateExcludePadrinhos,
+      alreadySentKeys,
+    },
   );
+}
+
+export type RecipientPreviewRow = {
+  refType: string;
+  refId: string;
+  name: string;
+  memberNames: string;
+  channel: "WHATSAPP" | "EMAIL" | "NONE";
+  status: "PENDING" | "SKIPPED";
+  skipReason: string | null;
+};
+
+function toPreviewRow(r: BuiltRecipient): RecipientPreviewRow {
+  const channel = r.phone ? "WHATSAPP" : r.email ? "EMAIL" : "NONE";
+  return {
+    refType: r.refType,
+    refId: r.refId,
+    name: r.name,
+    memberNames: r.memberNames,
+    channel,
+    status: r.status,
+    skipReason: r.skipReason,
+  };
+}
+
+export async function getSaveTheDateRecipients(
+  skipAlreadySent = true,
+): Promise<RecipientPreviewRow[] | null> {
+  const denied = await denyIfNoManage();
+  if (denied) return null;
+  const recipients = await loadRecipients({ skipAlreadySent });
+  return recipients.map(toPreviewRow);
 }
 
 export type BroadcastProgress = {
@@ -276,7 +376,9 @@ async function progressFor(broadcastId: string): Promise<BroadcastProgress | nul
   };
 }
 
-export async function startSaveTheDateBroadcast(): Promise<ActionResult<BroadcastProgress>> {
+export async function startSaveTheDateBroadcast(
+  skipAlreadySent = true,
+): Promise<ActionResult<BroadcastProgress>> {
   const t = await getTranslations("actions.saveTheDate");
   const denied = await denyIfNoManage();
   if (denied) return denied;
@@ -297,9 +399,13 @@ export async function startSaveTheDateBroadcast(): Promise<ActionResult<Broadcas
   const loaded = await loadSaveTheDateContext();
   if (!loaded.ok) return { success: false, error: t("eventNotConfigured") };
 
-  const recipients = await loadRecipients();
-  if (recipients.length === 0) return { success: false, error: t("noRecipients") };
-  const pendingCount = recipients.filter((r) => r.status === "PENDING").length;
+  const recipients = await loadRecipients({ skipAlreadySent });
+  // Excluídos por tag e já-enviados são intencionais: não viram linha no envio.
+  const toQueue = recipients.filter(
+    (r) => r.skipReason !== "EXCLUDED_TAG" && r.skipReason !== "ALREADY_SENT",
+  );
+  if (toQueue.length === 0) return { success: false, error: t("noRecipients") };
+  const pendingCount = toQueue.filter((r) => r.status === "PENDING").length;
   if (pendingCount === 0) return { success: false, error: t("noEligibleRecipients") };
 
   const broadcast = await prisma.$transaction(async (tx) => {
@@ -313,7 +419,7 @@ export async function startSaveTheDateBroadcast(): Promise<ActionResult<Broadcas
       },
     });
     await tx.broadcastRecipient.createMany({
-      data: recipients.map((r) => ({
+      data: toQueue.map((r) => ({
         broadcastId: created.id,
         refType: r.refType,
         refId: r.refId,
@@ -354,6 +460,42 @@ export async function getSaveTheDateBroadcastProgress(
   const denied = await denyIfNoManage();
   if (denied) return null;
   return progressFor(broadcastId);
+}
+
+export type BroadcastRecipientRow = {
+  name: string;
+  memberNames: string;
+  channelUsed: string | null;
+  status: string;
+  error: string | null;
+  sentAt: string | null;
+};
+
+export async function getSaveTheDateBroadcastRecipients(
+  broadcastId: string,
+): Promise<BroadcastRecipientRow[] | null> {
+  const denied = await denyIfNoManage();
+  if (denied) return null;
+  const rows = await prisma.broadcastRecipient.findMany({
+    where: { broadcastId },
+    select: {
+      name: true,
+      memberNames: true,
+      channelUsed: true,
+      status: true,
+      error: true,
+      sentAt: true,
+    },
+    orderBy: [{ status: "asc" }, { name: "asc" }],
+  });
+  return rows.map((r) => ({
+    name: r.name,
+    memberNames: r.memberNames,
+    channelUsed: r.channelUsed,
+    status: r.status,
+    error: r.error,
+    sentAt: r.sentAt ? r.sentAt.toISOString() : null,
+  }));
 }
 
 export async function resendFailedSaveTheDate(

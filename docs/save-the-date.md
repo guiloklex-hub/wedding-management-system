@@ -64,3 +64,30 @@ Módulo para avisar os convidados da **data** do casamento — com uma arte
   telefone válido, cai no e-mail; sem nenhum, o destinatário fica `SKIPPED`.
 - Arte: PNG, JPG, WEBP ou PDF, até 10 MB.
 - A arte é servida (preview na UI) por `GET /api/save-the-date/art` (autenticado).
+
+## Iteração 2 — refinamentos
+
+- **Exclusão por tag/padrinho**: `EventSettings.saveTheDateExcludeTagIds` (JSON de
+  IDs de `GuestTag`) + `saveTheDateExcludePadrinhos` (Boolean). Regra **ANY**: um
+  grupo é excluído se **qualquer** integrante tiver a tag/flag; avulso, se ele
+  próprio tiver. Aplicada em `buildSaveTheDateRecipients(..., { excludeTagIds,
+  excludePadrinhos })`.
+- **Variáveis de link**: `{site}` → site dos noivos; `{site-presentes}` → lista de
+  presentes. Quando usadas no corpo, entram inline; quando não, são anexadas ao
+  fim (compatível). Helpers puros em
+  [src/lib/notifications/std-message.ts](../src/lib/notifications/std-message.ts)
+  (`interpolateBaseTags`, `applySiteTags`) — compartilhados por template e preview.
+- **Teste para outro contato**: `sendTestSaveTheDate` aceita `to` (telefone `+55…`
+  ou e-mail); vazio = próprio usuário.
+- **E-mail sem branding**: no kind `SAVE_THE_DATE`, `wrapHtml` recebe cabeçalho =
+  nomes do casal e rodapé vazio (sem "Wedding Finance" / "mensagem automática").
+- **Pré-lista**: `getSaveTheDateRecipients()` devolve quem vai receber (canal +
+  status) — renderizada em "Quem vai receber".
+- **Não reenviar**: toggle `skipAlreadySent` em `startSaveTheDateBroadcast` —
+  coleta `refId`s já `SENT` em broadcasts `SAVE_THE_DATE` e os pula.
+- **Lista detalhada + CSV**: `getSaveTheDateBroadcastRecipients(broadcastId)` +
+  exportação CSV na UI.
+- **Normalização de telefone**: `normalizeMsisdn` (em `std-message.ts`) completa
+  `+55` para números BR sem DDI e **preserva** qualquer número que já comece com
+  `+` (ex.: `+1`, `+34`). Aplicada ao montar destinatários (o número normalizado
+  é gravado em `BroadcastRecipient.phone`).

@@ -232,3 +232,17 @@ Veja [troubleshooting.md](troubleshooting.md).
 
 Se o mesmo lembrete não chega: verifique se `NotificationLog` já tem entrada
 de sucesso para hoje. Se sim, foi pulado por design.
+
+## Anexos (mídia) e Save the Date
+
+`sendWhatsApp(phone, text, media?)` e `sendEmail({ ..., attachments? })` aceitam
+**mídia**: imagens viram `image` com legenda (WhatsApp) / inline via `cid`
+(e-mail); PDFs viram `document` / anexo. O orquestrador `notify()` repassa via
+`options.media`.
+
+O kind `SAVE_THE_DATE` (template em `notifications/templates.ts`) é o primeiro
+consumidor: aviso da data com arte anexada, variáveis `{nomes}/{convidados}/{data}/{local}`
+e linhas de site/lista de presentes condicionais. O disparo em massa usa a fila
+`Broadcast`/`BroadcastRecipient` drenada por um worker com throttle
+(`broadcast-worker.ts`, env `BROADCAST_INTERVAL_MS`) e o backstop
+`GET /api/cron/broadcast`. Detalhes em [save-the-date.md](save-the-date.md).

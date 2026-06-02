@@ -2029,5 +2029,66 @@
         "deleteAria": "Delete table"
       }
     }
+  },
+  "saveTheDate": {
+    "page": {
+      "title": "Save the Date",
+      "subtitle": "Let guests know the date before the formal invitation."
+    },
+    "notConfigured": {
+      "body": "Set the wedding date and the couple's names to enable sending.",
+      "cta": "Finish event setup"
+    },
+    "config": {
+      "title": "Save the Date content",
+      "artLabel": "Artwork (image or PDF)",
+      "artHint": "PNG, JPG, WEBP or PDF — up to 10 MB. Sent as an attachment.",
+      "removeArt": "Remove current artwork",
+      "websiteLabel": "Wedding website (optional)",
+      "registryLabel": "Gift registry (optional)",
+      "messageLabel": "Message",
+      "messagePlaceholder": "Hi, {convidados}! {nomes} are getting married...",
+      "mergeTagsHint": "Use {nomes}, {convidados}, {data} and {local} — replaced automatically. The links above are appended when filled.",
+      "save": "Save"
+    },
+    "test": {
+      "title": "Send a test to myself",
+      "subtitle": "Get the Save the Date on your own contact before the broadcast.",
+      "whatsapp": "Test on WhatsApp",
+      "email": "Test by email",
+      "whatsappOffline": "WhatsApp not connected. Connect it in Settings to test via WhatsApp."
+    },
+    "preview": {
+      "title": "Preview"
+    },
+    "broadcast": {
+      "title": "Send to guests",
+      "eligible": "Ready to send",
+      "skipped": "No contact / skipped",
+      "start": "Start sending",
+      "resendFailed": "Resend failures",
+      "cancel": "Cancel sending",
+      "statusLabel": "Status",
+      "sent": "Sent",
+      "failed": "Failed",
+      "pending": "Queued",
+      "doneNote": "Sending complete.",
+      "confirmStart": "Send the Save the Date to {count, plural, one {# recipient} other {# recipients}}? This sends real messages.",
+      "confirmCancel": "Cancel sending to the recipients still queued?",
+      "status": {
+        "DRAFT": "Draft",
+        "SENDING": "Sending",
+        "PAUSED": "Paused",
+        "DONE": "Done",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "toasts": {
+      "configSaved": "Save the Date saved.",
+      "testSent": "Test sent.",
+      "broadcastStarted": "Sending started.",
+      "resendStarted": "Resending failures.",
+      "broadcastCancelled": "Sending cancelled."
+    }
   }
 }

@@ -258,5 +258,21 @@
   "whatsapp": {
     "adminOnly": "Apenas administradores",
     "testMessageBody": "*Wedding Finance*\n\nMensagem de teste enviada com sucesso. Sua integração com WhatsApp está funcionando. ✅"
+  },
+  "saveTheDate": {
+    "unauthorized": "Não autorizado",
+    "tooManyAttempts": "Muitas tentativas. Aguarde um instante.",
+    "fileTooLarge": "Arquivo excede 10 MB.",
+    "fileTypeInvalid": "Formato não permitido. Use PNG, JPG, WEBP ou PDF.",
+    "errorSaving": "Não foi possível salvar.",
+    "noUserPhone": "Você não tem telefone cadastrado no perfil.",
+    "noUserEmail": "Você não tem e-mail cadastrado no perfil.",
+    "eventNotConfigured": "Configure a data e os nomes do casal primeiro.",
+    "errorSending": "Falha no envio.",
+    "alreadySending": "Já existe um envio em andamento.",
+    "noRecipients": "Nenhum convidado cadastrado.",
+    "noEligibleRecipients": "Nenhum convidado com telefone ou e-mail para envio.",
+    "broadcastNotFound": "Envio não encontrado.",
+    "noFailedRecipients": "Não há falhas para reenviar."
   }
 }

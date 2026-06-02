@@ -82,7 +82,44 @@ model EventSettings {
   pixKeyType             String?
   pixHolderName          String?
   pixCity                String?
+  weddingWebsiteUrl      String?
+  giftRegistryUrl        String?
+  saveTheDateMessage     String?
+  saveTheDateFilePath    String?
+  saveTheDateFileMime    String?
+  saveTheDateFileName    String?
   updatedAt              DateTime  @updatedAt
+}
+
+model Broadcast {
+  id         String               @id @default(cuid())
+  kind       String
+  status     String               @default("DRAFT")
+  channel    String               @default("AUTO")
+  total      Int                  @default(0)
+  createdAt  DateTime             @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+  recipients BroadcastRecipient[]
+}
+
+model BroadcastRecipient {
+  id          String    @id @default(cuid())
+  broadcastId String
+  refType     String
+  refId       String
+  name        String
+  memberNames String
+  phone       String?
+  email       String?
+  locale      String?
+  status      String    @default("PENDING")
+  channelUsed String?
+  error       String?
+  sentAt      DateTime?
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+
+  @@index([broadcastId, status])
 }
 
 model Vendor {

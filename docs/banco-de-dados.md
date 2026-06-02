@@ -59,7 +59,7 @@ Arquivo: [prisma/schema.prisma](../prisma/schema.prisma).
 | `PasswordResetToken` | Tokens de reset (hash sha256, expira em 60min). |
 | `NotificationLog` | Histórico de envios (email + WhatsApp), idempotência por dia. |
 | `SecuritySettings` | Singleton: lista de roles que exigem 2FA, tamanho mínimo de senha. |
-| `EventSettings` | Singleton: dados do casamento (data, contingência, moeda, nomes, plano B, `defaultLocale`). |
+| `EventSettings` | Singleton: dados do casamento (data, contingência, moeda, nomes, plano B, `defaultLocale`). Inclui Save the Date: `weddingWebsiteUrl`, `giftRegistryUrl`, `saveTheDateMessage`, `saveTheDateFilePath/Mime/Name` (a arte). |
 | `Vendor` | Fornecedores com status, categoria, notas, contratos, anexos. |
 | `VendorContact` | Múltiplos contatos por fornecedor (com isPrimary). |
 | `VendorNote` | Histórico de notas livre por fornecedor. |
@@ -83,6 +83,8 @@ Arquivo: [prisma/schema.prisma](../prisma/schema.prisma).
 | `Gift` | Presentes (cash/item, status recebimento). |
 | `Task` | Tarefas (status, prioridade, responsável, deadline). |
 | `AuditLog` | Auditoria (entity, action, payload, userId). |
+| `Broadcast` | Campanha de envio em massa (`kind`, ex.: `SAVE_THE_DATE`; `status`, `total`). Reaproveitável para o convite formal futuro. |
+| `BroadcastRecipient` | Item da fila de um `Broadcast` (`refType`/`refId`, `phone`, `email`, `status` PENDING/SENT/FAILED/SKIPPED). Cascade no delete do `Broadcast`. |
 
 ### Convenções
 

@@ -72,6 +72,9 @@
     "seed": "tsx prisma/seed.ts"
   },
   "overrides": {
-    "postcss": "8.5.14"
+    "postcss": "8.5.14",
+    "next-auth": {
+      "nodemailer": "$nodemailer"
+    }
   }
 }

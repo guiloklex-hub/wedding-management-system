@@ -16,6 +16,7 @@ import {
   PowerOff,
   RefreshCw,
   Save,
+  ScrollText,
   Search,
   Send,
   ShieldAlert,
@@ -112,7 +113,17 @@ type NotificationLogEntry = {
   createdAt: Date;
 };
 
-type Tab = "event" | "security" | "team" | "whatsapp" | "profile" | "backup" | "notifications";
+type AuditLogEntry = {
+  id: string;
+  entity: string;
+  entityId: string;
+  action: string;
+  createdAt: Date;
+  actorName: string | null;
+  actorEmail: string | null;
+};
+
+type Tab = "event" | "security" | "team" | "whatsapp" | "profile" | "backup" | "notifications" | "audit";
 
 export default function SettingsClient({
   initial,
@@ -121,6 +132,7 @@ export default function SettingsClient({
   members,
   securitySettings,
   notificationLogs,
+  auditLogs,
 }: {
   initial: Initial;
   pixSettings: PixSettings;
@@ -128,6 +140,7 @@ export default function SettingsClient({
   members: Member[];
   securitySettings: SecuritySettings;
   notificationLogs: NotificationLogEntry[];
+  auditLogs: AuditLogEntry[];
 }) {
   const t = useTranslations("dashboard.settings");
   const toast = useToast();
@@ -150,6 +163,11 @@ export default function SettingsClient({
         {manageUsers ? (
           <TabBtn current={tab} value="notifications" onClick={() => setTab("notifications")}>
             {t("tabs.notifications")}
+          </TabBtn>
+        ) : null}
+        {manageUsers ? (
+          <TabBtn current={tab} value="audit" onClick={() => setTab("audit")}>
+            {t("tabs.audit")}
           </TabBtn>
         ) : null}
         {isAdmin ? (
@@ -186,7 +204,152 @@ export default function SettingsClient({
       {tab === "notifications" && manageUsers ? (
         <NotificationsTab logs={notificationLogs} />
       ) : null}
+      {tab === "audit" && manageUsers ? <AuditTab logs={auditLogs} /> : null}
     </div>
+  );
+}
+
+function AuditTab({ logs }: { logs: AuditLogEntry[] }) {
+  const t = useTranslations("dashboard.settings");
+  const [entity, setEntity] = useState("ALL");
+  const [action, setAction] = useState("ALL");
+  const [query, setQuery] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+
+  const entities = useMemo(
+    () => [...new Set(logs.map((l) => l.entity))].sort((a, b) => a.localeCompare(b)),
+    [logs],
+  );
+  const actions = useMemo(
+    () => [...new Set(logs.map((l) => l.action))].sort((a, b) => a.localeCompare(b)),
+    [logs],
+  );
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const fromTs = from ? new Date(`${from}T00:00:00`).getTime() : null;
+    const toTs = to ? new Date(`${to}T23:59:59.999`).getTime() : null;
+    return logs.filter((l) => {
+      if (entity !== "ALL" && l.entity !== entity) return false;
+      if (action !== "ALL" && l.action !== action) return false;
+      if (q) {
+        const hay = `${l.entityId} ${l.actorName ?? ""} ${l.actorEmail ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      const ts = new Date(l.createdAt).getTime();
+      if (fromTs !== null && ts < fromTs) return false;
+      if (toTs !== null && ts > toTs) return false;
+      return true;
+    });
+  }, [logs, entity, action, query, from, to]);
+
+  const { pageItems, page, totalPages, total, from: pf, to: pt, setPage } = usePagination(filtered, 20);
+
+  useEffect(() => {
+    setPage(1);
+  }, [entity, action, query, from, to, setPage]);
+
+  return (
+    <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-xl">
+      <div className="flex items-center gap-2">
+        <ScrollText className="h-5 w-5 text-rose-400" />
+        <h2 className="text-lg font-semibold text-white">{t("audit.title")}</h2>
+      </div>
+      <p className="mt-1 text-sm text-zinc-500">{t("audit.subtitle")}</p>
+
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
+        <select
+          value={entity}
+          onChange={(e) => setEntity(e.target.value)}
+          className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
+        >
+          <option value="ALL">{t("audit.filter.allEntities")}</option>
+          {entities.map((en) => (
+            <option key={en} value={en}>
+              {en}
+            </option>
+          ))}
+        </select>
+        <select
+          value={action}
+          onChange={(e) => setAction(e.target.value)}
+          className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
+        >
+          <option value="ALL">{t("audit.filter.allActions")}</option>
+          {actions.map((ac) => (
+            <option key={ac} value={ac}>
+              {ac}
+            </option>
+          ))}
+        </select>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("audit.filter.searchPlaceholder")}
+          className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+        />
+        <input
+          type="date"
+          value={from}
+          onChange={(e) => setFrom(e.target.value)}
+          aria-label={t("audit.filter.from")}
+          className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
+        />
+        <input
+          type="date"
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+          aria-label={t("audit.filter.to")}
+          className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
+        />
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className="mt-4 rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
+          {t("audit.empty")}
+        </p>
+      ) : (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500">
+                <th className="py-2 pr-3 font-medium">{t("audit.col.when")}</th>
+                <th className="py-2 pr-3 font-medium">{t("audit.col.entity")}</th>
+                <th className="py-2 pr-3 font-medium">{t("audit.col.action")}</th>
+                <th className="py-2 pr-3 font-medium">{t("audit.col.entityId")}</th>
+                <th className="py-2 font-medium">{t("audit.col.actor")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pageItems.map((l) => (
+                <tr key={l.id} className="border-b border-zinc-900 align-top">
+                  <td className="py-2 pr-3 whitespace-nowrap text-zinc-400">{formatDateTimeBR(l.createdAt)}</td>
+                  <td className="py-2 pr-3 text-zinc-300">{l.entity}</td>
+                  <td className="py-2 pr-3">
+                    <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-medium tracking-wide text-zinc-300">
+                      {l.action}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-3 font-mono text-xs text-zinc-500 break-all">{l.entityId}</td>
+                  <td className="py-2 text-zinc-400">
+                    {l.actorName || l.actorEmail ? (
+                      <span title={l.actorEmail ?? undefined}>{l.actorName ?? l.actorEmail}</span>
+                    ) : (
+                      <span className="text-zinc-600">{t("audit.systemActor")}</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="mt-3">
+            <Pagination page={page} totalPages={totalPages} total={total} from={pf} to={pt} onPageChange={setPage} />
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 

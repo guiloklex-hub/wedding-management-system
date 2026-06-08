@@ -1031,6 +1031,20 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "Toda visualização de contrato registra um evento DOWNLOAD na auditoria.",
     ],
   },
+  {
+    id: "audit-trail",
+    title: "Consultar a trilha de auditoria",
+    category: "security",
+    keywords: ["auditoria", "audit", "histórico", "quem fez", "log", "rastreabilidade", "segurança"],
+    icon: ShieldCheck,
+    summary: "Veja quem fez o quê e quando, com filtros por entidade, ação, data e busca.",
+    steps: [
+      { title: "Vá em Ajustes › Auditoria", body: "Aba disponível para ADMIN/cerimonial (quem gerencia usuários)." },
+      { title: "Filtre", body: "Por entidade (Pagamento, Presente, Convidado…), ação (CREATE, MARK_PAID…), intervalo de data ou texto (ID ou pessoa)." },
+      { title: "Navegue", body: "Mostra as últimas 500 ações, 20 por página. Ações automáticas (cron/sistema) aparecem como 'Sistema'." },
+    ],
+    tips: ["Os detalhes técnicos (payload) não são exibidos — a tela foca em quem/o-quê/quando."],
+  },
 ];
 
 export type FaqItem = { question: string; answer: string };

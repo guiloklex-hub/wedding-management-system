@@ -165,6 +165,16 @@ await audit("Payment", payment.id, "MARK_PAID", { method: "PIX" });
 Campos: `entity`, `entityId`, `action`, `payload` (JSON serializado),
 `userId`, `createdAt`.
 
+### Trilha visível na UI
+
+A trilha é exibida em **Configurações › Auditoria** (`/dashboard/settings`),
+aba restrita a quem tem `canManageUsers` (ADMIN/PLANNER). Mostra as últimas
+500 ações com filtros por entidade, ação, intervalo de data e busca textual
+(ID da entidade ou pessoa), além de paginação. O `userId` é resolvido para
+nome/e-mail no servidor; ações sem ator (cron/sistema) aparecem como
+"Sistema". O `payload` **não** é exposto na UI — pode conter dados sensíveis,
+então a tela fica em quem/o-quê/quando.
+
 ### Auto-captura do `userId`
 
 O 5º argumento (`userId`) é **opcional**. Quando omitido, `audit()` faz um

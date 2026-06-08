@@ -19,6 +19,8 @@ const ISSUE_CODE_TO_KEY: Record<string, string> = {
 export function zodErrorMessage(error: ZodError, t: ZodTranslator): string {
   const issue = error.issues[0];
   if (!issue) return t("zod.invalid");
+  const i18nKey = (issue as { params?: { i18nKey?: string } }).params?.i18nKey;
+  if (i18nKey) return t(i18nKey);
   if (issue.message && !/^(Required|Expected|Invalid|String|Number|Array|Too\s|Unrecognized)/i.test(issue.message)) {
     return issue.message;
   }

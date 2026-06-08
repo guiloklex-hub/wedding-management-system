@@ -26,6 +26,7 @@ describe("buildSaveTheDateRecipients", () => {
     contactPhone: "+5511999990000",
     contactEmail: null,
     memberNames: ["Ana", "Lucas"],
+    memberContacts: [],
     memberTagIds: [],
     hasPadrinho: false,
     ...over,
@@ -119,5 +120,60 @@ describe("buildSaveTheDateRecipients", () => {
   it("falls back to group name when there are no members", () => {
     const out = buildSaveTheDateRecipients([group({ memberNames: [] })], []);
     expect(out[0].memberNames).toBe("Família Silva");
+  });
+
+  it("falls back to a member's phone when the group has no contact", () => {
+    const out = buildSaveTheDateRecipients(
+      [
+        group({
+          contactPhone: null,
+          contactEmail: null,
+          memberNames: ["Ana", "Lucas"],
+          memberContacts: [
+            { phone: null, email: null },
+            { phone: "11999990000", email: null },
+          ],
+        }),
+      ],
+      [],
+    );
+    expect(out[0].status).toBe("PENDING");
+    expect(out[0].phone).toBe("+5511999990000");
+  });
+
+  it("falls back to a member's email when the group has no contact and no member phone", () => {
+    const out = buildSaveTheDateRecipients(
+      [
+        group({
+          contactPhone: null,
+          contactEmail: null,
+          memberContacts: [{ phone: null, email: "ana@example.com" }],
+        }),
+      ],
+      [],
+    );
+    expect(out[0].status).toBe("PENDING");
+    expect(out[0].phone).toBeNull();
+    expect(out[0].email).toBe("ana@example.com");
+  });
+
+  it("marks an unsendable phone as INVALID_PHONE when there is no email", () => {
+    const out = buildSaveTheDateRecipients(
+      [],
+      [guest({ phone: "12345", email: null })],
+    );
+    expect(out[0].status).toBe("SKIPPED");
+    expect(out[0].skipReason).toBe("INVALID_PHONE");
+    expect(out[0].phone).toBeNull();
+  });
+
+  it("falls back to email when the phone is unsendable", () => {
+    const out = buildSaveTheDateRecipients(
+      [],
+      [guest({ phone: "12345", email: "convidado@example.com" })],
+    );
+    expect(out[0].status).toBe("PENDING");
+    expect(out[0].phone).toBeNull();
+    expect(out[0].email).toBe("convidado@example.com");
   });
 });

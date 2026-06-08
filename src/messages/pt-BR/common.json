@@ -163,6 +163,7 @@
     "invalidDate": "Data inválida",
     "invalidNumber": "Número inválido",
     "invalidEnum": "Valor não permitido",
+    "invalidPhone": "Telefone inválido",
     "invalid": "Dados inválidos"
   }
 }

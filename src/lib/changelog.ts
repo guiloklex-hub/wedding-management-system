@@ -6,6 +6,19 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.2",
+    date: "2026-06-08",
+    highlights: [
+      "👥 No cadastro de convidado, o **grupo agora é escolhido numa lista** (ou criado na hora com '+ Criar novo grupo') — chega de digitar o nome do grupo. Isso corrige um problema antigo: convidados digitados num grupo ficavam **fora** do RSVP coletivo e do Save the Date.",
+      "📇 O **contato do grupo** (quem recebe o Save the Date) pode ser preenchido **selecionando um integrante** do grupo — nome, telefone e e-mail são copiados automaticamente, sem digitar duas vezes.",
+      "🔄 Renomear um grupo agora **atualiza o grupo de todos os integrantes** automaticamente.",
+      "📱 **Telefone validado** no cadastro de convidados e grupos — bloqueia caracteres inválidos antes de salvar.",
+      "📨 A resposta de **RSVP de grupo** avisa os noivos com o **status real** (confirmou / não vai / respostas parciais), em vez de um genérico 'Respondeu'.",
+      "📬 **Save the Date agora alcança grupos sem contato próprio**: se o grupo não tem telefone/e-mail, o sistema usa o do primeiro integrante que tiver — antes a família inteira ficava de fora do envio.",
+      "🚦 A pré-lista do Save the Date ficou honesta: **telefone fora do formato** aparece como 'Telefone inválido' (e cai para e-mail se houver), em vez de prometer envio por WhatsApp e falhar depois.",
+    ],
+  },
+  {
     version: "0.7.1",
     date: "2026-06-02",
     highlights: [

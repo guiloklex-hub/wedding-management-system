@@ -100,6 +100,11 @@ comportamentos principais.
 ## 10. 👥 Convidados (`/dashboard/guests`)
 
 - Cadastrar nome, telefone, email, "lado" (família dele/dela), grupo.
+- **Grupo via seletor:** no cadastro/edição do convidado o grupo é escolhido
+  num `<select>` dos grupos existentes (ou "+ Criar novo grupo" inline). A ação
+  grava o vínculo real `groupId` **e** o espelho `groupName` (mantidos sempre em
+  sincronia). Digitar texto livre não existe mais — isso evita o convidado ficar
+  "órfão" do grupo e fora do RSVP coletivo / Save the Date.
 - **RSVP por link público:** `rsvpToken` único (cuid) → URL pública
   `/rsvp/[token]`.
 - Status: `INVITED` / `CONFIRMED` / `DECLINED` / `MAYBE`.
@@ -107,6 +112,18 @@ comportamentos principais.
 - Flags: `isVIP`, `isPadrinho`, `isChild`.
 - Restrições alimentares (`dietary`).
 - Check-in no dia (`checkedInAt`).
+- Telefone validado no cadastro (apenas dígitos, `+ ( ) - ` e espaços).
+
+### Grupos / Famílias (`/dashboard/guests/groups`)
+
+- Grupo é entidade própria (`GuestGroup`) com link de RSVP coletivo.
+- **Contato do grupo (quem recebe Save the Date):** pode ser preenchido
+  selecionando um **integrante** do grupo — nome/telefone/email são copiados
+  do convidado para os campos de contato (que continuam editáveis). Sem digitar
+  o mesmo dado duas vezes.
+- Renomear o grupo propaga o novo nome ao espelho `groupName` de todos os membros.
+- Resposta de RSVP do grupo notifica os gestores com status real
+  (`CONFIRMED` / `DECLINED` / `PARTIAL`), não mais um genérico "Respondeu".
 
 ---
 

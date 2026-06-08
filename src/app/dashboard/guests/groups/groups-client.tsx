@@ -29,7 +29,7 @@ type Group = {
   contactEmail: string | null;
   contactPhone: string | null;
   notes: string | null;
-  guests: { id: string; name: string; rsvpStatus: string }[];
+  guests: { id: string; name: string; phone: string | null; email: string | null; rsvpStatus: string }[];
 };
 
 export default function GroupsClient({
@@ -283,13 +283,26 @@ function GroupForm({
   onSubmit,
 }: {
   title: string;
-  initial?: Pick<Group, "name" | "contactName" | "contactEmail" | "contactPhone" | "notes">;
+  initial?: Pick<Group, "name" | "contactName" | "contactEmail" | "contactPhone" | "notes" | "guests">;
   busy: boolean;
   onCancel: () => void;
   onSubmit: (fd: FormData) => void;
 }) {
   const t = useTranslations("dashboard.guests.groups");
   const tc = useTranslations("common");
+  const members = initial?.guests ?? [];
+  const [contactName, setContactName] = useState(initial?.contactName ?? "");
+  const [contactEmail, setContactEmail] = useState(initial?.contactEmail ?? "");
+  const [contactPhone, setContactPhone] = useState(initial?.contactPhone ?? "");
+
+  function pickMember(guestId: string) {
+    const member = members.find((m) => m.id === guestId);
+    if (!member) return;
+    setContactName(member.name);
+    if (member.phone) setContactPhone(member.phone);
+    if (member.email) setContactEmail(member.email);
+  }
+
   return (
     <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:items-center">
       <form
@@ -298,24 +311,44 @@ function GroupForm({
       >
         <h2 className="text-base font-semibold text-zinc-100">{title}</h2>
         <FieldInput name="name" label={t("form.name")} defaultValue={initial?.name} required maxLength={120} />
+        {members.length > 0 ? (
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-zinc-400">{t("form.contactMember")}</span>
+            <select
+              defaultValue=""
+              onChange={(e) => pickMember(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-rose-500 focus:outline-none"
+            >
+              <option value="">{t("form.contactMemberHint")}</option>
+              {members.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <FieldInput
           name="contactName"
           label={t("form.contactName")}
-          defaultValue={initial?.contactName ?? ""}
+          value={contactName}
+          onChange={setContactName}
           maxLength={120}
         />
         <div className="grid grid-cols-2 gap-3">
           <FieldInput
             name="contactEmail"
             label={t("form.email")}
-            defaultValue={initial?.contactEmail ?? ""}
+            value={contactEmail}
+            onChange={setContactEmail}
             type="email"
             maxLength={160}
           />
           <FieldInput
             name="contactPhone"
             label={t("form.phone")}
-            defaultValue={initial?.contactPhone ?? ""}
+            value={contactPhone}
+            onChange={setContactPhone}
             maxLength={40}
           />
         </div>
@@ -469,6 +502,8 @@ function FieldInput({
   name,
   label,
   defaultValue,
+  value,
+  onChange,
   required,
   maxLength,
   type = "text",
@@ -476,17 +511,22 @@ function FieldInput({
   name: string;
   label: string;
   defaultValue?: string | null;
+  value?: string;
+  onChange?: (value: string) => void;
   required?: boolean;
   maxLength?: number;
   type?: string;
 }) {
+  const controlled = onChange !== undefined;
   return (
     <label className="block space-y-1">
       <span className="text-xs font-medium text-zinc-400">{label}</span>
       <input
         type={type}
         name={name}
-        defaultValue={defaultValue ?? ""}
+        {...(controlled
+          ? { value: value ?? "", onChange: (e) => onChange(e.target.value) }
+          : { defaultValue: defaultValue ?? "" })}
         required={required}
         maxLength={maxLength}
         className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-rose-500 focus:outline-none"

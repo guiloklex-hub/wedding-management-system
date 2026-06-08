@@ -32,6 +32,7 @@ type Guest = {
   email: string | null;
   side: string | null;
   groupName: string | null;
+  groupId: string | null;
   rsvpStatus: string;
   rsvpToken: string;
   rsvpRespondedAt: Date | null;
@@ -63,7 +64,17 @@ const RSVP_CHIP: Record<string, string> = {
   MAYBE: "bg-sky-500/10 text-sky-300 border-sky-500/20",
 };
 
-export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; baseUrl: string }) {
+type GroupRef = { id: string; name: string };
+
+export default function GuestsClient({
+  guests,
+  groups,
+  baseUrl,
+}: {
+  guests: Guest[];
+  groups: GroupRef[];
+  baseUrl: string;
+}) {
   const t = useTranslations("dashboard.guests");
   const tc = useTranslations("common");
   const rsvpLabel = (status: string) =>
@@ -406,6 +417,7 @@ export default function GuestsClient({ guests, baseUrl }: { guests: Guest[]; bas
         <GuestFormModal
           mode={editing ? "edit" : "create"}
           guest={editing ?? undefined}
+          groups={groups}
           isBusy={editing ? updatingBusy : busy}
           onClose={() => {
             setOpen(false);
@@ -460,18 +472,21 @@ function StatTile({
 function GuestFormModal({
   mode,
   guest,
+  groups,
   isBusy,
   onClose,
   formAction,
 }: {
   mode: "create" | "edit";
   guest?: Guest;
+  groups: GroupRef[];
   isBusy: boolean;
   onClose: () => void;
   formAction: (formData: FormData) => void;
 }) {
   const t = useTranslations("dashboard.guests");
   const tc = useTranslations("common");
+  const [groupValue, setGroupValue] = useState<string>(guest?.groupId ?? "");
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
       <div className="my-4 w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
@@ -496,7 +511,33 @@ function GuestFormModal({
               <option value="AMBOS">{t("side.both")}</option>
             </select>
           </div>
-          <Field name="groupName" label={t("form.groupName")} defaultValue={guest?.groupName ?? ""} />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.group")}</label>
+            <select
+              name="groupId"
+              value={groupValue}
+              onChange={(e) => setGroupValue(e.target.value)}
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+            >
+              <option value="">{t("form.groupNone")}</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+              <option value="__new__">{t("form.groupCreateNew")}</option>
+            </select>
+            {groupValue === "__new__" ? (
+              <input
+                type="text"
+                name="newGroupName"
+                maxLength={120}
+                autoFocus
+                placeholder={t("form.newGroupPlaceholder")}
+                className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+              />
+            ) : null}
+          </div>
           <Field name="city" label={t("form.city")} defaultValue={guest?.city ?? ""} />
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-400">{t("form.rsvpStatus")}</label>

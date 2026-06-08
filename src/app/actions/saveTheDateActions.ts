@@ -265,7 +265,13 @@ async function loadRecipients(
         contactEmail: true,
         guests: {
           where: { deletedAt: null },
-          select: { name: true, isPadrinho: true, tags: { select: { tagId: true } } },
+          select: {
+            name: true,
+            phone: true,
+            email: true,
+            isPadrinho: true,
+            tags: { select: { tagId: true } },
+          },
           orderBy: { name: "asc" },
         },
       },
@@ -293,6 +299,7 @@ async function loadRecipients(
       contactPhone: g.contactPhone,
       contactEmail: g.contactEmail,
       memberNames: g.guests.map((m) => m.name),
+      memberContacts: g.guests.map((m) => ({ phone: m.phone, email: m.email })),
       memberTagIds: g.guests.flatMap((m) => m.tags.map((t) => t.tagId)),
       hasPadrinho: g.guests.some((m) => m.isPadrinho),
     })),

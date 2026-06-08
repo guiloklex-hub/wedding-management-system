@@ -81,3 +81,13 @@ export function normalizeMsisdn(raw: string | null | undefined): string | null {
   // Não dá para inferir com segurança — devolve como veio.
   return raw;
 }
+
+/**
+ * Normaliza e **valida** um telefone para E.164 estrito (`+` seguido de 10 a 15
+ * dígitos) — a mesma regra usada no envio (`isValidPhone`). Retorna `null` quando o
+ * número não é enviável, para que a pré-lista reflita a realidade do disparo.
+ */
+export function toValidMsisdn(raw: string | null | undefined): string | null {
+  const normalized = normalizeMsisdn(raw);
+  return normalized && /^\+\d{10,15}$/.test(normalized) ? normalized : null;
+}

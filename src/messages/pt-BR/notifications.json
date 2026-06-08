@@ -101,6 +101,7 @@
       "DECLINED": "Não vai",
       "PENDING": "Pendente",
       "MAYBE": "Talvez",
+      "PARTIAL": "Respostas parciais",
       "RESPONDED": "Respondeu"
     }
   },

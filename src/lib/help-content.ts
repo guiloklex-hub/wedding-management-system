@@ -524,12 +524,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
     tips: [
       "Telefones sem código de país são completados com +55 automaticamente; números internacionais (ex.: +1, +34) são preservados como estão.",
+      "Grupo sem telefone/e-mail de contato? O sistema usa automaticamente o contato do primeiro integrante que tiver — então vale a pena preencher o telefone de pelo menos um membro de cada família.",
       "O e-mail do Save the Date sai sem o nome do sistema — com a cara dos noivos.",
       "O ritmo do envio é configurável via `BROADCAST_INTERVAL_MS` no .env (padrão 4000ms).",
     ],
     warnings: [
       "Defina a data e os nomes do casal (no onboarding) antes de enviar.",
       "Envios disparam mensagens reais — use sempre o teste primeiro.",
+      "Telefone fora do formato (sem DDD/DDI ou com poucos dígitos) aparece na pré-lista como 'Telefone inválido' e não envia por WhatsApp — confira a coluna de status antes de disparar.",
     ],
   },
   {
@@ -814,13 +816,15 @@ export const HELP_ARTICLES: HelpArticle[] = [
     summary:
       "Junte convidados em um grupo e envie um único link de RSVP — o responsável confirma por todos.",
     steps: [
-      { title: "Crie um grupo", body: "Em Convidados, clique 'Grupos' › 'Novo grupo'. Preencha nome (ex.: Família Silva) e contato do responsável." },
-      { title: "Adicione membros", body: "Clique 'Membros' no grupo, marque os convidados que pertencem a ele." },
+      { title: "Crie um grupo", body: "Em Convidados, clique 'Grupos' › 'Novo grupo'. Preencha o nome (ex.: Família Silva)." },
+      { title: "Adicione membros", body: "Clique 'Membros' no grupo e marque os convidados — ou, ao cadastrar/editar um convidado, escolha o grupo no seletor (há a opção '+ Criar novo grupo' ali mesmo)." },
+      { title: "Defina o contato", body: "Editando o grupo, use 'Usar dados de um integrante' para puxar nome, telefone e e-mail de um membro — ou digite manualmente. Esse contato é quem recebe o Save the Date do grupo." },
       { title: "Envie o link", body: "Botão 'Copiar link' gera /rsvp/group/{token}. Envie pelo WhatsApp ao responsável." },
     ],
     tips: [
       "RSVP individual continua funcionando — o link de grupo é alternativa, não substituto.",
-      "Cada convidado pode estar em apenas um grupo.",
+      "Cada convidado pode estar em apenas um grupo. Escolher o grupo pelo seletor já vincula o convidado de verdade (entra no RSVP coletivo e no Save the Date).",
+      "Renomeou o grupo? O novo nome é propagado automaticamente para todos os integrantes.",
       "Importou um CSV com a coluna 'Grupo' preenchida? Os grupos são criados automaticamente (e os existentes reaproveitados pelo nome) — basta abrir o grupo depois para preencher contato e copiar o link.",
     ],
     warnings: [

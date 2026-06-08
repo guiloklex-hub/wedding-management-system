@@ -20,11 +20,17 @@ const optStr = (max: number) =>
     .optional()
     .transform((v) => (v && v.length > 0 ? v : null));
 
+const PHONE_RE = /^[0-9+()\-\s]+$/;
+const optPhone = (max: number) =>
+  optStr(max).refine((v) => v === null || PHONE_RE.test(v), {
+    params: { i18nKey: "zod.invalidPhone" },
+  });
+
 const GroupCreateSchema = z.object({
   name: z.string().trim().min(1).max(120),
   contactName: optStr(120),
   contactEmail: optStr(160),
-  contactPhone: optStr(40),
+  contactPhone: optPhone(40),
   notes: optStr(500),
 });
 
@@ -72,9 +78,15 @@ export async function updateGuestGroup(
   }
   try {
     const { id, ...rest } = parsed.data;
-    const result = await prisma.guestGroup.updateMany({
-      where: { id },
-      data: rest,
+    const result = await prisma.$transaction(async (tx) => {
+      const updated = await tx.guestGroup.updateMany({
+        where: { id, deletedAt: null },
+        data: rest,
+      });
+      if (updated.count > 0) {
+        await tx.guest.updateMany({ where: { groupId: id }, data: { groupName: rest.name } });
+      }
+      return updated;
     });
     if (result.count === 0) return { success: false, error: t("notFound") };
     await audit("GuestGroup", id, "UPDATE", { name: rest.name });
@@ -96,7 +108,7 @@ export async function deleteGuestGroup(groupId: string): Promise<ActionResult> {
   }
   try {
     await prisma.$transaction([
-      prisma.guest.updateMany({ where: { groupId }, data: { groupId: null } }),
+      prisma.guest.updateMany({ where: { groupId }, data: { groupId: null, groupName: null } }),
       prisma.guestGroup.updateMany({ where: { id: groupId }, data: { deletedAt: new Date() } }),
     ]);
     await audit("GuestGroup", groupId, "DELETE");
@@ -127,16 +139,21 @@ export async function setGroupMembers(input: {
     return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
   try {
+    const group = await prisma.guestGroup.findFirst({
+      where: { id: parsed.data.groupId, deletedAt: null },
+      select: { name: true },
+    });
+    if (!group) return { success: false, error: t("notFound") };
     await prisma.$transaction([
       prisma.guest.updateMany({
         where: { groupId: parsed.data.groupId },
-        data: { groupId: null },
+        data: { groupId: null, groupName: null },
       }),
       ...(parsed.data.guestIds.length > 0
         ? [
             prisma.guest.updateMany({
               where: { id: { in: parsed.data.guestIds } },
-              data: { groupId: parsed.data.groupId },
+              data: { groupId: parsed.data.groupId, groupName: group.name },
             }),
           ]
         : []),
@@ -228,10 +245,16 @@ export async function publicRsvpRespondForGroup(input: {
     }
 
     const now = new Date();
+    let confirmedCount = 0;
+    let declinedCount = 0;
+    let totalPlusOnes = 0;
     await prisma.$transaction(
       parsed.data.responses.map((r) => {
         const plusMax = plusAllowedById.get(r.guestId) ?? 0;
         const plus = r.status === "CONFIRMED" ? Math.min(r.plusOnesConfirmed, plusMax) : 0;
+        if (r.status === "CONFIRMED") confirmedCount += 1;
+        if (r.status === "DECLINED") declinedCount += 1;
+        totalPlusOnes += plus;
         return prisma.guest.updateMany({
           where: { id: r.guestId, groupId: group.id, deletedAt: null },
           data: {
@@ -257,11 +280,18 @@ export async function publicRsvpRespondForGroup(input: {
     revalidatePath("/dashboard/guests");
     revalidatePath("/dashboard/guests/groups");
 
+    const groupStatus =
+      confirmedCount > 0 && declinedCount === 0
+        ? "CONFIRMED"
+        : declinedCount > 0 && confirmedCount === 0
+          ? "DECLINED"
+          : "PARTIAL";
     void notifyRsvpResponse({
       refType: "GuestGroup",
       refId: group.id,
       guestName: group.name,
-      rsvpStatus: "RESPONDED",
+      rsvpStatus: groupStatus,
+      plusOnes: totalPlusOnes,
     });
 
     return {

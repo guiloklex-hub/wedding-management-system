@@ -11,16 +11,18 @@ export default async function GuestGroupsPage() {
 
   const [groups, allGuests] = await Promise.all([
     prisma.guestGroup.findMany({
+      where: { deletedAt: null },
       include: {
         guests: {
           where: { deletedAt: null },
           orderBy: { name: "asc" },
-          select: { id: true, name: true, rsvpStatus: true },
+          select: { id: true, name: true, phone: true, email: true, rsvpStatus: true },
         },
       },
       orderBy: { name: "asc" },
     }),
     prisma.guest.findMany({
+      where: { deletedAt: null },
       orderBy: { name: "asc" },
       select: { id: true, name: true, groupId: true, rsvpStatus: true },
     }),

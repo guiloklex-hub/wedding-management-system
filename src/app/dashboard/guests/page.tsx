@@ -7,10 +7,17 @@ export const dynamic = "force-dynamic";
 
 export default async function GuestsPage() {
   const t = await getTranslations("dashboard.guests");
-  const guests = await prisma.guest.findMany({
-    where: { deletedAt: null },
-    orderBy: [{ rsvpStatus: "asc" }, { name: "asc" }],
-  });
+  const [guests, groups] = await Promise.all([
+    prisma.guest.findMany({
+      where: { deletedAt: null },
+      orderBy: [{ rsvpStatus: "asc" }, { name: "asc" }],
+    }),
+    prisma.guestGroup.findMany({
+      where: { deletedAt: null },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   const h = await headers();
   const host = h.get("host") ?? "localhost:3005";
@@ -23,7 +30,7 @@ export default async function GuestsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-white">{t("page.title")}</h1>
         <p className="text-sm text-zinc-500">{t("page.subtitle")}</p>
       </div>
-      <GuestsClient guests={guests} baseUrl={baseUrl} />
+      <GuestsClient guests={guests} groups={groups} baseUrl={baseUrl} />
     </div>
   );
 }

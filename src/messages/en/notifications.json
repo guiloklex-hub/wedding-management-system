@@ -101,6 +101,7 @@
       "DECLINED": "Not attending",
       "PENDING": "Pending",
       "MAYBE": "Maybe",
+      "PARTIAL": "Partial responses",
       "RESPONDED": "Responded"
     }
   },

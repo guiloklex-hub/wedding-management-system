@@ -39,12 +39,19 @@ const optStr = (max: number) =>
     .optional()
     .transform((v) => (v && v.length > 0 ? v : null));
 
+const PHONE_RE = /^[0-9+()\-\s]+$/;
+const optPhone = (max: number) =>
+  optStr(max).refine((v) => v === null || PHONE_RE.test(v), {
+    params: { i18nKey: "zod.invalidPhone" },
+  });
+
 const GuestBaseSchema = z.object({
   name: z.string().trim().min(1).max(160),
-  phone: optStr(40),
+  phone: optPhone(40),
   email: optStr(160),
   side: z.enum(["NOIVO", "NOIVA", "AMBOS"]).optional().nullable(),
-  groupName: optStr(80),
+  groupId: optStr(64),
+  newGroupName: optStr(120),
   rsvpStatus: RsvpStatusSchema.default("INVITED"),
   plusOnesAllowed: z.coerce.number().int().min(0).max(10).default(0),
   isChild: z.preprocess((v) => v === "on" || v === true || v === "true", z.boolean().default(false)),
@@ -59,6 +66,31 @@ const GuestBaseSchema = z.object({
 const GuestCreateSchema = GuestBaseSchema;
 const GuestUpdateSchema = GuestBaseSchema.extend({ id: z.string().min(1) });
 
+/**
+ * Resolve o grupo do convidado a partir do que o formulário enviou. Garante que o vínculo
+ * real (`groupId`) e o espelho denormalizado (`groupName`) fiquem sempre consistentes.
+ * Retorna `null` quando o `groupId` recebido não existe (ou foi removido).
+ */
+async function resolveGuestGroup(
+  groupId: string | null,
+  newGroupName: string | null,
+): Promise<{ groupId: string | null; groupName: string | null } | null> {
+  if (newGroupName) {
+    const created = await prisma.guestGroup.create({ data: { name: newGroupName } });
+    return { groupId: created.id, groupName: created.name };
+  }
+  const effectiveId = groupId && groupId !== "__new__" ? groupId : null;
+  if (effectiveId) {
+    const group = await prisma.guestGroup.findFirst({
+      where: { id: effectiveId, deletedAt: null },
+      select: { id: true, name: true },
+    });
+    if (!group) return null;
+    return { groupId: group.id, groupName: group.name };
+  }
+  return { groupId: null, groupName: null };
+}
+
 export async function createGuest(
   _state: ActionResult | undefined,
   formData: FormData,
@@ -71,6 +103,8 @@ export async function createGuest(
   if (!parsed.success) {
     return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
+  const group = await resolveGuestGroup(parsed.data.groupId, parsed.data.newGroupName);
+  if (!group) return { success: false, error: t("notFound") };
   try {
     const created = await prisma.guest.create({
       data: {
@@ -78,7 +112,8 @@ export async function createGuest(
         phone: parsed.data.phone,
         email: parsed.data.email,
         side: parsed.data.side ?? null,
-        groupName: parsed.data.groupName,
+        groupId: group.groupId,
+        groupName: group.groupName,
         rsvpStatus: parsed.data.rsvpStatus,
         plusOnesAllowed: parsed.data.plusOnesAllowed,
         isChild: parsed.data.isChild,
@@ -111,6 +146,8 @@ export async function updateGuest(
   if (!parsed.success) {
     return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
   }
+  const group = await resolveGuestGroup(parsed.data.groupId, parsed.data.newGroupName);
+  if (!group) return { success: false, error: t("notFound") };
   try {
     const result = await prisma.guest.updateMany({
       where: { id: parsed.data.id, deletedAt: null },
@@ -119,7 +156,8 @@ export async function updateGuest(
         phone: parsed.data.phone,
         email: parsed.data.email,
         side: parsed.data.side ?? null,
-        groupName: parsed.data.groupName,
+        groupId: group.groupId,
+        groupName: group.groupName,
         rsvpStatus: parsed.data.rsvpStatus,
         plusOnesAllowed: parsed.data.plusOnesAllowed,
         isChild: parsed.data.isChild,

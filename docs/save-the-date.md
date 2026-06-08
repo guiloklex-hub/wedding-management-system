@@ -24,8 +24,16 @@ Módulo para avisar os convidados da **data** do casamento — com uma arte
    `sendWhatsApp(phone, text, media?)` e o passthrough `media` em `notify()`.
 4. **Destinatários** — uma mensagem por **grupo** (telefone/e-mail do grupo,
    citando os integrantes) + uma por **convidado avulso** (sem `groupId`).
-   Telefones repetidos entre grupo e avulso são pulados. Lógica pura e testável
-   em [src/lib/notifications/recipients.ts](../src/lib/notifications/recipients.ts).
+   Quando o grupo **não tem** `contactPhone`/`contactEmail`, cai automaticamente
+   para o telefone/e-mail do **primeiro integrante** que tiver (fallback) — assim
+   uma família cujo contato ficou só no convidado ainda é alcançada. Telefones
+   repetidos entre grupo e avulso são pulados. Telefone fora do formato enviável
+   (`+` seguido de 10–15 dígitos) **não** entra como WhatsApp: cai para e-mail se
+   houver, senão o destinatário fica `SKIPPED` com motivo `INVALID_PHONE` (a
+   pré-lista reflete a realidade do envio). Lógica pura e testável em
+   [src/lib/notifications/recipients.ts](../src/lib/notifications/recipients.ts).
+   Motivos de skip: `EXCLUDED_TAG`, `ALREADY_SENT`, `DUPLICATE_PHONE`,
+   `INVALID_PHONE`, `NO_CONTACT`.
 5. **Envio em massa** — fila persistida (`Broadcast` + `BroadcastRecipient`)
    processada por um worker em processo com **throttle** anti-bloqueio.
 

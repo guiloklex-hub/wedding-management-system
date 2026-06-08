@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { interpolateBaseTags, applySiteTags, normalizeMsisdn } from "./std-message";
+import { interpolateBaseTags, applySiteTags, normalizeMsisdn, toValidMsisdn } from "./std-message";
 
 describe("interpolateBaseTags", () => {
   const tags = { nomes: "Ana & Lucas", convidados: "Família Silva", data: "21 de setembro", local: "Espaço Di Fieri" };
@@ -67,5 +67,20 @@ describe("normalizeMsisdn", () => {
     expect(normalizeMsisdn("123")).toBe("123");
     expect(normalizeMsisdn("")).toBe("");
     expect(normalizeMsisdn(null)).toBeNull();
+  });
+});
+
+describe("toValidMsisdn", () => {
+  it("retorna E.164 para números enviáveis (BR e DDI estrangeiro)", () => {
+    expect(toValidMsisdn("11999990000")).toBe("+5511999990000");
+    expect(toValidMsisdn("+34 600 12 34 56")).toBe("+34600123456");
+  });
+
+  it("retorna null para números fora do formato enviável", () => {
+    expect(toValidMsisdn("12345")).toBeNull();
+    expect(toValidMsisdn("123")).toBeNull();
+    expect(toValidMsisdn("")).toBeNull();
+    expect(toValidMsisdn(null)).toBeNull();
+    expect(toValidMsisdn(undefined)).toBeNull();
   });
 });

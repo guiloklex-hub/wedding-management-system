@@ -101,6 +101,7 @@
       "DECLINED": "No asistirá",
       "PENDING": "Pendiente",
       "MAYBE": "Quizás",
+      "PARTIAL": "Respuestas parciales",
       "RESPONDED": "Respondió"
     }
   },

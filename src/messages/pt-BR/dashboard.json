@@ -741,6 +741,20 @@
       "statusWarn": "Atenção em alguns pontos.",
       "statusBad": "Precisa de ajustes urgentes."
     },
+    "liquidity": {
+      "label": "Sobra até o evento",
+      "description": "Caixa disponível após os pagamentos planejados e a contingência.",
+      "positive": "Margem saudável",
+      "warning": "Margem reduzida",
+      "critical": "Déficit projetado"
+    },
+    "recommendations": {
+      "lowContracted": "Apenas {pct}% do orçamento está contratado (esperado ~{expectedPct}% nesta fase). Priorize fechar fornecedores.",
+      "lowCashCoverage": "O caixa cobre só {coverage}% do saldo devedor. Reforce a reserva ou reduza gastos futuros.",
+      "overdueTasksHigh": "{count} de {total} tarefas estão atrasadas. Atualize prazos ou acelere o andamento.",
+      "negativeMonthProjected": "Pelo menos um mês fica negativo na projeção. Reajuste o cronograma de pagamentos.",
+      "lowPaymentProgress": "Só {pct}% foi pago com {days} dias até o evento. Antecipe pagamentos ou revise o orçamento."
+    },
     "cashflow": {
       "title": "Fluxo de caixa projetado",
       "worstBalance": "Pior saldo: {value}",

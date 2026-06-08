@@ -14,7 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, TrendingDown, TrendingUp } from "lucide-react";
+import { AlertTriangle, Lightbulb, TrendingDown, TrendingUp } from "lucide-react";
 import { formatCurrency, formatDateBR } from "@/lib/format";
 import type {
   CategoryCreep,
@@ -34,6 +34,7 @@ type Props = {
   contingencyPercent: number;
   totals: { budget: number; contracted: number; paid: number; cash: number };
   daysToEvent: number;
+  leftover: number;
   cashflow: MonthlyPoint[];
   worstMonthlyBalance: number;
   health: HealthScoreResult;
@@ -48,6 +49,7 @@ export default function InsightsClient({
   eventDate,
   totals,
   daysToEvent,
+  leftover,
   cashflow,
   worstMonthlyBalance,
   health,
@@ -61,6 +63,7 @@ export default function InsightsClient({
   return (
     <div className="space-y-6">
       <HealthCard health={health} />
+      <LiquidityCard leftover={leftover} budget={totals.budget} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <CashflowProjection cashflow={cashflow} worstBalance={worstMonthlyBalance} />
@@ -154,6 +157,44 @@ function HealthCard({ health }: { health: HealthScoreResult }) {
           ))}
         </ul>
       ) : null}
+      {health.recommendations.length > 0 ? (
+        <ul className="mt-4 space-y-1 border-t border-current/10 pt-3 text-sm">
+          {health.recommendations.map((r, i) => (
+            <li key={i} className="flex items-start gap-2 text-amber-200">
+              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{t(r.key, r.params ?? {})}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+function LiquidityCard({ leftover, budget }: { leftover: number; budget: number }) {
+  const t = useTranslations("dashboard.insights");
+  const healthyThreshold = budget * 0.1;
+  const tone =
+    leftover < 0
+      ? { box: "border-rose-500/30 bg-rose-500/5 text-rose-200", status: t("liquidity.critical") }
+      : leftover < healthyThreshold
+        ? { box: "border-amber-500/30 bg-amber-500/5 text-amber-100", status: t("liquidity.warning") }
+        : { box: "border-emerald-500/30 bg-emerald-500/5 text-emerald-200", status: t("liquidity.positive") };
+  return (
+    <section className={`rounded-2xl border p-6 ${tone.box}`}>
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-wider opacity-70">{t("liquidity.label")}</p>
+          <p className="mt-1 text-3xl font-bold">{formatCurrency(leftover)}</p>
+          <p className="mt-1 text-xs opacity-70">{tone.status}</p>
+        </div>
+        {leftover >= 0 ? (
+          <TrendingUp className="h-8 w-8 shrink-0 opacity-80" />
+        ) : (
+          <TrendingDown className="h-8 w-8 shrink-0 opacity-80" />
+        )}
+      </div>
+      <p className="mt-3 text-xs opacity-70">{t("liquidity.description")}</p>
     </section>
   );
 }

@@ -6,6 +6,13 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.6",
+    date: "2026-06-08",
+    highlights: [
+      "💌 A página de **RSVP** (individual e de grupo) ganhou uma seção de boas-vindas: contagem regressiva até o casamento, programação do dia, plano B em caso de chuva e link para o site dos noivos — tudo a partir das configurações do evento.",
+    ],
+  },
+  {
     version: "0.7.5",
     date: "2026-06-08",
     highlights: [

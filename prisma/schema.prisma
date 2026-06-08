@@ -90,6 +90,8 @@ model EventSettings {
   saveTheDateFileName    String?
   saveTheDateExcludeTagIds   String?
   saveTheDateExcludePadrinhos Boolean @default(false)
+  rsvpReminderEnabled    Boolean   @default(false)
+  rsvpReminderDays       Int       @default(7)
   updatedAt              DateTime  @updatedAt
 }
 

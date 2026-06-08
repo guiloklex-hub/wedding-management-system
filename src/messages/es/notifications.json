@@ -139,5 +139,19 @@
     "signoff": "Pronto enviaremos la invitación oficial. Con cariño, {names}.",
     "websiteLabel": "Sitio de los novios",
     "registryLabel": "Lista de regalos"
+  },
+  "RSVP_REMINDER": {
+    "subject": "Recordatorio: confirma tu asistencia",
+    "intro": "Recibiste la invitación hace {days, plural, one {# día} other {# días}} y aún no has confirmado tu asistencia. ¿Puedes confirmar ahora?",
+    "cta": "Confirmar asistencia",
+    "waTitle": "📋 Recordatorio de RSVP",
+    "waIntro": "Recibiste la invitación hace {days, plural, one {# día} other {# días}} y aún no has confirmado. Toca el enlace para confirmar tu asistencia:"
+  },
+  "RSVP_REMINDER_GROUP": {
+    "subject": "Recordatorio: confirmen la asistencia",
+    "intro": "Aún faltan confirmar: {members}. La invitación se envió hace {days, plural, one {# día} other {# días}}. ¿Pueden confirmar ahora?",
+    "cta": "Confirmar asistencia del grupo",
+    "waTitle": "📋 Recordatorio de RSVP",
+    "waIntro": "Aún faltan confirmar: {members} (invitación enviada hace {days, plural, one {# día} other {# días}}). Toca el enlace para confirmar:"
   }
 }

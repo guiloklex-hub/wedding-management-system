@@ -22,6 +22,11 @@ const SettingsSchema = z.object({
   contingencyPercent: z.coerce.number().min(0).max(100),
   currency: z.enum(["BRL", "USD", "EUR"]).default("BRL"),
   coupleNames: optStr(120),
+  rsvpReminderEnabled: z.preprocess(
+    (v) => v === "on" || v === true || v === "true",
+    z.boolean().default(false),
+  ),
+  rsvpReminderDays: z.coerce.number().int().min(1).max(90).default(7),
 });
 
 const PixSettingsSchema = z.object({
@@ -53,6 +58,8 @@ export async function updateSettings(
       contingencyPercent: parsed.data.contingencyPercent,
       currency: parsed.data.currency,
       coupleNames: parsed.data.coupleNames,
+      rsvpReminderEnabled: parsed.data.rsvpReminderEnabled,
+      rsvpReminderDays: parsed.data.rsvpReminderDays,
     });
     await audit("EventSettings", "singleton", "UPDATE", {
       eventDate: parsed.data.eventDate,

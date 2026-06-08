@@ -7,6 +7,8 @@ import { timingSafeEquals } from "@/lib/timing-safe";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { computeAdjustedAmount } from "@/lib/payment-adjustment";
 import { coerceLocale } from "@/i18n/config";
+import { getEventConfig } from "@/lib/event-config";
+import { selectRsvpReminderTargets } from "@/lib/notifications/rsvp-reminder";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +31,7 @@ type Summary = {
   paymentsOverdue: number;
   tasksDue: number;
   tasksOverdue: number;
+  rsvpReminders: number;
   skippedAlreadyNotified: number;
 };
 
@@ -58,6 +61,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     paymentsOverdue: 0,
     tasksDue: 0,
     tasksOverdue: 0,
+    rsvpReminders: 0,
     skippedAlreadyNotified: 0,
   };
 
@@ -72,7 +76,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         select: { id: true, name: true, email: true, phone: true, locale: true },
       }),
       loadNotifiedTodaySet(
-        ["PAYMENT_DUE", "PAYMENT_OVERDUE", "TASK_DUE", "TASK_OVERDUE"],
+        ["PAYMENT_DUE", "PAYMENT_OVERDUE", "TASK_DUE", "TASK_OVERDUE", "RSVP_REMINDER", "RSVP_REMINDER_GROUP"],
         today,
       ),
       prisma.payment.findMany({
@@ -202,6 +206,83 @@ export async function GET(req: Request): Promise<NextResponse> {
       ),
     );
     summary.tasksOverdue += 1;
+  }
+
+  // Lembrete de RSVP (guest-facing) — opcional, só quando o casal habilita.
+  const cfg = await getEventConfig();
+  if (cfg.rsvpReminderEnabled) {
+    const baseUrl =
+      process.env.APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3005";
+    const days = Math.max(1, cfg.rsvpReminderDays);
+    const [groups, ungroupedGuests] = await Promise.all([
+      prisma.guestGroup.findMany({
+        where: { deletedAt: null },
+        select: {
+          id: true,
+          name: true,
+          contactName: true,
+          contactPhone: true,
+          contactEmail: true,
+          rsvpToken: true,
+          createdAt: true,
+          guests: {
+            where: { deletedAt: null },
+            orderBy: { name: "asc" },
+            select: { name: true, phone: true, email: true, rsvpStatus: true },
+          },
+        },
+      }),
+      prisma.guest.findMany({
+        where: { deletedAt: null, groupId: null, rsvpStatus: "INVITED" },
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          email: true,
+          language: true,
+          rsvpStatus: true,
+          rsvpToken: true,
+          createdAt: true,
+        },
+      }),
+    ]);
+
+    const targets = selectRsvpReminderTargets({
+      groups,
+      guests: ungroupedGuests,
+      days,
+      today,
+      defaultLocale: cfg.defaultLocale,
+      alreadySent: sentSet,
+    });
+
+    for (const target of targets) {
+      const rsvpUrl =
+        target.refType === "GuestGroup"
+          ? `${baseUrl}/rsvp/group/${target.token}`
+          : `${baseUrl}/rsvp/${target.token}`;
+      const renderInput =
+        target.kind === "RSVP_REMINDER_GROUP"
+          ? {
+              kind: "RSVP_REMINDER_GROUP" as const,
+              userName: target.name,
+              memberNames: target.memberNames,
+              rsvpUrl,
+              daysInvitedSince: target.daysInvitedSince,
+            }
+          : {
+              kind: "RSVP_REMINDER" as const,
+              userName: target.name,
+              rsvpUrl,
+              daysInvitedSince: target.daysInvitedSince,
+            };
+      await notify(
+        { email: target.email, phone: target.phone, locale: target.locale },
+        renderInput,
+        { refType: target.refType, refId: target.refId },
+      );
+      summary.rsvpReminders += 1;
+    }
   }
 
   return NextResponse.json({ ok: true, summary });

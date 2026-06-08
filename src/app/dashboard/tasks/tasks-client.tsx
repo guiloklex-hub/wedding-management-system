@@ -25,6 +25,7 @@ import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Pagination, usePagination } from "@/components/pagination";
 import { formatDateBR, toIsoDate } from "@/lib/format";
+import { EVENT_PHASES, getEventPhase, eventProgress } from "@/lib/event-phases";
 
 type TaskRow = {
   id: string;
@@ -64,10 +65,12 @@ export default function TasksClient({
   tasks,
   vendors,
   venues,
+  daysToEvent,
 }: {
   tasks: TaskRow[];
   vendors: RefRow[];
   venues: RefRow[];
+  daysToEvent: number | null;
 }) {
   const t = useTranslations("dashboard.tasks");
   const tc = useTranslations("common");
@@ -162,6 +165,7 @@ export default function TasksClient({
 
   return (
     <div className="space-y-4">
+      {daysToEvent !== null ? <TaskPhaseBar daysToEvent={daysToEvent} /> : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <select
@@ -659,5 +663,42 @@ function Field({
         className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
       />
     </div>
+  );
+}
+
+function TaskPhaseBar({ daysToEvent }: { daysToEvent: number }) {
+  const t = useTranslations("dashboard.tasks.phaseBar");
+  const current = getEventPhase(daysToEvent);
+  const progress = Math.round(eventProgress(daysToEvent) * 100);
+  const past = current === "past";
+  return (
+    <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-zinc-200">{t("title")}</h2>
+        <span className="text-xs text-zinc-400">
+          {past ? t("past") : t("daysRemaining", { days: daysToEvent })}
+        </span>
+      </div>
+      <div className="mb-2 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+        <div className="h-full rounded-full bg-rose-500 transition-all" style={{ width: `${progress}%` }} />
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {EVENT_PHASES.map((phase) => {
+          const active = phase === current;
+          return (
+            <span
+              key={phase}
+              className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
+                active
+                  ? "bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/30"
+                  : "bg-zinc-800/60 text-zinc-400"
+              }`}
+            >
+              {t(`phase.${phase}`)}
+            </span>
+          );
+        })}
+      </div>
+    </section>
   );
 }

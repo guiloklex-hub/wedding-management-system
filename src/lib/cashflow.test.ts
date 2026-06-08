@@ -4,7 +4,13 @@ import {
   buildPaymentHeatmap,
   computeCategoryCreep,
   computeHealthScore,
+  projectLeftoverUntilEvent,
+  savingsPace,
+  projectGoalCompletion,
+  forecastCategoryOverrun,
 } from "./cashflow";
+
+const DAY = 86_400_000;
 
 describe("buildMonthlyCashflow", () => {
   const eventDate = new Date(Date.UTC(2026, 5, 1));
@@ -227,5 +233,142 @@ describe("buildPaymentHeatmap", () => {
     expect(out).toHaveLength(2);
     expect(out[0]).toEqual({ date: "2026-01-01", amount: 300, count: 2 });
     expect(out[1]).toEqual({ date: "2026-01-02", amount: 300, count: 1 });
+  });
+});
+
+describe("projectLeftoverUntilEvent", () => {
+  it("retorna superávit (assets − orçamento restante − contingência)", () => {
+    expect(
+      projectLeftoverUntilEvent({ totalAssets: 100000, remainingBudget: 50000, contingencyAmount: 5000 }),
+    ).toBe(45000);
+  });
+
+  it("retorna negativo quando há déficit", () => {
+    expect(
+      projectLeftoverUntilEvent({ totalAssets: 40000, remainingBudget: 50000, contingencyAmount: 5000 }),
+    ).toBe(-15000);
+  });
+});
+
+describe("savingsPace", () => {
+  const today = new Date(Date.UTC(2026, 0, 1));
+
+  it("retorna null sem data alvo", () => {
+    expect(savingsPace({ currentAmount: 0, goalAmount: 100000, targetDate: null, today })).toBeNull();
+  });
+
+  it("retorna null se a data alvo já passou ou é hoje", () => {
+    expect(
+      savingsPace({ currentAmount: 0, goalAmount: 100000, targetDate: new Date(today.getTime() - DAY), today }),
+    ).toBeNull();
+    expect(
+      savingsPace({ currentAmount: 0, goalAmount: 100000, targetDate: today, today }),
+    ).toBeNull();
+  });
+
+  it("retorna 0 quando a meta já foi atingida", () => {
+    expect(
+      savingsPace({ currentAmount: 100000, goalAmount: 100000, targetDate: new Date(today.getTime() + 180 * DAY), today }),
+    ).toBe(0);
+  });
+
+  it("calcula o ritmo mensal restante", () => {
+    const pace = savingsPace({
+      currentAmount: 50000,
+      goalAmount: 200000,
+      targetDate: new Date(today.getTime() + 180 * DAY),
+      today,
+    });
+    // 150000 restante / ~5.91 meses ≈ 25360
+    expect(pace).toBeGreaterThan(24000);
+    expect(pace).toBeLessThan(27000);
+  });
+});
+
+describe("projectGoalCompletion", () => {
+  const today = new Date(Date.UTC(2026, 0, 1));
+
+  it("retorna null com menos de 2 pontos", () => {
+    expect(
+      projectGoalCompletion({ goalAmount: 100000, history: [{ date: today, amount: 1000 }], today }),
+    ).toBeNull();
+  });
+
+  it("retorna null quando a tendência é plana ou decrescente", () => {
+    expect(
+      projectGoalCompletion({
+        goalAmount: 100000,
+        history: [
+          { date: new Date(today.getTime() - 60 * DAY), amount: 50000 },
+          { date: new Date(today.getTime() - 30 * DAY), amount: 40000 },
+        ],
+        today,
+      }),
+    ).toBeNull();
+  });
+
+  it("ignora valores não-finitos no histórico", () => {
+    const out = projectGoalCompletion({
+      goalAmount: 100000,
+      history: [
+        { date: new Date(today.getTime() - 60 * DAY), amount: Number.NaN },
+        { date: new Date(today.getTime() - 30 * DAY), amount: 30000 },
+        { date: today, amount: 60000 },
+      ],
+      today,
+    });
+    expect(out).toBeInstanceOf(Date);
+  });
+
+  it("projeta data futura para tendência crescente (~30k/mês até 100k)", () => {
+    const out = projectGoalCompletion({
+      goalAmount: 100000,
+      history: [
+        { date: new Date(today.getTime() - 60 * DAY), amount: 40000 },
+        { date: new Date(today.getTime() - 30 * DAY), amount: 70000 },
+        { date: today, amount: 100000 },
+      ],
+      today,
+    });
+    // já em 100k hoje → projeção em torno de hoje
+    expect(out).toBeInstanceOf(Date);
+    expect(out!.getTime()).toBeGreaterThanOrEqual(today.getTime());
+  });
+});
+
+describe("forecastCategoryOverrun", () => {
+  const today = new Date(Date.UTC(2026, 0, 1));
+
+  it("retorna null com menos de 2 pontos", () => {
+    expect(
+      forecastCategoryOverrun({ history: [{ date: today, actual: 1000, estimated: 900 }], today }),
+    ).toBeNull();
+  });
+
+  it("indica estouro provável quando o real cresce acima do estimado", () => {
+    const out = forecastCategoryOverrun({
+      history: [
+        { date: new Date(today.getTime() - 60 * DAY), actual: 11000, estimated: 10000 },
+        { date: new Date(today.getTime() - 30 * DAY), actual: 13000, estimated: 10000 },
+        { date: today, actual: 16000, estimated: 10000 },
+      ],
+      today,
+    });
+    expect(out).not.toBeNull();
+    expect(out!.overrunProbability).toBeGreaterThan(0.5);
+    expect(out!.projectedAmount).toBeGreaterThan(10000);
+  });
+
+  it("probabilidade ≈ 0 quando o real fica abaixo do estimado", () => {
+    const out = forecastCategoryOverrun({
+      history: [
+        { date: new Date(today.getTime() - 60 * DAY), actual: 8000, estimated: 10000 },
+        { date: new Date(today.getTime() - 30 * DAY), actual: 8500, estimated: 10000 },
+        { date: today, actual: 9000, estimated: 10000 },
+      ],
+      today,
+    });
+    expect(out).not.toBeNull();
+    expect(out!.overrunProbability).toBe(0);
   });
 });

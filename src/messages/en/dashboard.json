@@ -554,6 +554,23 @@
     "risks": {
       "title": "Warning signs"
     },
+    "actionStream": {
+      "title": "Next actions",
+      "empty": "All caught up! Nothing pending right now. 🎉",
+      "more": "+{count, plural, one {# action} other {# actions}}",
+      "overdueBy": "overdue by {days, plural, one {# day} other {# days}}",
+      "dueIn": "due in {days, plural, one {# day} other {# days}}",
+      "dueToday": "due today",
+      "kind": {
+        "PAYMENT_OVERDUE": "Pay {vendor} — {amount}",
+        "PAYMENT_DUE": "Pay {vendor} — {amount}",
+        "TASK_OVERDUE": "Task: {title}",
+        "TASK_DUE": "Task: {title}",
+        "CONTRACT_EXPIRING": "Sign {vendor}'s contract",
+        "RSVP_PENDING": "{count, plural, one {# guest without a reply} other {# guests without a reply}}",
+        "GIFT_THANK": "{count, plural, one {# pending thank-you} other {# pending thank-yous}}"
+      }
+    },
     "funnel": {
       "title": "Vendor Funnel",
       "empty": "No vendors registered.",

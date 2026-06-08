@@ -13,8 +13,17 @@ comportamentos principais.
 - **O que mostra:** orçamento total, total pago, saldo devedor, cobertura de
   caixa, distribuição por categoria (gráfico de pizza) e próximos
   vencimentos (30 dias).
+- **Próximas ações:** card no topo (`ActionStreamCard`) com a lista priorizada
+  de itens acionáveis — pagamentos atrasados/a vencer, tarefas atrasadas/no
+  prazo, contratos a expirar, RSVP sem resposta e agradecimentos pendentes.
+  Cada linha leva direto à tela da ação. A priorização (atrasados primeiro) e o
+  ordenamento são do helper puro [src/lib/action-stream.ts](../src/lib/action-stream.ts)
+  (`aggregateActionStream`); itens financeiros só aparecem para quem tem
+  permissão. Mostra até 10 e indica "+N ações" quando há mais; estado vazio
+  positivo ("tudo em dia").
 - **Alertas:** se faltam ≤ 20 dias e há fornecedores com saldo devedor,
-  exibe alerta vermelho de quitação.
+  exibe alerta vermelho de quitação. O **Risk Radar** (sinais de atenção)
+  continua abaixo — agregado/preditivo, complementar ao stream de ações.
 - **Contagem regressiva:** pílula com cor adaptativa (verde > 90 dias, amarelo
   90–30 dias, vermelho ≤ 30 dias).
 

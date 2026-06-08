@@ -6,6 +6,13 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.9",
+    date: "2026-06-08",
+    highlights: [
+      "🎯 Novo card **Próximas ações** no topo do painel: reúne, em ordem de urgência, o que precisa da sua atenção agora — pagamentos atrasados/a vencer, tarefas no prazo, contratos a expirar, RSVP sem resposta e agradecimentos pendentes. Cada item leva direto à tela da ação.",
+    ],
+  },
+  {
     version: "0.7.8",
     date: "2026-06-08",
     highlights: [

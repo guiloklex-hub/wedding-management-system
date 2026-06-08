@@ -223,6 +223,20 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
   },
   {
+    id: "dashboard-action-stream",
+    title: "Próximas ações no painel",
+    category: "getting-started",
+    keywords: ["painel", "dashboard", "próximas ações", "pendências", "o que fazer", "prioridade"],
+    icon: Sparkles,
+    summary: "O card no topo do painel reúne o que precisa da sua atenção agora, em ordem de urgência.",
+    steps: [
+      { title: "Veja o que importa primeiro", body: "Pagamentos atrasados e a vencer, tarefas no prazo, contratos a expirar, RSVP sem resposta e agradecimentos pendentes — tudo em uma lista." },
+      { title: "Clique e resolva", body: "Cada item leva direto à tela certa (pagamentos, tarefas, convidados, presentes, fornecedores)." },
+      { title: "Ordem por urgência", body: "Itens atrasados aparecem no topo. Mostra até 10 e indica '+N ações' quando há mais. Some quando estiver tudo em dia." },
+    ],
+    tips: ["Itens financeiros (pagamentos/contratos) só aparecem para quem tem permissão de finanças."],
+  },
+  {
     id: "add-team-members",
     title: "Adicionar outro usuário (admin)",
     category: "getting-started",

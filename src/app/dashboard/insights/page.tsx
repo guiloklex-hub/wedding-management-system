@@ -10,6 +10,7 @@ import {
   buildPaymentHeatmap,
   computeCategoryCreep,
   computeHealthScore,
+  projectLeftoverUntilEvent,
 } from "@/lib/cashflow";
 import { buildPaymentSCurve } from "@/lib/reports/payment-curve";
 import { buildTaskBurndown } from "@/lib/reports/task-burndown";
@@ -129,6 +130,12 @@ export default async function InsightsPage() {
 
   const waterfall = buildCategoryWaterfall(creep);
 
+  const leftover = projectLeftoverUntilEvent({
+    totalAssets: totalCash,
+    remainingBudget: totalBudget - totalPaid,
+    contingencyAmount: Math.round(totalContracted * (cfg.contingencyPercent / 100)),
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -145,6 +152,7 @@ export default async function InsightsPage() {
           cash: totalCash,
         }}
         daysToEvent={daysToEvent}
+        leftover={leftover}
         cashflow={cashflow}
         worstMonthlyBalance={worstMonthlyBalance}
         health={health}

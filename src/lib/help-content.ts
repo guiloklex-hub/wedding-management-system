@@ -375,7 +375,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
       { title: "Em /dashboard/tasks, clique em 'Importar templates'", body: "O sistema cria tarefas com deadlines relativos ao seu evento." },
       { title: "Responsáveis sugeridos", body: "Cada tarefa vem com um responsável-padrão (noivo, noiva, ambos, cerimonial). Edite se quiser." },
     ],
-    tips: ["Importar é **idempotente** — rodar de novo não duplica tarefas já criadas."],
+    tips: [
+      "Importar é **idempotente** — rodar de novo não duplica tarefas já criadas.",
+      "No topo da tela de Tarefas, uma barra mostra a **fase da organização** (12+ meses → semana final) e os dias restantes, calculados pela data do evento.",
+    ],
   },
 
   // ============ guests ============

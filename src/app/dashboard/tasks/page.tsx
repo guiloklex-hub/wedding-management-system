@@ -1,11 +1,14 @@
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
+import { getEventConfig, daysUntil } from "@/lib/event-config";
 import TasksClient from "./tasks-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function TasksPage() {
   const t = await getTranslations("dashboard.tasks");
+  const cfg = await getEventConfig();
+  const daysToEvent = cfg.eventDate ? daysUntil(cfg.eventDate) : null;
   const [tasks, vendors, venues] = await Promise.all([
     prisma.task.findMany({
       where: { deletedAt: null },
@@ -33,7 +36,7 @@ export default async function TasksPage() {
         <h1 className="text-2xl font-bold tracking-tight text-white">{t("page.title")}</h1>
         <p className="text-sm text-zinc-500">{t("page.subtitle")}</p>
       </div>
-      <TasksClient tasks={tasks} vendors={vendors} venues={venues} />
+      <TasksClient tasks={tasks} vendors={vendors} venues={venues} daysToEvent={daysToEvent} />
     </div>
   );
 }

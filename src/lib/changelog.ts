@@ -6,6 +6,14 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.5",
+    date: "2026-06-08",
+    highlights: [
+      "⏳ A tela de **Tarefas** ganhou uma barra de **fase da organização** (12+ meses → semana final) com a contagem regressiva até o casamento, para você saber sempre em que etapa está.",
+      "📊 Em **Insights**: novo cartão de **sobra de caixa até o evento** e **recomendações acionáveis** no health score (próximos passos concretos quando algo precisa de atenção).",
+    ],
+  },
+  {
     version: "0.7.4",
     date: "2026-06-08",
     highlights: [

@@ -1525,6 +1525,18 @@
       "title": "Tareas",
       "subtitle": "Usa la plantilla lista de 12 meses o crea tareas sueltas. Se exporta al calendario."
     },
+    "phaseBar": {
+      "title": "Fase de organización",
+      "daysRemaining": "{days} día(s) hasta el evento",
+      "past": "El evento ya pasó",
+      "phase": {
+        "12m": "12+ meses",
+        "6m": "6 meses",
+        "3m": "3 meses",
+        "1m": "1 mes",
+        "1w": "Última semana"
+      }
+    },
     "toast": {
       "created": "Tarea creada",
       "updated": "Tarea actualizada",

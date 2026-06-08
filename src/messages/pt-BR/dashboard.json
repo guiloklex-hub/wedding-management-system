@@ -1525,6 +1525,18 @@
       "title": "Tarefas",
       "subtitle": "Use o template pronto de 12 meses ou crie tarefas avulsas. Exporta para o calendário."
     },
+    "phaseBar": {
+      "title": "Fase da organização",
+      "daysRemaining": "{days} dia(s) até o evento",
+      "past": "O evento já passou",
+      "phase": {
+        "12m": "12+ meses",
+        "6m": "6 meses",
+        "3m": "3 meses",
+        "1m": "1 mês",
+        "1w": "Semana final"
+      }
+    },
     "toast": {
       "created": "Tarefa criada",
       "updated": "Tarefa atualizada",

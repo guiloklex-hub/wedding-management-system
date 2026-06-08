@@ -20,6 +20,7 @@ import DashboardCharts, { type ChartDatum } from "./charts";
 import { KpiCard } from "./_components/kpi-card";
 import { FunnelCard } from "./_components/funnel-card";
 import { RiskAlertStrip } from "./_components/risk-alert-strip";
+import { ActionStreamCard } from "./_components/action-stream-card";
 import { RsvpMini } from "./_components/rsvp-mini";
 import { GiftsMini } from "./_components/gifts-mini";
 import { UpcomingTasks } from "./_components/upcoming-tasks";
@@ -174,6 +175,8 @@ export default async function DashboardPage() {
           </>
         )}
       </div>
+
+      <ActionStreamCard items={data.actionStream} canSeeFinance={finance} />
 
       <RiskAlertStrip risks={data.risks} canSeeFinance={finance} />
 

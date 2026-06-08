@@ -554,6 +554,23 @@
     "risks": {
       "title": "Sinais de atenção"
     },
+    "actionStream": {
+      "title": "Próximas ações",
+      "empty": "Tudo em dia por aqui! Nenhuma ação pendente. 🎉",
+      "more": "+{count, plural, one {# ação} other {# ações}}",
+      "overdueBy": "atrasado há {days, plural, one {# dia} other {# dias}}",
+      "dueIn": "vence em {days, plural, one {# dia} other {# dias}}",
+      "dueToday": "vence hoje",
+      "kind": {
+        "PAYMENT_OVERDUE": "Pagar {vendor} — {amount}",
+        "PAYMENT_DUE": "Pagar {vendor} — {amount}",
+        "TASK_OVERDUE": "Tarefa: {title}",
+        "TASK_DUE": "Tarefa: {title}",
+        "CONTRACT_EXPIRING": "Assinar contrato de {vendor}",
+        "RSVP_PENDING": "{count, plural, one {# convidado sem resposta} other {# convidados sem resposta}}",
+        "GIFT_THANK": "{count, plural, one {# agradecimento pendente} other {# agradecimentos pendentes}}"
+      }
+    },
     "funnel": {
       "title": "Funil de Fornecedores",
       "empty": "Nenhum fornecedor cadastrado.",

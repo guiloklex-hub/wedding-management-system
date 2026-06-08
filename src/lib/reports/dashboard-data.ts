@@ -7,6 +7,7 @@ import {
   type MonthlyPoint,
 } from "@/lib/cashflow";
 import { computeRiskAlerts } from "./risk-radar";
+import { aggregateActionStream, type ActionItem } from "@/lib/action-stream";
 import type { RiskAlert } from "./types";
 
 export type CategoryDatum = { name: string; value: number; color: string };
@@ -73,6 +74,7 @@ export type DashboardData = {
   worstCashflow: MonthlyPoint | null;
 
   risks: RiskAlert[];
+  actionStream: ActionItem[];
 };
 
 function startOfMonthUTC(d: Date): Date {
@@ -292,6 +294,32 @@ export async function loadDashboardData(role: string | null | undefined): Promis
     today,
   });
 
+  const actionStream = aggregateActionStream({
+    today,
+    payments: payments.map((p) => ({
+      id: p.id,
+      vendorName: p.vendor?.name ?? "—",
+      amount: p.amount,
+      dueDate: p.dueDate,
+      status: p.status,
+    })),
+    tasks: tasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      priority: t.priority,
+      status: t.status,
+      deadline: t.deadline,
+    })),
+    contracts: contracts.map((c) => ({
+      id: c.id,
+      vendorName: c.vendor?.name ?? "Fornecedor",
+      status: c.status,
+      expiresAt: c.expiresAt,
+    })),
+    rsvpPending: rsvp.invited,
+    giftsPendingThank: gifts.length - thankedCount,
+  });
+
   const budgetByCategory = Array.from(categoryMap.entries()).map(([name, m]) => ({
     name,
     value: m.value,
@@ -335,5 +363,6 @@ export async function loadDashboardData(role: string | null | undefined): Promis
     worstCashflow,
 
     risks,
+    actionStream,
   };
 }

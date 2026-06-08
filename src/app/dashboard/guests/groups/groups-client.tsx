@@ -4,15 +4,31 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Plus, Link2, Trash2, Edit3, Users, CheckCircle2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Link2,
+  Trash2,
+  Edit3,
+  Users,
+  CheckCircle2,
+  X,
+  Search,
+  Download,
+  MessageCircle,
+  PhoneOff,
+  UserCheck,
+} from "lucide-react";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Pagination, usePagination } from "@/components/pagination";
 import {
   createGuestGroup,
   deleteGuestGroup,
   setGroupMembers,
   updateGuestGroup,
 } from "@/app/actions/guestGroupActions";
+import { summarizeGroup, type GroupSummary } from "./group-summary";
 
 type GuestRef = {
   id: string;
@@ -20,6 +36,9 @@ type GuestRef = {
   groupId: string | null;
   rsvpStatus: string;
 };
+
+type GroupFilter = "ALL" | "NO_CONTACT" | "PENDING" | "ALL_CONFIRMED" | "EMPTY";
+type GroupSort = "NAME" | "SIZE" | "PENDING";
 
 type Group = {
   id: string;
@@ -50,6 +69,9 @@ export default function GroupsClient({
   const [managingMembersOf, setManagingMembersOf] = useState<Group | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Group | null>(null);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<GroupFilter>("ALL");
+  const [sort, setSort] = useState<GroupSort>("NAME");
   const [, startTransition] = useTransition();
 
   const [prevGroupsProp, setPrevGroupsProp] = useState(initialGroups);
@@ -61,6 +83,87 @@ export default function GroupsClient({
   if (allGuests !== prevGuestsProp) {
     setPrevGuestsProp(allGuests);
     setGuests(allGuests);
+  }
+
+  const summaries = useMemo(() => {
+    const map = new Map<string, GroupSummary>();
+    for (const g of groups) map.set(g.id, summarizeGroup(g));
+    return map;
+  }, [groups]);
+
+  const stats = useMemo(() => {
+    let people = 0;
+    let noContact = 0;
+    let pending = 0;
+    for (const g of groups) {
+      const s = summaries.get(g.id)!;
+      people += s.memberCount;
+      if (!s.willReceive) noContact += 1;
+      if (s.pending > 0) pending += 1;
+    }
+    return { total: groups.length, people, noContact, pending };
+  }, [groups, summaries]);
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const rows = groups.filter((g) => {
+      const s = summaries.get(g.id)!;
+      if (filter === "NO_CONTACT" && s.willReceive) return false;
+      if (filter === "PENDING" && s.pending === 0) return false;
+      if (filter === "ALL_CONFIRMED" && !(s.memberCount > 0 && s.pending === 0 && s.declined === 0))
+        return false;
+      if (filter === "EMPTY" && s.memberCount > 0) return false;
+      if (term && !`${g.name} ${g.contactName ?? ""}`.toLowerCase().includes(term)) return false;
+      return true;
+    });
+    const sorted = [...rows];
+    sorted.sort((a, b) => {
+      const sa = summaries.get(a.id)!;
+      const sb = summaries.get(b.id)!;
+      if (sort === "SIZE") return sb.memberCount - sa.memberCount || a.name.localeCompare(b.name);
+      if (sort === "PENDING") return sb.pending - sa.pending || a.name.localeCompare(b.name);
+      return a.name.localeCompare(b.name);
+    });
+    return sorted;
+  }, [groups, summaries, search, filter, sort]);
+
+  const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(filtered, 12);
+
+  function exportCsv() {
+    const header = [
+      t("csv.name"),
+      t("csv.contact"),
+      t("csv.phone"),
+      t("csv.email"),
+      t("csv.people"),
+      t("csv.confirmed"),
+      t("csv.pending"),
+      t("csv.declined"),
+      t("csv.willReceive"),
+    ].join(",");
+    const rows = filtered.map((g) => {
+      const s = summaries.get(g.id)!;
+      return [
+        g.name,
+        g.contactName ?? "",
+        s.effectivePhone ?? "",
+        s.effectiveEmail ?? "",
+        s.memberCount,
+        s.confirmed,
+        s.pending,
+        s.declined,
+        s.willReceive ? t("csv.yes") : t("csv.no"),
+      ]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(",");
+    });
+    const blob = new Blob([`${header}\n${rows.join("\n")}`], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${t("csv.fileName")}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function copyLink(token: string) {
@@ -140,14 +243,26 @@ export default function GroupsClient({
           <h1 className="text-xl font-semibold text-zinc-100 md:text-2xl">{t("title")}</h1>
           <p className="text-sm text-zinc-400">{t("subtitle")}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowCreate(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500"
-        >
-          <Plus className="h-4 w-4" />
-          {t("newGroup")}
-        </button>
+        <div className="flex items-center gap-2">
+          {groups.length > 0 ? (
+            <button
+              type="button"
+              onClick={exportCsv}
+              className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+            >
+              <Download className="h-4 w-4" />
+              {t("exportCsv")}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setShowCreate(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500"
+          >
+            <Plus className="h-4 w-4" />
+            {t("newGroup")}
+          </button>
+        </div>
       </header>
 
       {groups.length === 0 ? (
@@ -156,76 +271,165 @@ export default function GroupsClient({
           <p className="text-sm text-zinc-400">{t("empty")}</p>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {groups.map((g) => {
-            const confirmed = g.guests.filter((m) => m.rsvpStatus === "CONFIRMED").length;
-            const declined = g.guests.filter((m) => m.rsvpStatus === "DECLINED").length;
-            const pending = g.guests.length - confirmed - declined;
-            return (
-              <li
-                key={g.id}
-                className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4"
+        <>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatTile label={t("stats.total")} value={stats.total} />
+            <StatTile label={t("stats.people")} value={stats.people} />
+            <StatTile label={t("stats.pending")} value={stats.pending} accent="amber" />
+            <StatTile label={t("stats.noContact")} value={stats.noContact} accent="rose" />
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("search.placeholder")}
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+              />
+            </div>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as GroupSort)}
+              aria-label={t("sort.label")}
+              className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+            >
+              <option value="NAME">{t("sort.name")}</option>
+              <option value="SIZE">{t("sort.size")}</option>
+              <option value="PENDING">{t("sort.pending")}</option>
+            </select>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {(["ALL", "NO_CONTACT", "PENDING", "ALL_CONFIRMED", "EMPTY"] as GroupFilter[]).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFilter(f)}
+                className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                  filter === f
+                    ? "border-rose-500/30 bg-rose-500/10 text-rose-300"
+                    : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                }`}
               >
-                <header className="mb-2 flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h2 className="truncate text-base font-semibold text-zinc-100">{g.name}</h2>
-                    {g.contactName ? (
-                      <p className="text-xs text-zinc-500">{t("card.contact", { name: g.contactName })}</p>
+                {t(`filter.${f}`)}
+              </button>
+            ))}
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-zinc-700 p-8 text-center">
+              <Search className="mx-auto mb-3 h-8 w-8 text-zinc-500" />
+              <p className="text-sm text-zinc-400">{t("emptyFiltered")}</p>
+            </div>
+          ) : (
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {pageItems.map((g) => {
+                const s = summaries.get(g.id)!;
+                return (
+                  <li key={g.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
+                    <header className="mb-2 flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h2 className="truncate text-base font-semibold text-zinc-100">{g.name}</h2>
+                        {g.contactName ? (
+                          <p className="text-xs text-zinc-500">{t("card.contact", { name: g.contactName })}</p>
+                        ) : null}
+                        {s.effectivePhone || s.effectiveEmail ? (
+                          <p className="truncate text-xs text-zinc-500">
+                            {s.effectivePhone ?? s.effectiveEmail}
+                          </p>
+                        ) : null}
+                      </div>
+                      <span className="shrink-0 rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
+                        {t("card.people", { count: s.memberCount })}
+                      </span>
+                    </header>
+
+                    {!s.willReceive ? (
+                      <p className="mb-2 inline-flex items-center gap-1 rounded bg-rose-500/10 px-2 py-1 text-[10px] text-rose-300">
+                        <PhoneOff className="h-3 w-3" />
+                        {t("card.willNotReceive")}
+                      </p>
+                    ) : s.usesFallback ? (
+                      <p className="mb-2 inline-flex items-center gap-1 rounded bg-amber-500/10 px-2 py-1 text-[10px] text-amber-300">
+                        <UserCheck className="h-3 w-3" />
+                        {t("card.usesFallback", { name: s.fallbackName ?? "" })}
+                      </p>
                     ) : null}
-                  </div>
-                  <span className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
-                    {t("card.people", { count: g.guests.length })}
-                  </span>
-                </header>
-                <div className="mb-3 grid grid-cols-3 gap-1 text-center text-[10px]">
-                  <span className="rounded bg-emerald-500/10 px-1.5 py-1 text-emerald-300">
-                    {t("card.yes", { count: confirmed })}
-                  </span>
-                  <span className="rounded bg-amber-500/10 px-1.5 py-1 text-amber-300">
-                    {t("card.pending", { count: pending })}
-                  </span>
-                  <span className="rounded bg-rose-500/10 px-1.5 py-1 text-rose-300">
-                    {t("card.no", { count: declined })}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => copyLink(g.rsvpToken)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
-                  >
-                    <Link2 className="h-3.5 w-3.5" />
-                    {t("card.copyLink")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setManagingMembersOf(g)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
-                  >
-                    <Users className="h-3.5 w-3.5" />
-                    {t("card.members")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditing(g)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
-                  >
-                    <Edit3 className="h-3.5 w-3.5" />
-                    {tc("actions.edit")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDelete(g)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-rose-300 hover:bg-rose-500/10"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    {tc("actions.delete")}
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+
+                    <div className="mb-3 grid grid-cols-3 gap-1 text-center text-[10px]">
+                      <span className="rounded bg-emerald-500/10 px-1.5 py-1 text-emerald-300">
+                        {t("card.yes", { count: s.confirmed })}
+                      </span>
+                      <span className="rounded bg-amber-500/10 px-1.5 py-1 text-amber-300">
+                        {t("card.pending", { count: s.pending })}
+                      </span>
+                      <span className="rounded bg-rose-500/10 px-1.5 py-1 text-rose-300">
+                        {t("card.no", { count: s.declined })}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => copyLink(g.rsvpToken)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
+                      >
+                        <Link2 className="h-3.5 w-3.5" />
+                        {t("card.copyLink")}
+                      </button>
+                      {s.effectivePhone ? (
+                        <a
+                          href={`https://wa.me/${s.effectivePhone.replace(/\D+/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-lg border border-emerald-700/50 px-2 py-1.5 text-xs text-emerald-300 hover:bg-emerald-500/10"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          {t("card.whatsapp")}
+                        </a>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setManagingMembersOf(g)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
+                      >
+                        <Users className="h-3.5 w-3.5" />
+                        {t("card.members")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditing(g)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                        {tc("actions.edit")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(g)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-xs text-rose-300 hover:bg-rose-500/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        {tc("actions.delete")}
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            from={from}
+            to={to}
+            onPageChange={setPage}
+          />
+        </>
       )}
 
       {showCreate ? (
@@ -494,6 +698,25 @@ function MembersDialog({
           </div>
         </footer>
       </div>
+    </div>
+  );
+}
+
+function StatTile({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: number;
+  accent?: "amber" | "rose";
+}) {
+  const accentClass =
+    accent === "amber" ? "text-amber-300" : accent === "rose" ? "text-rose-300" : "text-zinc-100";
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+      <p className="text-xs uppercase tracking-wider text-zinc-500">{label}</p>
+      <p className={`mt-1 text-2xl font-bold ${accentClass}`}>{value}</p>
     </div>
   );
 }

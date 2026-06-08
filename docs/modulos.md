@@ -124,6 +124,15 @@ comportamentos principais.
 - Renomear o grupo propaga o novo nome ao espelho `groupName` de todos os membros.
 - Resposta de RSVP do grupo notifica os gestores com status real
   (`CONFIRMED` / `DECLINED` / `PARTIAL`), não mais um genérico "Respondeu".
+- **Tela com busca, filtros, ordenação e paginação** (12 por página):
+  - Filtros: sem contato, com pendência, todos confirmaram, sem integrantes.
+  - Ordenação: nome, nº de pessoas, nº de pendências.
+  - Indicadores no topo: grupos, pessoas agrupadas, com pendência, sem contato.
+- **Aviso de alcance no card:** badge "sem contato — não recebe Save the Date" ou
+  "usará contato de {integrante}" (fallback), espelhando a regra de
+  [recipients.ts](../src/lib/notifications/recipients.ts) via o helper puro
+  `summarizeGroup` ([group-summary.ts](../src/app/dashboard/guests/groups/group-summary.ts)).
+  Botão WhatsApp (`wa.me`) e export CSV da lista de grupos.
 
 ---
 

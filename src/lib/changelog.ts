@@ -6,6 +6,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.3",
+    date: "2026-06-08",
+    highlights: [
+      "👨‍👩‍👧‍👦 A tela de **Grupos** ganhou **busca, filtros, ordenação e paginação** — muito mais fácil de navegar quando há muitas famílias.",
+      "🚦 Novo filtro **'Sem contato'** e aviso no card mostram quais grupos **não receberiam o Save the Date** (ou de qual integrante o contato será usado).",
+      "📊 Indicadores no topo (grupos, pessoas agrupadas, com pendência, sem contato), **botão WhatsApp** direto no card e **export CSV** da lista de grupos.",
+    ],
+  },
+  {
     version: "0.7.2",
     date: "2026-06-08",
     highlights: [

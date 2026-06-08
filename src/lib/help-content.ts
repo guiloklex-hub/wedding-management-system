@@ -823,6 +823,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
     tips: [
       "RSVP individual continua funcionando — o link de grupo é alternativa, não substituto.",
+      "Use o filtro 'Sem contato' para achar rapidamente os grupos que ficariam de fora do Save the Date — o card avisa quando vai usar o contato de um integrante (fallback) ou quando ninguém tem contato.",
+      "A tela tem busca (por nome do grupo ou contato), ordenação (nome / nº de pessoas / pendências) e paginação. Dá para exportar a lista de grupos em CSV.",
       "Cada convidado pode estar em apenas um grupo. Escolher o grupo pelo seletor já vincula o convidado de verdade (entra no RSVP coletivo e no Save the Date).",
       "Renomeou o grupo? O novo nome é propagado automaticamente para todos os integrantes.",
       "Importou um CSV com a coluna 'Grupo' preenchida? Os grupos são criados automaticamente (e os existentes reaproveitados pelo nome) — basta abrir o grupo depois para preencher contato e copiar o link.",

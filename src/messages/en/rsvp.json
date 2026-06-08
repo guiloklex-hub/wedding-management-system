@@ -43,5 +43,12 @@
       "missingAnswers": "Please reply for all {count} guests."
     },
     "success": "Responses saved for {count} guest(s). Thank you!"
+  },
+  "landing": {
+    "countdown": "{days, plural, one {# day} other {# days}} to go until the big day!",
+    "today": "It's today! 🎉",
+    "schedule": "Schedule",
+    "rainPlan": "Plan B (rain)",
+    "website": "Visit our website"
   }
 }

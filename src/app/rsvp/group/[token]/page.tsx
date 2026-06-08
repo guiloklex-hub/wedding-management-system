@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getEventConfig } from "@/lib/event-config";
 import { formatDate } from "@/i18n/format";
 import { coerceLocale, isLocale } from "@/i18n/config";
+import { RsvpLanding } from "../../_components/rsvp-landing";
 import GroupRsvpForm from "./group-rsvp-form";
 
 export const dynamic = "force-dynamic";
@@ -76,6 +77,7 @@ export default async function PublicGroupRsvpPage({
               })
             : t("introWithoutDate")}
         </p>
+        <RsvpLanding cfg={cfg} locale={locale} />
         <GroupRsvpForm group={group} locale={locale} messages={messages} />
       </div>
       <p className="mt-6 text-center text-[11px] text-zinc-600">{tIndividual("footer")}</p>

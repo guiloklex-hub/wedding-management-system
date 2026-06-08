@@ -6,6 +6,8 @@ export type EventConfig = {
   contingencyPercent: number;
   currency: string;
   coupleNames: string | null;
+  daySchedule: string | null;
+  rainPlanB: string | null;
   onboardingCompletedAt: Date | null;
   defaultLocale: Locale;
   pixKey: string | null;
@@ -40,6 +42,8 @@ export async function getEventConfig(): Promise<EventConfig> {
     contingencyPercent: settings.contingencyPercent,
     currency: settings.currency,
     coupleNames: settings.coupleNames,
+    daySchedule: settings.daySchedule,
+    rainPlanB: settings.rainPlanB,
     onboardingCompletedAt: settings.onboardingCompletedAt,
     defaultLocale: coerceLocale(settings.defaultLocale),
     pixKey: settings.pixKey,
@@ -76,6 +80,8 @@ export async function updateEventConfig(
       contingencyPercent: input.contingencyPercent ?? undefined,
       currency: input.currency ?? undefined,
       coupleNames: input.coupleNames ?? undefined,
+      daySchedule: input.daySchedule === undefined ? undefined : input.daySchedule,
+      rainPlanB: input.rainPlanB === undefined ? undefined : input.rainPlanB,
       onboardingCompletedAt:
         input.onboardingCompletedAt === undefined ? undefined : input.onboardingCompletedAt,
       defaultLocale: input.defaultLocale ?? undefined,
@@ -113,6 +119,8 @@ export async function updateEventConfig(
     contingencyPercent: updated.contingencyPercent,
     currency: updated.currency,
     coupleNames: updated.coupleNames,
+    daySchedule: updated.daySchedule,
+    rainPlanB: updated.rainPlanB,
     onboardingCompletedAt: updated.onboardingCompletedAt,
     defaultLocale: coerceLocale(updated.defaultLocale),
     pixKey: updated.pixKey,

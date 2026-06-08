@@ -400,12 +400,15 @@ export const HELP_ARTICLES: HelpArticle[] = [
       },
       {
         title: "Convidado abre o link",
-        body: "Vê 'Oi NOME!' + formulário para confirmar (ou não) presença, +1s e restrição alimentar.",
+        body: "Vê uma página de boas-vindas (contagem regressiva, programação do dia, plano B de chuva e link do site, se você preencher) + formulário para confirmar presença, +1s e restrição alimentar.",
       },
       {
         title: "Você acompanha em /dashboard/guests",
         body: "Status (INVITED → CONFIRMED/DECLINED/MAYBE) atualiza em tempo real.",
       },
+    ],
+    tips: [
+      "A seção de boas-vindas usa data, programação e plano B do evento (Ajustes/onboarding). Sem esses campos, ela some graciosamente.",
     ],
     warnings: ["Token vazado? Regenere via Prisma Studio ou abra issue."],
   },

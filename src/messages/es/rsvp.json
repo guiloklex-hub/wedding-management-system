@@ -43,5 +43,12 @@
       "missingAnswers": "Responde por todos los {count} invitados."
     },
     "success": "Respuestas guardadas para {count} invitado(s). ¡Gracias!"
+  },
+  "landing": {
+    "countdown": "¡Faltan {days, plural, one {# día} other {# días}} para el gran día!",
+    "today": "¡Es hoy! 🎉",
+    "schedule": "Programa",
+    "rainPlan": "Plan B (lluvia)",
+    "website": "Visita nuestro sitio"
   }
 }

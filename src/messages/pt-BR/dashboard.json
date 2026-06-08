@@ -297,7 +297,45 @@
       "title": "Grupos / Famílias",
       "subtitle": "Crie grupos para gerar um único link de RSVP por família.",
       "newGroup": "Novo grupo",
+      "exportCsv": "Exportar CSV",
       "empty": "Nenhum grupo cadastrado.",
+      "emptyFiltered": "Nenhum grupo encontrado para a busca/filtro.",
+      "search": {
+        "placeholder": "Buscar por nome do grupo ou contato..."
+      },
+      "filter": {
+        "ALL": "Todos",
+        "NO_CONTACT": "Sem contato",
+        "PENDING": "Com pendência",
+        "ALL_CONFIRMED": "Todos confirmaram",
+        "EMPTY": "Sem integrantes"
+      },
+      "sort": {
+        "label": "Ordenar",
+        "name": "Nome (A–Z)",
+        "size": "Mais pessoas",
+        "pending": "Mais pendências"
+      },
+      "stats": {
+        "total": "Grupos",
+        "people": "Pessoas agrupadas",
+        "pending": "Com pendência",
+        "noContact": "Sem contato"
+      },
+      "csv": {
+        "name": "Grupo",
+        "contact": "Contato",
+        "phone": "Telefone",
+        "email": "Email",
+        "people": "Pessoas",
+        "confirmed": "Confirmados",
+        "pending": "Pendentes",
+        "declined": "Recusados",
+        "willReceive": "Recebe Save the Date",
+        "yes": "Sim",
+        "no": "Não",
+        "fileName": "grupos"
+      },
       "card": {
         "contact": "Contato: {name}",
         "people": "{count} pessoas",
@@ -305,7 +343,10 @@
         "pending": "{count} pendente",
         "no": "{count} não",
         "copyLink": "Copiar link",
-        "members": "Membros"
+        "members": "Membros",
+        "whatsapp": "WhatsApp",
+        "willNotReceive": "Sem contato — não recebe Save the Date",
+        "usesFallback": "Usará contato de {name}"
       },
       "form": {
         "createTitle": "Novo grupo",

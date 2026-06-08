@@ -6,6 +6,14 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.7",
+    date: "2026-06-08",
+    highlights: [
+      "🎁 **Presentes em dinheiro** agora podem ser **lançados nas finanças** com um clique: vire **Receita** (entrada) ou **Caixa/reserva**, escolhendo descrição e data. O presente fica marcado como *lançado* para não ser contado duas vezes.",
+      "💡 Na lista de presentes, novo indicador **'Em dinheiro a lançar'** mostra quanto ainda não virou Receita/Caixa, e um selo **'Lançado'** identifica os já contabilizados.",
+    ],
+  },
+  {
     version: "0.7.6",
     date: "2026-06-08",
     highlights: [

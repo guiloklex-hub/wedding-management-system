@@ -142,6 +142,15 @@ comportamentos principais.
 - Tipo: `CASH` ou `ITEM`.
 - Status: `RECEIVED` / `THANKED`.
 - Suporta múltiplos presentes por convidado.
+- **Lançar nas finanças** (presentes `CASH`): converte o valor em `Income`
+  (fonte `GIFT`, status `RECEIVED`) **ou** `Asset` (caixa/reserva), escolhendo
+  descrição e data. A operação é atômica (`$transaction`) e idempotente — grava
+  `Gift.processedAt` via `updateMany ... { processedAt: null }`, fechando a
+  corrida de dupla conversão. Audita `CONVERT_TO_FINANCE`.
+- **Anti dupla contagem:** marcar o Pix como recebido com "Adicionar ao caixa"
+  também grava `processedAt`; uma vez lançado por qualquer caminho, o outro não
+  duplica o valor. Indicadores na lista: **"Em dinheiro a lançar"** (soma dos
+  `CASH` com `processedAt = null`) e selo **"Lançado"**.
 
 ---
 

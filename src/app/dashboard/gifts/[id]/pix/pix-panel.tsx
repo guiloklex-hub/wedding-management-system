@@ -14,6 +14,7 @@ export default function PixPanel({
   giverName,
   formattedAmount,
   pixPaidAt,
+  processedAt,
   brCode,
   qrDataUrl,
   missingFields,
@@ -23,6 +24,7 @@ export default function PixPanel({
   giverName: string | null;
   formattedAmount: string | null;
   pixPaidAt: Date | null;
+  processedAt: Date | null;
   brCode: string | null;
   qrDataUrl: string | null;
   missingFields: string[];
@@ -32,7 +34,7 @@ export default function PixPanel({
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
-  const [createAsset, setCreateAsset] = useState(true);
+  const [createAsset, setCreateAsset] = useState(!processedAt);
   const [, startTransition] = useTransition();
 
   function copy() {
@@ -141,15 +143,19 @@ export default function PixPanel({
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
             <h2 className="mb-2 text-sm font-semibold text-zinc-100">{t("pix.confirm.title")}</h2>
             <p className="mb-3 text-xs text-zinc-400">{t("pix.confirm.hint")}</p>
-            <label className="mb-3 flex items-center gap-2 text-xs text-zinc-300">
-              <input
-                type="checkbox"
-                checked={createAsset}
-                onChange={(e) => setCreateAsset(e.target.checked)}
-                className="h-4 w-4 rounded border-zinc-700 bg-zinc-800"
-              />
-              {t("pix.confirm.addToAsset")}
-            </label>
+            {processedAt ? (
+              <p className="mb-3 text-xs text-sky-300">{t("pix.confirm.alreadyProcessed")}</p>
+            ) : (
+              <label className="mb-3 flex items-center gap-2 text-xs text-zinc-300">
+                <input
+                  type="checkbox"
+                  checked={createAsset}
+                  onChange={(e) => setCreateAsset(e.target.checked)}
+                  className="h-4 w-4 rounded border-zinc-700 bg-zinc-800"
+                />
+                {t("pix.confirm.addToAsset")}
+              </label>
+            )}
             <button
               type="button"
               onClick={handleMarkReceived}

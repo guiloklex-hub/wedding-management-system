@@ -44,6 +44,7 @@
     },
     "stats": {
       "cashTotal": "Total em dinheiro",
+      "cashPending": "Em dinheiro a lançar",
       "itemsReceived": "Itens recebidos",
       "pendingThank": "Aguardando agradecer"
     },
@@ -62,11 +63,13 @@
     "badge": {
       "thanked": "Agradecido",
       "honeymoon": "lua de mel",
-      "pixReceived": "Pix recebido"
+      "pixReceived": "Pix recebido",
+      "processed": "Lançado"
     },
     "actions": {
       "new": "Novo presente",
       "generatePix": "Gerar QR Pix",
+      "convert": "Lançar nas finanças",
       "toggleThank": "Alternar agradecimento",
       "markThanked": "Marcar como agradecido",
       "unmarkThanked": "Desmarcar agradecido"
@@ -92,7 +95,21 @@
       "removed": "Presente removido",
       "thanked": "Marcado como agradecido",
       "unthanked": "Desmarcado",
+      "converted": "Presente lançado nas finanças",
       "failed": "Falha"
+    },
+    "convert": {
+      "title": "Lançar presente nas finanças",
+      "intro": "Registre este valor como Receita ou no Caixa. O presente fica marcado como lançado, evitando recontagem.",
+      "recordType": "Lançar como",
+      "asIncome": "Receita (entrada)",
+      "asAsset": "Caixa / reserva",
+      "titleField": "Descrição do lançamento",
+      "dateField": "Data",
+      "amountLabel": "Valor",
+      "submit": "Lançar",
+      "defaultTitle": "Presente de {giver}",
+      "guestFallback": "convidado"
     },
     "pix": {
       "back": "Voltar",
@@ -127,6 +144,7 @@
         "title": "Confirmar recebimento",
         "hint": "Após verificar o pagamento na sua conta, marque como recebido.",
         "addToAsset": "Adicionar valor ao caixa (Asset)",
+        "alreadyProcessed": "Este presente já foi lançado nas finanças — não será duplicado.",
         "saving": "Salvando...",
         "markReceived": "Marcar como recebido"
       },

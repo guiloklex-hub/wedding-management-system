@@ -28,7 +28,12 @@ Botão de QR na lista de presentes abre `/dashboard/gifts/{id}/pix`. A página:
 Após o convidado pagar, o casal abre o presente e clica **"Marcar como recebido"** (action `markGiftAsPixReceived`):
 
 - Seta `Gift.pixPaidAt` e `status = RECEIVED`.
-- Opcionalmente cria `Asset` com o valor para entrar no caixa.
+- Opcionalmente cria `Asset` com o valor para entrar no caixa. Quando cria o
+  `Asset`, também grava `Gift.processedAt` (marca "lançado nas finanças"). Se o
+  presente já foi lançado — por aqui ou pela ação **"Lançar nas finanças"**
+  (`convertGiftCashToIncomeOrAsset`, que vira `Income` ou `Asset`) — o `Asset`
+  **não** é recriado, evitando dupla contagem. Nesse caso o painel mostra o
+  aviso em vez da caixa "Adicionar ao caixa".
 
 > Pix estático **não tem callback automático**. O sistema não sabe que o pagamento ocorreu até o casal marcar manualmente. Se quiser baixa automática, seria necessário integrar com MercadoPago ou similar — fora do escopo da v0.3.0.
 

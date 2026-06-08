@@ -3,8 +3,9 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, Gift as GiftIcon, Heart, Loader2, Pencil, Plus, QrCode, Trash2 } from "lucide-react";
+import { CheckCircle2, Gift as GiftIcon, Heart, Landmark, Loader2, Pencil, Plus, QrCode, Trash2 } from "lucide-react";
 import {
+  convertGiftCashToIncomeOrAsset,
   createGift,
   deleteGift,
   markGiftThanked,
@@ -27,6 +28,7 @@ type GiftRow = {
   thankedAt: Date | null;
   isHoneymoonShare: boolean;
   pixPaidAt: Date | null;
+  processedAt: Date | null;
   notes: string | null;
   guest: { id: string; name: string } | null;
 };
@@ -40,6 +42,8 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<GiftRow | null>(null);
   const [deleting, setDeleting] = useState<GiftRow | null>(null);
+  const [converting, setConverting] = useState<GiftRow | null>(null);
+  const [convertBusy, setConvertBusy] = useState(false);
   const [filter, setFilter] = useState<"ALL" | "PENDING_THANK">("ALL");
   const [busy, setBusy] = useState(false);
   const [updatingBusy, setUpdatingBusy] = useState(false);
@@ -53,10 +57,14 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
   const { pageItems, page, totalPages, total, from, to, setPage } = usePagination(filtered, 20);
 
   const totals = useMemo(() => {
-    const cash = gifts.filter((g) => g.type === "CASH").reduce((s, g) => s + (g.amount ?? 0), 0);
+    const cashGifts = gifts.filter((g) => g.type === "CASH");
+    const cash = cashGifts.reduce((s, g) => s + (g.amount ?? 0), 0);
+    const cashPending = cashGifts
+      .filter((g) => !g.processedAt && (g.amount ?? 0) > 0)
+      .reduce((s, g) => s + (g.amount ?? 0), 0);
     const items = gifts.filter((g) => g.type === "ITEM").length;
     const pending = gifts.filter((g) => g.status !== "THANKED").length;
-    return { cash, items, pending };
+    return { cash, cashPending, items, pending };
   }, [gifts]);
 
   function handleCreate(formData: FormData) {
@@ -105,11 +113,26 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
       } else toast.error(t("toast.failed"), r.error);
     });
   }
+  function handleConvert(input: { giftId: string; recordType: "INCOME" | "ASSET"; title: string; date: string }) {
+    setConvertBusy(true);
+    startTransition(async () => {
+      try {
+        const r = await convertGiftCashToIncomeOrAsset(input);
+        if (r.success) {
+          toast.success(t("toast.converted"));
+          setConverting(null);
+        } else toast.error(t("toast.failed"), r.error);
+      } finally {
+        setConvertBusy(false);
+      }
+    });
+  }
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label={t("stats.cashTotal")} value={formatCurrency(totals.cash)} accent="emerald" />
+        <StatCard label={t("stats.cashPending")} value={formatCurrency(totals.cashPending)} accent="amber" />
         <StatCard label={t("stats.itemsReceived")} value={String(totals.items)} />
         <StatCard label={t("stats.pendingThank")} value={String(totals.pending)} accent="amber" />
       </div>
@@ -180,10 +203,26 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
                           {t("badge.pixReceived")}
                         </span>
                       ) : null}
+                      {g.processedAt ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-300">
+                          <Landmark className="h-2.5 w-2.5" /> {t("badge.processed")}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}
                 <div className="flex items-center gap-1">
+                  {g.type === "CASH" && (g.amount ?? 0) > 0 && !g.processedAt ? (
+                    <button
+                      type="button"
+                      onClick={() => setConverting(g)}
+                      aria-label={t("actions.convert")}
+                      title={t("actions.convert")}
+                      className="rounded-lg p-1.5 text-zinc-400 hover:bg-sky-500/10 hover:text-sky-300"
+                    >
+                      <Landmark className="h-4 w-4" />
+                    </button>
+                  ) : null}
                   {g.type === "CASH" ? (
                     <Link
                       href={`/dashboard/gifts/${g.id}/pix`}
@@ -253,6 +292,15 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
         />
       )}
 
+      {converting ? (
+        <ConvertModal
+          gift={converting}
+          isBusy={convertBusy}
+          onClose={() => setConverting(null)}
+          onConvert={handleConvert}
+        />
+      ) : null}
+
       <ConfirmDialog
         open={!!deleting}
         title={t("delete.title")}
@@ -262,6 +310,91 @@ export default function GiftsClient({ gifts, guests }: { gifts: GiftRow[]; guest
         onConfirm={handleDelete}
         onCancel={() => setDeleting(null)}
       />
+    </div>
+  );
+}
+
+function ConvertModal({
+  gift,
+  isBusy,
+  onClose,
+  onConvert,
+}: {
+  gift: GiftRow;
+  isBusy: boolean;
+  onClose: () => void;
+  onConvert: (input: { giftId: string; recordType: "INCOME" | "ASSET"; title: string; date: string }) => void;
+}) {
+  const t = useTranslations("dashboard.gifts");
+  const tc = useTranslations("common");
+  const giver = gift.guest?.name ?? gift.giverName ?? t("convert.guestFallback");
+  const [recordType, setRecordType] = useState<"INCOME" | "ASSET">("INCOME");
+  const [title, setTitle] = useState(t("convert.defaultTitle", { giver }));
+  const [date, setDate] = useState(toIsoDate(new Date(gift.receivedAt)));
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    onConvert({ giftId: gift.id, recordType, title: title.trim(), date });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 bg-black/60 backdrop-blur-sm sm:items-center">
+      <div className="my-4 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+        <h2 className="text-lg font-semibold text-white">{t("convert.title")}</h2>
+        <p className="mt-1 text-xs text-zinc-400">{t("convert.intro")}</p>
+        <form onSubmit={submit} className="mt-4 space-y-3">
+          <div className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2">
+            <span className="text-xs uppercase tracking-wide text-zinc-500">{t("convert.amountLabel")}</span>
+            <span className="text-base font-semibold text-emerald-300">{formatCurrency(gift.amount ?? 0)}</span>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("convert.recordType")}</label>
+            <select
+              value={recordType}
+              onChange={(e) => setRecordType(e.target.value as "INCOME" | "ASSET")}
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
+            >
+              <option value="INCOME">{t("convert.asIncome")}</option>
+              <option value="ASSET">{t("convert.asAsset")}</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("convert.titleField")}</label>
+            <input
+              type="text"
+              value={title}
+              maxLength={120}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-400">{t("convert.dateField")}</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-rose-500/50"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl bg-zinc-800 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+            >
+              {tc("actions.cancel")}
+            </button>
+            <button
+              type="submit"
+              disabled={isBusy || title.trim().length === 0}
+              className="flex flex-1 items-center justify-center rounded-xl bg-rose-600 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-50"
+            >
+              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("convert.submit")}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

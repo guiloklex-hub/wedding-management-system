@@ -58,7 +58,12 @@
     "assetTitle": "Pix de {giver}{honeymoon}",
     "assetGuestFallback": "invitado",
     "assetHoneymoonSuffix": " (aporte luna de miel)",
-    "assetNotes": "Generado a partir del regalo #{id}"
+    "assetNotes": "Generado a partir del regalo #{id}",
+    "convertNotCash": "Solo los regalos en efectivo pueden registrarse en finanzas",
+    "convertNoAmount": "Indica un importe mayor que cero en el regalo antes de registrarlo",
+    "convertAlreadyProcessed": "Este regalo ya fue registrado en finanzas",
+    "convertNotes": "Registrado a partir del regalo #{id}",
+    "convertError": "Error al registrar el regalo en finanzas"
   },
   "goal": {
     "notFound": "Meta no encontrada",

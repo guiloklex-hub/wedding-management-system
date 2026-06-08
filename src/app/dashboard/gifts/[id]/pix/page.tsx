@@ -76,6 +76,7 @@ export default async function GiftPixPage({
         giverName={gift.giverName}
         formattedAmount={amount ? formatCurrency(amount, cfg.currency) : null}
         pixPaidAt={gift.pixPaidAt}
+        processedAt={gift.processedAt}
         brCode={brCode}
         qrDataUrl={qrDataUrl}
         missingFields={missingFields}

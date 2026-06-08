@@ -58,7 +58,12 @@
     "assetTitle": "Pix de {giver}{honeymoon}",
     "assetGuestFallback": "convidado",
     "assetHoneymoonSuffix": " (cota lua de mel)",
-    "assetNotes": "Gerado a partir do presente #{id}"
+    "assetNotes": "Gerado a partir do presente #{id}",
+    "convertNotCash": "Apenas presentes em dinheiro podem ser lançados nas finanças",
+    "convertNoAmount": "Informe um valor maior que zero no presente antes de lançar",
+    "convertAlreadyProcessed": "Este presente já foi lançado nas finanças",
+    "convertNotes": "Lançado a partir do presente #{id}",
+    "convertError": "Erro ao lançar presente nas finanças"
   },
   "goal": {
     "notFound": "Meta não encontrada",

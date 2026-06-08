@@ -536,6 +536,7 @@ model Gift {
   thankedAt         DateTime?
   isHoneymoonShare  Boolean  @default(false)
   pixPaidAt         DateTime?
+  processedAt       DateTime?
   notes             String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

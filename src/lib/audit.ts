@@ -22,6 +22,7 @@ export type AuditAction =
   | "REORDER"
   | "RSVP_GROUP_RESPOND"
   | "MARK_PIX_RECEIVED"
+  | "CONVERT_TO_FINANCE"
   | "BACKUP_EXPORT"
   | "BACKUP_RESTORE"
   | "UPLOAD"

@@ -247,3 +247,117 @@ export function buildPaymentHeatmap(
   }
   return Array.from(cells.values()).sort((a, b) => (a.date > b.date ? 1 : -1));
 }
+
+// ---------------------------------------------------------------------------
+// Helpers de projeção (funções puras, em centavos) — reutilizados por Insights,
+// Metas e Caixa. Sem I/O: o caller agrega os dados do Prisma e passa números.
+// ---------------------------------------------------------------------------
+
+const MS_PER_DAY = 86_400_000;
+const AVG_DAYS_PER_MONTH = 30.44; // média gregoriana
+
+type RegressionPoint = { x: number; y: number };
+
+/** Inclinação (y por unidade de x) por mínimos quadrados; null se não há variação em x. */
+function linearSlope(points: RegressionPoint[]): { slope: number; intercept: number } | null {
+  const n = points.length;
+  if (n < 2) return null;
+  const meanX = points.reduce((s, p) => s + p.x, 0) / n;
+  const meanY = points.reduce((s, p) => s + p.y, 0) / n;
+  let num = 0;
+  let den = 0;
+  for (const p of points) {
+    num += (p.x - meanX) * (p.y - meanY);
+    den += (p.x - meanX) ** 2;
+  }
+  if (den === 0) return null;
+  const slope = num / den;
+  return { slope, intercept: meanY - slope * meanX };
+}
+
+/**
+ * Sobra projetada de caixa até o evento, em centavos. Negativo indica déficit.
+ * Inputs assumidos não-negativos (responsabilidade do caller).
+ */
+export function projectLeftoverUntilEvent(input: {
+  totalAssets: number;
+  remainingBudget: number;
+  contingencyAmount: number;
+}): number {
+  return Math.round(input.totalAssets - input.remainingBudget - input.contingencyAmount);
+}
+
+/**
+ * Quanto poupar por mês (centavos) para atingir a meta até `targetDate`.
+ * `null` quando: sem data, data no passado/hoje. `0` quando a meta já foi atingida.
+ */
+export function savingsPace(input: {
+  currentAmount: number;
+  goalAmount: number;
+  targetDate: Date | null;
+  today?: Date;
+}): number | null {
+  if (!input.targetDate) return null;
+  const today = input.today ?? new Date();
+  const daysRemaining = (input.targetDate.getTime() - today.getTime()) / MS_PER_DAY;
+  if (daysRemaining <= 0) return null;
+  const remaining = input.goalAmount - input.currentAmount;
+  if (remaining <= 0) return 0;
+  const monthsRemaining = Math.max(1, daysRemaining / AVG_DAYS_PER_MONTH);
+  return Math.round(remaining / monthsRemaining);
+}
+
+/**
+ * Data projetada para atingir a meta, via regressão linear do histórico de aportes
+ * (Asset.amount acumulado ao longo do tempo). `null` se: menos de 2 pontos finitos,
+ * tendência plana/decrescente (slope ≤ 0), ou projeção não-finita.
+ */
+export function projectGoalCompletion(input: {
+  goalAmount: number;
+  history: Array<{ date: Date; amount: number }>;
+  today?: Date;
+}): Date | null {
+  const today = input.today ?? new Date();
+  const points = input.history
+    .filter((h) => Number.isFinite(h.amount))
+    .map((h) => ({ x: (h.date.getTime() - today.getTime()) / MS_PER_DAY, y: h.amount }))
+    .sort((a, b) => a.x - b.x);
+  const reg = linearSlope(points);
+  if (!reg || reg.slope <= 0) return null;
+  const daysToGoal = (input.goalAmount - reg.intercept) / reg.slope;
+  if (!Number.isFinite(daysToGoal)) return null;
+  const ms = today.getTime() + Math.max(0, daysToGoal) * MS_PER_DAY;
+  const date = new Date(ms);
+  return Number.isFinite(date.getTime()) ? date : null;
+}
+
+/**
+ * Previsão de estouro de uma categoria a partir do histórico (estimado vs real).
+ * Projeta o desvio (real − estimado) `horizonDays` à frente. `null` se < 2 pontos finitos.
+ * `overrunProbability` ∈ [0,1] (proporção do estouro projetado sobre o estimado recente).
+ */
+export function forecastCategoryOverrun(input: {
+  history: Array<{ date: Date; actual: number; estimated: number }>;
+  today?: Date;
+  horizonDays?: number;
+}): { overrunProbability: number; projectedAmount: number } | null {
+  const today = input.today ?? new Date();
+  const horizon = input.horizonDays ?? 30;
+  const points = input.history
+    .filter((h) => Number.isFinite(h.actual) && Number.isFinite(h.estimated))
+    .map((h) => ({
+      x: (h.date.getTime() - today.getTime()) / MS_PER_DAY,
+      y: h.actual - h.estimated,
+      estimated: h.estimated,
+    }))
+    .sort((a, b) => a.x - b.x);
+  if (points.length < 2) return null;
+  const reg = linearSlope(points);
+  const slope = reg ? reg.slope : 0;
+  const last = points[points.length - 1];
+  const estimatedRecent = last.estimated || 1;
+  const projectedDelta = last.y + slope * horizon;
+  const projectedAmount = Math.round(estimatedRecent + projectedDelta);
+  const overrunProbability = Math.min(Math.max(projectedDelta / Math.abs(estimatedRecent), 0), 1);
+  return { overrunProbability, projectedAmount };
+}

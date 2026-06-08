@@ -68,6 +68,43 @@ export default async function SettingsPage() {
       })
     : [];
 
+  const auditLogs = canManageUsers(me?.role)
+    ? await (async () => {
+        const logs = await prisma.auditLog.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 500,
+          select: {
+            id: true,
+            entity: true,
+            entityId: true,
+            action: true,
+            userId: true,
+            createdAt: true,
+          },
+        });
+        const actorIds = [...new Set(logs.map((l) => l.userId).filter((id): id is string => !!id))];
+        const actors = actorIds.length
+          ? await prisma.user.findMany({
+              where: { id: { in: actorIds } },
+              select: { id: true, name: true, email: true },
+            })
+          : [];
+        const byId = new Map(actors.map((u) => [u.id, u]));
+        return logs.map((l) => {
+          const actor = l.userId ? byId.get(l.userId) : undefined;
+          return {
+            id: l.id,
+            entity: l.entity,
+            entityId: l.entityId,
+            action: l.action,
+            createdAt: l.createdAt,
+            actorName: actor?.name ?? null,
+            actorEmail: actor?.email ?? null,
+          };
+        });
+      })()
+    : [];
+
   return (
     <div className="space-y-6">
       <div>
@@ -93,6 +130,7 @@ export default async function SettingsPage() {
         members={members}
         securitySettings={securitySettings}
         notificationLogs={notificationLogs}
+        auditLogs={auditLogs}
       />
     </div>
   );

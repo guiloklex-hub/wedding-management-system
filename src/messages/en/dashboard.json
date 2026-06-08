@@ -1254,6 +1254,7 @@
       "security": "Security",
       "team": "Team",
       "notifications": "Notifications",
+      "audit": "Audit",
       "whatsapp": "WhatsApp",
       "profile": "Profile",
       "backup": "Backup"
@@ -1272,6 +1273,26 @@
         "recipient": "Recipient",
         "status": "Status",
         "error": "Error"
+      }
+    },
+    "audit": {
+      "title": "Audit trail",
+      "subtitle": "Log of relevant actions in the system (last 500). Who did what, and when.",
+      "empty": "No actions match the selected filters.",
+      "systemActor": "System",
+      "filter": {
+        "allEntities": "All entities",
+        "allActions": "All actions",
+        "searchPlaceholder": "Search by ID or person…",
+        "from": "From",
+        "to": "To"
+      },
+      "col": {
+        "when": "When",
+        "entity": "Entity",
+        "action": "Action",
+        "entityId": "ID",
+        "actor": "Who"
       }
     },
     "event": {

@@ -1254,6 +1254,7 @@
       "security": "Seguridad",
       "team": "Equipo",
       "notifications": "Notificaciones",
+      "audit": "Auditoría",
       "whatsapp": "WhatsApp",
       "profile": "Perfil",
       "backup": "Copia de seguridad"
@@ -1272,6 +1273,26 @@
         "recipient": "Destinatario",
         "status": "Estado",
         "error": "Error"
+      }
+    },
+    "audit": {
+      "title": "Registro de auditoría",
+      "subtitle": "Registro de las acciones relevantes del sistema (últimas 500). Quién hizo qué y cuándo.",
+      "empty": "Ninguna acción coincide con los filtros elegidos.",
+      "systemActor": "Sistema",
+      "filter": {
+        "allEntities": "Todas las entidades",
+        "allActions": "Todas las acciones",
+        "searchPlaceholder": "Buscar por ID o persona…",
+        "from": "Desde",
+        "to": "Hasta"
+      },
+      "col": {
+        "when": "Cuándo",
+        "entity": "Entidad",
+        "action": "Acción",
+        "entityId": "ID",
+        "actor": "Quién"
       }
     },
     "event": {

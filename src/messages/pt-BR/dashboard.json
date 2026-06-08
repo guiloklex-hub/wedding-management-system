@@ -1254,6 +1254,7 @@
       "security": "Segurança",
       "team": "Time",
       "notifications": "Notificações",
+      "audit": "Auditoria",
       "whatsapp": "WhatsApp",
       "profile": "Perfil",
       "backup": "Backup"
@@ -1272,6 +1273,26 @@
         "recipient": "Destinatário",
         "status": "Status",
         "error": "Erro"
+      }
+    },
+    "audit": {
+      "title": "Trilha de auditoria",
+      "subtitle": "Registro das ações relevantes no sistema (últimas 500). Quem fez, o quê e quando.",
+      "empty": "Nenhuma ação registrada para os filtros escolhidos.",
+      "systemActor": "Sistema",
+      "filter": {
+        "allEntities": "Todas as entidades",
+        "allActions": "Todas as ações",
+        "searchPlaceholder": "Buscar por ID ou pessoa…",
+        "from": "De",
+        "to": "Até"
+      },
+      "col": {
+        "when": "Quando",
+        "entity": "Entidade",
+        "action": "Ação",
+        "entityId": "ID",
+        "actor": "Quem"
       }
     },
     "event": {

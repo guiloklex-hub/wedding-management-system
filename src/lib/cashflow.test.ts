@@ -4,6 +4,7 @@ import {
   buildPaymentHeatmap,
   computeCategoryCreep,
   computeHealthScore,
+  getExpectedContractedPct,
   projectLeftoverUntilEvent,
   savingsPace,
   projectGoalCompletion,
@@ -370,5 +371,57 @@ describe("forecastCategoryOverrun", () => {
     });
     expect(out).not.toBeNull();
     expect(out!.overrunProbability).toBe(0);
+  });
+});
+
+describe("getExpectedContractedPct", () => {
+  it("escalona conforme a distância do evento", () => {
+    expect(getExpectedContractedPct(400)).toBe(0.3);
+    expect(getExpectedContractedPct(200)).toBe(0.6);
+    expect(getExpectedContractedPct(100)).toBe(0.85);
+    expect(getExpectedContractedPct(45)).toBe(0.95);
+    expect(getExpectedContractedPct(10)).toBe(1);
+  });
+});
+
+describe("computeHealthScore recommendations", () => {
+  const base = {
+    totalBudget: 10_000,
+    totalContracted: 10_000,
+    totalPaid: 10_000,
+    totalCash: 10_000,
+    daysToEvent: 30,
+    totalTasks: 10,
+    tasksDone: 10,
+    tasksOverdue: 0,
+    worstMonthlyBalance: 5_000,
+  };
+
+  it("não gera recomendações quando tudo está em dia", () => {
+    expect(computeHealthScore(base).recommendations).toHaveLength(0);
+  });
+
+  it("recomenda fechar fornecedores quando a contratação está atrasada", () => {
+    const r = computeHealthScore({ ...base, totalContracted: 1_000, daysToEvent: 60 });
+    const rec = r.recommendations.find((x) => x.key === "recommendations.lowContracted");
+    expect(rec).toBeTruthy();
+    expect(rec!.params).toMatchObject({ pct: 10, expectedPct: 95 });
+  });
+
+  it("recomenda reforçar caixa quando a cobertura é baixa", () => {
+    const r = computeHealthScore({ ...base, totalCash: 100, totalPaid: 0 });
+    expect(r.recommendations.some((x) => x.key === "recommendations.lowCashCoverage")).toBe(true);
+  });
+
+  it("recomenda destravar tarefas atrasadas e mês negativo", () => {
+    const r = computeHealthScore({ ...base, tasksOverdue: 3, worstMonthlyBalance: -500 });
+    const keys = r.recommendations.map((x) => x.key);
+    expect(keys).toContain("recommendations.overdueTasksHigh");
+    expect(keys).toContain("recommendations.negativeMonthProjected");
+  });
+
+  it("recomenda antecipar pagamentos quando pouco foi pago e o evento está longe", () => {
+    const r = computeHealthScore({ ...base, totalPaid: 0, daysToEvent: 200, totalContracted: 6_000 });
+    expect(r.recommendations.some((x) => x.key === "recommendations.lowPaymentProgress")).toBe(true);
   });
 });

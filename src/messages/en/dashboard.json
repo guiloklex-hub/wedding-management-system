@@ -741,6 +741,20 @@
       "statusWarn": "A few points need attention.",
       "statusBad": "Needs urgent adjustments."
     },
+    "liquidity": {
+      "label": "Leftover until the event",
+      "description": "Cash available after planned payments and contingency.",
+      "positive": "Healthy margin",
+      "warning": "Reduced margin",
+      "critical": "Projected deficit"
+    },
+    "recommendations": {
+      "lowContracted": "Only {pct}% of the budget is contracted (≈{expectedPct}% expected at this stage). Prioritize closing vendors.",
+      "lowCashCoverage": "Cash covers only {coverage}% of the balance due. Boost your reserve or cut future spending.",
+      "overdueTasksHigh": "{count} of {total} tasks are overdue. Update deadlines or speed things up.",
+      "negativeMonthProjected": "At least one month goes negative in the projection. Reschedule payments.",
+      "lowPaymentProgress": "Only {pct}% paid with {days} days to the event. Bring payments forward or review the budget."
+    },
     "cashflow": {
       "title": "Projected cash flow",
       "worstBalance": "Worst balance: {value}",

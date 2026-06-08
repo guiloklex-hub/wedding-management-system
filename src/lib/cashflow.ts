@@ -103,11 +103,27 @@ export type HealthScoreBreakdown = {
   normalized: number;
 };
 
+/** Recomendação acionável: chave i18n (relativa a `dashboard.insights`) + params. */
+export type HealthRecommendation = {
+  key: string;
+  params?: Record<string, string | number>;
+};
+
 export type HealthScoreResult = {
   score: number;
   breakdown: HealthScoreBreakdown[];
   alerts: string[];
+  recommendations: HealthRecommendation[];
 };
+
+/** % de contratação esperada para a distância do evento (puro, reutilizável). */
+export function getExpectedContractedPct(daysToEvent: number): number {
+  if (daysToEvent > 365) return 0.3;
+  if (daysToEvent > 180) return 0.6;
+  if (daysToEvent > 90) return 0.85;
+  if (daysToEvent > 30) return 0.95;
+  return 1;
+}
 
 export function computeHealthScore(input: {
   totalBudget: number;
@@ -130,11 +146,7 @@ export function computeHealthScore(input: {
   const cashCoverage =
     budget > 0 ? Math.min(input.totalCash / Math.max(budget - input.totalPaid, 1), 1) : 0;
 
-  let expectedContractedPct = 1;
-  if (input.daysToEvent > 365) expectedContractedPct = 0.3;
-  else if (input.daysToEvent > 180) expectedContractedPct = 0.6;
-  else if (input.daysToEvent > 90) expectedContractedPct = 0.85;
-  else if (input.daysToEvent > 30) expectedContractedPct = 0.95;
+  const expectedContractedPct = getExpectedContractedPct(input.daysToEvent);
   const onTrack = expectedContractedPct > 0 ? Math.min(contractedPct / expectedContractedPct, 1) : 1;
 
   const liquidity = input.worstMonthlyBalance >= 0 ? 1 : 0;
@@ -160,7 +172,40 @@ export function computeHealthScore(input: {
   if (cashCoverage < 0.3 && budget - input.totalPaid > 0)
     alerts.push("Caixa cobre menos de 30% do saldo devedor.");
 
-  return { score, breakdown, alerts };
+  // Recomendações acionáveis (i18n via chaves relativas a `dashboard.insights`).
+  const recommendations: HealthRecommendation[] = [];
+  if (contractedPct < expectedContractedPct - 0.15) {
+    recommendations.push({
+      key: "recommendations.lowContracted",
+      params: {
+        pct: Math.round(contractedPct * 100),
+        expectedPct: Math.round(expectedContractedPct * 100),
+      },
+    });
+  }
+  if (cashCoverage < 0.3 && budget - input.totalPaid > 0) {
+    recommendations.push({
+      key: "recommendations.lowCashCoverage",
+      params: { coverage: Math.round(cashCoverage * 100) },
+    });
+  }
+  if (overdueRatio > 0.1) {
+    recommendations.push({
+      key: "recommendations.overdueTasksHigh",
+      params: { count: input.tasksOverdue, total: input.totalTasks },
+    });
+  }
+  if (liquidity === 0) {
+    recommendations.push({ key: "recommendations.negativeMonthProjected" });
+  }
+  if (paidPct < 0.2 && input.daysToEvent > 90) {
+    recommendations.push({
+      key: "recommendations.lowPaymentProgress",
+      params: { pct: Math.round(paidPct * 100), days: input.daysToEvent },
+    });
+  }
+
+  return { score, breakdown, alerts, recommendations };
 }
 
 export type CategoryCreep = {

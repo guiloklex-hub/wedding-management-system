@@ -13,6 +13,8 @@ export type NotificationKind =
   | "TASK_OVERDUE"
   | "GUEST_RSVP"
   | "SAVE_THE_DATE"
+  | "RSVP_REMINDER"
+  | "RSVP_REMINDER_GROUP"
   | "SYSTEM_WHATSAPP_DOWN"
   | "SYSTEM_WHATSAPP_RECOVERED";
 
@@ -92,6 +94,19 @@ export type RenderInput =
       giftRegistryUrl?: string | null;
       customMessage?: string | null;
       imageCid?: string | null;
+    } & WithLocale)
+  | ({
+      kind: "RSVP_REMINDER";
+      userName: string;
+      rsvpUrl: string;
+      daysInvitedSince: number;
+    } & WithLocale)
+  | ({
+      kind: "RSVP_REMINDER_GROUP";
+      userName: string;
+      memberNames: string;
+      rsvpUrl: string;
+      daysInvitedSince: number;
     } & WithLocale)
   | ({
       kind: "SYSTEM_WHATSAPP_DOWN";
@@ -692,6 +707,64 @@ ${errorLine}`;
       );
       const text = `${tk("text")}\n${downtime}\n\n${input.settingsUrl}`;
       const waText = `*${header}*\n\n${text}`;
+      return { subject, html, text, waText };
+    }
+
+    case "RSVP_REMINDER": {
+      const tk = (key: string, values?: Record<string, string | number | Date>) =>
+        t(`RSVP_REMINDER.${key}`, values);
+      const url = escapeHtml(input.rsvpUrl);
+      const days = input.daysInvitedSince;
+      const subject = tk("subject");
+      const html = wrapHtml(
+        subject,
+        `<p>${greetingHtml}</p>
+<p>${escapeHtml(tk("intro", { days }))}</p>
+<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">${escapeHtml(tk("cta"))}</a></p>`,
+        locale,
+        footer,
+        header,
+      );
+      const text = `${greetingText}
+
+${tk("intro", { days })}
+
+${tk("cta")}: ${input.rsvpUrl}`;
+      const waText = `*${tk("waTitle")}*
+
+${greetingText}
+
+${tk("waIntro", { days })}
+${input.rsvpUrl}`;
+      return { subject, html, text, waText };
+    }
+
+    case "RSVP_REMINDER_GROUP": {
+      const tk = (key: string, values?: Record<string, string | number | Date>) =>
+        t(`RSVP_REMINDER_GROUP.${key}`, values);
+      const url = escapeHtml(input.rsvpUrl);
+      const days = input.daysInvitedSince;
+      const subject = tk("subject");
+      const html = wrapHtml(
+        subject,
+        `<p>${greetingHtml}</p>
+<p>${escapeHtml(tk("intro", { members: input.memberNames, days }))}</p>
+<p><a href="${url}" style="display:inline-block;background:#e11d48;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">${escapeHtml(tk("cta"))}</a></p>`,
+        locale,
+        footer,
+        header,
+      );
+      const text = `${greetingText}
+
+${tk("intro", { members: input.memberNames, days })}
+
+${tk("cta")}: ${input.rsvpUrl}`;
+      const waText = `*${tk("waTitle")}*
+
+${greetingText}
+
+${tk("waIntro", { members: escapeWaMarkdown(input.memberNames), days })}
+${input.rsvpUrl}`;
       return { subject, html, text, waText };
     }
   }

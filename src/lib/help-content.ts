@@ -823,6 +823,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
     tips: [
       "RSVP individual continua funcionando — o link de grupo é alternativa, não substituto.",
+      "Ligue o 'Lembrete automático de RSVP' em Configurações › Evento para cutucar por WhatsApp/e-mail quem ainda não respondeu após X dias do convite (com o link de confirmação). Para grupos, vai ao contato do grupo citando quem falta.",
       "Use o filtro 'Sem contato' para achar rapidamente os grupos que ficariam de fora do Save the Date — o card avisa quando vai usar o contato de um integrante (fallback) ou quando ninguém tem contato.",
       "A tela tem busca (por nome do grupo ou contato), ordenação (nome / nº de pessoas / pendências) e paginação. Dá para exportar a lista de grupos em CSV.",
       "Cada convidado pode estar em apenas um grupo. Escolher o grupo pelo seletor já vincula o convidado de verdade (entra no RSVP coletivo e no Save the Date).",

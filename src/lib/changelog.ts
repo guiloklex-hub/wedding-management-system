@@ -6,6 +6,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.4",
+    date: "2026-06-08",
+    highlights: [
+      "📬 Novo **lembrete automático de RSVP**: o sistema pode cutucar por WhatsApp/e-mail os convidados que ainda não responderam, com o link de confirmação. Ative em Configurações › Evento e escolha após quantos dias do convite lembrar.",
+      "👨‍👩‍👧 Para famílias/grupos, o lembrete vai para o contato do grupo (ou, na falta, de um integrante) e cita quem ainda falta confirmar — sem mandar duas vezes para o mesmo número.",
+      "📊 Bastidores: novas projeções financeiras reutilizáveis (quanto sobra até o evento, ritmo de meta, previsão de estouro) que vão alimentar os próximos cartões de Insights.",
+    ],
+  },
+  {
     version: "0.7.3",
     date: "2026-06-08",
     highlights: [

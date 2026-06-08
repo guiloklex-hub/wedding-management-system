@@ -62,6 +62,8 @@ type Initial = {
   contingencyPercent: number;
   currency: string;
   coupleNames: string;
+  rsvpReminderEnabled: boolean;
+  rsvpReminderDays: number;
 };
 
 type PixSettings = {
@@ -356,6 +358,24 @@ function EventTab({
             type="number"
             step="0.1"
             defaultValue={String(initial.contingencyPercent)}
+          />
+          <label className="flex items-center gap-2 self-end pb-2 text-sm text-zinc-300 sm:col-span-2">
+            <input
+              type="checkbox"
+              name="rsvpReminderEnabled"
+              defaultChecked={initial.rsvpReminderEnabled}
+              className="accent-rose-500"
+            />
+            {t("event.rsvpReminderEnabled")}
+          </label>
+          <p className="-mt-2 text-xs text-zinc-500 sm:col-span-2">{t("event.rsvpReminderHint")}</p>
+          <Field
+            name="rsvpReminderDays"
+            label={t("event.rsvpReminderDays")}
+            type="number"
+            min="1"
+            max="90"
+            defaultValue={String(initial.rsvpReminderDays)}
           />
           <div className="sm:col-span-2">
             <button
@@ -2130,6 +2150,8 @@ function Field({
   type = "text",
   required,
   step,
+  min,
+  max,
   defaultValue,
   placeholder,
   pattern,
@@ -2139,6 +2161,8 @@ function Field({
   type?: string;
   required?: boolean;
   step?: string;
+  min?: string;
+  max?: string;
   defaultValue?: string;
   placeholder?: string;
   pattern?: string;
@@ -2151,6 +2175,8 @@ function Field({
         name={name}
         required={required}
         step={step}
+        min={min}
+        max={max}
         defaultValue={defaultValue}
         placeholder={placeholder}
         pattern={pattern}

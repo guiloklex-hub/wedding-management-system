@@ -1251,6 +1251,9 @@
       "currencyUSD": "Dólar (USD)",
       "currencyEUR": "Euro (EUR)",
       "contingency": "Contingencia (%)",
+      "rsvpReminderEnabled": "Enviar recordatorio de RSVP automático",
+      "rsvpReminderHint": "Recuerda por WhatsApp/correo a los invitados que aún no respondieron. Solo envía si lo activas.",
+      "rsvpReminderDays": "Recordar después de (días desde la invitación)",
       "save": "Guardar",
       "toast": {
         "saved": "Configuración guardada",

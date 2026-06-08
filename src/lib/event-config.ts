@@ -20,6 +20,8 @@ export type EventConfig = {
   saveTheDateFileName: string | null;
   saveTheDateExcludeTagIds: string | null;
   saveTheDateExcludePadrinhos: boolean;
+  rsvpReminderEnabled: boolean;
+  rsvpReminderDays: number;
 };
 
 export async function getEventConfig(): Promise<EventConfig> {
@@ -52,6 +54,8 @@ export async function getEventConfig(): Promise<EventConfig> {
     saveTheDateFileName: settings.saveTheDateFileName,
     saveTheDateExcludeTagIds: settings.saveTheDateExcludeTagIds,
     saveTheDateExcludePadrinhos: settings.saveTheDateExcludePadrinhos,
+    rsvpReminderEnabled: settings.rsvpReminderEnabled,
+    rsvpReminderDays: settings.rsvpReminderDays,
   };
 }
 
@@ -97,6 +101,10 @@ export async function updateEventConfig(
         input.saveTheDateExcludePadrinhos === undefined
           ? undefined
           : input.saveTheDateExcludePadrinhos,
+      rsvpReminderEnabled:
+        input.rsvpReminderEnabled === undefined ? undefined : input.rsvpReminderEnabled,
+      rsvpReminderDays:
+        input.rsvpReminderDays === undefined ? undefined : input.rsvpReminderDays,
     },
   });
 
@@ -119,6 +127,8 @@ export async function updateEventConfig(
     saveTheDateFileName: updated.saveTheDateFileName,
     saveTheDateExcludeTagIds: updated.saveTheDateExcludeTagIds,
     saveTheDateExcludePadrinhos: updated.saveTheDateExcludePadrinhos,
+    rsvpReminderEnabled: updated.rsvpReminderEnabled,
+    rsvpReminderDays: updated.rsvpReminderDays,
   };
 }
 

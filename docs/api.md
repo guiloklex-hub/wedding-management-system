@@ -164,8 +164,13 @@ Authorization: Bearer <CRON_SECRET>
 1. Busca pagamentos com `dueDate` em ≤ 3 dias ou já vencidos.
 2. Busca tarefas com `deadline` em ≤ 2 dias ou já vencidas.
 3. Para cada um, dispara `notify("PAYMENT_DUE"|"PAYMENT_OVERDUE"|"TASK_DUE"|"TASK_OVERDUE")`
-   por email e WhatsApp.
-4. Grava resultado em `NotificationLog` (idempotente por dia).
+   por email e WhatsApp (destinatários: equipe — `ADMIN/GROOM/BRIDE/PLANNER`).
+4. **Lembrete de RSVP (opcional, guest-facing):** quando `EventSettings.rsvpReminderEnabled`
+   está ligado, cutuca convidados/grupos ainda `INVITED` convidados há ≥ `rsvpReminderDays`
+   (padrão 7), com contato alcançável (telefone do grupo ou, na falta, do 1º integrante;
+   senão e-mail). Dispara `RSVP_REMINDER` / `RSVP_REMINDER_GROUP` com o link de RSVP.
+   Deduplica por telefone (grupo tem prioridade) e respeita a idempotência por dia.
+5. Grava resultado em `NotificationLog` (idempotente por dia: `kind + refType + refId + data BRT`).
 
 **Retorna:**
 

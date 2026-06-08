@@ -139,5 +139,19 @@
     "signoff": "Em breve enviaremos o convite oficial. Com carinho, {names}.",
     "websiteLabel": "Site dos noivos",
     "registryLabel": "Lista de presentes"
+  },
+  "RSVP_REMINDER": {
+    "subject": "Lembrete: confirme sua presença",
+    "intro": "Você recebeu o convite há {days, plural, one {# dia} other {# dias}} e ainda não confirmou sua presença. Pode confirmar agora?",
+    "cta": "Confirmar presença",
+    "waTitle": "📋 Lembrete de RSVP",
+    "waIntro": "Você recebeu o convite há {days, plural, one {# dia} other {# dias}} e ainda não confirmou. Toque no link para confirmar sua presença:"
+  },
+  "RSVP_REMINDER_GROUP": {
+    "subject": "Lembrete: confirmem a presença",
+    "intro": "Ainda faltam confirmar: {members}. O convite foi enviado há {days, plural, one {# dia} other {# dias}}. Podem confirmar agora?",
+    "cta": "Confirmar presença do grupo",
+    "waTitle": "📋 Lembrete de RSVP",
+    "waIntro": "Ainda faltam confirmar: {members} (convite enviado há {days, plural, one {# dia} other {# dias}}). Toque no link para confirmar:"
   }
 }

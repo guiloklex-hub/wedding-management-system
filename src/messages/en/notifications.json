@@ -139,5 +139,19 @@
     "signoff": "The formal invitation is coming soon. With love, {names}.",
     "websiteLabel": "Wedding website",
     "registryLabel": "Gift registry"
+  },
+  "RSVP_REMINDER": {
+    "subject": "Reminder: confirm your attendance",
+    "intro": "You received the invitation {days, plural, one {# day} other {# days}} ago and haven't confirmed your attendance yet. Can you confirm now?",
+    "cta": "Confirm attendance",
+    "waTitle": "📋 RSVP reminder",
+    "waIntro": "You received the invitation {days, plural, one {# day} other {# days}} ago and haven't confirmed yet. Tap the link to confirm your attendance:"
+  },
+  "RSVP_REMINDER_GROUP": {
+    "subject": "Reminder: confirm attendance",
+    "intro": "Still pending: {members}. The invitation was sent {days, plural, one {# day} other {# days}} ago. Can you confirm now?",
+    "cta": "Confirm group attendance",
+    "waTitle": "📋 RSVP reminder",
+    "waIntro": "Still pending: {members} (invitation sent {days, plural, one {# day} other {# days}} ago). Tap the link to confirm:"
   }
 }

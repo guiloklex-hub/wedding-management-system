@@ -80,6 +80,8 @@ export default async function SettingsPage() {
           contingencyPercent: cfg.contingencyPercent,
           currency: cfg.currency,
           coupleNames: cfg.coupleNames ?? "",
+          rsvpReminderEnabled: cfg.rsvpReminderEnabled,
+          rsvpReminderDays: cfg.rsvpReminderDays,
         }}
         pixSettings={{
           pixKey: cfg.pixKey ?? "",

@@ -44,6 +44,7 @@
     },
     "stats": {
       "cashTotal": "Total in cash",
+      "cashPending": "Cash to post",
       "itemsReceived": "Items received",
       "pendingThank": "Awaiting thank-you"
     },
@@ -62,11 +63,13 @@
     "badge": {
       "thanked": "Thanked",
       "honeymoon": "honeymoon",
-      "pixReceived": "Pix received"
+      "pixReceived": "Pix received",
+      "processed": "Posted"
     },
     "actions": {
       "new": "New gift",
       "generatePix": "Generate Pix QR",
+      "convert": "Post to finances",
       "toggleThank": "Toggle thank-you",
       "markThanked": "Mark as thanked",
       "unmarkThanked": "Unmark thanked"
@@ -92,7 +95,21 @@
       "removed": "Gift removed",
       "thanked": "Marked as thanked",
       "unthanked": "Unmarked",
+      "converted": "Gift posted to finances",
       "failed": "Failed"
+    },
+    "convert": {
+      "title": "Post gift to finances",
+      "intro": "Record this amount as Income or in your Cash balance. The gift is marked as posted to avoid double-counting.",
+      "recordType": "Post as",
+      "asIncome": "Income (inflow)",
+      "asAsset": "Cash / reserve",
+      "titleField": "Entry description",
+      "dateField": "Date",
+      "amountLabel": "Amount",
+      "submit": "Post",
+      "defaultTitle": "Gift from {giver}",
+      "guestFallback": "guest"
     },
     "pix": {
       "back": "Back",
@@ -127,6 +144,7 @@
         "title": "Confirm receipt",
         "hint": "After verifying the payment in your account, mark it as received.",
         "addToAsset": "Add amount to cash (Asset)",
+        "alreadyProcessed": "This gift was already posted to finances — it won't be duplicated.",
         "saving": "Saving...",
         "markReceived": "Mark as received"
       },

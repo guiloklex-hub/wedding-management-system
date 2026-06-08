@@ -58,7 +58,12 @@
     "assetTitle": "Pix from {giver}{honeymoon}",
     "assetGuestFallback": "guest",
     "assetHoneymoonSuffix": " (honeymoon contribution)",
-    "assetNotes": "Generated from gift #{id}"
+    "assetNotes": "Generated from gift #{id}",
+    "convertNotCash": "Only cash gifts can be posted to finances",
+    "convertNoAmount": "Set an amount greater than zero on the gift before posting",
+    "convertAlreadyProcessed": "This gift has already been posted to finances",
+    "convertNotes": "Posted from gift #{id}",
+    "convertError": "Error posting gift to finances"
   },
   "goal": {
     "notFound": "Goal not found",

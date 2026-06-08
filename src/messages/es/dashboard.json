@@ -44,6 +44,7 @@
     },
     "stats": {
       "cashTotal": "Total en dinero",
+      "cashPending": "En dinero por registrar",
       "itemsReceived": "Artículos recibidos",
       "pendingThank": "Pendiente de agradecer"
     },
@@ -62,11 +63,13 @@
     "badge": {
       "thanked": "Agradecido",
       "honeymoon": "luna de miel",
-      "pixReceived": "Pix recibido"
+      "pixReceived": "Pix recibido",
+      "processed": "Registrado"
     },
     "actions": {
       "new": "Nuevo regalo",
       "generatePix": "Generar QR Pix",
+      "convert": "Registrar en finanzas",
       "toggleThank": "Alternar agradecimiento",
       "markThanked": "Marcar como agradecido",
       "unmarkThanked": "Desmarcar agradecido"
@@ -92,7 +95,21 @@
       "removed": "Regalo eliminado",
       "thanked": "Marcado como agradecido",
       "unthanked": "Desmarcado",
+      "converted": "Regalo registrado en finanzas",
       "failed": "Error"
+    },
+    "convert": {
+      "title": "Registrar regalo en finanzas",
+      "intro": "Registra este importe como Ingreso o en tu Caja. El regalo queda marcado como registrado para evitar contarlo dos veces.",
+      "recordType": "Registrar como",
+      "asIncome": "Ingreso (entrada)",
+      "asAsset": "Caja / reserva",
+      "titleField": "Descripción del registro",
+      "dateField": "Fecha",
+      "amountLabel": "Importe",
+      "submit": "Registrar",
+      "defaultTitle": "Regalo de {giver}",
+      "guestFallback": "invitado"
     },
     "pix": {
       "back": "Volver",
@@ -127,6 +144,7 @@
         "title": "Confirmar recepción",
         "hint": "Después de verificar el pago en tu cuenta, márcalo como recibido.",
         "addToAsset": "Agregar importe a caja (Asset)",
+        "alreadyProcessed": "Este regalo ya fue registrado en finanzas — no se duplicará.",
         "saving": "Guardando...",
         "markReceived": "Marcar como recibido"
       },

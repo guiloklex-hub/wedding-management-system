@@ -162,23 +162,27 @@ export async function markGiftAsPixReceived(
     if (gift.pixPaidAt) return { success: false, error: t("pixAlreadyReceived") };
 
     const now = new Date();
+    // Só cria o Asset (e marca como lançado nas finanças) se ainda não houver
+    // sido processado por aqui ou pela conversão dedicada — evita dupla contagem.
+    const willCreateAsset = alsoCreateAsset && !!gift.amount && gift.amount > 0 && !gift.processedAt;
     await prisma.$transaction(async (tx: TxClient) => {
       await tx.gift.update({
         where: { id: giftId },
         data: {
           pixPaidAt: now,
           status: "RECEIVED",
+          ...(willCreateAsset ? { processedAt: now } : {}),
         },
       });
 
-      if (alsoCreateAsset && gift.amount && gift.amount > 0) {
+      if (willCreateAsset) {
         await tx.asset.create({
           data: {
             title: t("assetTitle", {
               giver: gift.giverName ?? t("assetGuestFallback"),
               honeymoon: gift.isHoneymoonShare ? t("assetHoneymoonSuffix") : "",
             }),
-            amount: gift.amount,
+            amount: gift.amount!,
             date: now,
             notes: t("assetNotes", { id: gift.id }),
           },
@@ -188,14 +192,98 @@ export async function markGiftAsPixReceived(
 
     await audit("Gift", giftId, "MARK_PIX_RECEIVED", {
       amount: gift.amount,
-      alsoCreateAsset,
+      alsoCreateAsset: willCreateAsset,
     });
 
     revalidatePath("/dashboard/gifts");
-    if (alsoCreateAsset) revalidatePath("/dashboard/assets");
+    if (willCreateAsset) revalidatePath("/dashboard/assets");
     return { success: true };
   } catch (err) {
     console.error("[markGiftAsPixReceived]", err);
     return { success: false, error: t("errorMarkingPix") };
+  }
+}
+
+const GiftConvertSchema = z.object({
+  giftId: z.string().min(1).max(64),
+  recordType: z.enum(["INCOME", "ASSET"]),
+  title: z.string().trim().min(1).max(120),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+});
+
+export type GiftConvertInput = z.input<typeof GiftConvertSchema>;
+
+/**
+ * Converte um presente em dinheiro (CASH) num lançamento financeiro: Receita
+ * (`Income`, fonte GIFT) ou Caixa (`Asset`). Idempotente por `processedAt` —
+ * a marcação é atômica dentro da transação (`updateMany` com `processedAt: null`)
+ * para fechar a corrida de dupla conversão. Não toca em `pixPaidAt`.
+ */
+export async function convertGiftCashToIncomeOrAsset(input: GiftConvertInput): Promise<ActionResult> {
+  const t = await getTranslations("actions.gift");
+  const denied = await denyIfNoFinance();
+  if (denied) return denied;
+  const parsed = GiftConvertSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: zodErrorMessage(parsed.error, await getTranslations("common")) };
+  }
+  try {
+    const gift = await prisma.gift.findFirst({
+      where: { id: parsed.data.giftId, deletedAt: null },
+    });
+    if (!gift) return { success: false, error: t("notFound") };
+    if (gift.type !== "CASH") return { success: false, error: t("convertNotCash") };
+    if (!gift.amount || gift.amount <= 0) return { success: false, error: t("convertNoAmount") };
+    if (gift.processedAt) return { success: false, error: t("convertAlreadyProcessed") };
+
+    const amount = gift.amount;
+    const when = parsed.data.date ? new Date(`${parsed.data.date}T12:00:00.000Z`) : new Date();
+    const recordType = parsed.data.recordType;
+
+    await prisma.$transaction(async (tx: TxClient) => {
+      const claim = await tx.gift.updateMany({
+        where: { id: gift.id, deletedAt: null, processedAt: null },
+        data: { processedAt: new Date() },
+      });
+      if (claim.count === 0) throw new Error("ALREADY_PROCESSED");
+
+      if (recordType === "INCOME") {
+        await tx.income.create({
+          data: {
+            title: parsed.data.title,
+            source: "GIFT",
+            amount,
+            status: "RECEIVED",
+            receivedAt: when,
+            givenByName: gift.giverName,
+            notes: t("convertNotes", { id: gift.id }),
+          },
+        });
+      } else {
+        await tx.asset.create({
+          data: {
+            title: parsed.data.title,
+            amount,
+            date: when,
+            notes: t("convertNotes", { id: gift.id }),
+          },
+        });
+      }
+    });
+
+    await audit("Gift", gift.id, "CONVERT_TO_FINANCE", { recordType, amount });
+
+    revalidatePath("/dashboard/gifts");
+    revalidatePath(recordType === "INCOME" ? "/dashboard/income" : "/dashboard/assets");
+    return { success: true };
+  } catch (err) {
+    if (err instanceof Error && err.message === "ALREADY_PROCESSED") {
+      return { success: false, error: t("convertAlreadyProcessed") };
+    }
+    console.error("[convertGiftCashToIncomeOrAsset]", err);
+    return { success: false, error: t("convertError") };
   }
 }

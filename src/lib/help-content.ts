@@ -441,6 +441,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
       { title: "Marque 'Agradecido'", body: "Quando enviar a nota de agradecimento, atualize `thankedAt`." },
     ],
   },
+  {
+    id: "gift-convert-finance",
+    title: "Lançar presente em dinheiro nas finanças",
+    category: "gifts",
+    keywords: ["presente", "dinheiro", "receita", "caixa", "asset", "income", "lançar", "finanças"],
+    icon: Gift,
+    summary: "Transforme um presente em dinheiro numa Receita ou no Caixa, sem contar duas vezes.",
+    steps: [
+      { title: "Use o botão 'Lançar nas finanças'", body: "No card do presente em dinheiro (ícone de banco), abra o lançamento." },
+      { title: "Escolha o destino", body: "Receita (entrada) — fonte 'Presente em dinheiro' — ou Caixa/reserva (Asset). Ajuste descrição e data." },
+      { title: "Lançado uma única vez", body: "O presente recebe o selo 'Lançado' e some da lista 'Em dinheiro a lançar'. Marcar o Pix com 'Adicionar ao caixa' também conta como lançado — o sistema não duplica." },
+    ],
+  },
 
   // ============ honeymoon-trousseau ============
   {

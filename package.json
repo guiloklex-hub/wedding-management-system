@@ -22,7 +22,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@google/genai": "^2.8.0",
     "@libsql/client": "^0.17.3",
-    "@prisma/adapter-libsql": "^6.19.3",
+    "@prisma/adapter-libsql": "^7.8.0",
     "@prisma/client": "^6.19.3",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-select": "^2.2.6",

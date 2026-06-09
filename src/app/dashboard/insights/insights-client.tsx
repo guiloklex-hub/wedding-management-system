@@ -28,6 +28,8 @@ import type { BurndownPoint } from "@/lib/reports/task-burndown";
 import { SCurve } from "@/components/charts/s-curve";
 import { Burndown } from "@/components/charts/burndown";
 import { Waterfall } from "@/components/charts/waterfall";
+import { AiGenerateButton } from "@/components/ai/ai-generate-button";
+import { generateInsightsNarrative } from "@/app/actions/aiActions";
 
 type Props = {
   eventDate: Date;
@@ -43,6 +45,7 @@ type Props = {
   sCurve: PaymentCurvePoint[];
   burndown: BurndownPoint[];
   waterfall: WaterfallBar[];
+  aiEnabled: boolean;
 };
 
 export default function InsightsClient({
@@ -58,11 +61,13 @@ export default function InsightsClient({
   sCurve,
   burndown,
   waterfall,
+  aiEnabled,
 }: Props) {
   const t = useTranslations("dashboard.insights");
   return (
     <div className="space-y-6">
       <HealthCard health={health} />
+      {aiEnabled ? <AiNarrativeCard /> : null}
       <LiquidityCard leftover={leftover} budget={totals.budget} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -109,6 +114,17 @@ export default function InsightsClient({
 
       <HeatmapCard heatmap={heatmap} eventDate={eventDate} daysToEvent={daysToEvent} />
     </div>
+  );
+}
+
+function AiNarrativeCard() {
+  const t = useTranslations("dashboard.insights.ai");
+  return (
+    <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+      <h2 className="text-lg font-semibold text-zinc-100">{t("title")}</h2>
+      <p className="mb-4 mt-1 text-xs text-zinc-500">{t("description")}</p>
+      <AiGenerateButton action={generateInsightsNarrative} namespace="dashboard.insights.ai" />
+    </section>
   );
 }
 

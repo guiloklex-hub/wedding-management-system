@@ -154,6 +154,15 @@
     "current": "Idioma actual",
     "selectHint": "Idioma usado en toda la interfaz, correos y WhatsApp."
   },
+  "ai": {
+    "generatedBadge": "Generado por IA",
+    "reviewNotice": "Revisa antes de usar — la IA puede equivocarse.",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "use": "Usar",
+    "regenerate": "Generar de nuevo",
+    "failed": "Error de IA"
+  },
   "zod": {
     "required": "Este campo es obligatorio",
     "invalidEmail": "Correo inválido",

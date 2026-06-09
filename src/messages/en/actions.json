@@ -1,4 +1,16 @@
 {
+  "ai": {
+    "disabled": "The AI assistant is turned off.",
+    "noEventDate": "Set the wedding date before using AI.",
+    "errors": {
+      "DISABLED": "The AI assistant is turned off.",
+      "RATE_LIMITED": "Too many AI requests in a short time. Try again shortly.",
+      "TIMEOUT": "The AI took too long to respond. Please try again.",
+      "INVALID_OUTPUT": "The AI returned an invalid response. Please try again.",
+      "BLOCKED": "The AI blocked this request for safety reasons.",
+      "PROVIDER_ERROR": "Couldn't reach the AI service right now. Please try again."
+    }
+  },
   "asset": {
     "notFound": "Contribution not found",
     "errorCreate": "Failed to create contribution",

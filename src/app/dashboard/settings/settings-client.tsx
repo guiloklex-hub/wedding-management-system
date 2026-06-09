@@ -65,6 +65,8 @@ type Initial = {
   coupleNames: string;
   rsvpReminderEnabled: boolean;
   rsvpReminderDays: number;
+  aiEnabled: boolean;
+  aiConfigured: boolean;
 };
 
 type PixSettings = {
@@ -540,6 +542,18 @@ function EventTab({
             max="90"
             defaultValue={String(initial.rsvpReminderDays)}
           />
+          <label className="flex items-center gap-2 self-end pb-2 text-sm text-zinc-300 sm:col-span-2">
+            <input
+              type="checkbox"
+              name="aiEnabled"
+              defaultChecked={initial.aiEnabled}
+              className="accent-rose-500"
+            />
+            {t("event.aiEnabled")}
+          </label>
+          <p className="-mt-2 text-xs text-zinc-500 sm:col-span-2">
+            {initial.aiConfigured ? t("event.aiEnabledHint") : t("event.aiNotConfigured")}
+          </p>
           <div className="sm:col-span-2">
             <button
               type="submit"

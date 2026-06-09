@@ -765,6 +765,12 @@
     }
   },
   "insights": {
+    "ai": {
+      "title": "AI summary",
+      "description": "Generate a plain-language explanation of your financial health.",
+      "button": "Generate AI summary",
+      "generating": "Generating…"
+    },
     "header": {
       "title": "Financial insights",
       "subtitle": "Projection, project health and per-category budget creep detector."
@@ -1324,6 +1330,9 @@
       "rsvpReminderEnabled": "Send automatic RSVP reminder",
       "rsvpReminderHint": "Nudges invited guests who haven't responded via WhatsApp/email. Only sends if you enable it.",
       "rsvpReminderDays": "Remind after (days since invite)",
+      "aiEnabled": "Enable AI assistant",
+      "aiEnabledHint": "Lets you generate AI summaries and drafts (Google Gemini). When enabled, your wedding data is sent to the provider to produce the response.",
+      "aiNotConfigured": "AI requires an API key configured on the server (GEMINI_API_KEY). Talk to whoever manages the installation.",
       "save": "Save",
       "toast": {
         "saved": "Settings saved",

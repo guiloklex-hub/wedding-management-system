@@ -154,6 +154,15 @@
     "current": "Current language",
     "selectHint": "Language used across the interface, emails and WhatsApp."
   },
+  "ai": {
+    "generatedBadge": "AI-generated",
+    "reviewNotice": "Review before using — AI can make mistakes.",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "use": "Use",
+    "regenerate": "Regenerate",
+    "failed": "AI failed"
+  },
   "zod": {
     "required": "This field is required",
     "invalidEmail": "Invalid email",

@@ -1,4 +1,16 @@
 {
+  "ai": {
+    "disabled": "O assistente de IA está desativado.",
+    "noEventDate": "Defina a data do casamento antes de usar a IA.",
+    "errors": {
+      "DISABLED": "O assistente de IA está desativado.",
+      "RATE_LIMITED": "Muitas solicitações de IA em pouco tempo. Tente novamente em instantes.",
+      "TIMEOUT": "A IA demorou para responder. Tente novamente.",
+      "INVALID_OUTPUT": "A IA devolveu uma resposta inválida. Tente novamente.",
+      "BLOCKED": "A IA bloqueou esta solicitação por segurança.",
+      "PROVIDER_ERROR": "Não foi possível falar com o serviço de IA agora. Tente novamente."
+    }
+  },
   "asset": {
     "notFound": "Aporte não encontrado",
     "errorCreate": "Erro ao criar aporte",

@@ -6,6 +6,13 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.8.0",
+    date: "2026-06-09",
+    highlights: [
+      "🤖 **Assistente de IA (Google Gemini), opcional e desligado por padrão.** Na tela de **Insights**, gere um **resumo em linguagem natural** da saúde financeira do casamento — o que vai bem, os riscos e o que fazer a seguir. Ative em **Ajustes › Casamento** (requer chave de API configurada no servidor). Todo texto é rotulado como *gerado por IA* e deve ser revisado antes de usar.",
+    ],
+  },
+  {
     version: "0.7.9",
     date: "2026-06-08",
     highlights: [

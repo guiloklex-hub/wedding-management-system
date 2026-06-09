@@ -92,6 +92,7 @@ model EventSettings {
   saveTheDateExcludePadrinhos Boolean @default(false)
   rsvpReminderEnabled    Boolean   @default(false)
   rsvpReminderDays       Int       @default(7)
+  aiEnabled              Boolean   @default(false)
   updatedAt              DateTime  @updatedAt
 }
 
@@ -587,5 +588,22 @@ model AuditLog {
 
   @@index([entity, entityId])
   @@index([createdAt])
+  @@index([userId, createdAt])
+}
+
+// Registro de metadados de cada geração de IA (sem PII bruta).
+// `outputPreview` é truncado e fica null para features que lidam com PII.
+model AiGeneration {
+  id            String   @id @default(cuid())
+  userId        String?
+  resource      String
+  model         String
+  status        String
+  inputTokens   Int?
+  outputTokens  Int?
+  outputPreview String?
+  createdAt     DateTime @default(now())
+
+  @@index([resource, createdAt])
   @@index([userId, createdAt])
 }

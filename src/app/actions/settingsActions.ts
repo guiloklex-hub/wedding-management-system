@@ -27,6 +27,10 @@ const SettingsSchema = z.object({
     z.boolean().default(false),
   ),
   rsvpReminderDays: z.coerce.number().int().min(1).max(90).default(7),
+  aiEnabled: z.preprocess(
+    (v) => v === "on" || v === true || v === "true",
+    z.boolean().default(false),
+  ),
 });
 
 const PixSettingsSchema = z.object({
@@ -60,6 +64,7 @@ export async function updateSettings(
       coupleNames: parsed.data.coupleNames,
       rsvpReminderEnabled: parsed.data.rsvpReminderEnabled,
       rsvpReminderDays: parsed.data.rsvpReminderDays,
+      aiEnabled: parsed.data.aiEnabled,
     });
     await audit("EventSettings", "singleton", "UPDATE", {
       eventDate: parsed.data.eventDate,

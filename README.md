@@ -38,6 +38,7 @@ confirmou a presença.
 - 💍 **Painel do Dia D** (cronograma, plano B chuva, contatos críticos, check-in)
 - 🪑 **Mapa de assentos** — arraste convidados confirmados para as mesas e reordene as mesas pela alça; capacidade considera +1s
 - 📊 **Insights** financeiros (health score, heatmap, detector de creep)
+- 🤖 **Assistente de IA** (Google Gemini) — **opcional, desligado por padrão**: resumo em linguagem natural da saúde financeira nos Insights
 - 📨 **Notificações por email + WhatsApp** (Baileys) — no idioma do destinatário, com aviso aos noivos quando um convidado responde o RSVP e painel de diagnóstico de envios (Ajustes › Notificações)
 - 🌐 **Multi-idioma** (pt-BR, inglês, espanhol) — escolhido por usuário e respeitado em emails/WhatsApp/RSVP
 - 🔐 **2FA TOTP**, reset por email/WhatsApp, audit log
@@ -118,6 +119,7 @@ Abra <http://localhost:3005> no navegador.
 | Modelo de dados (Prisma) | [docs/banco-de-dados.md](docs/banco-de-dados.md) |
 | Endpoints da API | [docs/api.md](docs/api.md) |
 | Notificações (email + WhatsApp) | [docs/notificacoes.md](docs/notificacoes.md) |
+| IA (Google Gemini) — opcional, opt-in | [docs/ia.md](docs/ia.md) |
 | Internacionalização (i18n) | [docs/i18n.md](docs/i18n.md) |
 | Segurança e 2FA | [docs/seguranca.md](docs/seguranca.md) |
 | Backup e restauração | [docs/backup-restore.md](docs/backup-restore.md) |
@@ -194,7 +196,9 @@ Para agentes de IA (Claude Code, Gemini Code, Cursor, etc.), leia
 - **Sem cloud obrigatória.** SQLite local. Você decide se hospeda na
   nuvem ou no PC de casa.
 - **Sem telemetria.** Zero "phone home". Zero analytics. O projeto não
-  envia nada para lugar nenhum.
+  envia nada para lugar nenhum — **exceto** se você ativar a IA opcional
+  (Google Gemini), que envia dados do casamento ao provedor **apenas quando
+  ligada**. Desligada por padrão. Veja [docs/ia.md](docs/ia.md).
 
 ---
 

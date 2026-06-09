@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getEventConfig } from "@/lib/event-config";
+import { isAiEnabled } from "@/lib/ai/config";
 import { getSecuritySettings } from "@/lib/security-settings";
 import { canManageUsers } from "@/lib/permissions";
 import { toIsoDate } from "@/lib/format";
@@ -119,6 +120,8 @@ export default async function SettingsPage() {
           coupleNames: cfg.coupleNames ?? "",
           rsvpReminderEnabled: cfg.rsvpReminderEnabled,
           rsvpReminderDays: cfg.rsvpReminderDays,
+          aiEnabled: cfg.aiEnabled,
+          aiConfigured: isAiEnabled(),
         }}
         pixSettings={{
           pixKey: cfg.pixKey ?? "",

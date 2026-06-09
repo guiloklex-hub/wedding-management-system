@@ -61,7 +61,7 @@
     "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
-    "happy-dom": "^20.9.0",
+    "happy-dom": "^20.10.2",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",

@@ -323,6 +323,32 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
   },
 
+  {
+    id: "ai-insights-narrative",
+    title: "Resumo com IA nos Insights",
+    category: "financial",
+    keywords: ["ia", "inteligência artificial", "gemini", "resumo", "insights", "assistente"],
+    icon: Sparkles,
+    summary: "Gere uma explicação em linguagem natural da sua saúde financeira (opcional).",
+    steps: [
+      {
+        title: "Ative a IA",
+        body: "Em Ajustes › Casamento, marque 'Ativar assistente de IA'. O recurso só funciona se houver uma chave de API (Google Gemini) configurada no servidor.",
+      },
+      {
+        title: "Gere o resumo",
+        body: "Na tela de Insights, clique em 'Gerar resumo com IA'. Em segundos aparece um texto explicando seu Health Score, fluxo de caixa e desvios de orçamento.",
+      },
+      {
+        title: "Revise antes de usar",
+        body: "O texto vem marcado como 'Gerado por IA'. Releia — a IA pode cometer erros. Use os botões Copiar ou Gerar de novo.",
+      },
+    ],
+    warnings: [
+      "Ao ativar a IA, dados do seu casamento são enviados ao provedor (Google) para gerar a resposta. Sem chave configurada e sem ativar, nada é enviado.",
+    ],
+  },
+
   // ============ vendors ============
   {
     id: "vendor-flow",

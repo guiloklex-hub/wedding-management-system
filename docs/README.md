@@ -26,6 +26,7 @@ Se você é um casal querendo apenas usar o sistema, comece pelo
 | Tópico | Documento |
 |---|---|
 | Notificações (email + WhatsApp) | [notificacoes.md](notificacoes.md) |
+| IA (Google Gemini) — opcional, opt-in | [ia.md](ia.md) |
 | Internacionalização (i18n) | [i18n.md](i18n.md) |
 | Segurança e 2FA | [seguranca.md](seguranca.md) |
 | Roles e permissões | [permissoes.md](permissoes.md) |

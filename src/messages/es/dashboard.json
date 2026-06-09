@@ -765,6 +765,12 @@
     }
   },
   "insights": {
+    "ai": {
+      "title": "Resumen con IA",
+      "description": "Genera una explicación en lenguaje natural de tu salud financiera.",
+      "button": "Generar resumen con IA",
+      "generating": "Generando…"
+    },
     "header": {
       "title": "Insights financieros",
       "subtitle": "Proyección, salud del proyecto y detector de desvío del presupuesto por categoría."
@@ -1324,6 +1330,9 @@
       "rsvpReminderEnabled": "Enviar recordatorio de RSVP automático",
       "rsvpReminderHint": "Recuerda por WhatsApp/correo a los invitados que aún no respondieron. Solo envía si lo activas.",
       "rsvpReminderDays": "Recordar después de (días desde la invitación)",
+      "aiEnabled": "Activar asistente de IA",
+      "aiEnabledHint": "Permite generar resúmenes y textos con IA (Google Gemini). Al activarlo, los datos de tu boda se envían al proveedor para generar la respuesta.",
+      "aiNotConfigured": "La IA requiere una clave de API configurada en el servidor (GEMINI_API_KEY). Habla con quien administra la instalación.",
       "save": "Guardar",
       "toast": {
         "saved": "Configuración guardada",

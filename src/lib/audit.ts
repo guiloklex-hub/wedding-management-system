@@ -32,7 +32,8 @@ export type AuditAction =
   | "CONNECT"
   | "DISCONNECT"
   | "ENABLE_2FA"
-  | "DISABLE_2FA";
+  | "DISABLE_2FA"
+  | "AI_GENERATE";
 
 export type AuditEntity =
   | "Vendor"
@@ -57,7 +58,8 @@ export type AuditEntity =
   | "Honeymoon"
   | "HoneymoonItem"
   | "TrousseauItem"
-  | "Broadcast";
+  | "Broadcast"
+  | "AiGeneration";
 
 export async function audit(
   entity: AuditEntity,

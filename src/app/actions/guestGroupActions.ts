@@ -28,6 +28,7 @@ const optPhone = (max: number) =>
 
 const GroupCreateSchema = z.object({
   name: z.string().trim().min(1).max(120),
+  rsvpPin: optStr(20),
   contactName: optStr(120),
   contactEmail: optStr(160),
   contactPhone: optPhone(40),

@@ -8,8 +8,11 @@ export type RecipientSourceGroup = {
   memberNames: string[];
   /** Contatos dos integrantes (mesma ordem de `memberNames`), para fallback. */
   memberContacts: { phone: string | null; email: string | null }[];
+  memberLocales?: (string | null)[];
   memberTagIds: string[];
   hasPadrinho: boolean;
+  rsvpPin?: string | null;
+  rsvpToken?: string | null;
 };
 
 export type RecipientSourceGuest = {
@@ -20,6 +23,8 @@ export type RecipientSourceGuest = {
   language: string | null;
   tagIds: string[];
   isPadrinho: boolean;
+  rsvpPin?: string | null;
+  rsvpToken?: string | null;
 };
 
 export type SkipReason =

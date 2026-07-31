@@ -23,11 +23,15 @@ export type RecipientSourceGuest = {
 };
 
 export type SkipReason =
+  | "NO_PIN"
   | "NO_CONTACT"
   | "INVALID_PHONE"
   | "DUPLICATE_PHONE"
+  | "DUPLICATE_EMAIL"
   | "EXCLUDED_TAG"
-  | "ALREADY_SENT";
+  | "ALREADY_SENT"
+  | "CANCELLED"
+  | "DELIVERY_STATE_UNKNOWN";
 
 export type BuiltRecipient = {
   refType: "GuestGroup" | "Guest";
@@ -48,6 +52,17 @@ export type RecipientExcludeOptions = {
   alreadySentKeys?: Set<string>;
 };
 
+export type RecipientSourceGroupInvitation = RecipientSourceGroup & {
+  rsvpPin?: string | null;
+  memberLocales?: (string | null)[];
+  rsvpToken?: string | null;
+};
+
+export type RecipientSourceGuestInvitation = RecipientSourceGuest & {
+  rsvpPin?: string | null;
+  rsvpToken?: string | null;
+};
+
 function digits(value?: string | null): string {
   return (value ?? "").replace(/\D+/g, "");
 }
@@ -59,6 +74,18 @@ export function joinNames(names: string[]): string {
   if (clean.length === 1) return clean[0];
   if (clean.length === 2) return `${clean[0]} e ${clean[1]}`;
   return `${clean.slice(0, -1).join(", ")} e ${clean[clean.length - 1]}`;
+}
+
+export function formatList(names: string[], locale: string = "pt-BR"): string {
+  const clean = names.map((n) => n.trim()).filter(Boolean);
+  if (clean.length === 0) return "";
+  if (clean.length === 1) return clean[0];
+  try {
+    const formatter = new Intl.ListFormat(locale, { type: "conjunction", style: "long" });
+    return formatter.format(clean);
+  } catch {
+    return joinNames(clean);
+  }
 }
 
 /**
@@ -179,3 +206,173 @@ export function buildSaveTheDateRecipients(
 
   return out;
 }
+
+export function buildInvitationRecipients(
+  groups: RecipientSourceGroupInvitation[],
+  guests: RecipientSourceGuestInvitation[],
+  opts: RecipientExcludeOptions = {},
+): BuiltRecipient[] {
+  const excludeTags = new Set(opts.excludeTagIds ?? []);
+  const padrinhos = opts.excludePadrinhos ?? false;
+  const alreadySent = opts.alreadySentKeys ?? new Set<string>();
+
+  const isExcludedByTag = (tagIds: string[], hasPadrinho: boolean): boolean => {
+    if (padrinhos && hasPadrinho) return true;
+    if (excludeTags.size === 0) return false;
+    return tagIds.some((id) => excludeTags.has(id));
+  };
+
+  const firstWith = <K extends "phone" | "email">(
+    contacts: { phone: string | null; email: string | null }[],
+    field: K,
+  ): string | null => contacts.find((c) => c[field] && c[field]!.trim())?.[field] ?? null;
+
+  const sortedGroups = [...groups].sort(
+    (a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id),
+  );
+  const sortedGuests = [...guests].sort(
+    (a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id),
+  );
+
+  type PreRecipient = {
+    refType: "GuestGroup" | "Guest";
+    refId: string;
+    name: string;
+    memberNames: string[];
+    rawPhone: string | null;
+    validPhone: string | null;
+    email: string | null;
+    locale: string | null;
+    rsvpPin: string | null;
+    tagIds: string[];
+    hasPadrinho: boolean;
+  };
+
+  const candidates: PreRecipient[] = [];
+
+  for (const grp of sortedGroups) {
+    const rawPhone = grp.contactPhone ?? firstWith(grp.memberContacts, "phone");
+    const rawEmail = grp.contactEmail ?? firstWith(grp.memberContacts, "email");
+    const email = rawEmail && rawEmail.trim() ? rawEmail.trim().toLowerCase() : null;
+    const validPhone = toValidMsisdn(rawPhone);
+    const members = grp.memberNames.length > 0 ? grp.memberNames : [grp.name];
+    const grpLocale = grp.memberLocales?.find((l) => l && l.trim()) ?? null;
+
+    candidates.push({
+      refType: "GuestGroup",
+      refId: grp.id,
+      name: grp.name,
+      memberNames: members,
+      rawPhone,
+      validPhone,
+      email,
+      locale: grpLocale,
+      rsvpPin: grp.rsvpPin ?? null,
+      tagIds: grp.memberTagIds,
+      hasPadrinho: grp.hasPadrinho,
+    });
+  }
+
+  for (const gst of sortedGuests) {
+    const validPhone = toValidMsisdn(gst.phone);
+    const email = gst.email && gst.email.trim() ? gst.email.trim().toLowerCase() : null;
+
+    candidates.push({
+      refType: "Guest",
+      refId: gst.id,
+      name: gst.name,
+      memberNames: [gst.name],
+      rawPhone: gst.phone,
+      validPhone,
+      email,
+      locale: gst.language,
+      rsvpPin: gst.rsvpPin ?? null,
+      tagIds: gst.tagIds,
+      hasPadrinho: gst.isPadrinho,
+    });
+  }
+
+  const phoneCounts = new Map<string, number>();
+  const emailCounts = new Map<string, number>();
+
+  for (const c of candidates) {
+    const key = `${c.refType}:${c.refId}`;
+    if (isExcludedByTag(c.tagIds, c.hasPadrinho)) continue;
+    if (alreadySent.has(key)) continue;
+    if (!c.rsvpPin || !c.rsvpPin.trim()) continue;
+
+    if (c.validPhone) {
+      const d = digits(c.validPhone);
+      phoneCounts.set(d, (phoneCounts.get(d) ?? 0) + 1);
+    }
+    if (c.email) {
+      emailCounts.set(c.email, (emailCounts.get(c.email) ?? 0) + 1);
+    }
+  }
+
+  const out: BuiltRecipient[] = [];
+
+  for (const c of candidates) {
+    const key = `${c.refType}:${c.refId}`;
+    let status: "PENDING" | "SKIPPED" = "PENDING";
+    let skipReason: SkipReason | null = null;
+    let finalPhone: string | null = null;
+    let finalEmail: string | null = null;
+
+    if (isExcludedByTag(c.tagIds, c.hasPadrinho)) {
+      status = "SKIPPED";
+      skipReason = "EXCLUDED_TAG";
+    } else if (alreadySent.has(key)) {
+      status = "SKIPPED";
+      skipReason = "ALREADY_SENT";
+    } else if (!c.rsvpPin || !c.rsvpPin.trim()) {
+      status = "SKIPPED";
+      skipReason = "NO_PIN";
+    } else {
+      const phoneDigits = c.validPhone ? digits(c.validPhone) : null;
+      const isPhoneDup = phoneDigits ? (phoneCounts.get(phoneDigits) ?? 0) > 1 : false;
+      const isEmailDup = c.email ? (emailCounts.get(c.email) ?? 0) > 1 : false;
+
+      if (c.validPhone && !isPhoneDup) {
+        finalPhone = c.validPhone;
+      }
+      if (c.email && !isEmailDup) {
+        finalEmail = c.email;
+      }
+
+      if (finalPhone || finalEmail) {
+        status = "PENDING";
+        skipReason = null;
+      } else {
+        status = "SKIPPED";
+        if (c.rawPhone && c.rawPhone.trim() && !c.validPhone) {
+          skipReason = "INVALID_PHONE";
+        } else if (isPhoneDup) {
+          skipReason = "DUPLICATE_PHONE";
+        } else if (isEmailDup) {
+          skipReason = "DUPLICATE_EMAIL";
+        } else {
+          skipReason = "NO_CONTACT";
+        }
+      }
+    }
+
+    const loc = c.locale || "pt-BR";
+    const formattedMembers = formatList(c.memberNames, loc);
+
+    out.push({
+      refType: c.refType,
+      refId: c.refId,
+      name: c.name,
+      memberNames: formattedMembers,
+      phone: finalPhone,
+      email: finalEmail,
+      locale: c.locale,
+      status,
+      skipReason,
+    });
+  }
+
+  return out;
+}
+

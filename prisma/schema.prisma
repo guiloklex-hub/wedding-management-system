@@ -90,6 +90,15 @@ model EventSettings {
   saveTheDateFileName    String?
   saveTheDateExcludeTagIds   String?
   saveTheDateExcludePadrinhos Boolean @default(false)
+  invitationMessage             String?
+  invitationFilePath            String?
+  invitationFileMime            String?
+  invitationFileName            String?
+  invitationRsvpUrl             String?
+  invitationRsvpUseExternal     Boolean @default(false)
+  invitationRsvpDeadline        String?
+  invitationExcludeTagIds       String?
+  invitationExcludePadrinhos    Boolean @default(false)
   rsvpReminderEnabled    Boolean   @default(false)
   rsvpReminderDays       Int       @default(7)
   aiEnabled              Boolean   @default(false)
@@ -102,6 +111,7 @@ model Broadcast {
   status     String               @default("DRAFT")
   channel    String               @default("AUTO")
   total      Int                  @default(0)
+  payloadJson String?
   createdAt  DateTime             @default(now())
   startedAt  DateTime?
   finishedAt DateTime?
@@ -109,22 +119,26 @@ model Broadcast {
 }
 
 model BroadcastRecipient {
-  id          String    @id @default(cuid())
-  broadcastId String
-  refType     String
-  refId       String
-  name        String
-  memberNames String
-  phone       String?
-  email       String?
-  locale      String?
-  status      String    @default("PENDING")
-  channelUsed String?
-  error       String?
-  sentAt      DateTime?
-  broadcast   Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  id                  String    @id @default(cuid())
+  broadcastId         String
+  refType             String
+  refId               String
+  name                String
+  memberNames         String
+  phone               String?
+  email               String?
+  locale              String?
+  status              String    @default("PENDING")
+  channelUsed         String?
+  error               String?
+  payloadJson         String?
+  attempts            Int       @default(0)
+  processingStartedAt DateTime?
+  sentAt              DateTime?
+  broadcast           Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
 
   @@index([broadcastId, status])
+  @@index([broadcastId, status, processingStartedAt])
 }
 
 model Vendor {
@@ -434,6 +448,7 @@ model Guest {
   rsvpStatus          String    @default("INVITED")
   rsvpToken           String    @unique @default(cuid())
   rsvpTokenExpiresAt  DateTime?
+  rsvpPin             String?
   rsvpRespondedAt     DateTime?
   plusOnesAllowed     Int       @default(0)
   plusOnesConfirmed   Int       @default(0)

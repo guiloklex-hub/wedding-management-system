@@ -2263,5 +2263,115 @@
         "SKIPPED": "Ignorado"
       }
     }
+  },
+  "invitations": {
+    "page": {
+      "title": "Convites Oficiais",
+      "subtitle": "Configure, pré-visualize, envie e acompanhe os convites oficiais do casamento por WhatsApp e e-mail."
+    },
+    "metrics": {
+      "ready": "Prontos para envio",
+      "noPin": "Atenção: sem PIN",
+      "skipped": "Ignorados",
+      "sent": "Enviados",
+      "failed": "Falhas"
+    },
+    "tabs": {
+      "config": "Configuração",
+      "recipients": "Destinatários",
+      "broadcast": "Transmissão & Relatório"
+    },
+    "config": {
+      "title": "Mensagem & Arte do Convite",
+      "messageLabel": "Mensagem personalizada",
+      "messagePlaceholder": "Digite a mensagem do convite...",
+      "tagsHelp": "Clique nas pills para inserir merge tags no cursor:",
+      "rsvpMode": "Modo de RSVP",
+      "nativeRsvp": "RSVP Nativo (do sistema)",
+      "externalRsvp": "RSVP Externo (link próprio)",
+      "externalUrlLabel": "URL do RSVP externo",
+      "externalUrlPlaceholder": "https://meusite.com/rsvp",
+      "deadlineLabel": "Data limite para confirmação (AAAA-MM-DD)",
+      "deadlinePlaceholder": "AAAA-MM-DD",
+      "artLabel": "Arte do Convite (opcional)",
+      "artHint": "PNG, JPG, WEBP ou PDF de até 10 MB.",
+      "removeArt": "Remover arte atual",
+      "filtersTitle": "Exclusões & Filtros",
+      "excludeTags": "Excluir tags específicas",
+      "excludePadrinhos": "Excluir padrinhos e madrinhas",
+      "saveButton": "Salvar Configuração",
+      "saving": "Salvando..."
+    },
+    "tags": {
+      "pin": "{pin} (PIN do convidado/grupo)",
+      "linkRsvp": "{link-rsvp} (Link direto)",
+      "deadline": "{data-limite} (Prazo)",
+      "nomes": "{nomes} (Nome)",
+      "convidados": "{convidados} (Integrantes)",
+      "data": "{data} (Data)",
+      "local": "{local} (Local)"
+    },
+    "test": {
+      "title": "Envio de Teste",
+      "subtitle": "Envie um convite de teste com PIN simulado (1234) para conferir a formatação.",
+      "whatsapp": "Testar no WhatsApp",
+      "email": "Testar por e-mail",
+      "toPlaceholder": "Número (+55...) ou e-mail (opcional)",
+      "sending": "Enviando teste..."
+    },
+    "recipients": {
+      "title": "Pré-lista de Destinatários",
+      "filterAll": "Todos ({count})",
+      "filterReady": "Prontos ({count})",
+      "filterNoPin": "Sem PIN ({count})",
+      "filterSkipped": "Ignorados ({count})",
+      "colName": "Destinatário",
+      "colMembers": "Integrantes",
+      "colChannel": "Canal previsto",
+      "colPin": "PIN",
+      "colStatus": "Status",
+      "hasPinYes": "Possui PIN",
+      "hasPinNo": "Sem PIN",
+      "empty": "Nenhum destinatário cadastrado."
+    },
+    "reasons": {
+      "NO_PIN": "Atenção — sem PIN",
+      "NO_CONTACT": "Sem contato",
+      "INVALID_PHONE": "Telefone inválido",
+      "DUPLICATE_PHONE": "Telefone duplicado",
+      "DUPLICATE_EMAIL": "E-mail duplicado",
+      "EXCLUDED_TAG": "Excluído por tag",
+      "ALREADY_SENT": "Já enviado",
+      "CANCELLED": "Cancelado",
+      "DELIVERY_STATE_UNKNOWN": "Entrega desconhecida"
+    },
+    "broadcast": {
+      "title": "Transmissão em Segundo Plano",
+      "start": "Iniciar Envio de Convites",
+      "resendFailed": "Reenviar Falhas",
+      "cancel": "Cancelar Envio",
+      "exportCsv": "Exportar CSV",
+      "progress": "Progresso do envio",
+      "confirmModalTitle": "Confirmar Disparo de Convites Oficiais",
+      "confirmModalIntro": "Você está prestes a iniciar o disparo oficial para os convidados:",
+      "modalEligible": "Elegíveis para envio (com PIN e contato): {count}",
+      "modalNoPin": "Sem PIN (serão ignorados): {count}",
+      "modalSkipped": "Ignorados por filtro/contato: {count}",
+      "modalMode": "Modo de RSVP: {mode}",
+      "modalDeadline": "Prazo de confirmação: {deadline}",
+      "modalArt": "Anexo/Arte: {art}",
+      "modalWarning": "ATENÇÃO: As mensagens serão enviadas para contatos reais dos convidados.",
+      "confirmSubmit": "Sim, Iniciar Envio Real",
+      "confirmUnknownTitle": "Confirmar Reenvio de Estado Desconhecido",
+      "confirmUnknownMessage": "Existem {count} envios com estado de entrega desconhecido (servidor foi reiniciado durante o envio). Confirma o reenvio desses itens?",
+      "confirmUnknownSubmit": "Sim, Reenviar Mesmo Assim"
+    },
+    "toasts": {
+      "configSaved": "Configuração do convite salva com sucesso.",
+      "testSent": "Convite de teste enviado com sucesso.",
+      "broadcastStarted": "Disparo de convites iniciado em segundo plano.",
+      "resendStarted": "Reenvio das falhas iniciado.",
+      "broadcastCancelled": "Disparo cancelado."
+    }
   }
 }

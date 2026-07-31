@@ -153,5 +153,8 @@
     "cta": "Confirmar presença do grupo",
     "waTitle": "📋 Lembrete de RSVP",
     "waIntro": "Ainda faltam confirmar: {members} (convite enviado há {days, plural, one {# dia} other {# dias}}). Toque no link para confirmar:"
+  },
+  "OFFICIAL_INVITATION": {
+    "subject": "Convite Oficial — {names}"
   }
 }

@@ -50,5 +50,13 @@
     "schedule": "Schedule",
     "rainPlan": "Plan B (rain)",
     "website": "Visit our website"
+  },
+  "pin": {
+    "title": "Security PIN",
+    "description": "Please enter the PIN provided in your invitation to proceed.",
+    "placeholder": "Enter PIN",
+    "submit": "Verify PIN",
+    "invalid": "Invalid PIN or expired link.",
+    "tooManyAttempts": "Too many incorrect attempts. Please try again in 1 minute."
   }
 }

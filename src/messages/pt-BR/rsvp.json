@@ -50,5 +50,13 @@
     "schedule": "Programação",
     "rainPlan": "Plano B (chuva)",
     "website": "Visite nosso site"
+  },
+  "pin": {
+    "title": "PIN de Segurança",
+    "description": "Por favor, digite o PIN fornecido no seu convite para prosseguir.",
+    "placeholder": "Digite o PIN",
+    "submit": "Verificar PIN",
+    "invalid": "PIN inválido ou link expirado.",
+    "tooManyAttempts": "Muitas tentativas incorretas. Tente novamente em 1 minuto."
   }
 }

@@ -22,6 +22,15 @@ export type EventConfig = {
   saveTheDateFileName: string | null;
   saveTheDateExcludeTagIds: string | null;
   saveTheDateExcludePadrinhos: boolean;
+  invitationMessage: string | null;
+  invitationFilePath: string | null;
+  invitationFileMime: string | null;
+  invitationFileName: string | null;
+  invitationRsvpUrl: string | null;
+  invitationRsvpUseExternal: boolean;
+  invitationRsvpDeadline: string | null;
+  invitationExcludeTagIds: string | null;
+  invitationExcludePadrinhos: boolean;
   rsvpReminderEnabled: boolean;
   rsvpReminderDays: number;
   aiEnabled: boolean;
@@ -59,6 +68,15 @@ export async function getEventConfig(): Promise<EventConfig> {
     saveTheDateFileName: settings.saveTheDateFileName,
     saveTheDateExcludeTagIds: settings.saveTheDateExcludeTagIds,
     saveTheDateExcludePadrinhos: settings.saveTheDateExcludePadrinhos,
+    invitationMessage: settings.invitationMessage,
+    invitationFilePath: settings.invitationFilePath,
+    invitationFileMime: settings.invitationFileMime,
+    invitationFileName: settings.invitationFileName,
+    invitationRsvpUrl: settings.invitationRsvpUrl,
+    invitationRsvpUseExternal: settings.invitationRsvpUseExternal,
+    invitationRsvpDeadline: settings.invitationRsvpDeadline,
+    invitationExcludeTagIds: settings.invitationExcludeTagIds,
+    invitationExcludePadrinhos: settings.invitationExcludePadrinhos,
     rsvpReminderEnabled: settings.rsvpReminderEnabled,
     rsvpReminderDays: settings.rsvpReminderDays,
     aiEnabled: settings.aiEnabled,
@@ -109,6 +127,28 @@ export async function updateEventConfig(
         input.saveTheDateExcludePadrinhos === undefined
           ? undefined
           : input.saveTheDateExcludePadrinhos,
+      invitationMessage:
+        input.invitationMessage === undefined ? undefined : input.invitationMessage,
+      invitationFilePath:
+        input.invitationFilePath === undefined ? undefined : input.invitationFilePath,
+      invitationFileMime:
+        input.invitationFileMime === undefined ? undefined : input.invitationFileMime,
+      invitationFileName:
+        input.invitationFileName === undefined ? undefined : input.invitationFileName,
+      invitationRsvpUrl:
+        input.invitationRsvpUrl === undefined ? undefined : input.invitationRsvpUrl,
+      invitationRsvpUseExternal:
+        input.invitationRsvpUseExternal === undefined
+          ? undefined
+          : input.invitationRsvpUseExternal,
+      invitationRsvpDeadline:
+        input.invitationRsvpDeadline === undefined ? undefined : input.invitationRsvpDeadline,
+      invitationExcludeTagIds:
+        input.invitationExcludeTagIds === undefined ? undefined : input.invitationExcludeTagIds,
+      invitationExcludePadrinhos:
+        input.invitationExcludePadrinhos === undefined
+          ? undefined
+          : input.invitationExcludePadrinhos,
       rsvpReminderEnabled:
         input.rsvpReminderEnabled === undefined ? undefined : input.rsvpReminderEnabled,
       rsvpReminderDays:
@@ -138,6 +178,15 @@ export async function updateEventConfig(
     saveTheDateFileName: updated.saveTheDateFileName,
     saveTheDateExcludeTagIds: updated.saveTheDateExcludeTagIds,
     saveTheDateExcludePadrinhos: updated.saveTheDateExcludePadrinhos,
+    invitationMessage: updated.invitationMessage,
+    invitationFilePath: updated.invitationFilePath,
+    invitationFileMime: updated.invitationFileMime,
+    invitationFileName: updated.invitationFileName,
+    invitationRsvpUrl: updated.invitationRsvpUrl,
+    invitationRsvpUseExternal: updated.invitationRsvpUseExternal,
+    invitationRsvpDeadline: updated.invitationRsvpDeadline,
+    invitationExcludeTagIds: updated.invitationExcludeTagIds,
+    invitationExcludePadrinhos: updated.invitationExcludePadrinhos,
     rsvpReminderEnabled: updated.rsvpReminderEnabled,
     rsvpReminderDays: updated.rsvpReminderDays,
     aiEnabled: updated.aiEnabled,

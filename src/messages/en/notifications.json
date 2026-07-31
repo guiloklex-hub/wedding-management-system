@@ -151,7 +151,10 @@
     "subject": "Reminder: confirm attendance",
     "intro": "Still pending: {members}. The invitation was sent {days, plural, one {# day} other {# days}} ago. Can you confirm now?",
     "cta": "Confirm group attendance",
-    "waTitle": "📋 RSVP reminder",
-    "waIntro": "Still pending: {members} (invitation sent {days, plural, one {# day} other {# days}} ago). Tap the link to confirm:"
+    "waTitle": "📋 RSVP Reminder",
+    "waIntro": "Still waiting for confirmation from: {members} (invitation sent {days, plural, one {# day} other {# days}} ago). Tap link to confirm:"
+  },
+  "OFFICIAL_INVITATION": {
+    "subject": "Official Invitation — {names}"
   }
 }

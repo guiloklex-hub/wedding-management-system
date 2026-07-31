@@ -5,6 +5,8 @@ import { getEventConfig } from "@/lib/event-config";
 import { formatDate } from "@/i18n/format";
 import { coerceLocale, isLocale } from "@/i18n/config";
 import { RsvpLanding } from "../../_components/rsvp-landing";
+import { PinGateForm } from "../../_components/pin-gate-form";
+import { verifyRsvpPinCookie } from "@/lib/rsvp-pin-auth";
 import GroupRsvpForm from "./group-rsvp-form";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +52,36 @@ export default async function PublicGroupRsvpPage({
   const locale = coerceLocale(
     isLocale(sp?.lang) ? sp.lang : isLocale(firstLang) ? firstLang : cfg.defaultLocale,
   );
+
+  if (group.rsvpPin) {
+    const isPinVerified = await verifyRsvpPinCookie(token);
+    if (!isPinVerified) {
+      const tPin = await getTranslations({ locale, namespace: "rsvp.pin" });
+      const tIndiv = await getTranslations({ locale, namespace: "rsvp.individual" });
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-rose-950 via-zinc-950 to-zinc-950 px-4 py-10">
+          <div className="mx-auto max-w-md rounded-3xl border border-rose-500/20 bg-zinc-950/80 p-8 shadow-2xl backdrop-blur">
+            <p className="text-center text-xs uppercase tracking-widest text-rose-300">
+              {cfg.coupleNames ? cfg.coupleNames : tIndiv("officialInvite")}
+            </p>
+            <h1 className="mt-2 text-center text-2xl font-bold text-white">
+              {tPin("title")}
+            </h1>
+            <PinGateForm
+              token={token}
+              type="group"
+              labels={{
+                title: tPin("title"),
+                description: tPin("description"),
+                placeholder: tPin("placeholder"),
+                submit: tPin("submit"),
+              }}
+            />
+          </div>
+        </div>
+      );
+    }
+  }
   const messages = (await getMessages({ locale })) as Record<string, unknown>;
   const t = await getTranslations({ locale, namespace: "rsvp.group" });
   const tIndividual = await getTranslations({ locale, namespace: "rsvp.individual" });

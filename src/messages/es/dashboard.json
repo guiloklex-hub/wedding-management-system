@@ -2263,5 +2263,115 @@
         "SKIPPED": "Omitido"
       }
     }
+  },
+  "invitations": {
+    "page": {
+      "title": "Invitaciones Oficiales",
+      "subtitle": "Configure, previsualice, envíe y siga las invitaciones oficiales de boda por WhatsApp y correo electrónico."
+    },
+    "metrics": {
+      "ready": "Listos para enviar",
+      "noPin": "Atención: sin PIN",
+      "skipped": "Omitidos",
+      "sent": "Enviados",
+      "failed": "Fallidos"
+    },
+    "tabs": {
+      "config": "Configuración",
+      "recipients": "Destinatarios",
+      "broadcast": "Transmisión y Informe"
+    },
+    "config": {
+      "title": "Mensaje y Arte de la Invitación",
+      "messageLabel": "Mensaje personalizado",
+      "messagePlaceholder": "Ingrese el mensaje de la invitación...",
+      "tagsHelp": "Haga clic en las etiquetas para insertar variables en el cursor:",
+      "rsvpMode": "Modo de RSVP",
+      "nativeRsvp": "RSVP Nativo (del sistema)",
+      "externalRsvp": "RSVP Externo (enlace propio)",
+      "externalUrlLabel": "URL del RSVP externo",
+      "externalUrlPlaceholder": "https://misitio.com/rsvp",
+      "deadlineLabel": "Fecha límite de confirmación (AAAA-MM-DD)",
+      "deadlinePlaceholder": "AAAA-MM-DD",
+      "artLabel": "Arte de la Invitación (opcional)",
+      "artHint": "PNG, JPG, WEBP o PDF de hasta 10 MB.",
+      "removeArt": "Eliminar arte actual",
+      "filtersTitle": "Exclusiones y Filtros",
+      "excludeTags": "Excluir etiquetas específicas",
+      "excludePadrinhos": "Excluir padrinos y madrinas",
+      "saveButton": "Guardar Configuración",
+      "saving": "Guardando..."
+    },
+    "tags": {
+      "pin": "{pin} (PIN del invitado/grupo)",
+      "linkRsvp": "{link-rsvp} (Enlace directo)",
+      "deadline": "{data-limite} (Fecha límite)",
+      "nomes": "{nomes} (Nombre)",
+      "convidados": "{convidados} (Miembros)",
+      "data": "{data} (Fecha)",
+      "local": "{local} (Lugar)"
+    },
+    "test": {
+      "title": "Envío de Prueba",
+      "subtitle": "Envíe una invitación de prueba con PIN simulado (1234) para revisar el formato.",
+      "whatsapp": "Probar en WhatsApp",
+      "email": "Probar por correo",
+      "toPlaceholder": "Número (+55...) o correo (opcional)",
+      "sending": "Enviando prueba..."
+    },
+    "recipients": {
+      "title": "Prelista de Destinatarios",
+      "filterAll": "Todos ({count})",
+      "filterReady": "Listos ({count})",
+      "filterNoPin": "Sin PIN ({count})",
+      "filterSkipped": "Omitidos ({count})",
+      "colName": "Destinatario",
+      "colMembers": "Miembros",
+      "colChannel": "Canal previsto",
+      "colPin": "PIN",
+      "colStatus": "Estado",
+      "hasPinYes": "Tiene PIN",
+      "hasPinNo": "Sin PIN",
+      "empty": "No hay destinatarios registrados."
+    },
+    "reasons": {
+      "NO_PIN": "Atención — sin PIN",
+      "NO_CONTACT": "Sin contacto",
+      "INVALID_PHONE": "Teléfono inválido",
+      "DUPLICATE_PHONE": "Teléfono duplicado",
+      "DUPLICATE_EMAIL": "Correo duplicado",
+      "EXCLUDED_TAG": "Excluido por etiqueta",
+      "ALREADY_SENT": "Ya enviado",
+      "CANCELLED": "Cancelado",
+      "DELIVERY_STATE_UNKNOWN": "Estado de entrega desconocido"
+    },
+    "broadcast": {
+      "title": "Transmisión en Segundo Plano",
+      "start": "Iniciar Envío de Invitaciones",
+      "resendFailed": "Reenviar Fallidos",
+      "cancel": "Cancelar Envío",
+      "exportCsv": "Exportar CSV",
+      "progress": "Progreso del envío",
+      "confirmModalTitle": "Confirmar Envío de Invitaciones Oficiales",
+      "confirmModalIntro": "Está a punto de iniciar el envío oficial a los invitados:",
+      "modalEligible": "Elegibles para envío (con PIN y contacto): {count}",
+      "modalNoPin": "Sin PIN (serán omitidos): {count}",
+      "modalSkipped": "Omitidos por filtro/contacto: {count}",
+      "modalMode": "Modo de RSVP: {mode}",
+      "modalDeadline": "Fecha límite de confirmación: {deadline}",
+      "modalArt": "Adjunto/Arte: {art}",
+      "modalWarning": "ATENCIÓN: Los mensajes se enviarán a contactos reales de los invitados.",
+      "confirmSubmit": "Sí, Iniciar Envío Real",
+      "confirmUnknownTitle": "Confirmar Reintento de Estado Desconocido",
+      "confirmUnknownMessage": "Hay {count} envíos con estado de entrega desconocido (el servidor se reinició durante el envío). ¿Confirma el reintento de estos elementos?",
+      "confirmUnknownSubmit": "Sí, Reenviar De Todos Modos"
+    },
+    "toasts": {
+      "configSaved": "Configuración de invitación guardada con éxito.",
+      "testSent": "Invitación de prueba enviada con éxito.",
+      "broadcastStarted": "Envío de invitaciones iniciado en segundo plano.",
+      "resendStarted": "Reintento de elementos fallidos iniciado.",
+      "broadcastCancelled": "Envío cancelado."
+    }
   }
 }

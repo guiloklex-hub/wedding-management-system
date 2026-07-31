@@ -9,6 +9,7 @@ import {
   FileText,
   Gift,
   Lock,
+  Mail,
   MessageSquare,
   PiggyBank,
   Plane,
@@ -1084,6 +1085,26 @@ export const HELP_ARTICLES: HelpArticle[] = [
       { title: "Navegue", body: "Mostra as últimas 500 ações, 20 por página. Ações automáticas (cron/sistema) aparecem como 'Sistema'." },
     ],
     tips: ["Os detalhes técnicos (payload) não são exibidos — a tela foca em quem/o-quê/quando."],
+  },
+  {
+    id: "official-invitations",
+    title: "Convites Oficiais e RSVP protegido por PIN",
+    category: "communications",
+    keywords: ["convite", "oficial", "pin", "rsvp", "whatsapp", "email", "arte", "disparo"],
+    icon: Mail,
+    summary:
+      "Configure e envie os convites oficiais com proteção por PIN de 4 dígitos para cada convidado ou família.",
+    steps: [
+      { title: "Acesse Convites Oficiais", body: "Menu lateral › Pessoas & Negócios › Convites Oficiais (/dashboard/invitations)." },
+      { title: "Configure a mensagem e arte", body: "Escreva a mensagem personalizada usando merge tags ({pin}, {link-rsvp}, {data-limite}, {nomes}, {convidados}, {data}, {local}). Se desejar, faça upload do arquivo de arte (imagem ou PDF de até 10 MB)." },
+      { title: "Envie um teste", body: "Use a coluna 'Envio de Teste' para receber uma cópia do convite com PIN simulado no seu WhatsApp ou e-mail." },
+      { title: "Verifique a pré-lista", body: "Abra a aba 'Destinatários' para conferir quem possui PIN gerado e quais contatos estão prontos." },
+      { title: "Dispare a transmissão", body: "Na aba 'Transmissão & Relatório', clique em 'Iniciar Envio de Convites' e confirme no modal pré-voo." },
+    ],
+    tips: [
+      "Convidados sem PIN (atenção sem PIN) são automaticamente pulados para evitar envio de link bloqueado.",
+      "Se o servidor reiniciar durante o envio, a transmissão retoma com segurança e solicita confirmação para reenvio de estados desconhecidos.",
+    ],
   },
 ];
 

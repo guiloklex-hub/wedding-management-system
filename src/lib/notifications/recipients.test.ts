@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildSaveTheDateRecipients,
+  buildInvitationRecipients,
   joinNames,
   type RecipientSourceGroup,
   type RecipientSourceGuest,
@@ -177,3 +178,62 @@ describe("buildSaveTheDateRecipients", () => {
     expect(out[0].email).toBe("convidado@example.com");
   });
 });
+
+describe("buildInvitationRecipients", () => {
+  const invitationGroup = (over: Partial<RecipientSourceGroup>): RecipientSourceGroup => ({
+    id: "g1",
+    name: "Família Silva",
+    contactPhone: "+5511999990000",
+    contactEmail: null,
+    memberNames: ["Ana", "Lucas"],
+    memberContacts: [],
+    memberTagIds: [],
+    hasPadrinho: false,
+    rsvpPin: "1234",
+    rsvpToken: "group-token-1",
+    ...over,
+  });
+
+  const invitationGuest = (over: Partial<RecipientSourceGuest>): RecipientSourceGuest => ({
+    id: "u1",
+    name: "Convidado Individual",
+    phone: "+5511888880000",
+    email: null,
+    language: null,
+    tagIds: [],
+    isPadrinho: false,
+    rsvpPin: "5678",
+    rsvpToken: "guest-token-1",
+    ...over,
+  });
+
+  it("marks recipient as PENDING when contact and PIN are valid", () => {
+    const res = buildInvitationRecipients([invitationGroup({})], [invitationGuest({})]);
+    expect(res).toHaveLength(2);
+    expect(res[0].status).toBe("PENDING");
+    expect(res[1].status).toBe("PENDING");
+  });
+
+  it("skips with NO_PIN when rsvpPin is null or empty", () => {
+    const res = buildInvitationRecipients(
+      [invitationGroup({ rsvpPin: null })],
+      [invitationGuest({ rsvpPin: "   " })],
+    );
+    expect(res[0].status).toBe("SKIPPED");
+    expect(res[0].skipReason).toBe("NO_PIN");
+    expect(res[1].status).toBe("SKIPPED");
+    expect(res[1].skipReason).toBe("NO_PIN");
+  });
+
+  it("prioritizes EXCLUDED_TAG over NO_PIN", () => {
+    const res = buildInvitationRecipients(
+      [invitationGroup({ rsvpPin: null, memberTagIds: ["tag-excluir"] })],
+      [],
+      { excludeTagIds: ["tag-excluir"] },
+    );
+    expect(res[0].status).toBe("SKIPPED");
+    expect(res[0].skipReason).toBe("EXCLUDED_TAG");
+  });
+});
+
+

@@ -345,6 +345,7 @@
         "contact": "Contact",
         "phone": "Phone",
         "email": "Email",
+        "pin": "PIN",
         "people": "People",
         "confirmed": "Confirmed",
         "pending": "Pending",
@@ -356,6 +357,7 @@
       },
       "card": {
         "contact": "Contact: {name}",
+        "pin": "PIN: {pin}",
         "people": "{count, plural, one {# person} other {# people}}",
         "yes": "{count} yes",
         "pending": "{count} pending",
@@ -370,6 +372,8 @@
         "createTitle": "New group",
         "editTitle": "Edit group",
         "name": "Group name",
+        "rsvpPin": "RSVP PIN (optional)",
+        "generatePin": "Generate PIN",
         "contactMember": "Use a member's details",
         "contactMemberHint": "Pick a member to fill in",
         "contactName": "Contact (optional)",
@@ -2258,6 +2262,116 @@
         "ALREADY_SENT": "Already sent",
         "SKIPPED": "Skipped"
       }
+    }
+  },
+  "invitations": {
+    "page": {
+      "title": "Official Invitations",
+      "subtitle": "Configure, preview, send, and track official wedding invitations via WhatsApp and email."
+    },
+    "metrics": {
+      "ready": "Ready to send",
+      "noPin": "Attention: no PIN",
+      "skipped": "Skipped",
+      "sent": "Sent",
+      "failed": "Failed"
+    },
+    "tabs": {
+      "config": "Configuration",
+      "recipients": "Recipients",
+      "broadcast": "Broadcast & Report"
+    },
+    "config": {
+      "title": "Invitation Message & Art",
+      "messageLabel": "Custom message",
+      "messagePlaceholder": "Type invitation message...",
+      "tagsHelp": "Click pills to insert merge tags at cursor:",
+      "rsvpMode": "RSVP Mode",
+      "nativeRsvp": "Native RSVP (System)",
+      "externalRsvp": "External RSVP (Custom link)",
+      "externalUrlLabel": "External RSVP URL",
+      "externalUrlPlaceholder": "https://mywebsite.com/rsvp",
+      "deadlineLabel": "Confirmation deadline (YYYY-MM-DD)",
+      "deadlinePlaceholder": "YYYY-MM-DD",
+      "artLabel": "Invitation Art (optional)",
+      "artHint": "PNG, JPG, WEBP, or PDF up to 10 MB.",
+      "removeArt": "Remove current art",
+      "filtersTitle": "Exclusions & Filters",
+      "excludeTags": "Exclude specific tags",
+      "excludePadrinhos": "Exclude groomsmen and bridesmaids",
+      "saveButton": "Save Settings",
+      "saving": "Saving..."
+    },
+    "tags": {
+      "pin": "{pin} (Guest/Group PIN)",
+      "linkRsvp": "{link-rsvp} (Direct link)",
+      "deadline": "{data-limite} (Deadline)",
+      "nomes": "{nomes} (Name)",
+      "convidados": "{convidados} (Members)",
+      "data": "{data} (Date)",
+      "local": "{local} (Venue)"
+    },
+    "test": {
+      "title": "Test Send",
+      "subtitle": "Send a test invitation with simulated PIN (1234) to preview formatting.",
+      "whatsapp": "Test on WhatsApp",
+      "email": "Test via email",
+      "toPlaceholder": "Phone (+55...) or email (optional)",
+      "sending": "Sending test..."
+    },
+    "recipients": {
+      "title": "Recipient Preflight List",
+      "filterAll": "All ({count})",
+      "filterReady": "Ready ({count})",
+      "filterNoPin": "No PIN ({count})",
+      "filterSkipped": "Skipped ({count})",
+      "colName": "Recipient",
+      "colMembers": "Members",
+      "colChannel": "Expected Channel",
+      "colPin": "PIN",
+      "colStatus": "Status",
+      "hasPinYes": "Has PIN",
+      "hasPinNo": "No PIN",
+      "empty": "No recipients registered."
+    },
+    "reasons": {
+      "NO_PIN": "Attention — no PIN",
+      "NO_CONTACT": "No contact",
+      "INVALID_PHONE": "Invalid phone",
+      "DUPLICATE_PHONE": "Duplicate phone",
+      "DUPLICATE_EMAIL": "Duplicate email",
+      "EXCLUDED_TAG": "Excluded by tag",
+      "ALREADY_SENT": "Already sent",
+      "CANCELLED": "Cancelled",
+      "DELIVERY_STATE_UNKNOWN": "Unknown delivery state"
+    },
+    "broadcast": {
+      "title": "Background Broadcast",
+      "start": "Start Invitation Broadcast",
+      "resendFailed": "Resend Failures",
+      "cancel": "Cancel Broadcast",
+      "exportCsv": "Export CSV",
+      "progress": "Broadcast progress",
+      "confirmModalTitle": "Confirm Official Invitation Broadcast",
+      "confirmModalIntro": "You are about to start sending official invitations to guests:",
+      "modalEligible": "Eligible recipients (with PIN and contact): {count}",
+      "modalNoPin": "No PIN (will be skipped): {count}",
+      "modalSkipped": "Skipped by filter/contact: {count}",
+      "modalMode": "RSVP Mode: {mode}",
+      "modalDeadline": "Confirmation deadline: {deadline}",
+      "modalArt": "Attachment/Art: {art}",
+      "modalWarning": "WARNING: Messages will be sent to real guest contacts.",
+      "confirmSubmit": "Yes, Start Real Broadcast",
+      "confirmUnknownTitle": "Confirm Resend of Unknown Delivery State",
+      "confirmUnknownMessage": "There are {count} items in unknown delivery state (server restarted during send). Confirm resending these items?",
+      "confirmUnknownSubmit": "Yes, Resend Anyway"
+    },
+    "toasts": {
+      "configSaved": "Invitation settings saved successfully.",
+      "testSent": "Test invitation sent successfully.",
+      "broadcastStarted": "Invitation broadcast started in background.",
+      "resendStarted": "Resending failed items started.",
+      "broadcastCancelled": "Broadcast cancelled."
     }
   }
 }

@@ -44,6 +44,7 @@ type Group = {
   id: string;
   name: string;
   rsvpToken: string;
+  rsvpPin: string | null;
   contactName: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
@@ -135,6 +136,7 @@ export default function GroupsClient({
       t("csv.contact"),
       t("csv.phone"),
       t("csv.email"),
+      t("csv.pin"),
       t("csv.people"),
       t("csv.confirmed"),
       t("csv.pending"),
@@ -148,6 +150,7 @@ export default function GroupsClient({
         g.contactName ?? "",
         s.effectivePhone ?? "",
         s.effectiveEmail ?? "",
+        g.rsvpPin ?? "",
         s.memberCount,
         s.confirmed,
         s.pending,
@@ -342,9 +345,16 @@ export default function GroupsClient({
                           </p>
                         ) : null}
                       </div>
-                      <span className="shrink-0 rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
-                        {t("card.people", { count: s.memberCount })}
-                      </span>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <span className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
+                          {t("card.people", { count: s.memberCount })}
+                        </span>
+                        {g.rsvpPin ? (
+                          <span className="rounded border border-rose-500/20 bg-rose-500/10 px-2 py-0.5 font-mono text-[10px] text-rose-300">
+                            {t("card.pin", { pin: g.rsvpPin })}
+                          </span>
+                        ) : null}
+                      </div>
                     </header>
 
                     {!s.willReceive ? (
@@ -487,7 +497,7 @@ function GroupForm({
   onSubmit,
 }: {
   title: string;
-  initial?: Pick<Group, "name" | "contactName" | "contactEmail" | "contactPhone" | "notes" | "guests">;
+  initial?: Pick<Group, "name" | "contactName" | "contactEmail" | "contactPhone" | "notes" | "guests" | "rsvpPin">;
   busy: boolean;
   onCancel: () => void;
   onSubmit: (fd: FormData) => void;
@@ -498,6 +508,12 @@ function GroupForm({
   const [contactName, setContactName] = useState(initial?.contactName ?? "");
   const [contactEmail, setContactEmail] = useState(initial?.contactEmail ?? "");
   const [contactPhone, setContactPhone] = useState(initial?.contactPhone ?? "");
+  const [rsvpPin, setRsvpPin] = useState(initial?.rsvpPin ?? "");
+
+  function generateRandomPin() {
+    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    setRsvpPin(pin);
+  }
 
   function pickMember(guestId: string) {
     const member = members.find((m) => m.id === guestId);
@@ -515,6 +531,27 @@ function GroupForm({
       >
         <h2 className="text-base font-semibold text-zinc-100">{title}</h2>
         <FieldInput name="name" label={t("form.name")} defaultValue={initial?.name} required maxLength={120} />
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-zinc-400">{t("form.rsvpPin")}</span>
+            <button
+              type="button"
+              onClick={generateRandomPin}
+              className="text-xs font-medium text-rose-400 hover:text-rose-300"
+            >
+              {t("form.generatePin")}
+            </button>
+          </div>
+          <input
+            type="text"
+            name="rsvpPin"
+            value={rsvpPin}
+            onChange={(e) => setRsvpPin(e.target.value)}
+            placeholder="Ex.: 8696"
+            maxLength={20}
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm font-mono text-zinc-100 focus:border-rose-500 focus:outline-none"
+          />
+        </div>
         {members.length > 0 ? (
           <label className="block space-y-1">
             <span className="text-xs font-medium text-zinc-400">{t("form.contactMember")}</span>

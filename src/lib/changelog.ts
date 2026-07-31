@@ -6,6 +6,16 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.9.0",
+    date: "2026-07-30",
+    highlights: [
+      "✉️ **Módulo de Convites Oficiais** (`/dashboard/invitations`): configure a mensagem com merge tags (`{pin}`, `{link-rsvp}`, `{data-limite}`, `{nomes}`, `{convidados}`, `{data}`, `{local}`), suba a arte (imagem ou PDF) e envie convites formais via WhatsApp e e-mail.",
+      "🔒 **RSVP Protegido por PIN**: confirmação individual e em grupo protegida por PIN de 4 dígitos com limite de taxa (rate-limit 5/min) e cookie assinado de sessão (15 min).",
+      "📊 **Pré-lista e Métricas ao Vivo**: 5 indicadores no topo (Prontos, Sem PIN, Ignorados, Enviados, Falhas), pré-lista de destinatários com filtro por status e exportação em CSV.",
+      "⚡ **Transmissão Resiliente**: snapshot imutável em `payloadJson`, worker atômico com recuperação de estado e suporte a retentativas.",
+    ],
+  },
+  {
     version: "0.8.0",
     date: "2026-06-09",
     highlights: [

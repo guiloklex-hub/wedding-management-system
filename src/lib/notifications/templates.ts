@@ -13,6 +13,7 @@ export type NotificationKind =
   | "TASK_OVERDUE"
   | "GUEST_RSVP"
   | "SAVE_THE_DATE"
+  | "OFFICIAL_INVITATION"
   | "RSVP_REMINDER"
   | "RSVP_REMINDER_GROUP"
   | "SYSTEM_WHATSAPP_DOWN"
@@ -93,6 +94,19 @@ export type RenderInput =
       websiteUrl?: string | null;
       giftRegistryUrl?: string | null;
       customMessage?: string | null;
+      imageCid?: string | null;
+    } & WithLocale)
+  | ({
+      kind: "OFFICIAL_INVITATION";
+      coupleNames: string;
+      recipientNames: string;
+      memberNames: string;
+      customMessage: string;
+      pin: string;
+      rsvpLink: string;
+      deadline: string | null;
+      eventDate: Date | string | null;
+      daySchedule?: string | null;
       imageCid?: string | null;
     } & WithLocale)
   | ({
@@ -629,6 +643,76 @@ ${tk("intro", { guest: escapeWaMarkdown(input.guestName) })}
         "",
         names,
       );
+      return { subject, html, text, waText };
+    }
+
+    case "OFFICIAL_INVITATION": {
+      const tk = (key: string, values?: Record<string, string | number | Date>) =>
+        t(`OFFICIAL_INVITATION.${key}`, values);
+      const subject = tk("subject", { names: input.coupleNames });
+
+      let deadlineStr = "";
+      if (input.deadline) {
+        const match = input.deadline.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (match) {
+          const [, y, m, d] = match;
+          const dt = new Date(Date.UTC(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10)));
+          deadlineStr = formatDate(dt, locale, { timeZone: "UTC", dateStyle: "long" });
+        } else {
+          deadlineStr = input.deadline;
+        }
+      }
+
+      let eventDateStr = "";
+      if (input.eventDate) {
+        const dt = typeof input.eventDate === "string" ? new Date(input.eventDate) : input.eventDate;
+        if (!isNaN(dt.getTime())) {
+          eventDateStr = formatDate(dt, locale, { timeZone: "UTC", dateStyle: "long" });
+        }
+      }
+
+      const tagValuesText = {
+        pin: input.pin,
+        "link-rsvp": input.rsvpLink,
+        "data-limite": deadlineStr,
+        nomes: input.recipientNames,
+        convidados: input.memberNames,
+        data: eventDateStr,
+        local: input.daySchedule ?? "",
+      };
+
+      let textCore = input.customMessage;
+      for (const [tag, val] of Object.entries(tagValuesText)) {
+        textCore = textCore.replaceAll(`{${tag}}`, val);
+      }
+      const text = textCore;
+      const waText = textCore;
+
+      let htmlCore = escapeHtml(input.customMessage);
+      const anchorHtml = `<a href="${escapeHtml(input.rsvpLink)}" style="color:#fda4af;text-decoration:underline;">${escapeHtml(input.rsvpLink)}</a>`;
+
+      htmlCore = htmlCore
+        .replaceAll("{pin}", escapeHtml(input.pin))
+        .replaceAll("{link-rsvp}", anchorHtml)
+        .replaceAll("{data-limite}", escapeHtml(deadlineStr))
+        .replaceAll("{nomes}", escapeHtml(input.recipientNames))
+        .replaceAll("{convidados}", escapeHtml(input.memberNames))
+        .replaceAll("{data}", escapeHtml(eventDateStr))
+        .replaceAll("{local}", escapeHtml(input.daySchedule ?? ""));
+
+      const bodyHtml = htmlCore.replace(/\n/g, "<br>");
+      const imageHtml = input.imageCid
+        ? `<p style="text-align:center;margin:0 0 20px;"><img src="cid:${escapeHtml(input.imageCid)}" alt="Convite" style="max-width:100%;border-radius:12px;"></p>`
+        : "";
+
+      const html = wrapHtml(
+        subject,
+        `${imageHtml}<p style="font-size:16px;line-height:1.6;">${bodyHtml}</p>`,
+        locale,
+        "",
+        input.coupleNames,
+      );
+
       return { subject, html, text, waText };
     }
 

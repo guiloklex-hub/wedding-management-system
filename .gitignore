@@ -87,7 +87,6 @@ backups/
 .claude/plans/
 .claude/settings.local.json
 
-# Arquivos temporarios
-temp.md
-temp/
+# Operational specs
+docs/goal-invitations-module-reviewed.md
 temp/*

@@ -39,14 +39,14 @@ sudo apt update && sudo apt upgrade -y
 
 ---
 
-## 3. Instalar Node 20 com nvm
+## 3. Instalar Node 24 com nvm
 
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 # feche e reabra o terminal Ubuntu
-nvm install 20
-nvm use 20
-node -v   # esperado: v20.x.x
+nvm install 24
+nvm use 24
+node -v   # esperado: v24.x.x
 ```
 
 ---

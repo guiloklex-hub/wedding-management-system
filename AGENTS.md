@@ -56,6 +56,7 @@ Stack:
 
 | Camada | Tecnologia | Versão |
 |---|---|---|
+| Runtime | Node.js | 22+ (CI e recomendado: 24 LTS) |
 | Framework | Next.js (App Router) | 16.3 |
 | UI | React | 19.2 |
 | Estilo | Tailwind CSS | 4 |
@@ -449,6 +450,11 @@ npm run test:coverage   # cobertura v8
 ---
 
 ## 9. Comandos
+
+> **Lockfile:** o CI roda `npm ci` em Node 24 (npm 11), o mesmo npm que o
+> Dependabot usa para gerar o `package-lock.json`. Ao mexer em dependências,
+> regenere o lockfile com npm 11 — o npm 10 omite/exige entradas de peers
+> opcionais de forma diferente e o `npm ci` do CI pode recusar o arquivo.
 
 ### App
 

@@ -11,7 +11,7 @@ WSL**. Tudo roda em PowerShell.
 
 ---
 
-## 1. Instalar Node.js 20+
+## 1. Instalar Node.js 22+
 
 ### Opção A — via instalador oficial (mais simples)
 
@@ -19,7 +19,7 @@ WSL**. Tudo roda em PowerShell.
 2. Execute o `.msi` e clique **Next** até concluir.
 3. Abra um **PowerShell novo** e confirme:
    ```powershell
-   node --version   # esperado: v20.x.x ou superior
+   node --version   # esperado: v22.x.x ou superior (recomendado: v24 LTS)
    npm --version
    ```
 
@@ -85,7 +85,7 @@ Quando perguntar, responda **Y** (Sim).
 
 O script:
 
-1. ✅ Verifica Node 20+
+1. ✅ Verifica Node 22+
 2. ✅ Cria um `.env` com `NEXTAUTH_SECRET` e `CRON_SECRET` aleatórios
 3. ✅ Roda `npm install`
 4. ✅ Aplica o schema (`prisma db push`)

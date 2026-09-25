@@ -6,6 +6,7 @@ Visão geral técnica do Wedding Finance Planner.
 
 | Camada | Tecnologia | Versão |
 |---|---|---|
+| Runtime | Node.js | 22+ (CI e recomendado: 24 LTS) |
 | Framework | Next.js (App Router) | 16.3 |
 | UI | React | 19.2 |
 | Estilos | Tailwind CSS | 4 |

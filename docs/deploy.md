@@ -19,10 +19,10 @@ Guia para colocar o Wedding Finance Planner online de forma estável.
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl git build-essential
 
-# Node 20 via nvm (na conta de usuário não-root)
+# Node 24 (LTS) via nvm (na conta de usuário não-root)
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 source ~/.bashrc
-nvm install 20
+nvm install 24
 
 # PM2 global
 npm install -g pm2

@@ -15,15 +15,15 @@ chmod +x setup.sh
 
 ### `node: command not found`
 
-Você ainda não instalou o Node 20+. Veja:
+Você ainda não instalou o Node 22+. Veja:
 
 - [Linux](instalacao-linux.md#1-pré-requisitos)
-- [Windows](instalacao-windows.md#1-instalar-nodejs-20)
-- [WSL](instalacao-wsl.md#3-instalar-node-20-com-nvm)
+- [Windows](instalacao-windows.md#1-instalar-nodejs-22)
+- [WSL](instalacao-wsl.md#3-instalar-node-24-com-nvm)
 
-### `Node.js X detectado. Este projeto requer Node 20 ou superior.`
+### `Node.js X detectado. Este projeto requer Node 22 ou superior.`
 
-Atualize via `nvm install 20` (Linux/macOS/WSL) ou pelo instalador oficial
+Atualize via `nvm install 24` (Linux/macOS/WSL) ou pelo instalador oficial
 (Windows). Confirme com `node -v`.
 
 ### `Set-ExecutionPolicy : Access denied` (Windows)

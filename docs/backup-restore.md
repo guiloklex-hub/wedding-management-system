@@ -29,7 +29,7 @@ Retorna um arquivo com envelope:
     "meta": {
       "appVersion": "0.1.0",
       "hostname": "debian",
-      "nodeVersion": "v20.x",
+      "nodeVersion": "v24.x",
       "exportedBy": { "id": "...", "email": "..." }
     },
     "eventSettings": { ... },

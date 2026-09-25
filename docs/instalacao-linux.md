@@ -15,25 +15,25 @@ Você precisa de:
 
 | Ferramenta | Versão mínima | Como instalar |
 |---|---|---|
-| **Node.js** | 20.0.0 | `nvm install 20` (recomendado) ou via gerenciador de pacotes |
+| **Node.js** | 22.0.0 (recomendado: 24 LTS) | `nvm install 24` (recomendado) ou via gerenciador de pacotes |
 | **npm** | 10 (vem com o Node) | — |
 | **Git** | qualquer | `sudo apt install git` / `brew install git` |
 
-### Instalando o Node 20 com nvm (recomendado)
+### Instalando o Node 24 com nvm (recomendado)
 
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 # feche e reabra o terminal
-nvm install 20
-nvm use 20
-node -v   # esperado: v20.x.x
+nvm install 24
+nvm use 24
+node -v   # esperado: v24.x.x
 ```
 
 ### Alternativas
 
 - **Ubuntu/Debian:** `sudo apt install nodejs npm` (verifique versão — pode estar
   desatualizada; prefira o nvm).
-- **macOS:** `brew install node@20`.
+- **macOS:** `brew install node@24`.
 - **Fedora:** `sudo dnf install nodejs`.
 
 ---
@@ -58,7 +58,7 @@ chmod +x setup.sh
 
 O script faz tudo de uma vez:
 
-1. ✅ verifica o Node 20+
+1. ✅ verifica o Node 22+
 2. ✅ cria um `.env` com `NEXTAUTH_SECRET` e `CRON_SECRET` aleatórios
 3. ✅ roda `npm install`
 4. ✅ aplica o schema do banco (`prisma db push`)

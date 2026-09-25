@@ -50,12 +50,12 @@ echo
 
 # 1. Pré-requisitos
 info "Verificando pré-requisitos..."
-command -v node >/dev/null 2>&1 || fail "Node.js não encontrado. Instale Node 20+."
+command -v node >/dev/null 2>&1 || fail "Node.js não encontrado. Instale Node 22+ (recomendado: 24 LTS)."
 command -v npm  >/dev/null 2>&1 || fail "npm não encontrado."
 
 NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
-if [ "$NODE_MAJOR" -lt 20 ]; then
-  fail "Node.js $NODE_MAJOR detectado. Este projeto requer Node 20 ou superior."
+if [ "$NODE_MAJOR" -lt 22 ]; then
+  fail "Node.js $NODE_MAJOR detectado. Este projeto requer Node 22 ou superior."
 fi
 ok "Node $(node -v)  ·  npm $(npm -v)"
 

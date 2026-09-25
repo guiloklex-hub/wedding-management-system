@@ -13,6 +13,11 @@ describe("escapeWaMarkdown", () => {
   it("escapa asteriscos e underlines", () => {
     expect(escapeWaMarkdown("*bold* _italic_")).toBe("\\*bold\\* \\_italic\\_");
   });
+
+  it("escapa a barra invertida para ela não anular o escape seguinte", () => {
+    expect(escapeWaMarkdown("\\*bold*")).toBe("\\\\\\*bold\\*");
+    expect(escapeWaMarkdown("C:\\pasta")).toBe("C:\\\\pasta");
+  });
 });
 
 describe("render (pt-BR)", () => {

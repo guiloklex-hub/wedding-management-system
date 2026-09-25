@@ -157,7 +157,7 @@ export function escapeHtml(value: string): string {
 }
 
 export function escapeWaMarkdown(value: string): string {
-  return value.replace(/([*_~`])/g, "\\$1");
+  return value.replace(/([\\*_~`])/g, "\\$1");
 }
 
 function wrapHtml(title: string, body: string, locale: Locale, footer: string, header: string): string {

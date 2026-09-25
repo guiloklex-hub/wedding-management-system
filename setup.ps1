@@ -54,14 +54,14 @@ Write-Host ""
 # 1. Pré-requisitos
 Write-Info "Verificando pré-requisitos..."
 $node = Get-Command node -ErrorAction SilentlyContinue
-if (-not $node) { Write-Fail "Node.js não encontrado. Instale Node 20+ em https://nodejs.org/" }
+if (-not $node) { Write-Fail "Node.js não encontrado. Instale Node 22+ (recomendado: 24 LTS) em https://nodejs.org/" }
 $npm  = Get-Command npm -ErrorAction SilentlyContinue
 if (-not $npm)  { Write-Fail "npm não encontrado." }
 
 $nodeVersion = (node --version).TrimStart("v")
 $nodeMajor = [int]($nodeVersion.Split(".")[0])
-if ($nodeMajor -lt 20) {
-    Write-Fail "Node.js $nodeMajor detectado. Este projeto requer Node 20 ou superior."
+if ($nodeMajor -lt 22) {
+    Write-Fail "Node.js $nodeMajor detectado. Este projeto requer Node 22 ou superior."
 }
 Write-Ok "Node v$nodeVersion  ·  npm $((npm --version))"
 

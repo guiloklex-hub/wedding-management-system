@@ -85,7 +85,7 @@ Abra <http://localhost:3005> no navegador.
 
 ### Pré-requisitos
 
-- **Node.js 20+** ([nodejs.org](https://nodejs.org/))
+- **Node.js 22+** — recomendado **24 LTS** ([nodejs.org](https://nodejs.org/))
 - **Git** ([git-scm.com](https://git-scm.com/))
 
 ---

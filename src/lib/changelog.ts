@@ -6,6 +6,14 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.9.1",
+    date: "2026-09-25",
+    highlights: [
+      "🛡️ **Atualização de segurança das dependências**: Next.js 16.3.6, Auth.js 5.0.0-beta.32, Nodemailer 10 e correções transitivas (PostCSS, sharp, protobufjs, uuid, entre outras). O `npm audit` volta a zerar vulnerabilidades conhecidas. Nenhuma mudança de comportamento ou de configuração do app é necessária.",
+      "🟢 **Node.js 22 ou superior agora é o mínimo** (o Node 20 saiu de suporte em abril de 2026). Recomendado: **Node 24 LTS**, a mesma versão usada no CI. Os scripts `setup.sh`/`setup.ps1` já verificam a nova versão.",
+    ],
+  },
+  {
     version: "0.9.0",
     date: "2026-07-30",
     highlights: [

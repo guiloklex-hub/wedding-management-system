@@ -56,13 +56,13 @@ Stack:
 
 | Camada | Tecnologia | Versão |
 |---|---|---|
-| Framework | Next.js (App Router) | 16.2 |
+| Framework | Next.js (App Router) | 16.3 |
 | UI | React | 19.2 |
 | Estilo | Tailwind CSS | 4 |
 | Banco | SQLite + Prisma | Prisma 6 |
-| Auth | Auth.js v5 (beta) | 5.0.0-beta.31 |
+| Auth | Auth.js v5 (beta) | 5.0.0-beta.32 |
 | 2FA | otplib (TOTP) | 13 |
-| Email | Nodemailer | 7 |
+| Email | Nodemailer | 10 |
 | WhatsApp | @whiskeysockets/baileys | 7-rc11 |
 | Validação | Zod | 4 |
 | Gráficos | Recharts | 3 |

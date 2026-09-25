@@ -6,15 +6,15 @@ Visão geral técnica do Wedding Finance Planner.
 
 | Camada | Tecnologia | Versão |
 |---|---|---|
-| Framework | Next.js (App Router) | 16.2 |
+| Framework | Next.js (App Router) | 16.3 |
 | UI | React | 19.2 |
 | Estilos | Tailwind CSS | 4 |
 | Banco de dados | SQLite | via Prisma |
 | ORM | Prisma | 6 |
-| Autenticação | Auth.js (NextAuth v5 beta) | 5.0.0-beta.31 |
+| Autenticação | Auth.js (NextAuth v5 beta) | 5.0.0-beta.32 |
 | 2FA | otplib (TOTP) | 13 |
 | Validação | Zod | 4 |
-| Email | Nodemailer | 7 |
+| Email | Nodemailer | 10 |
 | WhatsApp | @whiskeysockets/baileys | 7-rc11 |
 | Gráficos | Recharts | 3 |
 | Ícones | Lucide React | 1.x |

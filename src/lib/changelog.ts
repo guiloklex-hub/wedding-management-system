@@ -6,6 +6,13 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.9.1",
+    date: "2026-09-25",
+    highlights: [
+      "🛡️ **Atualização de segurança das dependências**: Next.js 16.3.6, Auth.js 5.0.0-beta.32, Nodemailer 10 e correções transitivas (PostCSS, sharp, protobufjs, uuid, entre outras). O `npm audit` volta a zerar vulnerabilidades conhecidas. Nenhuma mudança de comportamento ou de configuração é necessária.",
+    ],
+  },
+  {
     version: "0.9.0",
     date: "2026-07-30",
     highlights: [

@@ -48,28 +48,40 @@ import kotlinx.coroutines.launch
 class MainActivity : FragmentActivity() {
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
     private var unlocked by mutableStateOf(false)
+    private var requestedSection by mutableStateOf<String?>(null)
     private var lastBackgroundAt = 0L
     private var afterAuthentication: (() -> Unit)? = null
     private var unlockLanguage = "pt-BR"
+    private lateinit var database: PlannerDatabase
+    private lateinit var model: PlannerViewModel
 
     private val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or
         BiometricManager.Authenticators.DEVICE_CREDENTIAL
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val database = PlannerDatabase.get(this)
+        database = PlannerDatabase.get(this)
         val preferences = PlannerPreferences(this)
         val archive = BackupArchive(this, database, preferences)
         ReminderWorker.schedule(this)
-        val model = ViewModelProvider(
+        model = ViewModelProvider(
             this,
             PlannerViewModel.Factory(PlannerRepository(database), preferences),
         )[PlannerViewModel::class.java]
+        handleDebugIntent(intent)
         setContent {
             PlannerTheme {
                 val language by model.locale.collectAsState()
                 if (unlocked) {
-                    PlannerApp(model, this, archive, ::authenticate)
+                    PlannerApp(
+                        model = model,
+                        activity = this,
+                        archive = archive,
+                        authenticate = ::authenticate,
+                        externalSection = requestedSection,
+                        onExternalSectionConsumed = { requestedSection = null },
+                        onLoadDemoSeed = { model.loadDemoSeed(database) },
+                    )
                 } else {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(
@@ -101,9 +113,30 @@ class MainActivity : FragmentActivity() {
                 unlockLanguage = language
                 if (initial) {
                     initial = false
-                    authenticate()
+                    if (!unlocked) authenticate()
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleDebugIntent(intent)
+    }
+
+    private fun handleDebugIntent(intent: Intent?) {
+        if (intent == null) return
+        if (intent.getBooleanExtra("skip_auth", false)) {
+            unlocked = true
+        }
+        if (intent.getBooleanExtra("seed_demo", false)) {
+            unlocked = true
+            model.loadDemoSeed(database)
+        }
+        intent.getStringExtra("section")?.takeIf { it.isNotBlank() }?.let { target ->
+            unlocked = true
+            requestedSection = target
         }
     }
 

@@ -196,7 +196,6 @@ export async function restorePortable(source: string, password: string): Promise
         await fs.rm(stateRoot, { recursive: true, force: true });
         await fs.cp(staged.state, stateRoot, { recursive: true, force: true });
         await clearRestoreJournal();
-        journal = false;
       } catch (error) {
         if (journal) {
           await snapshot(path.join(reversal, "web.sqlite"), databasePath());

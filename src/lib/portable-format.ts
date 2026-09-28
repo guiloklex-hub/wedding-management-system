@@ -116,37 +116,37 @@ export async function withPortableFile<T>(source: string, password: string,
   block: (archive: OpenPortable) => Promise<T>): Promise<T> {
   const temporary = await fs.mkdtemp(path.join(tmpdir(), "wfp-read-"));
   try {
-    const sourceSize = (await fs.stat(source)).size;
-    if (sourceSize < HEADER_SIZE + TAG_SIZE) throw new Error("Backup incompleto");
-    const header = Buffer.alloc(HEADER_SIZE);
-    const tag = Buffer.alloc(TAG_SIZE);
+    const plain = path.join(temporary, "payload.zip");
     const handle = await fs.open(source, "r");
     try {
+      const { size: sourceSize } = await handle.stat();
+      if (sourceSize < HEADER_SIZE + TAG_SIZE) throw new Error("Backup incompleto");
+      const header = Buffer.alloc(HEADER_SIZE);
+      const tag = Buffer.alloc(TAG_SIZE);
       await handle.read(header, 0, HEADER_SIZE, 0);
       await handle.read(tag, 0, TAG_SIZE, sourceSize - TAG_SIZE);
+      if (!header.subarray(0, 8).equals(MAGIC)) throw new Error("Formato de backup desconhecido");
+      const iterations = header.readUInt32BE(8);
+      if (iterations < ITERATIONS || iterations > 2_000_000) throw new Error("Parâmetros de criptografia inválidos");
+      const key = pbkdf2Sync(password, header.subarray(12, 28), iterations, 32, "sha256");
+      const decipher = createDecipheriv("aes-256-gcm", key, header.subarray(28, 40));
+      decipher.setAAD(header);
+      decipher.setAuthTag(tag);
+      key.fill(0);
+      const output = createWriteStream(plain, { mode: 0o600 });
+      output.on("error", () => undefined);
+      try {
+        for await (const chunk of handle.createReadStream({ start: HEADER_SIZE, end: sourceSize - TAG_SIZE - 1, autoClose: false })) {
+          if (!output.write(decipher.update(chunk))) await new Promise<void>((resolve) => output.once("drain", resolve));
+        }
+        output.end(decipher.final());
+        await finished(output);
+      } catch (error) {
+        output.destroy();
+        throw new Error(`Senha incorreta ou backup alterado: ${(error as Error).message}`);
+      }
     } finally {
       await handle.close();
-    }
-    if (!header.subarray(0, 8).equals(MAGIC)) throw new Error("Formato de backup desconhecido");
-    const iterations = header.readUInt32BE(8);
-    if (iterations < ITERATIONS || iterations > 2_000_000) throw new Error("Parâmetros de criptografia inválidos");
-    const key = pbkdf2Sync(password, header.subarray(12, 28), iterations, 32, "sha256");
-    const decipher = createDecipheriv("aes-256-gcm", key, header.subarray(28, 40));
-    decipher.setAAD(header);
-    decipher.setAuthTag(tag);
-    key.fill(0);
-    const plain = path.join(temporary, "payload.zip");
-    const output = createWriteStream(plain, { mode: 0o600 });
-    output.on("error", () => undefined);
-    try {
-      for await (const chunk of createReadStream(source, { start: HEADER_SIZE, end: sourceSize - TAG_SIZE - 1 })) {
-        if (!output.write(decipher.update(chunk))) await new Promise<void>((resolve) => output.once("drain", resolve));
-      }
-      output.end(decipher.final());
-      await finished(output);
-    } catch (error) {
-      output.destroy();
-      throw new Error(`Senha incorreta ou backup alterado: ${(error as Error).message}`);
     }
 
     const directory = await unzipper.Open.file(plain);

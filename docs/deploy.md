@@ -10,7 +10,7 @@ Guia para colocar o Wedding Finance Planner online de forma estável.
 - PM2 para manter o processo Node vivo.
 - Cron diário para backup.
 - Cron a cada 30 min para `/api/cron/reminders`.
-- Cron diário para `/api/cron/cleanup-files` (limpa anexos órfãos/soft-deletados).
+- Monitorar espaço de `uploads/`; `/api/cron/cleanup-files` informa retenção, sem apagar arquivos.
 
 ## 1. Preparar o servidor
 
@@ -166,9 +166,9 @@ crontab -e
 
 ## 8. Cron de limpeza de arquivos
 
-Remove definitivamente anexos soft-deletados há mais de 30 dias e arquivos
-órfãos em disco (sem registro correspondente). Sem ele, o diretório de
-uploads cresce indefinidamente — risco de encher o disco.
+O endpoint apenas informa a quantidade de anexos soft-deletados antigos.
+Arquivos sem vínculo e artes permanecem em disco para entrar no backup v2.
+Monitore o espaço de `uploads/`, que cresce com essa retenção.
 
 ```bash
 crontab -e

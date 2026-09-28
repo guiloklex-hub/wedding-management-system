@@ -1,0 +1,97 @@
+<resources>
+    <string name="app_name">Wedding Finance Planner</string>
+    <string name="dashboard">Panel</string><string name="tasks">Tareas</string>
+    <string name="vendors">Proveedores</string><string name="guests">Invitados</string>
+    <string name="vendors_nav">Proveed.</string>
+    <string name="more">Más</string><string name="venues">Lugares</string>
+    <string name="budget">Presupuesto</string><string name="payments">Pagos</string>
+    <string name="income">Ingresos</string><string name="assets">Ahorros</string>
+    <string name="goals">Metas</string><string name="groups">Grupos</string>
+    <string name="tags">Etiquetas</string><string name="gifts">Regalos</string>
+    <string name="wedding_day">Día de la boda</string><string name="seating">Mesas</string>
+    <string name="honeymoon">Luna de miel</string><string name="honeymoon_items">Actividades de luna de miel</string>
+    <string name="trousseau">Ajuar</string><string name="contracts">Contratos</string>
+    <string name="contacts">Contactos</string><string name="venue_check">Lista de lugares</string>
+    <string name="vendor_notes">Notas de proveedores</string><string name="invitations">Invitaciones</string>
+    <string name="save_the_date">Reserva la fecha</string><string name="insights">Análisis</string>
+    <string name="settings">Ajustes</string><string name="help">Ayuda</string>
+    <string name="backup">Copia de seguridad</string><string name="add">Añadir</string>
+    <string name="edit">Editar</string><string name="save">Guardar</string>
+    <string name="cancel">Cancelar</string><string name="delete">Eliminar</string>
+    <string name="title">Nombre o título</string><string name="subtitle">Descripción</string>
+    <string name="amount">Importe</string><string name="date">Fecha (AAAA-MM-DD)</string>
+    <string name="status">Estado</string><string name="phone">Teléfono</string>
+    <string name="email">Correo</string><string name="notes">Notas</string>
+    <string name="search">Buscar</string><string name="empty">Aún no hay registros</string>
+    <string name="confirm_delete">¿Eliminar este registro?</string>
+    <string name="total_budget">Presupuesto previsto</string><string name="total_paid">Total pagado</string>
+    <string name="pending_tasks">Tareas pendientes</string><string name="confirmed_guests">Confirmados</string>
+    <string name="upcoming">Próximas acciones</string><string name="mark_paid">Marcar pagado</string>
+    <string name="mark_done">Completar</string><string name="confirm_guest">Confirmar asistencia</string>
+    <string name="decline_guest">Rechazar asistencia</string><string name="check_in">Registrar llegada</string>
+    <string name="share_whatsapp">Abrir WhatsApp</string><string name="share_text">Compartir texto</string>
+    <string name="sent_confirm">Marcar como enviado</string><string name="sent_warning">Abrir otra aplicación no confirma el envío. Márcalo solo después de comprobarlo.</string>
+    <string name="language">Idioma</string><string name="currency">Moneda</string>
+    <string name="couple_names">Nombres de la pareja</string><string name="event_date">Fecha de la boda</string>
+    <string name="unlock_title">Desbloquea el organizador</string><string name="unlock_button">Usar huella o PIN del dispositivo</string>
+    <string name="device_lock_required">Configura un bloqueo de pantalla en Android antes de usar la aplicación.</string>
+    <string name="unlock_error">No se pudo desbloquear. Inténtalo de nuevo.</string>
+    <string name="backup_export">Exportar copia cifrada</string>
+    <string name="backup_import">Restaurar copia</string>
+    <string name="backup_password">Contraseña de la copia</string>
+    <string name="backup_password_repeat">Repite la contraseña</string>
+    <string name="backup_password_hint">Guarda esta contraseña: sin ella no podrás restaurar el archivo en otro dispositivo.</string>
+    <string name="backup_replace_warning">La restauración reemplazará todos los datos de este dispositivo.</string>
+    <string name="backup_created">Copia guardada</string><string name="backup_restored">Datos restaurados</string>
+    <string name="backup_failed">Error en la copia o restauración</string>
+    <string name="backup_preview">Este archivo contiene {records} registros y {files} adjuntos. Confirme la sustitución de todos los datos.</string>
+    <string name="backup_complete_preview">Copia completa: {records} registros móviles, {files} adjuntos y {tables} tablas web conservadas. La restauración reemplazará los datos del dispositivo.</string>
+    <string name="backup_partial_preview">Copia antigua y parcial: {records} registros y {files} adjuntos. Restáurela solo en una instalación vacía.</string>
+    <string name="backup_preview_details">Áreas: {areas}. Espacio mínimo: {bytes} bytes. Modificados: {changed}; creados: {created}; eliminados: {deleted}. Se guardará una copia de reversión.</string>
+    <string name="backup_export_reversal">Exportar última copia de reversión</string>
+    <string name="attach_file">Añadir adjunto</string><string name="post_gift">Registrar regalo como ingreso</string>
+    <string name="health_score">Salud de la planificación</string><string name="cashflow">Flujo de caja mensual</string>
+    <string name="choose_guest">Elija un invitado</string><string name="prepare_invite">Preparar envío</string>
+    <string name="confirmed_sends">Envíos confirmados</string>
+    <string name="export_calendar">Exportar calendario (.ics)</string>
+    <string name="import_guests">Importar invitados CSV/Wedy</string>
+    <string name="guest_import_preview">{count} invitados encontrados en {source}. Se omitirán nombres y grupos existentes.</string>
+    <string name="guest_import_result">{added} invitados importados; {skipped} duplicados omitidos.</string>
+    <string name="add_task_templates">Añadir modelos de tareas</string>
+    <string name="table_full">No hay asientos disponibles en esta mesa</string>
+    <string name="day_schedule">Cronograma del día</string><string name="rain_plan">Plan B</string><string name="special_notes">Notas importantes</string>
+    <string name="checked_in">Registrados</string><string name="seats">asientos</string>
+    <string name="create_installments">Crear cuotas</string><string name="installment_count">Número de cuotas</string><string name="first_due_date">Primer vencimiento (AAAA-MM-DD)</string>
+    <string name="capacity">Capacidad</string><string name="plus_allowed">Acompañantes permitidos</string><string name="plus_confirmed">Acompañantes confirmados</string>
+    <string name="invalid_fields">Revise los campos introducidos</string>
+    <string name="status_todo">Pendiente</string><string name="status_in_progress">En curso</string><string name="status_done">Hecho</string><string name="status_blocked">Bloqueado</string>
+    <string name="status_negotiation">Negociación</string><string name="status_contracted">Contratado</string><string name="status_finalized">Finalizado</string>
+    <string name="status_not_invited">No invitado</string><string name="status_invited">Invitado</string><string name="status_confirmed">Confirmado</string><string name="status_declined">Rechazado</string><string name="status_maybe">Tal vez</string>
+    <string name="status_pending">Pendiente</string><string name="status_paid">Pagado</string><string name="status_expected">Previsto</string><string name="status_received">Recibido</string><string name="status_cancelled">Cancelado</string>
+    <string name="status_thanked">Agradecido</string><string name="status_processed">Registrado</string><string name="status_planned">Planificado</string><string name="status_booked">Reservado</string>
+    <string name="status_to_buy">Por comprar</string><string name="status_bought">Comprado</string><string name="status_gifted">Regalado</string><string name="status_draft">Borrador</string><string name="status_signed">Firmado</string><string name="status_expired">Vencido</string><string name="status_sent">Enviado</string>
+    <string name="backup_weekly_reminder">Haz una copia de tus datos</string>
+    <string name="backup_weekly_body">Hay cambios desde la última copia.</string>
+    <string name="help_body">Tus datos están en este dispositivo. Crea copias cifradas regularmente. Las invitaciones abren WhatsApp, pero tú confirmas el envío. El RSVP se registra manualmente.</string>
+    <string name="web_rsvp_warning">Los enlaces antiguos de RSVP dejarán de funcionar cuando el servidor web se apague.</string>
+    <string name="error_generic">No se pudo completar la operación.</string>
+    <string name="pix_static">Pix estático</string><string name="pix_key">Clave Pix</string>
+    <string name="pix_holder">Nombre del titular</string><string name="share_pix">Compartir Pix</string>
+    <string name="pix_share_message">Clave Pix: {key}\nTitular: {holder}</string>
+    <string name="pix_manual_warning">La aplicación no consulta pagos. Confirma la recepción y regístrala manualmente.</string>
+    <string name="call_phone">Llamar</string><string name="open_maps">Abrir mapa</string>
+    <string name="export_report">Exportar informe CSV</string><string name="report_type">Tipo</string>
+    <string name="report_estimated">Valor estimado</string>
+    <string name="audit">Historial</string><string name="audit_save">Registro guardado</string>
+    <string name="audit_delete">Registro eliminado</string><string name="audit_status">Estado cambiado</string>
+    <string name="audit_paid">Pago confirmado</string><string name="audit_file">Archivo adjunto</string>
+    <string name="audit_import">Invitados importados</string>
+    <string name="budget_actual">Valor real</string>
+    <string name="address">Dirección</string>
+    <string name="confirm_group">Confirmar grupo</string><string name="decline_group">Rechazar grupo</string>
+    <string name="vendor_compare">Comparar proveedores</string><string name="category">Categoría</string><string name="rating">Valoración (1–5)</string>
+    <string name="all_tags">Todas las etiquetas</string>
+    <string name="frequency">Frecuencia</string><string name="one_time">Una vez</string><string name="monthly">Mensual</string>
+    <string name="contract_version">Versión del contrato</string>
+    <string name="table_overview">Ocupación de mesas</string><string name="unseated_guests">Confirmados sin mesa</string>
+</resources>

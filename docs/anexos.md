@@ -106,20 +106,20 @@ Fluxo de `replaceContractFile`:
    - `UPLOAD` no primeiro envio (fromVersion === toVersion).
    - `REPLACE` quando houve troca de versão.
 
-Arquivos da versão antiga **não são removidos do disco imediatamente** —
-ficam soft-deletados por 30 dias.
+Arquivos da versão antiga permanecem soft-deletados no banco e no disco para
+que o backup portátil v2 preserve todo o histórico e seus bytes.
 
 ## Cleanup
 
 Endpoint cron `GET /api/cron/cleanup-files` (Bearer `CRON_SECRET`):
 
-- Remove do FS e hard-delete da tabela qualquer Attachment com
-  `deletedAt < now - 30d`.
-- Lista FS recursivamente e remove arquivos órfãos (sem registro no DB).
-- Idempotente (tolera ENOENT).
+- Conta anexos soft-deletados antigos, mas não os remove.
+- Preserva também arquivos sem vínculo e artes de convites; todos entram no
+  `.wfpbackup` v2.
+- Retorna zeros nos contadores legados de remoção.
 
-Configure no orquestrador externo (cron de sistema, GitHub Actions,
-Cloudflare Cron Workers etc.) para rodar 1× ao dia.
+O endpoint pode continuar agendado para observação. Planeje capacidade de
+armazenamento, pois a retenção completa faz `uploads/` crescer.
 
 ## UI
 

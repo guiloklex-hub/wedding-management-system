@@ -1863,6 +1863,7 @@ function BackupTab({
 
   return (
     <div className="space-y-4">
+      <PortableBackupSection isAdmin={isAdmin} toast={toast} />
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
         <h2 className="text-lg font-semibold text-zinc-100">{t("backup.exportTitle")}</h2>
         <p className="mt-1 text-sm text-zinc-500">{t("backup.exportSubtitle")}</p>
@@ -2014,6 +2015,140 @@ function BackupTab({
         busy={restoring}
       />
     </div>
+  );
+}
+
+type PortablePreview = {
+  recordsByArea: Record<string, number>;
+  webTables: Record<string, number>;
+  uploadCount: number;
+  uploadBytes: number;
+  requiredBytes: number;
+  changedRecords: number;
+  createdRecords: number;
+  deletedRecords: number;
+  blockers: string[];
+};
+
+function PortableBackupSection({ isAdmin, toast }: { isAdmin: boolean; toast: ReturnType<typeof useToast> }) {
+  const t = useTranslations("dashboard.settings.backup.portable");
+  const [accountPassword, setAccountPassword] = useState("");
+  const [backupPassword, setBackupPassword] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<PortablePreview | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(false);
+
+  async function exportBackup() {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/backup", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accountPassword, backupPassword }),
+      });
+      if (!response.ok) throw new Error(((await response.json()) as { error?: string }).error ?? t("exportError"));
+      const filename = `wedding-finance-${new Date().toISOString().slice(0, 10)}.wfpbackup`;
+      const picker = (window as unknown as { showSaveFilePicker?: (options: unknown) => Promise<{
+        createWritable(): Promise<WritableStream<Uint8Array>>;
+      }> }).showSaveFilePicker;
+      if (picker && response.body) {
+        const handle = await picker({ suggestedName: filename, types: [{ description: "WFP backup", accept: { "application/octet-stream": [".wfpbackup"] } }] });
+        await response.body.pipeTo(await handle.createWritable());
+      } else {
+        const url = URL.createObjectURL(await response.blob());
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = filename;
+        anchor.click();
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      }
+      toast.success(t("exportDone"));
+    } catch (error) { toast.error((error as Error).message); }
+    finally { setBusy(false); }
+  }
+
+  async function send(endpoint: "validate" | "restore") {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const form = new FormData();
+      form.set("file", file);
+      form.set("backupPassword", backupPassword);
+      if (endpoint === "restore") {
+        form.set("accountPassword", accountPassword);
+        form.set("confirm", "REPLACE_ALL");
+      }
+      const response = await fetch(`/api/backup/portable/${endpoint}`, { method: "POST", body: form });
+      const body = await response.json() as { ok: boolean; error?: string; preview?: PortablePreview };
+      if (!response.ok || !body.ok) throw new Error(body.error ?? t("restoreError"));
+      if (body.preview) setPreview(body.preview);
+      toast.success(endpoint === "validate" ? t("validated") : t("restoreDone"));
+      if (endpoint === "restore") setTimeout(() => window.location.reload(), 1200);
+    } catch (error) { toast.error((error as Error).message); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <section className="space-y-4 rounded-2xl border border-rose-900/50 bg-zinc-900/50 p-6">
+      <div>
+        <h2 className="text-lg font-semibold text-zinc-100">{t("title")}</h2>
+        <p className="mt-1 text-sm text-zinc-400">{t("subtitle")}</p>
+      </div>
+      {!isAdmin ? <p className="text-sm text-amber-200">{t("adminOnly")}</p> : (
+        <>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="text-xs text-zinc-300">{t("accountPassword")}
+              <input type="password" autoComplete="current-password" value={accountPassword}
+                onChange={(event) => setAccountPassword(event.target.value)}
+                className="mt-1 block w-full rounded-xl border border-zinc-700 bg-zinc-950 p-2 text-sm" />
+            </label>
+            <label className="text-xs text-zinc-300">{t("backupPassword")}
+              <input type="password" autoComplete="new-password" value={backupPassword}
+                onChange={(event) => { setBackupPassword(event.target.value); setPreview(null); }}
+                className="mt-1 block w-full rounded-xl border border-zinc-700 bg-zinc-950 p-2 text-sm" />
+            </label>
+          </div>
+          <button type="button" disabled={busy || !accountPassword || backupPassword.length < 12}
+            onClick={exportBackup} className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-40">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}{t("export")}
+          </button>
+          <div className="border-t border-zinc-800 pt-4">
+            <label className="block text-xs text-zinc-300">{t("selectFile")}
+              <input type="file" accept=".wfpbackup" onChange={(event) => {
+                setFile(event.target.files?.[0] ?? null); setPreview(null); setAcknowledged(false);
+              }} className="mt-2 block w-full text-sm text-zinc-300" />
+            </label>
+            <button type="button" disabled={busy || !file || !backupPassword} onClick={() => send("validate")}
+              className="mt-3 rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-200 disabled:opacity-40">
+              {t("preview")}
+            </button>
+          </div>
+          {preview ? <div className="space-y-2 rounded-xl border border-zinc-700 bg-zinc-950 p-4 text-sm text-zinc-300">
+            <p>{t("counts", { areas: Object.keys(preview.recordsByArea).length,
+              tables: Object.keys(preview.webTables).length, files: preview.uploadCount })}</p>
+            <ul aria-label={t("areaCounts")} className="grid grid-cols-2 gap-x-4 text-xs text-zinc-400 sm:grid-cols-3">
+              {Object.entries(preview.recordsByArea).sort(([left], [right]) => left.localeCompare(right))
+                .map(([area, count]) => <li key={area}>{area}: {count}</li>)}
+            </ul>
+            <p>{t("changes", { changed: preview.changedRecords,
+              created: preview.createdRecords, deleted: preview.deletedRecords })}</p>
+            <p>{t("space", { bytes: preview.requiredBytes.toLocaleString() })}</p>
+            {preview.blockers.length ? <ul className="list-disc pl-5 text-amber-200">
+              {preview.blockers.map((blocker) => <li key={blocker}>{blocker}</li>)}
+            </ul> : <p className="text-emerald-300">{t("noOmissions")}</p>}
+            <label className="flex gap-2 text-amber-200">
+              <input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} />
+              {t("replaceConfirm")}
+            </label>
+            <button type="button" disabled={busy || !!preview.blockers.length || !acknowledged || !accountPassword}
+              onClick={() => send("restore")}
+              className="rounded-xl bg-rose-600 px-4 py-2 font-medium text-white disabled:opacity-40">
+              {t("restore")}
+            </button>
+          </div> : null}
+        </>
+      )}
+    </section>
   );
 }
 

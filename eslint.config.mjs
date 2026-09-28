@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Coverage reports geram HTML/JS auxiliares com lint próprio.
     "coverage/**",
+    "android/**/build/**",
   ]),
 ]);
 

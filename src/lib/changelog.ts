@@ -6,6 +6,14 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.9.2",
+    date: "2026-09-27",
+    highlights: [
+      "💾 **Backup portátil v2**: web e Android compartilham um arquivo .wfpbackup cifrado com banco, anexos, artes e todos os uploads. A prévia valida hashes, relações e campos obrigatórios antes da troca; cada restauração guarda uma cópia de reversão.",
+      "📱 **Transferência móvel**: alterações em campos equivalentes voltam ao web, enquanto dados web exclusivos ficam preservados no cofre privado do Android. A ferramenta de computador gera v2 diretamente de SQLite + uploads/.",
+    ],
+  },
+  {
     version: "0.9.1",
     date: "2026-09-25",
     highlights: [

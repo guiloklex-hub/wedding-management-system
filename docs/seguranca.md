@@ -270,7 +270,7 @@ detalhes completos. Resumo das proteções:
 - **Audit** em UPLOAD/DOWNLOAD/REPLACE/SIGN/DELETE.
 - **Versionamento de contrato**: o primeiro PDF mantém a versão atual
   do contrato; substituições posteriores criam v2, v3… atomicamente em
-  `prisma.$transaction`; versão antiga soft-deletada por 30 dias.
+  `prisma.$transaction`; versão antiga permanece soft-deletada para o backup completo.
 - **/api/files/[id]** ganhou ownership granular por kind
   (`canViewAttachmentKind`), headers `X-Content-Type-Options: nosniff`,
   `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: no-referrer`,
@@ -278,8 +278,8 @@ detalhes completos. Resumo das proteções:
   PDFs usam apenas `frame-ancestors 'self'` (sem `sandbox`, que bloqueava
   o visualizador interno do Chrome); demais MIMEs mantêm
   `default-src 'none'; sandbox; style-src 'unsafe-inline'; frame-ancestors 'self'`.
-- **Cron diário** `/api/cron/cleanup-files` remove arquivos soft-deletados
-  após 30 dias e órfãos no FS. Protegido por `CRON_SECRET` via
+- **Cron** `/api/cron/cleanup-files` conta arquivos antigos, mas não os remove
+  para preservar o backup portátil. Protegido por `CRON_SECRET` via
   `timingSafeEquals`.
 
 ## Checklist do reviewer

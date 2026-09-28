@@ -1,306 +1,63 @@
-# 💾 Backup e Restauração
+# Backup completo e transferência web ↔ Android
 
-O Wedding Finance Planner usa SQLite — todos os dados ficam em um único
-arquivo (`prisma/dev.db` por padrão). Isso facilita backup binário e
-migração. Em paralelo, o app expõe um **export JSON** com checksum SHA-256
-e um endpoint de **restore** que aplica o arquivo de volta em uma única
-transação Prisma.
+O formato principal é `.wfpbackup` **v2**. Um arquivo contém o SQLite web inteiro, quando existe uma origem web, todos os arquivos de `uploads/` (inclusive órfãos e artes), a representação móvel, anexos, preferências transferíveis e histórico. O pacote é cifrado integralmente com AES-256-GCM; a chave vem de PBKDF2-HMAC-SHA256 com 600 mil iterações, salt aleatório e senha escolhida a cada exportação. A senha não fica salva e não pode ser recuperada. O cabeçalho é autenticado como AAD.
 
----
+O backup exclui `.env`, `.whatsapp-auth` e segredos de serviços externos. As contas, hashes de senha e 2FA **web** estão no SQLite cifrado. O desbloqueio biométrico é configurado novamente no aparelho. Links públicos de RSVP dependem do endereço e da disponibilidade do servidor web.
 
-## Backup JSON pela UI
+## Pela interface
 
-```
-GET /api/backup
-Authorization: cookie de sessão (role com canViewSensitiveFinance — ADMIN/GROOM/BRIDE)
-```
+Em **Ajustes → Backup → Backup completo**:
 
-Retorna um arquivo com envelope:
+1. Entre como administrador. Para exportar, informe a senha da conta web e crie uma senha de arquivo de pelo menos 12 caracteres. Salve o `.wfpbackup` fora do computador que contém a instalação.
+2. Para importar, selecione o arquivo, informe a senha do arquivo e abra a prévia. Ela mostra áreas, tabelas, arquivos, espaço estimado, mudanças e bloqueios. Senha incorreta, alteração cifrada, hash ou relação inválida impedem a troca.
+3. Confirme a substituição e informe a senha da conta web. O destino é substituído; não há mesclagem de duas instalações ativas. Após uma transferência, use uma instalação de cada vez.
 
-```json
-{
-  "checksum": {
-    "algorithm": "sha256",
-    "value": "<hash hex>"
-  },
-  "payload": {
-    "version": 3,
-    "exportedAt": "2026-05-23T12:00:00.000Z",
-    "meta": {
-      "appVersion": "0.1.0",
-      "hostname": "debian",
-      "nodeVersion": "v24.x",
-      "exportedBy": { "id": "...", "email": "..." }
-    },
-    "eventSettings": { ... },
-    "securitySettings": { ... },
-    "users": [ ... ],
-    "vendors": [ ... ],
-    ...
-  }
-}
-```
+O Android usa o seletor de documentos e exige biometria forte ou credencial do aparelho antes de exportar ou restaurar. A versão móvel mantém o SQLite web e os arquivos exclusivos em um cofre privado cifrado pelo Android Keystore. Sua próxima exportação inclui esse estado e as edições móveis. No web, o estado móvel exclusivo fica em `PortableState` e `.portable-state/` e volta ao próximo pacote.
 
-Headers úteis:
+Na primeira transferência **Android → web** sem SQLite web anterior, a restauração mantém as contas administrativas da instalação web de destino e substitui os dados do casamento. A prévia bloqueia registros sem campos web obrigatórios, identificando o registro e o campo a corrigir; fornecedores exigem categoria, por exemplo. Os campos que só existem no Android continuam no estado portátil.
 
-- `X-Backup-Version: 3`
-- `X-Backup-Checksum: <sha256 hex>`
-- `Content-Disposition: attachment; filename="wedding-finance-backup-YYYY-MM-DD.json"`
+### Reversão
 
-### Coleções exportadas (v3)
+- Web: cada v2 restaurado guarda SQLite, `uploads/` e estado portátil anteriores em `.portable-reversions/<geração>/`. Um diário `.portable-restore-journal.json` permite recuperar a cópia anterior após interrupção. Rotas Prisma e gravações de uploads são bloqueadas durante a troca. Mantenha a pasta de reversões protegida e fora do controle de versão.
+- Android: antes de substituir o Room, o app grava uma cópia v2 privada cifrada pelo Keystore em `files/portable-reversions/`. A tela de Backup permite exportar a última reversão com uma nova senha. A transação Room mantém o banco anterior se a escrita falhar; o cofre web anterior só é removido após confirmação.
 
-- **Singletons:** `eventSettings`, `securitySettings`, `honeymoon`.
-- **Tabelas:** `vendors`, `vendorContacts`, `vendorNotes`, `contracts`,
-  `attachments`, `venues`, `venueChecklistItems`, `budgetItems`,
-  `payments`, `incomes`, `assets`, `savingsGoals`, `honeymoonItems`,
-  `trousseauItems`, `guestGroups`, `guests`, `seatingTables`, `gifts`,
-  `tasks`.
-- **Sensíveis (apenas ADMIN):** `users` (com `password` bcrypt e
-  `twoFactorSecret`), `notificationLogs`, `auditLogs`.
+Há necessidade de espaço livre para pacote, preparação e reversão. Se o armazenamento não for suficiente, a restauração é bloqueada antes da troca. No navegador, a exportação usa gravação em fluxo quando o seletor de arquivos está disponível; o caminho alternativo monta um `Blob` em memória. O modelo atual de anexos do Room usa BLOBs e cada arquivo precisa caber no limite de um BLOB/array Android; testes com volumes muito grandes ainda são necessários.
 
-> 🔐 Como o backup contém hashes bcrypt das senhas e secrets de 2FA,
-> **trate o arquivo como um secret**. Qualquer pessoa com o arquivo +
-> instância nova pode reativar todos os logins.
+## Ferramenta para a cópia da Área de Trabalho
 
-### Versionamento e compatibilidade
-
-| Versão | Coleções | Checksum | Notas |
-|---|---|---|---|
-| v1 | 5 (event, vendors, budget, payments, assets) | não | legado, sem importador |
-| v2 | 22 (event + tudo da v1 + restante) | não | suportado para restore |
-| v3 | 25 (v2 + users + notificationLogs + auditLogs) + meta + checksum | sim | atual |
-
-O `parseBackupText` aceita v2 e v3. Backups v1 antigos precisam ser
-convertidos manualmente.
-
-### `BACKUP_EXPORT` no AuditLog
-
-Cada download grava em `AuditLog`:
-
-```json
-{
-  "entity": "EventSettings",
-  "entityId": "singleton",
-  "action": "BACKUP_EXPORT",
-  "payload": "{\"version\":3,\"checksum\":\"...\",\"counts\":{...},\"includesSensitive\":true}",
-  "userId": "..."
-}
-```
-
----
-
-## Validação de arquivo (dry-run)
-
-```
-POST /api/backup/validate
-Content-Type: multipart/form-data
-Body: file=@arquivo.json
-```
-
-Retorna 200 com:
-
-```json
-{
-  "ok": true,
-  "version": 3,
-  "systemVersion": 3,
-  "exportedAt": "...",
-  "meta": { ... },
-  "checksumValid": true,
-  "checksum": { "algorithm": "sha256", "value": "..." },
-  "counts": { "vendors": 12, "payments": 28, ... },
-  "warnings": []
-}
-```
-
-Em erro, 422 com `issues` (Zod path/message) ou mensagem.
-
-**Quem pode chamar:** mesma permissão do export (`ADMIN/GROOM/BRIDE`).
-
----
-
-## Restore
-
-```
-POST /api/backup/restore
-Content-Type: multipart/form-data
-Body:
-  file=@arquivo.json
-  password=<senha do admin logado>
-  confirm=WIPE_AND_RESTORE
-```
-
-Resposta de sucesso (200):
-
-```json
-{
-  "ok": true,
-  "counts": { "vendors": 12, "users": 3, ... },
-  "warnings": [],
-  "protectedCurrentUser": false
-}
-```
-
-### Garantias
-
-1. **Apenas ADMIN.** Outras roles recebem 403.
-2. **Re-autenticação obrigatória** — `password` deve bater com o hash
-   bcrypt do usuário logado. Sem isso, 401.
-3. **Confirmação explícita** — sem `confirm=WIPE_AND_RESTORE`, 400.
-4. **Validação do arquivo** — Zod schema + checksum. Checksum inválido
-   → 422 e nenhuma escrita no banco.
-5. **Rate limit** — 3 tentativas por hora por (userId, IP).
-6. **Transação Prisma única** — wipe + insert em
-   `prisma.$transaction({ timeout: 120s })`. Se qualquer passo falha,
-   nada é commitado.
-7. **Proteção do usuário logado** — se o backup tem `users` mas o usuário
-   atual não está na lista, ele é preservado para não perder a sessão.
-8. **Audit** — grava `BACKUP_RESTORE` em `AuditLog` ao final, com
-   `counts`, `version`, `checksum` e `warnings`.
-
-### Ordem de wipe (children → parents)
-
-`AuditLog → NotificationLog → PasswordResetToken → Attachment → Contract
-→ VendorNote → VendorContact → VenueChecklistItem → HoneymoonItem →
-Payment → Gift → Task → BudgetItem → Asset → Guest → GuestGroup →
-SeatingTable → Income → TrousseauItem → SavingsGoal → Vendor → Venue →
-Honeymoon`.
-
-`EventSettings` e `SecuritySettings` (singletons) são **upserted**,
-nunca deletados.
-
-`User` é wipado **só** se o backup traz a coleção `users` não-vazia.
-
-### Ordem de restore (parents → children)
-
-`User → SecuritySettings → EventSettings → SavingsGoal → Vendor → Venue →
-SeatingTable → GuestGroup → Honeymoon → Income → TrousseauItem → Asset →
-Guest → BudgetItem → VendorContact → VendorNote → Contract →
-VenueChecklistItem → Payment → HoneymoonItem → Gift → Task → Attachment →
-NotificationLog → AuditLog`.
-
-Datas em string ISO são convertidas para `Date` via lista canônica
-(`createdAt`, `updatedAt`, `eventDate`, `dueDate`, etc.) — ver
-`DATE_FIELDS` em [src/lib/backup-restore.ts](../src/lib/backup-restore.ts).
-
-### Sessão após restore
-
-Se o backup contém users e o usuário atual **está** entre eles, o
-registro local será sobrescrito — pode ser necessário relogar (a sessão
-JWT expira na próxima revalidação, em até 60s).
-
-Se o backup não traz `users` ou o usuário atual **não** está nele, a
-sessão segue válida (o registro foi preservado).
-
----
-
-## Backup direto do arquivo SQLite
-
-Para um backup binário (mais fiel e mais barato que JSON):
+Faça a conversão a partir de **cópias** do SQLite e de `uploads/`. O banco localizado em `~/Área de trabalho/temp/prisma/dev.db` e sua pasta `uploads/` foram usados nos testes desta implementação. A ferramenta faz snapshot consistente do SQLite e compara hashes dos arquivos:
 
 ```bash
-# parar o servidor (ou usar VACUUM INTO em produção)
-cp prisma/dev.db backups/dev-$(date +%F).db
+python -m pip install 'cryptography==50.0.1'
+python android/tools/portable_v2.py \
+  --sqlite "$HOME/Área de trabalho/temp/prisma/dev.db" \
+  --uploads "$HOME/Área de trabalho/temp/uploads" \
+  --output "$HOME/Área de trabalho/temp/wedding-full.wfpbackup" \
+  --report "$HOME/Área de trabalho/temp/wedding-full-report.json"
 ```
 
-Em **produção**, cron diário:
+Ela pede e confirma uma nova senha sem exibi-la. O relatório traz as 31 tabelas, arquivos e relações; ausência ou divergência bloqueia a geração. A saída deve ser testada em uma instalação separada antes de trocar o aparelho principal. **Não desligue o web nem apague a origem antes da conferência.**
 
-```cron
-0 3 * * * /usr/bin/cp /var/lib/wedding/prisma/dev.db /var/backups/wedding-$(date +\%F).db && find /var/backups -name "wedding-*.db" -mtime +30 -delete
-```
+## Contrato v2
 
-### Restaurar SQLite cru
+O fluxo binário começa com `WFPBAK01`, iterações (big endian), salt de 16 bytes, nonce GCM de 12 bytes, ZIP cifrado e tag GCM de 16 bytes. O ZIP contém `manifest.json`, `records.json`, `baseline.json`, `files.json`, `settings.json`, `audit.json`, `blobs/<id>`, e, se houver origem web, `web.sqlite` e `uploads/<caminho>`. O manifesto inclui origem, linhagem, geração, versões, contagens e SHA-256 por arquivo. Caminhos absolutos, `..`, barras invertidas e entradas inesperadas são rejeitados.
 
-```bash
-pm2 stop wedding-management-system
-cp /var/backups/wedding-2025-10-12.db prisma/dev.db
-npx prisma db push --skip-generate
-npx prisma generate
-pm2 start wedding-management-system
-```
+Campos equivalentes são aplicados ao SQLite de origem usando `baseline.json` como referência. O conversor só modifica colunas móveis alteradas; campos web não editados no Android ficam como estavam. Novos registros são verificados contra colunas obrigatórias e chaves estrangeiras antes de substituir o destino. Os arquivos de uploads sem vínculo permanecem no pacote. O web não remove automaticamente anexos antigos nem artes para não tornar um backup posterior incompleto.
 
----
-
-## Onde fica o banco?
-
-| Ambiente | Caminho típico |
+| Rota web | Função |
 |---|---|
-| Dev (Linux/macOS/WSL) | `./prisma/dev.db` |
-| Dev (Windows nativo) | `.\prisma\dev.db` |
-| Prod | `DATABASE_URL="file:/var/lib/wedding/dev.db"` |
+| `POST /api/backup` | Exporta v2 após senha da conta e nova senha do arquivo; resposta em fluxo. |
+| `POST /api/backup/portable/validate` | Lê `file` e `backupPassword`; devolve prévia e bloqueios. |
+| `POST /api/backup/portable/restore` | Lê `file`, `backupPassword`, `accountPassword` e `confirm=REPLACE_ALL`; prepara, guarda reversão e substitui. |
 
-Em produção, configure `DATABASE_URL` para um diretório persistente fora
-do deploy (não dentro de `/var/www/wedding/...` se você costuma fazer
-`git pull && npm run build`).
+Todos os três exigem sessão administradora. O arquivo deve ser mantido em local privado: perder a senha impede a restauração e divulgá-la expõe os dados pessoais e credenciais web contidos no backup.
 
----
+## Formatos antigos são parciais
 
-## Backup do `.whatsapp-auth/`
+O JSON web v2/v3 continua disponível na seção legada de Ajustes e nos endpoints `/api/backup` GET, `/api/backup/validate` e `/api/backup/restore`. Ele não carrega bytes de `uploads/`, artes órfãs nem todas as tabelas atuais. O v3 tem checksum SHA-256; o v2 não. O `.wfpbackup` v1 do Android contém apenas seus registros e BLOBs; o Android o aceita somente em instalação vazia. **Nenhum dos dois é uma transferência completa.** Use a ferramenta a partir de SQLite + `uploads/` para recuperar tudo o que ainda estiver na origem.
 
-Quando o WhatsApp está conectado, a sessão Baileys vive em
-`.whatsapp-auth/` (gitignored). O JSON do `/api/backup` **não** inclui
-esse diretório. Para evitar precisar escanear o QR Code toda hora:
+O JSON legado pode alterar contas e dados visíveis, mas não recompõe os arquivos ausentes. O restaurador JSON também guarda uma cópia local prévia em `.portable-reversions/`; antes de usá-lo, faça ainda um backup completo v2 que possa ser levado a outro aparelho. A cópia original do SQLite e de `uploads/` deve ser mantida até todos os testes de restauração passarem.
 
-```bash
-tar czf backups/whatsapp-auth-$(date +%F).tar.gz .whatsapp-auth/
-```
+## Testes e operação
 
-Restaurar:
-
-```bash
-tar xzf backups/whatsapp-auth-2025-10-12.tar.gz
-pm2 restart wedding-management-system
-```
-
-> ⚠️ Trate esse diretório como **secret** — quem tem o arquivo pode se
-> passar pela sua conta WhatsApp.
-
----
-
-## Backup do `.env`
-
-Faça! Embora os secrets sejam gerados aleatoriamente, perder o
-`NEXTAUTH_SECRET` invalida todas as sessões ativas. Guarde em local seguro.
-
----
-
-## Plano sugerido
-
-| Frequência | O quê | Destino | Retenção |
-|---|---|---|---|
-| Diário (3am) | `prisma/dev.db` | local + nuvem | 30 dias |
-| Semanal | `/api/backup` JSON | nuvem (criptografado) | 8 semanas |
-| Semanal | `.whatsapp-auth/` | nuvem (criptografado) | 4 semanas |
-| Quando muda | `.env`, `prisma/schema.prisma` | gerenciador de senhas | sempre |
-| Antes de update | `npm run build` (artefato) | local | até próximo deploy |
-
----
-
-## Migração entre máquinas
-
-### Via JSON (recomendado para mudar de host limpo)
-
-```bash
-# Máquina nova: setup limpo
-git clone ... && cd wedding-management-system
-./setup.sh                    # cria admin temporário
-# Faça login com o admin temporário
-# Ajustes → Backup → Selecione o arquivo → Validar → Restaurar
-```
-
-A sua conta admin temporária será sobrescrita pelos users do backup. Use
-as credenciais antigas para entrar.
-
-### Via SQLite (preserva sessões, mais fiel)
-
-```bash
-# máquina antiga
-tar czf migration.tar.gz prisma/dev.db .env .whatsapp-auth/
-
-# máquina nova
-git clone ...
-cd wedding-management-system
-tar xzf ../migration.tar.gz
-./setup.sh --skip-seed
-npm run dev   # ou: ./setup.sh --prod --skip-seed
-```
+O projeto testa Python ↔ web e Python ↔ Android com uma fixture sintética, migração Room v1→v2, senha incorreta e arquivo alterado. Em uma cópia dos dados da Área de Trabalho, a ida e volta sem edição passou pelo emulador Android e preservou todas as linhas das 31 tabelas originais e o hash dos 10 arquivos; a importação contou 339 registros móveis e 10 arquivos. Uma edição de convidado feita dentro do emulador chegou ao web e permaneceu após nova exportação web e importação Android. Um ensaio iniciado em Android vazio levou fornecedor, convidada e anexo ao web, preservou as quatro contas do destino e voltou ao Android. Outros testes de mudança em cópias isoladas verificaram convidado criado/excluído logicamente e anexo alterado. Ainda é necessário ensaiar corte de energia/interrupção em dispositivos reais, volumes grandes e atualização de APK assinado antes da adoção como única cópia.

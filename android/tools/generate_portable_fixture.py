@@ -60,7 +60,8 @@ def main(output: Path):
         files = [dict(id="file-1", recordId="vendor-1", kind="CONTRACT", fileName="contract.pdf",
                       mimeType="application/pdf", byteSize=len(UPLOAD), sha256=digest,
                       createdAt=1700000000000, deletedAt=None)]
-        web = database.read_bytes()
+        raw_web = database.read_bytes()
+        web = raw_web[:96] + struct.pack(">I", 3045000) + raw_web[100:]
         check = sqlite3.connect(database)
         try:
             fingerprint = portable_v2.schema_hash(check)
@@ -74,10 +75,11 @@ def main(output: Path):
                         schemas={"web": fingerprint, "android": 2},
                         webDatabase={"sha256": hashlib.sha256(web).hexdigest(), "size": len(web)})
         plain = work / "payload.zip"
-        with zipfile.ZipFile(plain, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as archive:
+        with zipfile.ZipFile(plain, "w", zipfile.ZIP_STORED, allowZip64=True) as archive:
             def add(name: str, value: bytes):
                 entry = zipfile.ZipInfo(name, date_time=(2020, 1, 1, 0, 0, 0))
-                entry.compress_type = zipfile.ZIP_DEFLATED
+                entry.create_system = 3
+                entry.compress_type = zipfile.ZIP_STORED
                 archive.writestr(entry, value)
 
             for name, value in (("manifest.json", manifest), ("records.json", records),

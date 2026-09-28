@@ -2,11 +2,12 @@
 
 <p align="center">
   <strong>Sistema open-source para casais organizarem o casamento.</strong><br/>
-  Orçamento, fornecedores, convidados, lua de mel e enxoval — na versão web para servidor próprio e no projeto Android local.
+  Orçamento, fornecedores, convidados, lua de mel e enxoval — na versão web self-hosted e no aplicativo Android nativo (APK assinado).
 </p>
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <a href="https://github.com/guiloklex-hub/wedding-management-system/releases/latest"><img alt="Android APK" src="https://img.shields.io/badge/Android_11%2B-APK_v1.0.0-3DDC84?logo=android&logoColor=white"></a>
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?logo=next.js">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white">
   <img alt="Prisma" src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white">
@@ -16,11 +17,14 @@
 
 ---
 
-## 📱 Projeto Android
+## 📱 Aplicativo Android Nativo (`v1.0.0`)
 
-O diretório [android/](android/README.md) contém um aplicativo Kotlin/Jetpack Compose independente do servidor. O APK de desenvolvimento funciona com banco Room/SQLite local, desbloqueio pelo aparelho, formulários móveis, anexos e lembretes. **Ajustes → Backup** nas duas versões oferece `.wfpbackup` v2 cifrado, com banco e arquivos, prévia e cópia de reversão; consulte [backup e transferência](docs/backup-restore.md). A cópia do SQLite web e de `uploads/` também pode ser convertida no computador.
+O aplicativo oficial para **Android 11+ (SDK 30–36)** está disponível em [**GitHub Releases**](https://github.com/guiloklex-hub/wedding-management-system/releases/latest) (`wedding-finance-planner-v1.0.0.apk`, pacote `br.com.paivalab.weddingmanagementsystem`). Desenvolvido em **Kotlin, Jetpack Compose (Material 3) e Room/SQLite**, roda **100% offline no aparelho**, sem depender de servidor Node.js, nuvem ou hospedagem externa.
 
-**Estado:** versão de desenvolvimento. A cobertura das regras e telas do web ainda é parcial; não substitua a instalação web nem apague o SQLite/`uploads/` antes de conferir a migração e a restauração em um aparelho de teste. O identificador Android é `br.com.paivalab.weddingmanagementsystem`.
+- 📥 **Download direto (APK assinado):** [`wedding-finance-planner-v1.0.0.apk`](https://github.com/guiloklex-hub/wedding-management-system/releases/download/v1.0.0/wedding-finance-planner-v1.0.0.apk) (`SHA-256: ad4d56ae472c3904c04d48ce6e384b49e5eac3d6f44d542ffaf49b13bfee7be7`)
+- 🎨 **Identidade Material 3 (rosa/champagne)** com tema escuro nativo, badges semânticas, filtros rápidos (`FilterChip`), `DatePickerDialog` nativo e base de demonstração em 1 toque
+- ⚡ **Paridade de domínio com o webapp:** gerador nativo de **PIX Copia e Cola (EMV® QRCPS-MPM + CRC16-CCITT)** e **QR Code ISO/IEC 18004** em `Canvas`, **Radar de Riscos** proativo (6 regras de auditoria financeira/contratual), cálculo automático de **multa e juros pro-rata die**, **Resumo Demográfico para Buffet** (pagantes, meias 50%, isentos e restrições alimentares), **20 itens de Checklist Técnico de Local** e **33 modelos de tarefas**
+- 🔐 **Segurança e portabilidade (`.wfpbackup` v2):** desbloqueio por biometria forte ou credencial do aparelho, cofre **Android Keystore** e transferência bidirecional cifrada (`AES-256-GCM` + `PBKDF2-HMAC-SHA256` com 600 mil iterações) em **Ajustes → Backup**, preservando 100% do SQLite web, `uploads/`, anexos e cópia automática de reversão. Veja [Android nativo](docs/android.md) e [backup e transferência](docs/backup-restore.md).
 
 ---
 
@@ -112,6 +116,7 @@ Abra <http://localhost:3005> no navegador.
 | Gráficos | [Recharts](https://recharts.org/) |
 | Testes | [Vitest 4](https://vitest.dev/) + Testing Library |
 | i18n | [next-intl 4](https://next-intl.dev/) (pt-BR, en, es) |
+| Android Nativo | [Kotlin](https://kotlinlang.org/) + [Jetpack Compose](https://developer.android.com/compose) (Material 3) + [Room](https://developer.android.com/training/data-storage/room) |
 
 ---
 

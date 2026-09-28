@@ -6,6 +6,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.0",
+    date: "2026-09-28",
+    highlights: [
+      "📱 **Lançamento oficial do aplicativo Android nativo (`v1.0.0`)**: APK assinado de produção publicado em GitHub Releases (`br.com.paivalab.weddingmanagementsystem`), 100% offline em Room/SQLite, com tema escuro Material 3 (rosa/champagne), badges semânticas, filtros rápidos (`FilterChip`), `DatePickerDialog` nativo e base de demonstração em 1 toque.",
+      "⚡ **Paridade de domínio com o webapp**: gerador nativo de **PIX Copia e Cola (EMV® QRCPS-MPM + CRC16-CCITT)** e **QR Code ISO/IEC 18004** em `Canvas`, **Radar de Riscos** proativo (6 regras de auditoria financeira/contratual), cálculo automático de **multa e juros pro-rata die** em parcelas vencidas, **Resumo Demográfico para Buffet** (pagantes, meias 50%, isentos e restrições alimentares), **20 itens de Checklist Técnico de Local** e **33 modelos de tarefas**.",
+      "🔐 **Portabilidade `.wfpbackup` v2 e segurança biométrica**: desbloqueio por biometria forte ou credencial do aparelho, cofre Android Keystore e transferência bidirecional cifrada (`AES-256-GCM` + `PBKDF2 600k`) entre web e Android com cópia automática de reversão.",
+    ],
+  },
+  {
     version: "0.9.2",
     date: "2026-09-27",
     highlights: [

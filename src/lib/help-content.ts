@@ -790,19 +790,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
   },
   {
     id: "android-migration",
-    title: "Migrar para o projeto Android",
+    title: "Aplicativo Android nativo e migração",
     category: "backup-calendar",
-    keywords: ["android", "apk", "migrar", "sqlite", "uploads", "wfpbackup"],
+    keywords: ["android", "apk", "migrar", "sqlite", "uploads", "wfpbackup", "release"],
     icon: Database,
-    summary: "Gerar um .wfpbackup v2 completo a partir de uma cópia do SQLite e de uploads/.",
+    summary: "Instale o APK assinado oficial (v1.0.0) pelo GitHub Releases e transfira seus dados com .wfpbackup v2.",
     steps: [
-      { title: "Preserve o original", body: "Guarde o SQLite e a pasta uploads/ antes de qualquer migração." },
-      { title: "Execute a ferramenta no computador", body: "Use android/tools/portable_v2.py com --sqlite, --uploads, --output e --report. Consulte docs/backup-restore.md." },
-      { title: "Confira em instalação de teste", body: "Restaure no app Android e compare contagens, relações e anexos antes de desativar o web." },
+      { title: "Baixe o APK assinado em GitHub Releases", body: "Baixe `wedding-finance-planner-v1.0.0.apk` (pacote `br.com.paivalab.weddingmanagementsystem`) na página de Releases do projeto e confira o hash SHA-256 antes de instalar." },
+      { title: "Exporte o .wfpbackup v2", body: "Pela interface web em Ajustes → Backup completo (ou no computador via `android/tools/portable_v2.py` com `--sqlite`, `--uploads`, `--output` e `--report`)." },
+      { title: "Restaure no app Android", body: "Em Ajustes → Backup → Restaurar backup, selecione o arquivo `.wfpbackup`, informe a senha de 12+ caracteres e confira a prévia antes de confirmar com biometria/PIN." },
     ],
     warnings: [
-      "O projeto Android ainda está em desenvolvimento e não cobre todas as funções do web.",
-      "Ao desligar o servidor web, links públicos antigos de RSVP deixam de funcionar.",
+      "Mantenha o mesmo certificado de assinatura ao atualizar o APK para preservar o banco Room e o cofre Android Keystore.",
+      "Ao desligar o servidor web, links públicos antigos de RSVP deixam de funcionar (respostas novas são registradas manualmente no app).",
     ],
   },
   {

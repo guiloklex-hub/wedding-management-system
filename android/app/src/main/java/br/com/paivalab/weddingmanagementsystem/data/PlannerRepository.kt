@@ -113,6 +113,28 @@ class PlannerRepository(private val database: PlannerDatabase) {
         tasks.size
     }
 
+    suspend fun seedVenueChecklist(venueId: String): Int = database.withTransaction {
+        require(dao.find(venueId)?.kind == Kinds.VENUE) { "Local inválido" }
+        val existingTitles = dao.allRecords().filter {
+            it.kind == Kinds.VENUE_CHECK && it.parentId == venueId && it.deletedAt == null
+        }.map { it.title.lowercase() }.toSet()
+        val additions = VenueChecklistTemplates.all.filterNot { it.lowercase() in existingTitles }.mapIndexed { idx, label ->
+            PlannerRecord(
+                id = UUID.randomUUID().toString(),
+                kind = Kinds.VENUE_CHECK,
+                title = label,
+                subtitle = "Vistoria técnica #${idx + 1}",
+                status = "TODO",
+                parentId = venueId,
+            )
+        }
+        dao.saveRecords(additions)
+        if (additions.isNotEmpty()) {
+            dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), venueId, "SEED_VENUE_CHECKLIST", details = additions.size.toString()))
+        }
+        additions.size
+    }
+
     suspend fun createInstallments(vendorId: String?, title: String, totalCents: Long,
                                    count: Int, firstDueDate: LocalDate) = database.withTransaction {
         require(title.isNotBlank() && title.length <= 160)

@@ -1,6 +1,16 @@
 package br.com.paivalab.weddingmanagementsystem.ui
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 
 @Composable
@@ -37,4 +47,48 @@ fun statusLabel(status: String, language: String): String {
         else -> return status
     }
     return localized(resource, language)
+}
+
+fun statusColor(status: String): Color = when (status) {
+    "DONE", "PAID", "CONFIRMED", "FINALIZED", "SIGNED", "RECEIVED", "PROCESSED", "BOUGHT", "GIFTED", "THANKED", "SENT" -> PlannerEmerald
+    "IN_PROGRESS", "NEGOTIATION", "CONTRACTED", "INVITED", "MAYBE", "PENDING", "EXPECTED", "BOOKED", "PLANNED" -> PlannerChampagne
+    "BLOCKED", "DECLINED", "CANCELLED", "EXPIRED" -> PlannerRose
+    else -> PlannerMuted
+}
+
+@Composable
+fun StatusBadge(status: String, language: String) {
+    if (status.isBlank()) return
+    val color = statusColor(status)
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = color.copy(alpha = 0.14f),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.40f)),
+    ) {
+        Text(
+            text = statusLabel(status, language),
+            color = color,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+        )
+    }
+}
+
+@Composable
+fun InfoBadge(text: String, color: Color = PlannerChampagne) {
+    if (text.isBlank()) return
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = color.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.32f)),
+    ) {
+        Text(
+            text = text,
+            color = color,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+        )
+    }
 }

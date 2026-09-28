@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { assertPortableFilesWritable } from "./portable-maintenance";
 
 function uploadsRootPath(): string {
   return path.resolve(process.cwd(), "uploads");
@@ -50,6 +51,7 @@ export async function saveUpload(
     overrideExtension?: string;
   },
 ): Promise<StoredFile> {
+  assertPortableFilesWritable();
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new Error("Arquivo excede 10 MB.");
   }
@@ -71,6 +73,7 @@ export async function saveUpload(
   const absolutePath = resolveSafe(relativePath);
 
   await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+  assertPortableFilesWritable();
   await fs.writeFile(absolutePath, bytes);
 
   return {

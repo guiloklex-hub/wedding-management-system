@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { assertPortableReady } from "./portable-maintenance";
 
 const SOFT_DELETE_MODELS = new Set<string>([
   "Vendor",
@@ -33,7 +34,17 @@ function injectDeletedAtFilter<T extends Record<string, unknown> | undefined>(wh
 }
 
 function createExtendedClient() {
-  const base = new PrismaClient();
+  const base = new PrismaClient().$extends({
+    name: "portableMaintenance",
+    query: {
+      $allModels: {
+        async $allOperations({ args, query }) {
+          await assertPortableReady();
+          return query(args);
+        },
+      },
+    },
+  });
 
   // Reference holder so the delete-hook can call .update on the extended client
   // without infinite recursion (update is not intercepted).

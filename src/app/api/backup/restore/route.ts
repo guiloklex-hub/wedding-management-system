@@ -7,6 +7,7 @@ import { audit } from "@/lib/audit";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { BACKUP_VERSION, parseBackupText } from "@/lib/backup";
 import { restoreBackup } from "@/lib/backup-restore";
+import { createLegacyReversal } from "@/lib/portable-maintenance";
 
 export const dynamic = "force-dynamic";
 
@@ -149,7 +150,9 @@ export async function POST(req: Request) {
       : undefined;
 
   let counts;
+  let reversal: string;
   try {
+    reversal = await createLegacyReversal();
     counts = await restoreBackup(parsed.payload, { protectUserId });
   } catch (err) {
     console.error("[backup/restore] falha:", err);
@@ -173,6 +176,7 @@ export async function POST(req: Request) {
       counts,
       protectedCurrentUser: protectUserId !== undefined,
       warnings: parsed.warnings,
+      reversal,
     },
     sessionUser.id,
   );
@@ -182,5 +186,6 @@ export async function POST(req: Request) {
     counts,
     warnings: parsed.warnings,
     protectedCurrentUser: protectUserId !== undefined,
+    reversalStored: true,
   });
 }

@@ -55,6 +55,10 @@ dev.db-shm
 
 # Uploaded files (storage local)
 /uploads
+/.portable-state/
+/.portable-reversions/
+/.portable-operation.lock
+/.portable-restore-journal.json
 
 # WhatsApp (Baileys) auth session
 /.whatsapp-auth

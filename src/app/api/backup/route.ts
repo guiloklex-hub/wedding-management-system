@@ -1,4 +1,5 @@
 import { hostname } from "node:os";
+import { getTranslations } from "next-intl/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
@@ -6,8 +7,48 @@ import { canViewSensitiveFinance } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
 import { BACKUP_VERSION, computeChecksum, type BackupPayload } from "@/lib/backup";
 import appPkg from "@/../package.json";
+import bcrypt from "bcryptjs";
+import { createReadStream } from "node:fs";
+import { Readable } from "node:stream";
+import { exportPortable } from "@/lib/portable-export";
+import { acquirePortableOperation } from "@/lib/portable-maintenance";
 
 export const dynamic = "force-dynamic";
+
+export async function POST(request: Request) {
+  const t = await getTranslations("dashboard.settings.backup.portable");
+  const session = await auth();
+  const user = session?.user as { id?: string; role?: string } | undefined;
+  if (!user?.id) return NextResponse.json({ error: t("adminOnly") }, { status: 401 });
+  if (user.role !== "ADMIN") return NextResponse.json({ error: t("adminOnly") }, { status: 403 });
+  const body = await request.json().catch(() => null) as { accountPassword?: string; backupPassword?: string } | null;
+  if (typeof body?.accountPassword !== "string" || typeof body.backupPassword !== "string" ||
+      body.backupPassword.length < 12) {
+    return NextResponse.json({ error: t("exportInput") }, { status: 400 });
+  }
+  const account = await prisma.user.findUnique({ where: { id: user.id } });
+  if (!account?.isActive || account.archivedAt || !await bcrypt.compare(body.accountPassword, account.password)) {
+    return NextResponse.json({ error: t("accountPasswordInvalid") }, { status: 401 });
+  }
+  try {
+    const release = await acquirePortableOperation();
+    let result: Awaited<ReturnType<typeof exportPortable>>;
+    try { result = await exportPortable(body.backupPassword); } finally { await release(); }
+    const stream = createReadStream(result.file);
+    stream.once("close", () => void result.dispose());
+    return new NextResponse(Readable.toWeb(stream) as ReadableStream, {
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "Content-Disposition": `attachment; filename="wedding-finance-${new Date().toISOString().slice(0, 10)}.wfpbackup"`,
+        "Cache-Control": "no-store",
+        "X-Backup-Version": "2",
+      },
+    });
+  } catch (error) {
+    console.error("[backup/portable-export] falha:", error);
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+  }
+}
 
 export async function GET() {
   const session = await auth();

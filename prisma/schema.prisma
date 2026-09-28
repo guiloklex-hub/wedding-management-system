@@ -622,3 +622,9 @@ model AiGeneration {
   @@index([resource, createdAt])
   @@index([userId, createdAt])
 }
+
+model PortableState {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt
+}

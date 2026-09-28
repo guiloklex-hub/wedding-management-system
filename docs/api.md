@@ -198,15 +198,12 @@ Authorization: Bearer <CRON_SECRET>
 **Requer:** Bearer token (`CRON_SECRET` do `.env`), comparado timing-safe.
 Tem rate limit por IP (5/min).
 
-**O que faz:**
-1. Remove definitivamente os `Attachment` com `deletedAt` há mais de 30 dias
-   (apaga o arquivo em disco e o registro).
-2. Varre o diretório de uploads e remove arquivos órfãos (sem `Attachment`
-   correspondente).
+**O que faz:** Conta anexos soft-deletados antigos para observação. A limpeza
+física está suspensa para preservar arquivos sem vínculo e artes no backup
+portátil v2. O endpoint não apaga arquivos nem registros.
 
-> ⚠️ Sem este cron os anexos soft-deletados nunca são apagados do disco —
-> o diretório de uploads cresce indefinidamente. Agende-o (ex.: diário).
-> Veja [deploy.md](deploy.md).
+> O diretório de uploads cresce com a retenção completa. Monitore espaço e
+> mantenha backups v2 verificados. Veja [deploy.md](deploy.md).
 
 **Retorna:**
 
@@ -214,8 +211,9 @@ Tem rate limit por IP (5/min).
 {
   "ok": true,
   "summary": {
-    "softDeletedHardRemoved": 3,
-    "orphanFilesRemoved": 1,
+    "softDeletedHardRemoved": 0,
+    "orphanFilesRemoved": 0,
+    "retainedSoftDeleted": 3,
     "errors": 0
   }
 }

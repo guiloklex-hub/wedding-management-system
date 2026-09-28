@@ -1,0 +1,97 @@
+<resources>
+    <string name="app_name">Wedding Finance Planner</string>
+    <string name="dashboard">Dashboard</string><string name="tasks">Tasks</string>
+    <string name="vendors">Vendors</string><string name="guests">Guests</string>
+    <string name="vendors_nav">Vendors</string>
+    <string name="more">More</string><string name="venues">Venues</string>
+    <string name="budget">Budget</string><string name="payments">Payments</string>
+    <string name="income">Income</string><string name="assets">Savings</string>
+    <string name="goals">Goals</string><string name="groups">Groups</string>
+    <string name="tags">Tags</string><string name="gifts">Gifts</string>
+    <string name="wedding_day">Wedding day</string><string name="seating">Tables</string>
+    <string name="honeymoon">Honeymoon</string><string name="honeymoon_items">Honeymoon items</string>
+    <string name="trousseau">Trousseau</string><string name="contracts">Contracts</string>
+    <string name="contacts">Contacts</string><string name="venue_check">Venue checklist</string>
+    <string name="vendor_notes">Vendor notes</string><string name="invitations">Invitations</string>
+    <string name="save_the_date">Save the Date</string><string name="insights">Insights</string>
+    <string name="settings">Settings</string><string name="help">Help</string>
+    <string name="backup">Backup</string><string name="add">Add</string>
+    <string name="edit">Edit</string><string name="save">Save</string>
+    <string name="cancel">Cancel</string><string name="delete">Delete</string>
+    <string name="title">Name or title</string><string name="subtitle">Description</string>
+    <string name="amount">Amount</string><string name="date">Date (YYYY-MM-DD)</string>
+    <string name="status">Status</string><string name="phone">Phone</string>
+    <string name="email">Email</string><string name="notes">Notes</string>
+    <string name="search">Search</string><string name="empty">No records yet</string>
+    <string name="confirm_delete">Delete this record?</string>
+    <string name="total_budget">Planned budget</string><string name="total_paid">Total paid</string>
+    <string name="pending_tasks">Pending tasks</string><string name="confirmed_guests">Confirmed</string>
+    <string name="upcoming">Next actions</string><string name="mark_paid">Mark paid</string>
+    <string name="mark_done">Complete</string><string name="confirm_guest">Confirm attendance</string>
+    <string name="decline_guest">Decline attendance</string><string name="check_in">Check in</string>
+    <string name="share_whatsapp">Open WhatsApp</string><string name="share_text">Share text</string>
+    <string name="sent_confirm">Mark as sent</string><string name="sent_warning">Opening another app does not prove delivery. Mark this only after confirming.</string>
+    <string name="language">Language</string><string name="currency">Currency</string>
+    <string name="couple_names">Couple names</string><string name="event_date">Wedding date</string>
+    <string name="unlock_title">Unlock your planner</string><string name="unlock_button">Use fingerprint or device PIN</string>
+    <string name="device_lock_required">Set up an Android screen lock before using the app.</string>
+    <string name="unlock_error">Could not unlock. Try again.</string>
+    <string name="backup_export">Export encrypted backup</string>
+    <string name="backup_import">Restore backup</string>
+    <string name="backup_password">Backup password</string>
+    <string name="backup_password_repeat">Repeat password</string>
+    <string name="backup_password_hint">Keep this password safe: without it, you cannot restore the file on another device.</string>
+    <string name="backup_replace_warning">Restoring replaces all data on this device.</string>
+    <string name="backup_created">Backup saved</string><string name="backup_restored">Data restored</string>
+    <string name="backup_failed">Backup or restore failed</string>
+    <string name="backup_preview">This file contains {records} records and {files} attachments. Confirm replacement of all data.</string>
+    <string name="backup_complete_preview">Full backup: {records} mobile records, {files} attachments, and {tables} preserved web tables. Restoring replaces this device’s data.</string>
+    <string name="backup_partial_preview">Older partial backup: {records} records and {files} attachments. Restore it only into an empty installation.</string>
+    <string name="backup_preview_details">Areas: {areas}. Minimum space: {bytes} bytes. Changed: {changed}; created: {created}; deleted: {deleted}. A reversal copy will be kept.</string>
+    <string name="backup_export_reversal">Export latest reversal copy</string>
+    <string name="attach_file">Add attachment</string><string name="post_gift">Post gift as income</string>
+    <string name="health_score">Planning health</string><string name="cashflow">Monthly cash flow</string>
+    <string name="choose_guest">Choose a guest</string><string name="prepare_invite">Prepare message</string>
+    <string name="confirmed_sends">Confirmed sends</string>
+    <string name="export_calendar">Export calendar (.ics)</string>
+    <string name="import_guests">Import CSV/Wedy guests</string>
+    <string name="guest_import_preview">{count} guests found in {source}. Existing names and groups will be skipped.</string>
+    <string name="guest_import_result">{added} guests imported; {skipped} duplicates skipped.</string>
+    <string name="add_task_templates">Add task templates</string>
+    <string name="table_full">No seats available at this table</string>
+    <string name="day_schedule">Day schedule</string><string name="rain_plan">Backup plan</string><string name="special_notes">Important notes</string>
+    <string name="checked_in">Checked in</string><string name="seats">seats</string>
+    <string name="create_installments">Create installments</string><string name="installment_count">Number of installments</string><string name="first_due_date">First due date (YYYY-MM-DD)</string>
+    <string name="capacity">Capacity</string><string name="plus_allowed">Allowed companions</string><string name="plus_confirmed">Confirmed companions</string>
+    <string name="invalid_fields">Check the entered fields</string>
+    <string name="status_todo">To do</string><string name="status_in_progress">In progress</string><string name="status_done">Done</string><string name="status_blocked">Blocked</string>
+    <string name="status_negotiation">Negotiation</string><string name="status_contracted">Contracted</string><string name="status_finalized">Finalized</string>
+    <string name="status_not_invited">Not invited</string><string name="status_invited">Invited</string><string name="status_confirmed">Confirmed</string><string name="status_declined">Declined</string><string name="status_maybe">Maybe</string>
+    <string name="status_pending">Pending</string><string name="status_paid">Paid</string><string name="status_expected">Expected</string><string name="status_received">Received</string><string name="status_cancelled">Cancelled</string>
+    <string name="status_thanked">Thanked</string><string name="status_processed">Posted</string><string name="status_planned">Planned</string><string name="status_booked">Booked</string>
+    <string name="status_to_buy">To buy</string><string name="status_bought">Bought</string><string name="status_gifted">Gifted</string><string name="status_draft">Draft</string><string name="status_signed">Signed</string><string name="status_expired">Expired</string><string name="status_sent">Sent</string>
+    <string name="backup_weekly_reminder">Back up your data</string>
+    <string name="backup_weekly_body">There are changes since your last backup.</string>
+    <string name="help_body">Your data stays on this device. Create encrypted backups regularly. Invitations open WhatsApp, but you confirm delivery. RSVP is entered manually.</string>
+    <string name="web_rsvp_warning">Old RSVP links stop working when the web server is turned off.</string>
+    <string name="error_generic">Could not complete the operation.</string>
+    <string name="pix_static">Static Pix</string><string name="pix_key">Pix key</string>
+    <string name="pix_holder">Account holder</string><string name="share_pix">Share Pix</string>
+    <string name="pix_share_message">Pix key: {key}\nAccount holder: {holder}</string>
+    <string name="pix_manual_warning">The app does not check payments. Confirm receipt and record it manually.</string>
+    <string name="call_phone">Call</string><string name="open_maps">Open map</string>
+    <string name="export_report">Export CSV report</string><string name="report_type">Type</string>
+    <string name="report_estimated">Estimated value</string>
+    <string name="audit">History</string><string name="audit_save">Record saved</string>
+    <string name="audit_delete">Record deleted</string><string name="audit_status">Status changed</string>
+    <string name="audit_paid">Payment confirmed</string><string name="audit_file">File attached</string>
+    <string name="audit_import">Guests imported</string>
+    <string name="budget_actual">Actual value</string>
+    <string name="address">Address</string>
+    <string name="confirm_group">Confirm group</string><string name="decline_group">Decline group</string>
+    <string name="vendor_compare">Compare vendors</string><string name="category">Category</string><string name="rating">Rating (1–5)</string>
+    <string name="all_tags">All tags</string>
+    <string name="frequency">Frequency</string><string name="one_time">One time</string><string name="monthly">Monthly</string>
+    <string name="contract_version">Contract version</string>
+    <string name="table_overview">Table occupancy</string><string name="unseated_guests">Confirmed guests without a table</string>
+</resources>

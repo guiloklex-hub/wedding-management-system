@@ -734,12 +734,30 @@ export const HELP_ARTICLES: HelpArticle[] = [
 
   // ============ backup-calendar ============
   {
+    id: "backup-portable-v2",
+    title: "Transferir tudo entre web e Android",
+    category: "backup-calendar",
+    keywords: ["backup", "wfpbackup", "android", "restaurar", "arquivos", "reversão"],
+    icon: Database,
+    summary: "O .wfpbackup v2 cifrado inclui SQLite, anexos, artes e todos os arquivos de uploads/.",
+    steps: [
+      { title: "Exporte na instalação ativa", body: "Em Ajustes → Backup completo, confirme a senha da conta e crie uma senha de arquivo com ao menos 12 caracteres. No Android, confirme a biometria ou credencial do aparelho." },
+      { title: "Leve o arquivo manualmente", body: "Na outra instalação, selecione o .wfpbackup, informe a senha de arquivo e verifique a prévia de tabelas, arquivos, mudanças e bloqueios." },
+      { title: "Substitua somente depois da conferência", body: "A restauração guarda automaticamente uma cópia de reversão do destino. Use web e Android um de cada vez." },
+    ],
+    warnings: [
+      "Sem a senha do arquivo, não há recuperação. O pacote inclui contas e 2FA web; proteja-o como segredo.",
+      "O backup não inclui .env nem .whatsapp-auth. Links públicos antigos de RSVP dependem do servidor web.",
+      "Dados criados no Android sem campos obrigatórios web bloqueiam a transferência; a prévia mostra o que completar.",
+    ],
+  },
+  {
     id: "backup-download",
-    title: "Baixar backup dos dados",
+    title: "Baixar JSON legado parcial",
     category: "backup-calendar",
     keywords: ["backup", "json", "exportar", "download", "lgpd", "checksum"],
     icon: Database,
-    summary: "Exporte todos os dados (v3, com checksum SHA-256) em um único JSON.",
+    summary: "Exporte o JSON v3 legado com checksum; ele não contém os arquivos de uploads/.",
     steps: [
       { title: "Logue como ADMIN, GROOM ou BRIDE", body: "/dashboard/settings → aba 'Backup'." },
       { title: "Clique em 'Exportar backup JSON'", body: "Arquivo nomeado `wedding-finance-backup-YYYY-MM-DD.json` com envelope `{ checksum, payload }`." },
@@ -748,25 +766,43 @@ export const HELP_ARTICLES: HelpArticle[] = [
     tips: [
       "O checksum SHA-256 é validado automaticamente antes de qualquer restauração.",
       "v3 inclui Users, NotificationLog e AuditLog quando exportado por ADMIN. Roles GROOM/BRIDE exportam só dados de negócio.",
+      "Para transferência completa entre web e Android, use o .wfpbackup v2 acima.",
     ],
   },
   {
     id: "backup-restore",
-    title: "Restaurar backup",
+    title: "Restaurar JSON legado parcial",
     category: "backup-calendar",
     keywords: ["restore", "restaurar", "backup", "import", "wipe"],
     icon: Database,
-    summary: "Apaga e recria todos os dados a partir de um arquivo JSON exportado pelo sistema.",
+    summary: "Restaura registros do JSON v2/v3, sem recuperar bytes de anexos e artes.",
     steps: [
-      { title: "Faça backup do estado atual primeiro", body: "Antes de restaurar, exporte um backup novo. O restore é IRREVERSÍVEL." },
+      { title: "Faça backup completo do estado atual primeiro", body: "Exporte um .wfpbackup v2 e guarde-o antes de usar a recuperação JSON parcial." },
       { title: "Logue como ADMIN", body: "Restore é restrito a admins. Outras roles só conseguem validar o arquivo." },
       { title: "Ajustes → Backup → Restaurar backup", body: "Selecione o arquivo. Clique em 'Validar arquivo' primeiro para conferir checksum, versão e contagens." },
-      { title: "Confirme com sua senha", body: "Digite a senha do admin logado, marque o aviso de irreversibilidade e clique 'Restaurar agora'." },
+      { title: "Confirme com sua senha", body: "Digite a senha do admin logado, marque o aviso de substituição e clique 'Restaurar agora'. Uma cópia local de reversão será guardada." },
     ],
     warnings: [
-      "Apaga e recria todos os dados em uma transação Prisma única. Em caso de erro, nenhum registro é commitado.",
+      "Apaga e recria os registros do JSON em uma transação Prisma única. O arquivo não restaura os bytes de uploads/.",
       "Rate-limit: 3 tentativas por hora por usuário+IP.",
       "Se o backup contém seu próprio usuário, sua sessão pode expirar logo após o restore — relogue com as credenciais do backup.",
+    ],
+  },
+  {
+    id: "android-migration",
+    title: "Migrar para o projeto Android",
+    category: "backup-calendar",
+    keywords: ["android", "apk", "migrar", "sqlite", "uploads", "wfpbackup"],
+    icon: Database,
+    summary: "Gerar um .wfpbackup v2 completo a partir de uma cópia do SQLite e de uploads/.",
+    steps: [
+      { title: "Preserve o original", body: "Guarde o SQLite e a pasta uploads/ antes de qualquer migração." },
+      { title: "Execute a ferramenta no computador", body: "Use android/tools/portable_v2.py com --sqlite, --uploads, --output e --report. Consulte docs/backup-restore.md." },
+      { title: "Confira em instalação de teste", body: "Restaure no app Android e compare contagens, relações e anexos antes de desativar o web." },
+    ],
+    warnings: [
+      "O projeto Android ainda está em desenvolvimento e não cobre todas as funções do web.",
+      "Ao desligar o servidor web, links públicos antigos de RSVP deixam de funcionar.",
     ],
   },
   {
@@ -1068,7 +1104,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "Validação por magic bytes, hash SHA-256, ownership por kind, rate-limit em upload e download, audit log de UPLOAD/DOWNLOAD/REPLACE/SIGN.",
     tips: [
       "Tentativas de subir .exe renomeado como .pdf são bloqueadas (não passa no magic byte).",
-      "Arquivos soft-deletados são removidos do disco depois de 30 dias pelo cron /api/cron/cleanup-files.",
+      "Arquivos soft-deletados e artes antigas permanecem em uploads/ para entrar no backup portátil; monitore o espaço disponível.",
       "Toda visualização de contrato registra um evento DOWNLOAD na auditoria.",
     ],
   },

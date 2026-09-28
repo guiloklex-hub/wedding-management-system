@@ -1,0 +1,15 @@
+.gradle/
+.kotlin/
+build/
+**/build/
+local.properties
+*.jks
+*.keystore
+keystore.properties
+*.apk
+*.aab
+*.wfpbackup
+!app/src/androidTest/assets/interop.wfpbackup
+!app/src/androidTest/assets/portable-v2-fixture.wfpbackup
+__pycache__/
+*.pyc

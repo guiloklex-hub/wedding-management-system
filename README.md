@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>Sistema open-source para casais organizarem o casamento.</strong><br/>
-  Orçamento, fornecedores, convidados, lua de mel e enxoval — tudo em um só lugar, no seu próprio servidor.
+  Orçamento, fornecedores, convidados, lua de mel e enxoval — na versão web para servidor próprio e no projeto Android local.
 </p>
 
 <p align="center">
@@ -13,6 +13,14 @@
   <img alt="PWA" src="https://img.shields.io/badge/PWA-ready-5A0FC8">
   <img alt="Made with ❤" src="https://img.shields.io/badge/feito_com-♥-rose">
 </p>
+
+---
+
+## 📱 Projeto Android
+
+O diretório [android/](android/README.md) contém um aplicativo Kotlin/Jetpack Compose independente do servidor. O APK de desenvolvimento funciona com banco Room/SQLite local, desbloqueio pelo aparelho, formulários móveis, anexos e lembretes. **Ajustes → Backup** nas duas versões oferece `.wfpbackup` v2 cifrado, com banco e arquivos, prévia e cópia de reversão; consulte [backup e transferência](docs/backup-restore.md). A cópia do SQLite web e de `uploads/` também pode ser convertida no computador.
+
+**Estado:** versão de desenvolvimento. A cobertura das regras e telas do web ainda é parcial; não substitua a instalação web nem apague o SQLite/`uploads/` antes de conferir a migração e a restauração em um aparelho de teste. O identificador Android é `br.com.paivalab.weddingmanagementsystem`.
 
 ---
 
@@ -112,6 +120,7 @@ Abra <http://localhost:3005> no navegador.
 | Tópico | Documento |
 |---|---|
 | **Instalar no Linux/macOS** | [docs/instalacao-linux.md](docs/instalacao-linux.md) |
+| **Android nativo e migração** | [docs/android.md](docs/android.md) |
 | **Instalar no Windows** | [docs/instalacao-windows.md](docs/instalacao-windows.md) |
 | **Instalar via WSL2** | [docs/instalacao-wsl.md](docs/instalacao-wsl.md) |
 | Arquitetura geral | [docs/arquitetura.md](docs/arquitetura.md) |
@@ -168,7 +177,7 @@ Veja [docs/deploy.md](docs/deploy.md) para um passo-a-passo completo com:
 - VPS Ubuntu + PM2
 - Cloudflare Tunnel (HTTPS automático, sem abrir portas) **ou** nginx + Let's Encrypt
 - Cron de lembretes (`*/30 * * * *`)
-- Cron de backup diário
+- Snapshot diário do SQLite e exportação manual completa `.wfpbackup` v2
 - Conexão WhatsApp via QR Code
 - Atualizações com zero downtime (`git pull && ./setup.sh --prod --skip-seed`)
 

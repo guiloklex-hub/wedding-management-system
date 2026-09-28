@@ -97,7 +97,14 @@ if $SKIP_DEPS; then
   info "Pulando npm install (--skip-deps)."
 else
   info "Instalando dependências (npm install)..."
-  npm install
+  if [ -d node_modules ]; then
+    find node_modules -maxdepth 3 -type d -name ".*-*" -exec rm -rf {} + 2>/dev/null || true
+  fi
+  if ! npm install; then
+    warn "npm install falhou (ex.: ENOTEMPTY em node_modules). Limpando node_modules e tentando novamente..."
+    rm -rf node_modules
+    npm install
+  fi
   ok "Dependências instaladas."
 fi
 

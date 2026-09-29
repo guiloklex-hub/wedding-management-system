@@ -742,7 +742,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     summary: "O .wfpbackup v2 cifrado inclui SQLite, anexos, artes e todos os arquivos de uploads/.",
     steps: [
       { title: "Exporte na instalação ativa", body: "Em Ajustes → Backup completo, confirme a senha da conta e crie uma senha de arquivo com ao menos 12 caracteres. No Android, confirme a biometria ou credencial do aparelho." },
-      { title: "Leve o arquivo manualmente", body: "Na outra instalação, selecione o .wfpbackup, informe a senha de arquivo e verifique a prévia de tabelas, arquivos, mudanças e bloqueios." },
+      { title: "Leve o arquivo manualmente", body: "Na outra instalação, selecione o .wfpbackup, informe a senha de arquivo e verifique a prévia de tabelas, arquivos, contratos, PDFs de contrato, mudanças e bloqueios. O Android recusa o arquivo se algum contrato ou PDF do SQLite web não estiver na representação móvel." },
       { title: "Substitua somente depois da conferência", body: "A restauração guarda automaticamente uma cópia de reversão do destino. Use web e Android um de cada vez." },
     ],
     warnings: [
@@ -1141,6 +1141,21 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "Convidados sem PIN (atenção sem PIN) são automaticamente pulados para evitar envio de link bloqueado.",
       "Se o servidor reiniciar durante o envio, a transmissão retoma com segurança e solicita confirmação para reenvio de estados desconhecidos.",
     ],
+  },
+  {
+    id: "android-parity",
+    title: "Usar detalhes e anexos no Android",
+    category: "getting-started",
+    keywords: ["android", "mobile", "desbloqueio", "biometria", "pin", "fornecedor", "contrato", "pdf", "anexo", "whatsapp", "relatórios"],
+    icon: FileText,
+    summary: "Encontre os detalhes de fornecedores e locais e compartilhe convites com anexo no aplicativo Android.",
+    steps: [
+      { title: "Desbloqueie o aplicativo", body: "A nova tela ilustrada mantém o texto em um cartão legível. Use a digital ou o PIN do aparelho para entrar; seus dados continuam guardados no próprio celular." },
+      { title: "Abra um fornecedor ou local", body: "Toque no cartão para ver contatos, contratos, cláusulas, observações, anexos e itens relacionados. As datas de contratos importadas do backup web são exibidas como datas. Os PDFs incluem versões anteriores arquivadas e mostram seu número de versão; toque em um arquivo para abrir ou salvar uma cópia." },
+      { title: "Envie um convite com anexo", body: "Adicione o arquivo ao modelo de Convite ou Save the Date, escolha o anexo e o convidado e toque em WhatsApp. Se o convidado não tiver telefone cadastrado, use Compartilhar com anexo e escolha o WhatsApp. Confira o destinatário antes de enviar." },
+      { title: "Confira os relatórios", body: "No Android, abra Mais › Relatórios para ver os resumos locais. As visualizações da web ainda contêm filtros e gráficos adicionais." },
+    ],
+    warnings: ["Abrir o WhatsApp não confirma a entrega. Marque o convite como enviado somente depois de conferir o envio."],
   },
 ];
 

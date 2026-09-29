@@ -1,6 +1,7 @@
 # 📚 Documentação — Wedding Finance Planner
 
 O projeto Android independente e sua migração estão descritos em [android.md](android.md).
+Veja também a [auditoria de paridade entre web e Android](android-paridade.md).
 
 Bem-vindo(a)! Aqui você encontra toda a documentação técnica do projeto.
 Se você é um casal querendo apenas usar o sistema, comece pelo

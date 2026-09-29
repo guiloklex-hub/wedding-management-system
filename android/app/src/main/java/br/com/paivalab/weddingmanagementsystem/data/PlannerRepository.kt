@@ -3,12 +3,14 @@ package br.com.paivalab.weddingmanagementsystem.data
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import androidx.core.content.FileProvider
 import androidx.room.withTransaction
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
 import java.util.UUID
 import java.security.MessageDigest
+import java.io.File
 import org.json.JSONObject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +57,7 @@ class PlannerRepository(private val database: PlannerDatabase) {
     private val dao = database.dao()
     val records: Flow<List<PlannerRecord>> = dao.observeRecords()
     val files: Flow<List<PlannerFile>> = dao.observeFiles()
+    val allFiles: Flow<List<PlannerFile>> = dao.observeAllFiles()
     val audits: Flow<List<PlannerAudit>> = dao.observeAudit()
 
     suspend fun previewGuestImport(context: Context, uri: Uri): GuestImportPreview = withContext(Dispatchers.IO) {
@@ -150,7 +153,7 @@ class PlannerRepository(private val database: PlannerDatabase) {
     }
 
     suspend fun addAttachment(context: Context, recordId: String, uri: Uri) {
-        require(dao.find(recordId) != null)
+        val record = dao.find(recordId) ?: error("Registro ausente")
         val resolver = context.contentResolver
         val bytes = resolver.openInputStream(uri)?.use { input ->
             val output = java.io.ByteArrayOutputStream()
@@ -167,8 +170,15 @@ class PlannerRepository(private val database: PlannerDatabase) {
             if (cursor.moveToFirst()) cursor.getString(0) else null
         } ?: "anexo"
         val hash = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-        val file = PlannerFile(UUID.randomUUID().toString(), recordId, "ATTACHMENT", name.take(160),
-            resolver.getType(uri) ?: "application/octet-stream", bytes.size.toLong(), hash)
+        val contractFile = record.kind == Kinds.CONTRACT
+        if (contractFile) require(bytes.size >= 5 && bytes.copyOfRange(0, 5).contentEquals("%PDF-".toByteArray())) {
+            context.getString(br.com.paivalab.weddingmanagementsystem.R.string.contract_pdf_required)
+        }
+        val file = PlannerFile(UUID.randomUUID().toString(), recordId,
+            if (contractFile) "CONTRACT" else "ATTACHMENT", name.take(160),
+            if (contractFile) "application/pdf" else resolver.getType(uri) ?: "application/octet-stream",
+            bytes.size.toLong(), hash,
+            version = if (contractFile) JSONObject(record.extraJson).optInt("version", 1).coerceAtLeast(1) else 1)
         database.withTransaction {
             dao.saveFile(file)
             dao.saveBlob(PlannerBlob(file.id, bytes))
@@ -181,6 +191,24 @@ class PlannerRepository(private val database: PlannerDatabase) {
         require(bytes.size.toLong() == file.byteSize)
         context.contentResolver.openOutputStream(destination, "w")?.use { it.write(bytes) }
             ?: error("Não foi possível salvar o arquivo")
+    }
+
+    suspend fun prepareSharedFile(context: Context, file: PlannerFile): Uri = withContext(Dispatchers.IO) {
+        val bytes = dao.blob(file.id)?.bytes ?: error("Arquivo ausente")
+        require(bytes.size.toLong() == file.byteSize) { "Tamanho do arquivo divergente" }
+        val actualHash = MessageDigest.getInstance("SHA-256").digest(bytes)
+            .joinToString("") { "%02x".format(it) }
+        require(actualHash.equals(file.sha256, ignoreCase = true)) { "Hash do arquivo divergente" }
+        val sharedRoot = File(context.cacheDir, "shared")
+        sharedRoot.listFiles()?.filter { System.currentTimeMillis() - it.lastModified() > 86_400_000L }
+            ?.forEach { it.deleteRecursively() }
+        val directory = File(sharedRoot, file.id.filter { it.isLetterOrDigit() }.ifBlank { "file" })
+        require(directory.mkdirs() || directory.isDirectory)
+        val safeName = file.fileName.substringAfterLast('/').substringAfterLast('\\')
+            .replace(Regex("[^\\p{L}\\p{N}._ -]"), "_").take(160).trim('.', ' ').ifBlank { "anexo" }
+        val output = File(directory, safeName)
+        output.writeBytes(bytes)
+        FileProvider.getUriForFile(context, "${context.packageName}.sharedfiles", output)
     }
 
     suspend fun setting(key: String): String? = dao.setting(key)?.value

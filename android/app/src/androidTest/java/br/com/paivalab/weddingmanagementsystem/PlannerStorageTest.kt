@@ -137,6 +137,21 @@ class PlannerStorageTest {
         }
     }
 
+    @Test fun sharedAttachmentUsesReadableContentUriAndRejectsCorruption() = runBlocking {
+        val bytes = "%PDF-1.4 test".toByteArray()
+        val hash = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+        val file = PlannerFile("share-test", null, "ATTACHMENT", "convite.pdf", "application/pdf", bytes.size.toLong(), hash)
+        database.dao().saveFile(file)
+        database.dao().saveBlob(PlannerBlob(file.id, bytes))
+
+        val uri = repository.prepareSharedFile(context, file)
+        assertEquals("content", uri.scheme)
+        assertEquals(bytes.toList(), context.contentResolver.openInputStream(uri)!!.use { it.readBytes().toList() })
+
+        database.dao().saveBlob(PlannerBlob(file.id, "corrupt".toByteArray()))
+        assertNotNull(runCatching { repository.prepareSharedFile(context, file) }.exceptionOrNull())
+    }
+
     @Test fun desktopConverterBackupRestoresOnAndroid() = runBlocking {
         val source = File.createTempFile("interop-", ".wfpbackup", context.cacheDir)
         try {

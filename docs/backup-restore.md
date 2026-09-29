@@ -14,6 +14,8 @@ Em **Ajustes → Backup → Backup completo**:
 
 O Android usa o seletor de documentos e exige biometria forte ou credencial do aparelho antes de exportar ou restaurar. A versão móvel mantém o SQLite web e os arquivos exclusivos em um cofre privado cifrado pelo Android Keystore. Sua próxima exportação inclui esse estado e as edições móveis. No web, o estado móvel exclusivo fica em `PortableState` e `.portable-state/` e volta ao próximo pacote.
 
+Na importação v2, o Android compara cada contrato e cada anexo do SQLite web com os registros móveis, inclusive a associação do PDF ao contrato, o tamanho e o SHA-256. Se algum faltar ou divergir, a prévia falha e o banco atual permanece intacto. A prévia mostra separadamente o total de contratos e PDFs de contrato, incluindo versões anteriores. Depois de restaurar, abra o fornecedor para consultar os PDFs atuais e arquivados com seus números de versão. Se um pacote v2 antigo não trouxer a versão em `files.json`, o app a recupera do SQLite web.
+
 Na primeira transferência **Android → web** sem SQLite web anterior, a restauração mantém as contas administrativas da instalação web de destino e substitui os dados do casamento. A prévia bloqueia registros sem campos web obrigatórios, identificando o registro e o campo a corrigir; fornecedores exigem categoria, por exemplo. Os campos que só existem no Android continuam no estado portátil.
 
 ### Reversão
@@ -57,6 +59,8 @@ Todos os três exigem sessão administradora. O arquivo deve ser mantido em loca
 O JSON web v2/v3 continua disponível na seção legada de Ajustes e nos endpoints `/api/backup` GET, `/api/backup/validate` e `/api/backup/restore`. Ele não carrega bytes de `uploads/`, artes órfãs nem todas as tabelas atuais. O v3 tem checksum SHA-256; o v2 não. O `.wfpbackup` v1 do Android contém apenas seus registros e BLOBs; o Android o aceita somente em instalação vazia. **Nenhum dos dois é uma transferência completa.** Use a ferramenta a partir de SQLite + `uploads/` para recuperar tudo o que ainda estiver na origem.
 
 O JSON legado pode alterar contas e dados visíveis, mas não recompõe os arquivos ausentes. O restaurador JSON também guarda uma cópia local prévia em `.portable-reversions/`; antes de usá-lo, faça ainda um backup completo v2 que possa ser levado a outro aparelho. A cópia original do SQLite e de `uploads/` deve ser mantida até todos os testes de restauração passarem.
+
+O conversor legado `android/tools/migrate_web.py` recusa agora, por padrão, JSON com anexos quando a pasta de uploads não foi fornecida. A opção explícita `--allow-missing-files` continua permitindo recuperação parcial e deve ser usada apenas quando a perda dos anexos é conhecida.
 
 ## Testes e operação
 

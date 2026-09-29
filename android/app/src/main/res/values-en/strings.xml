@@ -29,11 +29,16 @@
     <string name="upcoming">Next actions</string><string name="mark_paid">Mark paid</string>
     <string name="mark_done">Complete</string><string name="confirm_guest">Confirm attendance</string>
     <string name="decline_guest">Decline attendance</string><string name="check_in">Check in</string>
-    <string name="share_whatsapp">Open WhatsApp</string><string name="share_text">Share text</string>
+    <string name="share_whatsapp">Open WhatsApp</string><string name="share_text">Share text</string><string name="share_with_attachment">Share with attachment</string>
+    <string name="invite_attachment">Invitation attachment</string><string name="no_attachment">No attachment</string>
+    <string name="select_whatsapp_recipient">Select the recipient in WhatsApp and check before sending.</string>
     <string name="sent_confirm">Mark as sent</string><string name="sent_warning">Opening another app does not prove delivery. Mark this only after confirming.</string>
     <string name="language">Language</string><string name="currency">Currency</string>
     <string name="couple_names">Couple names</string><string name="event_date">Wedding date</string>
     <string name="unlock_title">Unlock your planner</string><string name="unlock_button">Use fingerprint or device PIN</string>
+    <string name="unlock_brand">WEDDING FINANCE</string><string name="unlock_private">YOUR PRIVATE SPACE</string>
+    <string name="unlock_intro">Your big day starts here.</string><string name="unlock_description">Every detail of your wedding, organized and protected for you.</string>
+    <string name="unlock_local_data">Your data stays on this device.</string>
     <string name="device_lock_required">Set up an Android screen lock before using the app.</string>
     <string name="unlock_error">Could not unlock. Try again.</string>
     <string name="backup_export">Export encrypted backup</string>
@@ -69,6 +74,7 @@
     <string name="status_not_invited">Not invited</string><string name="status_invited">Invited</string><string name="status_confirmed">Confirmed</string><string name="status_declined">Declined</string><string name="status_maybe">Maybe</string>
     <string name="status_pending">Pending</string><string name="status_paid">Paid</string><string name="status_expected">Expected</string><string name="status_received">Received</string><string name="status_cancelled">Cancelled</string>
     <string name="status_thanked">Thanked</string><string name="status_processed">Posted</string><string name="status_planned">Planned</string><string name="status_booked">Booked</string>
+    <string name="status_signed_digital">Digitally signed</string><string name="status_signed_physical">Physically signed</string>
     <string name="status_to_buy">To buy</string><string name="status_bought">Bought</string><string name="status_gifted">Gifted</string><string name="status_draft">Draft</string><string name="status_signed">Signed</string><string name="status_expired">Expired</string><string name="status_sent">Sent</string>
     <string name="backup_weekly_reminder">Back up your data</string>
     <string name="backup_weekly_body">There are changes since your last backup.</string>
@@ -93,5 +99,32 @@
     <string name="all_tags">All tags</string>
     <string name="frequency">Frequency</string><string name="one_time">One time</string><string name="monthly">Monthly</string>
     <string name="contract_version">Contract version</string>
+    <string name="vendor_finance">Financial summary</string><string name="vendor_balance">Balance due</string>
+    <string name="indicated_by">Referred by</string><string name="contract_link">Contract link</string>
+    <string name="primary_contact">Primary contact</string><string name="contract_signed">Signed on</string>
+    <string name="contact_role">Contact role</string>
+    <string name="contract_expires">Contract expiry</string><string name="payment_terms">Payment terms</string>
+    <string name="cancellation_policy">Cancellation policy</string><string name="included_items">Included items</string>
+    <string name="excluded_items">Excluded items</string><string name="open_file">Open</string>
+    <string name="save_copy">Save a copy</string><string name="archived_version">Previous version</string><string name="venue_pricing">Venue pricing terms</string>
+    <string name="backup_contract_preview">Contracts: {contracts} · contract PDFs: {pdfs} (including previous versions)</string>
+    <string name="contract_pdf_required">The contract must be a valid PDF</string>
+    <string name="venue_restrictions">Restrictions</string><string name="venue_pros">Advantages</string>
+    <string name="venue_cons">Drawbacks</string><string name="seed_venue_checklist">Generate default checklist</string>
+    <string name="venue_maps_url">Map link</string><string name="venue_capacity_seated">Seated capacity</string>
+    <string name="venue_capacity_standing">Standing capacity</string><string name="venue_contact_name">Contact name</string>
+    <string name="venue_shortlisted">Shortlisted</string>
+    <string name="reports">Reports</string><string name="report_cashflow">Cash flow</string>
+    <string name="report_vendor_funnel">Vendor funnel</string><string name="report_risk">Risk radar</string>
+    <string name="report_guests">Guests and RSVPs</string><string name="report_gifts">Gifts</string>
+    <string name="report_tasks">Task progress</string><string name="report_honeymoon">Honeymoon</string>
+    <string name="report_trousseau">Trousseau</string><string name="report_activity">Activity history</string>
+    <string name="report_by_category">By category</string><string name="report_by_room">By room</string>
+    <string name="report_total_value">Total value</string><string name="report_completion">Completion</string>
+    <string name="report_no_alerts">No risks identified</string><string name="report_event_date_needed">Set the wedding date to see the projection.</string>
+    <string name="help_mobile_details_title">Details and reports</string>
+    <string name="help_mobile_details_body">Tap a vendor or venue to open details, contracts, clauses and PDFs. Open More › Reports for summaries of each area.</string>
+    <string name="help_mobile_share_title">Invitation with an attachment</string>
+    <string name="help_mobile_share_body">Add a file to the invitation template, choose the attachment and guest, then open WhatsApp. Select and check the recipient before sending. Mark it as sent only after confirming.</string>
     <string name="table_overview">Table occupancy</string><string name="unseated_guests">Confirmed guests without a table</string>
 </resources>

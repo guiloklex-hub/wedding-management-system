@@ -6,6 +6,16 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.1.0",
+    date: "2026-09-29",
+    highlights: [
+      "🎨 **Nova tela de desbloqueio Android**: arte original de casamento, texto em cartão de alto contraste e acesso pela biometria/PIN do aparelho, sem expor o painel ao fundo.",
+      "📄 **Detalhes de fornecedores e locais no Android**: contatos, cláusulas, contratos versionados, PDFs, observações e itens relacionados em telas dedicadas.",
+      "💾 **Restauração web → Android reforçada**: conferência de cada contrato, PDF e anexo com a cópia web preservada; prévia com contagens e recusa de pacotes incompletos.",
+      "💌 **Convites com anexo no WhatsApp**: imagem/PDF e mensagem chegam juntos à prévia; o envio e a marcação de entrega continuam sob confirmação do usuário.",
+    ],
+  },
+  {
     version: "1.0.0",
     date: "2026-09-28",
     highlights: [

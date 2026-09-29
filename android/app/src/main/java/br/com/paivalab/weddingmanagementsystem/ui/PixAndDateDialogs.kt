@@ -66,22 +66,24 @@ fun PixQrDialog(
     pixHolderName: String,
     pixCity: String,
     initialAmountCents: Long? = null,
+    transactionId: String? = null,
     onDismiss: () -> Unit,
     onNotify: (String) -> Unit,
 ) {
-    var customAmountText by remember {
+    var customAmountText by remember(transactionId, initialAmountCents) {
         mutableStateOf(initialAmountCents?.let { String.format("%.2f", it / 100.0) } ?: "")
     }
     val parsedCents = remember(customAmountText) {
         if (customAmountText.isBlank()) null else runCatching { Money.parseToCents(customAmountText) }.getOrNull()
     }
-    val brCode = remember(pixKey, pixHolderName, pixCity, parsedCents) {
+    val brCode = remember(pixKey, pixHolderName, pixCity, parsedCents, transactionId) {
         runCatching {
             PixBrCode.generate(
                 key = pixKey.ifBlank { "casamento@guilhermeemarina.com.br" },
                 merchantName = pixHolderName.ifBlank { "Casamento" },
                 merchantCity = pixCity.ifBlank { "SAO PAULO" },
                 amountCents = parsedCents,
+                txid = transactionId,
             )
         }.getOrElse { "" }
     }

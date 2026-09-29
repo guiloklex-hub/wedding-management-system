@@ -1,6 +1,7 @@
 package br.com.paivalab.weddingmanagementsystem.ui
 
 import android.app.Activity
+import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -113,6 +114,7 @@ fun PlannerApp(
 ) {
     val allRecords by model.records.collectAsState()
     val allFiles by model.files.collectAsState()
+    val storedFiles by model.allFiles.collectAsState()
     val allAudits by model.audits.collectAsState()
     val language by model.locale.collectAsState()
     val currency by model.currency.collectAsState()
@@ -126,20 +128,26 @@ fun PlannerApp(
     val guestImport by model.guestImport.collectAsState()
     val guestImportResult by model.guestImportResult.collectAsState()
     var section by remember { mutableStateOf("dashboard") }
+    var detailId by remember { mutableStateOf<String?>(null) }
     var editor by remember { mutableStateOf<PlannerRecord?>(null) }
     var creating by remember { mutableStateOf(false) }
+    var creatingKind by remember { mutableStateOf<String?>(null) }
+    var creatingParentId by remember { mutableStateOf<String?>(null) }
     var deleteTarget by remember { mutableStateOf<PlannerRecord?>(null) }
     var attachmentTarget by remember { mutableStateOf<PlannerRecord?>(null) }
     var exportTarget by remember { mutableStateOf<PlannerFile?>(null) }
     var inviteTemplate by remember { mutableStateOf<PlannerRecord?>(null) }
+    var inviteAttachmentId by remember { mutableStateOf<String?>(null) }
     var pendingInvite by remember { mutableStateOf<Triple<PlannerRecord, PlannerRecord, String>?>(null) }
     var installments by remember { mutableStateOf(false) }
     var showPixDialog by remember { mutableStateOf(false) }
+    var pixGiftId by remember { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val notify: (String) -> Unit = { msg -> scope.launch { snackbar.showSnackbar(msg) } }
     val guestResultMessage = localized(R.string.guest_import_result, language)
     val genericError = localized(R.string.error_generic, language)
+    val recipientPrompt = localized(R.string.select_whatsapp_recipient, language)
     val tableFullError = localized(R.string.table_full, language)
     val importFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val target = attachmentTarget
@@ -161,11 +169,22 @@ fun PlannerApp(
     val guestFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) model.previewGuestImport(activity, uri)
     }
+    val openAttachment: (PlannerFile) -> Unit = { file ->
+        model.prepareSharedFile(activity, file) { uri ->
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, file.mimeType.ifBlank { "application/octet-stream" })
+                clipData = ClipData.newUri(activity.contentResolver, file.fileName, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            if (runCatching { activity.startActivity(intent) }.isFailure) notify(genericError)
+        }
+    }
 
     LaunchedEffect(externalSection) {
         if (!externalSection.isNullOrBlank()) {
             editor = null
             creating = false
+            detailId = null
             section = externalSection
             onExternalSectionConsumed()
         }
@@ -182,25 +201,30 @@ fun PlannerApp(
                 .replace("{added}", added.toString()).replace("{skipped}", skipped.toString()))
         }
     }
-    BackHandler(section != "dashboard" || editor != null || creating) {
+    BackHandler(section != "dashboard" || editor != null || creating || detailId != null) {
         when {
-            editor != null || creating -> { editor = null; creating = false }
+            editor != null || creating -> { editor = null; creating = false; creatingKind = null; creatingParentId = null }
+            detailId != null -> detailId = null
+            section.startsWith("report-") -> section = "reports"
             else -> section = "dashboard"
         }
     }
 
     val currentModule = modules.find { it.kind == section }
+    val detailRecord = allRecords.firstOrNull { it.id == detailId && it.deletedAt == null }
     val title = when (section) {
         "dashboard" -> localized(R.string.dashboard, language)
         "more" -> localized(R.string.more, language)
         "settings" -> localized(R.string.settings, language)
         "insights" -> localized(R.string.insights, language)
+        "reports" -> localized(R.string.reports, language)
+        in mobileReports.map { it.route } -> localized(mobileReports.first { it.route == section }.title, language)
         "help" -> localized(R.string.help, language)
         "audit" -> localized(R.string.audit, language)
         "vendor-compare" -> localized(R.string.vendor_compare, language)
         "wedding-day" -> localized(R.string.wedding_day, language)
         "backup" -> localized(R.string.backup, language)
-        else -> currentModule?.let { localized(it.title, language) } ?: section
+        else -> detailRecord?.title ?: currentModule?.let { localized(it.title, language) } ?: section
     }
     Scaffold(
         topBar = {
@@ -213,8 +237,8 @@ fun PlannerApp(
                     }
                 },
                 navigationIcon = {
-                    if (section !in listOf("dashboard", "more") && section !in primaryTabs) {
-                        IconButton(onClick = { section = "more" }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
+                    if (detailId != null || (section !in listOf("dashboard", "more") && section !in primaryTabs)) {
+                        IconButton(onClick = { if (detailId != null) detailId = null else section = if (section.startsWith("report-")) "reports" else "more" }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = PlannerBackground),
@@ -232,7 +256,7 @@ fun PlannerApp(
                 tabs.forEach { (key, label, icon) ->
                     NavigationBarItem(
                         selected = section == key || (key == "more" && section !in tabs.map { it.first }),
-                        onClick = { section = key },
+                        onClick = { detailId = null; section = key },
                         icon = { Icon(icon, localized(label, language)) },
                         label = { Text(localized(label, language), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall) },
                         colors = NavigationBarItemDefaults.colors(
@@ -248,9 +272,9 @@ fun PlannerApp(
         },
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
-            if (currentModule != null) {
+            if (currentModule != null && detailId == null) {
                 ExtendedFloatingActionButton(
-                    onClick = { creating = true },
+                    onClick = { creatingKind = section; creatingParentId = null; creating = true },
                     containerColor = PlannerRose,
                     contentColor = Color.White,
                     icon = { Icon(Icons.Default.Add, null) },
@@ -260,7 +284,40 @@ fun PlannerApp(
         },
     ) { inner ->
         Box(Modifier.fillMaxSize().padding(inner)) {
-            when (section) {
+            if (detailRecord?.kind == Kinds.VENDOR) {
+                VendorDetailScreen(
+                    vendor = detailRecord, records = allRecords, files = storedFiles,
+                    language = language, currency = currency,
+                    onEdit = { editor = it },
+                    onAddRelated = { kind, parentId -> creatingKind = kind; creatingParentId = parentId; creating = true },
+                    onDelete = { deleteTarget = it },
+                    onAttach = { record -> attachmentTarget = record; importFile.launch(arrayOf("*/*")) },
+                    onOpenFile = openAttachment,
+                    onExportFile = { file -> exportTarget = file; exportFile.launch(file.fileName) },
+                    onPaid = model::markPaid,
+                    onDial = { phone -> dialPhone(activity, phone) },
+                    onWhatsApp = { record -> openWhatsApp(activity, record) },
+                    onOpenLink = { url ->
+                        val uri = Uri.parse(url)
+                        if (uri.scheme in listOf("http", "https")) {
+                            if (runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, uri)) }.isFailure) notify(genericError)
+                        } else notify(genericError)
+                    },
+                )
+            } else if (detailRecord?.kind == Kinds.VENUE) {
+                VenueDetailScreen(
+                    venue = detailRecord, records = allRecords, files = allFiles,
+                    language = language, currency = currency,
+                    onEdit = { editor = it },
+                    onAddRelated = { kind, parentId -> creatingKind = kind; creatingParentId = parentId; creating = true },
+                    onAttach = { record -> attachmentTarget = record; importFile.launch(arrayOf("*/*")) },
+                    onOpenFile = openAttachment,
+                    onExportFile = { file -> exportTarget = file; exportFile.launch(file.fileName) },
+                    onChecklistStatus = model::setStatus,
+                    onSeedChecklist = { id -> model.seedVenueChecklist(id) },
+                    onMaps = { record -> openMap(activity, record) },
+                )
+            } else when (section) {
                 "dashboard" -> DashboardScreen(allRecords, coupleNames, eventDate, currency, language) { section = it }
                 "more" -> MoreScreen(allRecords, language) { section = it }
                 "settings" -> SettingsScreen(
@@ -273,6 +330,8 @@ fun PlannerApp(
                     onNotify = notify,
                 ) { section = it }
                 "insights" -> InsightsScreen(allRecords, language, currency, eventDate, contingencyPercent) { section = it }
+                "reports" -> ReportsHubScreen(language) { section = it }
+                in mobileReports.map { it.route } -> ReportDetailScreen(section, allRecords, allAudits, language, currency, eventDate) { section = it }
                 "help" -> HelpScreen(language)
                 "audit" -> AuditScreen(allAudits, allRecords, language)
                 "vendor-compare" -> VendorCompareScreen(allRecords, language, currency)
@@ -286,6 +345,7 @@ fun PlannerApp(
                         language = language,
                         currency = currency,
                         onEdit = { editor = it },
+                        onDetail = { detailId = it.id },
                         onDelete = { deleteTarget = it },
                         onStatus = { id, status -> model.setStatus(id, status) },
                         onPaid = model::markPaid,
@@ -293,7 +353,11 @@ fun PlannerApp(
                         onAttach = { record -> attachmentTarget = record; importFile.launch(arrayOf("*/*")) },
                         onExport = { file -> exportTarget = file; exportFile.launch(file.fileName) },
                         onGift = { id -> model.convertGift(id, Kinds.INCOME) },
-                        onInvite = { inviteTemplate = it },
+                        onInvite = { template ->
+                            inviteTemplate = template
+                            inviteAttachmentId = allFiles.filter { it.recordId == template.id }
+                                .maxByOrNull { it.createdAt }?.id
+                        },
                         onGuestImport = { guestFile.launch(arrayOf("*/*")) },
                         onSeedTasks = model::seedTaskTemplates,
                         onSeedVenueChecklist = { venueId ->
@@ -305,6 +369,7 @@ fun PlannerApp(
                         onGroupRsvp = model::setGroupRsvp,
                         onCompare = { section = "vendor-compare" },
                         onSharePix = { showPixDialog = true },
+                        onGiftPix = { gift -> pixGiftId = gift.id; showPixDialog = true },
                         pixConfigured = pixKey.isNotBlank(),
                         onDial = { record -> dialPhone(activity, record.phone) },
                         onMaps = { record -> openMap(activity, record) },
@@ -320,24 +385,29 @@ fun PlannerApp(
             pixKey = pixKey,
             pixHolderName = pixHolder.ifBlank { coupleNames.ifBlank { "CASAMENTO" } },
             pixCity = pixCity.ifBlank { "SAO PAULO" },
-            onDismiss = { showPixDialog = false },
+            initialAmountCents = allRecords.firstOrNull { it.id == pixGiftId }?.amountCents,
+            transactionId = pixGiftId,
+            onDismiss = { showPixDialog = false; pixGiftId = null },
             onNotify = notify,
         )
     }
 
     if (creating || editor != null) {
-        val module = currentModule
+        val module = modules.find { it.kind == (editor?.kind ?: creatingKind ?: section) }
         if (module != null) {
             RecordEditor(
                 module = module,
                 initial = editor,
+                initialParentId = creatingParentId,
                 records = allRecords,
                 language = language,
-                onDismiss = { editor = null; creating = false },
+                onDismiss = { editor = null; creating = false; creatingKind = null; creatingParentId = null },
                 onSave = { record ->
                     model.save(record) {
                         editor = null
                         creating = false
+                        creatingKind = null
+                        creatingParentId = null
                         notify("Registro salvo com sucesso!")
                     }
                 },
@@ -366,11 +436,23 @@ fun PlannerApp(
         )
     }
     inviteTemplate?.let { template ->
+        val templateFiles = allFiles.filter { it.recordId == template.id }.sortedByDescending { it.createdAt }
         AlertDialog(
             onDismissRequest = { inviteTemplate = null },
             title = { Text(localized(R.string.choose_guest, language)) },
             text = {
                 LazyColumn(Modifier.heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (templateFiles.isNotEmpty()) item {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(localized(R.string.invite_attachment, language), style = MaterialTheme.typography.labelLarge)
+                            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                FilterChip(selected = inviteAttachmentId == null, onClick = { inviteAttachmentId = null }, label = { Text(localized(R.string.no_attachment, language)) })
+                                templateFiles.forEach { file ->
+                                    FilterChip(selected = inviteAttachmentId == file.id, onClick = { inviteAttachmentId = file.id }, label = { Text(file.fileName, maxLines = 1) })
+                                }
+                            }
+                        }
+                    }
                     items(allRecords.filter { it.kind == Kinds.GUEST && it.deletedAt == null }) { guest ->
                         Card(
                             colors = CardDefaults.cardColors(containerColor = PlannerSurface),
@@ -383,13 +465,37 @@ fun PlannerApp(
                                     if (guest.phone.isNotBlank()) {
                                         TextButton(onClick = {
                                             inviteTemplate = null
-                                            if (openInviteWhatsApp(activity, template, guest)) pendingInvite = Triple(template, guest, "WHATSAPP")
+                                            val file = templateFiles.firstOrNull { it.id == inviteAttachmentId }
+                                            if (file == null) {
+                                                if (openInviteWhatsApp(activity, template, guest)) pendingInvite = Triple(template, guest, "WHATSAPP")
+                                                else notify(genericError)
+                                            } else {
+                                                model.prepareSharedFile(activity, file) { uri ->
+                                                    val channel = shareInviteAttachment(activity, template, guest, file, uri, true)
+                                                    if (channel != null) {
+                                                        notify(recipientPrompt)
+                                                        pendingInvite = Triple(template, guest, channel)
+                                                    } else notify(genericError)
+                                                }
+                                            }
                                         }) { Text(localized(R.string.share_whatsapp, language)) }
                                     }
                                     TextButton(onClick = {
                                         inviteTemplate = null
-                                        if (shareInviteText(activity, template, guest)) pendingInvite = Triple(template, guest, "SHARE")
-                                    }) { Text(localized(R.string.share_text, language)) }
+                                        val file = templateFiles.firstOrNull { it.id == inviteAttachmentId }
+                                        if (file == null) {
+                                            if (shareInviteText(activity, template, guest)) pendingInvite = Triple(template, guest, "SHARE")
+                                            else notify(genericError)
+                                        } else {
+                                            model.prepareSharedFile(activity, file) { uri ->
+                                                val channel = shareInviteAttachment(activity, template, guest, file, uri, false)
+                                                if (channel != null) pendingInvite = Triple(template, guest, channel)
+                                                else notify(genericError)
+                                            }
+                                        }
+                                    }) {
+                                        Text(localized(if (templateFiles.any { it.id == inviteAttachmentId }) R.string.share_with_attachment else R.string.share_text, language))
+                                    }
                                 }
                             }
                         }
@@ -618,6 +724,7 @@ private fun MoreScreen(records: List<PlannerRecord>, language: String, navigate:
     val secondaryModules = modules.filter { it.kind !in primaryTabs }
     val systemItems = listOf(
         Triple("insights", R.string.insights, Icons.Default.Search),
+        Triple("reports", R.string.reports, Icons.Default.Search),
         Triple("vendor-compare", R.string.vendor_compare, Icons.Default.Search),
         Triple("wedding-day", R.string.wedding_day, Icons.Default.Celebration),
         Triple("settings", R.string.settings, Icons.Default.Settings),
@@ -687,6 +794,7 @@ private fun ModuleScreen(
     language: String,
     currency: String,
     onEdit: (PlannerRecord) -> Unit,
+    onDetail: (PlannerRecord) -> Unit,
     onDelete: (PlannerRecord) -> Unit,
     onStatus: (String, String) -> Unit,
     onPaid: (String) -> Unit,
@@ -702,6 +810,7 @@ private fun ModuleScreen(
     onGroupRsvp: (String, String) -> Unit,
     onCompare: () -> Unit,
     onSharePix: () -> Unit,
+    onGiftPix: (PlannerRecord) -> Unit,
     pixConfigured: Boolean,
     onDial: (PlannerRecord) -> Unit,
     onMaps: (PlannerRecord) -> Unit,
@@ -818,7 +927,9 @@ private fun ModuleScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    RecordCard(record, active, currency, language, onClick = { onEdit(record) })
+                    RecordCard(record, active, currency, language, onClick = {
+                        if (module.kind in setOf(Kinds.VENDOR, Kinds.VENUE)) onDetail(record) else onEdit(record)
+                    })
                     HorizontalDivider(color = PlannerBorder)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -868,6 +979,9 @@ private fun ModuleScreen(
                             }
                             if (module.kind == Kinds.VENUE) {
                                 TextButton(onClick = { onMaps(record) }) { Text(localized(R.string.open_maps, language)) }
+                            }
+                            if (module.kind == Kinds.GIFT && pixConfigured) {
+                                TextButton(onClick = { onGiftPix(record) }) { Text(localized(R.string.share_pix, language)) }
                             }
                             if (module.kind in setOf(Kinds.VENDOR, Kinds.VENUE, Kinds.CONTRACT, Kinds.INVITATION, Kinds.SAVE_THE_DATE)) {
                                 TextButton(onClick = { onAttach(record) }) { Text(localized(R.string.attach_file, language)) }
@@ -1192,9 +1306,28 @@ private data class EditorFormState(
     val email: String,
     val notes: String,
     val venueAddress: String,
+    val venueCapacitySeated: String,
+    val venueCapacityStanding: String,
+    val venuePricingNotes: String,
+    val venueRestrictions: String,
+    val venuePros: String,
+    val venueCons: String,
+    val venueContactName: String,
+    val venueMapsUrl: String,
+    val venueShortlisted: Boolean,
     val rating: String,
+    val vendorIndicatedBy: String,
+    val vendorTags: String,
+    val vendorContractLink: String,
     val incomeFrequency: String,
     val contractVersion: String,
+    val contractExpiresAt: String,
+    val contractPaymentTerms: String,
+    val contractCancellationPolicy: String,
+    val contractIncludedItems: String,
+    val contractExcludedItems: String,
+    val contactRole: String,
+    val contactPrimary: Boolean,
     val guestSide: String,
     val guestDietary: String,
     val guestCity: String,
@@ -1222,6 +1355,7 @@ private data class EditorFormState(
 private fun RecordEditor(
     module: ModuleDefinition,
     initial: PlannerRecord?,
+    initialParentId: String?,
     records: List<PlannerRecord>,
     language: String,
     onDismiss: () -> Unit,
@@ -1246,9 +1380,28 @@ private fun RecordEditor(
                 email = initial?.email.orEmpty(),
                 notes = initial?.notes.orEmpty(),
                 venueAddress = json.optString("address"),
+                venueCapacitySeated = json.optString("capacitySeated", ""),
+                venueCapacityStanding = json.optString("capacityStanding", ""),
+                venuePricingNotes = json.optString("pricingNotes", ""),
+                venueRestrictions = json.optString("restrictions", ""),
+                venuePros = json.optString("pros", ""),
+                venueCons = json.optString("cons", ""),
+                venueContactName = json.optString("contactName", ""),
+                venueMapsUrl = json.optString("mapsUrl", ""),
+                venueShortlisted = json.optBoolean("isShortlisted", false),
                 rating = json.optInt("rating", 0).takeIf { it > 0 }?.toString().orEmpty(),
+                vendorIndicatedBy = json.optString("indicatedBy", ""),
+                vendorTags = json.optString("tags", ""),
+                vendorContractLink = json.optString("contractLink", ""),
                 incomeFrequency = json.optString("frequency", "ONE_TIME"),
                 contractVersion = json.optInt("version", 1).toString(),
+                contractExpiresAt = json.optString("expiresAt", "").take(10),
+                contractPaymentTerms = json.optString("paymentTerms", ""),
+                contractCancellationPolicy = json.optString("cancellationPolicy", ""),
+                contractIncludedItems = json.optString("includedItems", ""),
+                contractExcludedItems = json.optString("excludedItems", ""),
+                contactRole = json.optString("role", ""),
+                contactPrimary = json.optBoolean("isPrimary", false),
                 guestSide = json.optString("side", "BOTH"),
                 guestDietary = json.optString("dietary", ""),
                 guestCity = json.optString("city", ""),
@@ -1263,7 +1416,7 @@ private fun RecordEditor(
                 trousseauRoom = json.optString("room", ""),
                 trousseauStore = json.optString("store", ""),
                 itemPriority = json.optString("priority", "MEDIUM"),
-                parentId = initial?.parentId,
+                parentId = initial?.parentId ?: initialParentId,
                 guestGroupId = initial?.guestGroupId,
                 seatingTableId = initial?.seatingTableId,
                 plusAllowed = initial?.plusOnesAllowed?.toString() ?: "0",
@@ -1426,6 +1579,17 @@ private fun RecordEditor(
                 }
                 if (module.kind == Kinds.VENUE) {
                     OutlinedTextField(form.venueAddress, { form = form.copy(venueAddress = it.take(240)) }, label = { Text(localized(R.string.address, language)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(form.venueMapsUrl, { form = form.copy(venueMapsUrl = it.take(1000)) }, label = { Text(localized(R.string.venue_maps_url, language)) }, modifier = Modifier.fillMaxWidth())
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(form.venueCapacitySeated, { form = form.copy(venueCapacitySeated = it.filter(Char::isDigit).take(6)) }, label = { Text(localized(R.string.venue_capacity_seated, language)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f))
+                        OutlinedTextField(form.venueCapacityStanding, { form = form.copy(venueCapacityStanding = it.filter(Char::isDigit).take(6)) }, label = { Text(localized(R.string.venue_capacity_standing, language)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f))
+                    }
+                    OutlinedTextField(form.venueContactName, { form = form.copy(venueContactName = it.take(120)) }, label = { Text(localized(R.string.venue_contact_name, language)) }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(form.venuePricingNotes, { form = form.copy(venuePricingNotes = it.take(2000)) }, label = { Text(localized(R.string.venue_pricing, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(form.venueRestrictions, { form = form.copy(venueRestrictions = it.take(2000)) }, label = { Text(localized(R.string.venue_restrictions, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(form.venuePros, { form = form.copy(venuePros = it.take(2000)) }, label = { Text(localized(R.string.venue_pros, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(form.venueCons, { form = form.copy(venueCons = it.take(2000)) }, label = { Text(localized(R.string.venue_cons, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
+                    FilterChip(selected = form.venueShortlisted, onClick = { form = form.copy(venueShortlisted = !form.venueShortlisted) }, label = { Text(localized(R.string.venue_shortlisted, language)) })
                 }
                 if (module.kind == Kinds.VENDOR) {
                     OutlinedTextField(
@@ -1436,6 +1600,9 @@ private fun RecordEditor(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    OutlinedTextField(form.vendorIndicatedBy, { form = form.copy(vendorIndicatedBy = it.take(120)) }, label = { Text(localized(R.string.indicated_by, language)) }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(form.vendorTags, { form = form.copy(vendorTags = it.take(500)) }, label = { Text(localized(R.string.tags, language)) }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(form.vendorContractLink, { form = form.copy(vendorContractLink = it.take(1000)) }, label = { Text(localized(R.string.contract_link, language)) }, modifier = Modifier.fillMaxWidth())
                 }
                 if (module.kind == Kinds.CONTRACT) {
                     OutlinedTextField(
@@ -1446,6 +1613,15 @@ private fun RecordEditor(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    DatePickerOutlinedField(value = form.contractExpiresAt, onValueChange = { form = form.copy(contractExpiresAt = it) }, label = localized(R.string.contract_expires, language))
+                    OutlinedTextField(form.contractPaymentTerms, { form = form.copy(contractPaymentTerms = it.take(2000)) }, label = { Text(localized(R.string.payment_terms, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(form.contractCancellationPolicy, { form = form.copy(contractCancellationPolicy = it.take(2000)) }, label = { Text(localized(R.string.cancellation_policy, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(form.contractIncludedItems, { form = form.copy(contractIncludedItems = it.take(2000)) }, label = { Text(localized(R.string.included_items, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(form.contractExcludedItems, { form = form.copy(contractExcludedItems = it.take(2000)) }, label = { Text(localized(R.string.excluded_items, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
+                }
+                if (module.kind == Kinds.CONTACT) {
+                    OutlinedTextField(form.contactRole, { form = form.copy(contactRole = it.take(120)) }, label = { Text(localized(R.string.contact_role, language)) }, modifier = Modifier.fillMaxWidth())
+                    FilterChip(selected = form.contactPrimary, onClick = { form = form.copy(contactPrimary = !form.contactPrimary) }, label = { Text(localized(R.string.primary_contact, language)) })
                 }
                 if (module.parentKind != null) {
                     Text(localized(modules.first { it.kind == module.parentKind }.title, language), style = MaterialTheme.typography.labelLarge)
@@ -1548,11 +1724,29 @@ private fun RecordEditor(
                     val parsedRating = form.rating.takeIf { it.isNotBlank() }?.toInt()?.also { require(it in 1..5) }
                     val parsedContractVersion = if (module.kind == Kinds.CONTRACT)
                         form.contractVersion.toInt().also { require(it in 1..999) } else 1
+                    val contractExpiresAt = if (module.kind == Kinds.CONTRACT) normalizeDateInput(form.contractExpiresAt) else ""
+                    if (contractExpiresAt.isNotBlank()) LocalDate.parse(contractExpiresAt)
                     if (normalizedDate.isNotBlank()) LocalDate.parse(normalizedDate)
                     val updatedJson = JSONObject(initial?.extraJson ?: "{}").apply {
                         when (module.kind) {
-                            Kinds.VENUE -> put("address", form.venueAddress.trim())
-                            Kinds.VENDOR -> put("rating", parsedRating ?: JSONObject.NULL)
+                            Kinds.VENUE -> {
+                                put("address", form.venueAddress.trim())
+                                put("mapsUrl", form.venueMapsUrl.trim())
+                                put("capacitySeated", form.venueCapacitySeated.toIntOrNull() ?: JSONObject.NULL)
+                                put("capacityStanding", form.venueCapacityStanding.toIntOrNull() ?: JSONObject.NULL)
+                                put("contactName", form.venueContactName.trim())
+                                put("pricingNotes", form.venuePricingNotes.trim())
+                                put("restrictions", form.venueRestrictions.trim())
+                                put("pros", form.venuePros.trim())
+                                put("cons", form.venueCons.trim())
+                                put("isShortlisted", form.venueShortlisted)
+                            }
+                            Kinds.VENDOR -> {
+                                put("rating", parsedRating ?: JSONObject.NULL)
+                                put("indicatedBy", form.vendorIndicatedBy.trim())
+                                put("tags", form.vendorTags.trim())
+                                put("contractLink", form.vendorContractLink.trim())
+                            }
                             Kinds.GUEST -> {
                                 put("tagIds", JSONArray(form.selectedTagIds.sorted()))
                                 put("side", form.guestSide)
@@ -1578,7 +1772,18 @@ private fun RecordEditor(
                             }
                             Kinds.TASK -> put("priority", form.itemPriority)
                             Kinds.INCOME -> put("frequency", form.incomeFrequency)
-                            Kinds.CONTRACT -> put("version", parsedContractVersion)
+                            Kinds.CONTRACT -> {
+                                put("version", parsedContractVersion)
+                                put("expiresAt", contractExpiresAt)
+                                put("paymentTerms", form.contractPaymentTerms.trim())
+                                put("cancellationPolicy", form.contractCancellationPolicy.trim())
+                                put("includedItems", form.contractIncludedItems.trim())
+                                put("excludedItems", form.contractExcludedItems.trim())
+                            }
+                            Kinds.CONTACT -> {
+                                put("role", form.contactRole.trim())
+                                put("isPrimary", form.contactPrimary)
+                            }
                         }
                     }.toString()
                     val record = (initial ?: PlannerRecord(UUID.randomUUID().toString(), module.kind, form.title)).copy(
@@ -1616,7 +1821,11 @@ private fun dialPhone(activity: Activity, phone: String) {
 }
 
 private fun openMap(activity: Activity, record: PlannerRecord) {
-    val address = runCatching { JSONObject(record.extraJson).optString("address") }.getOrDefault("")
+    val details = runCatching { JSONObject(record.extraJson) }.getOrElse { JSONObject() }
+    val mapsUrl = Uri.parse(details.optString("mapsUrl"))
+    if (mapsUrl.scheme in listOf("http", "https") &&
+        runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, mapsUrl)) }.isSuccess) return
+    val address = details.optString("address")
     val query = address.ifBlank { record.title }
     val geo = Uri.parse("geo:0,0?q=${Uri.encode(query)}")
     if (runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, geo)) }.isFailure) {
@@ -1706,24 +1915,3 @@ private fun InstallmentsDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text(localized(R.string.cancel, language)) } },
     )
 }
-
-private fun inviteMessage(template: PlannerRecord, guest: PlannerRecord): String =
-    (template.notes.ifBlank { template.subtitle.ifBlank { template.title } })
-        .replace("{nome}", guest.title).replace("{name}", guest.title)
-
-private fun openInviteWhatsApp(activity: Activity, template: PlannerRecord, guest: PlannerRecord): Boolean = runCatching {
-    val number = guest.phone.filter { it.isDigit() }
-    require(number.isNotBlank())
-    val uri = Uri.parse("https://wa.me/$number?text=${Uri.encode(inviteMessage(template, guest))}")
-    activity.startActivity(Intent(Intent.ACTION_VIEW, uri))
-    true
-}.getOrDefault(false)
-
-private fun shareInviteText(activity: Activity, template: PlannerRecord, guest: PlannerRecord): Boolean = runCatching {
-    val intent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, inviteMessage(template, guest))
-    }
-    activity.startActivity(Intent.createChooser(intent, guest.title))
-    true
-}.getOrDefault(false)

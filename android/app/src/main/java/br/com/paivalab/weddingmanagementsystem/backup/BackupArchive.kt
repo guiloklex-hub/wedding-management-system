@@ -28,7 +28,8 @@ import org.json.JSONObject
 data class BackupPreview(val records: Int, val files: Int, val exportedAt: Long,
                          val complete: Boolean = false, val webTables: Int = 0,
                          val areas: Map<String, Int> = emptyMap(), val requiredBytes: Long = 0,
-                         val changed: Int = 0, val created: Int = 0, val deleted: Int = 0)
+                         val changed: Int = 0, val created: Int = 0, val deleted: Int = 0,
+                         val contracts: Int = 0, val contractPdfs: Int = 0)
 
 private data class ValidatedBackup(
     val manifest: JSONObject,
@@ -58,7 +59,9 @@ private data class ValidatedBackup(
                 old != null && (old.optLong("updatedAt") != record.updatedAt ||
                     old.optNullableLong("deletedAt") != record.deletedAt)
             },
-            records.count { it.id !in initialRows }, initialRows.keys.count { it !in currentIds })
+            records.count { it.id !in initialRows }, initialRows.keys.count { it !in currentIds },
+            records.count { it.kind == "contract" },
+            files.count { it.kind == "CONTRACT" && it.mimeType == "application/pdf" })
     }
 }
 
@@ -236,7 +239,7 @@ class BackupArchive(
         val manifest = validatedManifest(zip)
         val complete = manifest.getInt("version") == 2
         val records = readArray(zip, "records.json").map(::recordFromJson)
-        val files = readArray(zip, "files.json").map(::fileFromJson)
+        var files = readArray(zip, "files.json").map(::fileFromJson)
         val settings = readArray(zip, "settings.json").map(::settingFromJson)
         val audits = readArray(zip, "audit.json").map(::auditFromJson)
         val baseline = if (complete) String(readBytes(zip, "baseline.json", Int.MAX_VALUE), Charsets.UTF_8) else "[]"
@@ -251,6 +254,7 @@ class BackupArchive(
         require(manifest.getJSONObject("hashes").length() == files.size) { "Contagem de hashes inválida" }
         files.forEach { file ->
             require(file.recordId == null || file.recordId in recordIds) { "Anexo sem registro" }
+            require(file.version >= 1) { "Versão de anexo inválida" }
             require(idPattern.matches(file.id)) { "ID de anexo inválido" }
             require(file.byteSize in 0..Int.MAX_VALUE.toLong()) { "Anexo não cabe no armazenamento Room" }
             require(file.sha256 == manifest.getJSONObject("hashes").getString(file.id)) { "Hash inconsistente" }
@@ -295,7 +299,8 @@ class BackupArchive(
                 require(result.first == webDatabase.getString("sha256") && result.second == webDatabase.getLong("size")) {
                     "SQLite web alterado"
                 }
-                validateWebSqlite(zip, manifest)
+                val webFileVersions = validateWebSqlite(zip, manifest, records, files)
+                files = files.map { file -> file.copy(version = webFileVersions[file.id] ?: file.version) }
                 webEntries += "web.sqlite"
             }
             val uploads = manifest.getJSONObject("uploads")
@@ -399,8 +404,11 @@ class BackupArchive(
         return digest.digest().joinToString("") { "%02x".format(it) } to size
     }
 
-    private fun validateWebSqlite(zip: ZipFile, manifest: JSONObject) {
+    private fun validateWebSqlite(
+        zip: ZipFile, manifest: JSONObject, records: List<PlannerRecord>, files: List<PlannerFile>,
+    ): Map<String, Int> {
         val temporary = File.createTempFile("wfp-web-check-", ".sqlite", context.cacheDir)
+        val versions = mutableMapOf<String, Int>()
         try {
             zip.getInputStream(zip.getEntry("web.sqlite")).use { input ->
                 temporary.outputStream().buffered().use { input.copyTo(it) }
@@ -430,10 +438,48 @@ class BackupArchive(
                     }
                 }
                 val uploads = manifest.getJSONObject("uploads")
-                database.rawQuery("SELECT storagePath FROM Attachment", null).use { cursor ->
+                val recordById = records.associateBy { it.id }
+                val fileById = files.associateBy { it.id }
+                if (tables.has("Contract")) {
+                    database.rawQuery("SELECT id FROM Contract", null).use { cursor ->
+                        while (cursor.moveToNext()) {
+                            val id = cursor.getString(0)
+                            require(recordById[id]?.kind == "contract") { "Contrato ausente no Android: $id" }
+                        }
+                    }
+                }
+                val attachmentColumns = mutableSetOf<String>()
+                database.rawQuery("PRAGMA table_info(Attachment)", null).use { cursor ->
+                    while (cursor.moveToNext()) attachmentColumns += cursor.getString(1)
+                }
+                val fields = listOf("id", "ownerType", "ownerId", "contractId", "vendorId", "venueId", "storagePath", "version")
+                val selection = fields.joinToString(", ") { field ->
+                    if (field in attachmentColumns) "\"$field\"" else "NULL AS \"$field\""
+                }
+                database.rawQuery("SELECT $selection FROM Attachment", null).use { cursor ->
                     while (cursor.moveToNext()) {
-                        val relative = cursor.getString(0).removePrefix("uploads/")
+                        val id = cursor.getString(0)
+                        val ownerType = cursor.getString(1)?.uppercase().orEmpty()
+                        val ownerId = cursor.getString(2)
+                        val contractId = cursor.getString(3)
+                        val vendorId = cursor.getString(4)
+                        val venueId = cursor.getString(5)
+                        val owner = when (ownerType) {
+                            "CONTRACT" -> contractId ?: ownerId
+                            "VENDOR" -> vendorId ?: ownerId
+                            "VENUE" -> venueId ?: ownerId
+                            else -> null
+                        } ?: contractId ?: vendorId ?: venueId ?: ownerId
+                        val projected = fileById[id]
+                        require(projected != null && projected.recordId == owner) {
+                            "Anexo ausente ou sem dono no Android: $id"
+                        }
+                        val relative = cursor.getString(6).removePrefix("uploads/")
                         require(uploads.has(relative)) { "Anexo web ausente: $relative" }
+                        val uploaded = uploads.getJSONObject(relative)
+                        require(projected.sha256 == uploaded.getString("sha256") &&
+                            projected.byteSize == uploaded.getLong("size")) { "Anexo divergente no Android: $id" }
+                        versions[id] = if (cursor.isNull(7)) 1 else cursor.getInt(7)
                     }
                 }
                 database.rawQuery("SELECT invitationFilePath, saveTheDateFilePath FROM EventSettings", null).use { cursor ->
@@ -446,6 +492,7 @@ class BackupArchive(
                 }
             }
         } finally { temporary.delete() }
+        return versions
     }
 }
 
@@ -469,6 +516,7 @@ private fun PlannerFile.asJson(): JSONObject = JSONObject()
     .put("id", id).putNullable("recordId", recordId).put("kind", kind)
     .put("fileName", fileName).put("mimeType", mimeType).put("byteSize", byteSize)
     .put("sha256", sha256).put("createdAt", createdAt).putNullable("deletedAt", deletedAt)
+    .put("version", version)
 
 private fun PlannerSetting.asJson(): JSONObject = JSONObject().put("key", key).put("value", value)
 private fun PlannerAudit.asJson(): JSONObject = JSONObject().put("id", id).putNullable("recordId", recordId)
@@ -491,6 +539,7 @@ private fun fileFromJson(json: JSONObject): PlannerFile = PlannerFile(
     fileName = json.getString("fileName"), mimeType = json.getString("mimeType"),
     byteSize = json.getLong("byteSize"), sha256 = json.getString("sha256"),
     createdAt = json.getLong("createdAt"), deletedAt = json.optNullableLong("deletedAt"),
+    version = json.optInt("version", 1),
 )
 
 private fun settingFromJson(json: JSONObject): PlannerSetting =

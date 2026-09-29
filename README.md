@@ -2,12 +2,12 @@
 
 <p align="center">
   <strong>Sistema open-source para casais organizarem o casamento.</strong><br/>
-  Orçamento, fornecedores, convidados, lua de mel e enxoval — na versão web self-hosted e no aplicativo Android nativo (APK assinado).
+Orçamento, fornecedores, convidados, lua de mel e enxoval — na versão web self-hosted e no aplicativo Android nativo (APK assinado).
 </p>
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <a href="https://github.com/guiloklex-hub/wedding-management-system/releases/latest"><img alt="Android APK" src="https://img.shields.io/badge/Android_11%2B-APK_v1.0.0-3DDC84?logo=android&logoColor=white"></a>
+  <a href="https://github.com/guiloklex-hub/wedding-management-system/releases/latest"><img alt="Android APK" src="https://img.shields.io/badge/Android_11%2B-APK_v1.1.0-3DDC84?logo=android&logoColor=white"></a>
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?logo=next.js">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white">
   <img alt="Prisma" src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white">
@@ -17,14 +17,17 @@
 
 ---
 
-## 📱 Aplicativo Android Nativo (`v1.0.0`)
+## 📱 Aplicativo Android Nativo (`v1.1.0`)
 
-O aplicativo oficial para **Android 11+ (SDK 30–36)** está disponível em [**GitHub Releases**](https://github.com/guiloklex-hub/wedding-management-system/releases/latest) (`wedding-finance-planner-v1.0.0.apk`, pacote `br.com.paivalab.weddingmanagementsystem`). Desenvolvido em **Kotlin, Jetpack Compose (Material 3) e Room/SQLite**, roda **100% offline no aparelho**, sem depender de servidor Node.js, nuvem ou hospedagem externa.
+O aplicativo oficial para **Android 11+ (SDK 30–36)** está disponível em [**GitHub Releases**](https://github.com/guiloklex-hub/wedding-management-system/releases/latest) (`wedding-finance-planner-v1.1.0.apk`, pacote `br.com.paivalab.weddingmanagementsystem`). Desenvolvido em **Kotlin, Jetpack Compose (Material 3) e Room/SQLite**, roda **100% offline no aparelho**, sem depender de servidor Node.js, nuvem ou hospedagem externa.
 
-- 📥 **Download direto (APK assinado):** [`wedding-finance-planner-v1.0.0.apk`](https://github.com/guiloklex-hub/wedding-management-system/releases/download/v1.0.0/wedding-finance-planner-v1.0.0.apk) (`SHA-256: ad4d56ae472c3904c04d48ce6e384b49e5eac3d6f44d542ffaf49b13bfee7be7`)
+- 📥 **Download direto (APK assinado):** [`wedding-finance-planner-v1.1.0.apk`](https://github.com/guiloklex-hub/wedding-management-system/releases/download/v1.1.0/wedding-finance-planner-v1.1.0.apk) (`SHA-256: 00b70745c825a29a1d7ffdda93f086390eae56773d8df61d8e35125d718b818e`)
+- 🌙 **Nova tela de desbloqueio:** arte exclusiva de casamento, conteúdo em cartão de alto contraste e acesso pela biometria ou PIN do aparelho.
 - 🎨 **Identidade Material 3 (rosa/champagne)** com tema escuro nativo, badges semânticas, filtros rápidos (`FilterChip`), `DatePickerDialog` nativo e base de demonstração em 1 toque
 - ⚡ **Paridade de domínio com o webapp:** gerador nativo de **PIX Copia e Cola (EMV® QRCPS-MPM + CRC16-CCITT)** e **QR Code ISO/IEC 18004** em `Canvas`, **Radar de Riscos** proativo (6 regras de auditoria financeira/contratual), cálculo automático de **multa e juros pro-rata die**, **Resumo Demográfico para Buffet** (pagantes, meias 50%, isentos e restrições alimentares), **20 itens de Checklist Técnico de Local** e **33 modelos de tarefas**
 - 🔐 **Segurança e portabilidade (`.wfpbackup` v2):** desbloqueio por biometria forte ou credencial do aparelho, cofre **Android Keystore** e transferência bidirecional cifrada (`AES-256-GCM` + `PBKDF2-HMAC-SHA256` com 600 mil iterações) em **Ajustes → Backup**, preservando 100% do SQLite web, `uploads/`, anexos e cópia automática de reversão. Veja [Android nativo](docs/android.md) e [backup e transferência](docs/backup-restore.md).
+
+O [inventário de paridade web × Android](docs/android-paridade.md) mostra as telas disponíveis, as diferenças atuais e o que ainda depende do servidor web.
 
 ---
 

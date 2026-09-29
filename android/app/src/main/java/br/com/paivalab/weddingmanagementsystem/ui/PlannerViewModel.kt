@@ -22,6 +22,7 @@ class PlannerViewModel(
 ) : ViewModel() {
     val records = repository.records.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val files = repository.files.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val allFiles = repository.allFiles.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val audits = repository.audits.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val locale = preferences.locale.stateIn(viewModelScope, SharingStarted.Eagerly, "pt-BR")
     val currency = preferences.currency.stateIn(viewModelScope, SharingStarted.Eagerly, "BRL")
@@ -123,6 +124,9 @@ class PlannerViewModel(
     }
     fun exportAttachment(context: Context, file: PlannerFile, destination: Uri) = launchAction {
         repository.exportAttachment(context, file, destination)
+    }
+    fun prepareSharedFile(context: Context, file: PlannerFile, onReady: (Uri) -> Unit) = launchAction {
+        onReady(repository.prepareSharedFile(context, file))
     }
     fun setLocale(value: String) = launchAction { preferences.setLocale(value) }
     fun setCurrency(value: String) = launchAction { preferences.setCurrency(value) }

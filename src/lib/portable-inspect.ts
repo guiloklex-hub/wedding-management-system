@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { backup, DatabaseSync } from "node:sqlite";
 import { safeArchiveName, sha256File, sqliteSchemaHash, withPortableFile, type OpenPortable, type PortableManifest } from "./portable-format";
-import type { MobileFile, MobileRecord } from "./portable-projection";
+import { assertWebContractCoverage, type MobileFile, type MobileRecord, type Row } from "./portable-projection";
 import { mergeMobileRecords, prepareAndroidBase } from "./portable-merge";
 import { databasePath } from "./portable-export";
 
@@ -118,6 +118,10 @@ export async function inspectPortable<T>(source: string, password: string,
             failUnless(db.prepare(`SELECT count(*) AS n FROM "${table}"`).get()?.n === count,
               `Contagem divergente: ${table}`);
           }
+          const contracts = manifest.webTables.Contract == null ? [] :
+            db.prepare("SELECT * FROM Contract").all() as Row[];
+          const attachments = db.prepare("SELECT * FROM Attachment").all() as Row[];
+          assertWebContractCoverage(contracts, attachments, records, files, manifest.uploads);
           const paths = db.prepare("SELECT storagePath FROM Attachment").all() as { storagePath: string }[];
           const event = db.prepare("SELECT invitationFilePath, saveTheDateFilePath FROM EventSettings").get() as
             { invitationFilePath: string | null; saveTheDateFilePath: string | null } | undefined;

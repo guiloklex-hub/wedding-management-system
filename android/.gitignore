@@ -11,5 +11,6 @@ keystore.properties
 *.wfpbackup
 !app/src/androidTest/assets/interop.wfpbackup
 !app/src/androidTest/assets/portable-v2-fixture.wfpbackup
+!app/src/androidTest/assets/portable-v2-missing-contract.wfpbackup
 __pycache__/
 *.pyc

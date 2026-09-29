@@ -29,11 +29,16 @@
     <string name="upcoming">Próximas ações</string><string name="mark_paid">Marcar pago</string>
     <string name="mark_done">Concluir</string><string name="confirm_guest">Confirmar presença</string>
     <string name="decline_guest">Recusar presença</string><string name="check_in">Check-in</string>
-    <string name="share_whatsapp">Abrir WhatsApp</string><string name="share_text">Compartilhar texto</string>
+    <string name="share_whatsapp">Abrir WhatsApp</string><string name="share_text">Compartilhar texto</string><string name="share_with_attachment">Compartilhar com anexo</string>
+    <string name="invite_attachment">Anexo do convite</string><string name="no_attachment">Sem anexo</string>
+    <string name="select_whatsapp_recipient">Selecione o destinatário no WhatsApp e confira antes de enviar.</string>
     <string name="sent_confirm">Marcar como enviado</string><string name="sent_warning">Abrir outro aplicativo não comprova o envio. Marque apenas depois de confirmar.</string>
     <string name="language">Idioma</string><string name="currency">Moeda</string>
     <string name="couple_names">Nomes do casal</string><string name="event_date">Data do casamento</string>
     <string name="unlock_title">Desbloqueie o planejador</string><string name="unlock_button">Usar digital ou PIN do aparelho</string>
+    <string name="unlock_brand">WEDDING FINANCE</string><string name="unlock_private">SEU ESPAÇO PRIVADO</string>
+    <string name="unlock_intro">Seu grande dia começa aqui.</string><string name="unlock_description">Cada detalhe do seu casamento, organizado e protegido para você.</string>
+    <string name="unlock_local_data">Seus dados permanecem neste aparelho.</string>
     <string name="device_lock_required">Configure um bloqueio de tela no Android antes de usar o aplicativo.</string>
     <string name="unlock_error">Não foi possível desbloquear. Tente novamente.</string>
     <string name="backup_export">Exportar backup criptografado</string>
@@ -69,6 +74,7 @@
     <string name="status_not_invited">Não convidado</string><string name="status_invited">Convidado</string><string name="status_confirmed">Confirmado</string><string name="status_declined">Recusado</string><string name="status_maybe">Talvez</string>
     <string name="status_pending">Pendente</string><string name="status_paid">Pago</string><string name="status_expected">Previsto</string><string name="status_received">Recebido</string><string name="status_cancelled">Cancelado</string>
     <string name="status_thanked">Agradecido</string><string name="status_processed">Lançado</string><string name="status_planned">Planejado</string><string name="status_booked">Reservado</string>
+    <string name="status_signed_digital">Assinado digitalmente</string><string name="status_signed_physical">Assinado fisicamente</string>
     <string name="status_to_buy">A comprar</string><string name="status_bought">Comprado</string><string name="status_gifted">Presenteado</string><string name="status_draft">Rascunho</string><string name="status_signed">Assinado</string><string name="status_expired">Expirado</string><string name="status_sent">Enviado</string>
     <string name="backup_weekly_reminder">Faça uma cópia dos seus dados</string>
     <string name="backup_weekly_body">Há alterações desde o último backup.</string>
@@ -93,5 +99,32 @@
     <string name="all_tags">Todas as tags</string>
     <string name="frequency">Frequência</string><string name="one_time">Uma vez</string><string name="monthly">Mensal</string>
     <string name="contract_version">Versão do contrato</string>
+    <string name="vendor_finance">Resumo financeiro</string><string name="vendor_balance">Saldo a pagar</string>
+    <string name="indicated_by">Indicado por</string><string name="contract_link">Link do contrato</string>
+    <string name="primary_contact">Contato principal</string><string name="contract_signed">Assinado em</string>
+    <string name="contact_role">Função do contato</string>
+    <string name="contract_expires">Vencimento do contrato</string><string name="payment_terms">Condições de pagamento</string>
+    <string name="cancellation_policy">Cláusulas de cancelamento</string><string name="included_items">Itens incluídos</string>
+    <string name="excluded_items">Itens excluídos</string><string name="open_file">Abrir</string>
+    <string name="save_copy">Salvar cópia</string><string name="archived_version">Versão anterior</string><string name="venue_pricing">Condições do local</string>
+    <string name="backup_contract_preview">Contratos: {contracts} · PDFs de contrato: {pdfs} (inclui versões anteriores)</string>
+    <string name="contract_pdf_required">O contrato precisa ser um PDF válido</string>
+    <string name="venue_restrictions">Restrições</string><string name="venue_pros">Pontos positivos</string>
+    <string name="venue_cons">Pontos negativos</string><string name="seed_venue_checklist">Gerar checklist padrão</string>
+    <string name="venue_maps_url">Link do mapa</string><string name="venue_capacity_seated">Capacidade sentada</string>
+    <string name="venue_capacity_standing">Capacidade em pé</string><string name="venue_contact_name">Nome do contato</string>
+    <string name="venue_shortlisted">Na lista de opções</string>
+    <string name="reports">Relatórios</string><string name="report_cashflow">Fluxo de caixa</string>
+    <string name="report_vendor_funnel">Funil de fornecedores</string><string name="report_risk">Radar de riscos</string>
+    <string name="report_guests">Convidados e confirmações</string><string name="report_gifts">Presentes</string>
+    <string name="report_tasks">Progresso das tarefas</string><string name="report_honeymoon">Lua de mel</string>
+    <string name="report_trousseau">Enxoval</string><string name="report_activity">Histórico de atividade</string>
+    <string name="report_by_category">Por categoria</string><string name="report_by_room">Por cômodo</string>
+    <string name="report_total_value">Valor total</string><string name="report_completion">Conclusão</string>
+    <string name="report_no_alerts">Nenhum risco identificado</string><string name="report_event_date_needed">Configure a data do casamento para ver a projeção.</string>
+    <string name="help_mobile_details_title">Detalhes e relatórios</string>
+    <string name="help_mobile_details_body">Toque em um fornecedor ou local para abrir os detalhes, contratos, cláusulas e PDFs. Em Mais › Relatórios, consulte os resumos de cada área.</string>
+    <string name="help_mobile_share_title">Convite com anexo</string>
+    <string name="help_mobile_share_body">Adicione o arquivo ao modelo de convite, escolha o anexo e o convidado e abra o WhatsApp. Selecione e confira o destinatário antes de enviar. Marque como enviado somente depois de confirmar.</string>
     <string name="table_overview">Ocupação das mesas</string><string name="unseated_guests">Confirmados sem mesa</string>
 </resources>

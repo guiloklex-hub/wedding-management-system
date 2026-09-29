@@ -9,6 +9,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -30,7 +31,18 @@ fun localizedCurrency(cents: Long, currency: String, language: String): String {
 fun formatDisplayDate(dateStr: String?, language: String): String {
     if (dateStr.isNullOrBlank()) return ""
     return runCatching {
-        val date = LocalDate.parse(dateStr.trim())
+        val raw = dateStr.trim()
+        val epoch = raw.toLongOrNull()
+        val date = if (epoch == null) {
+            LocalDate.parse(raw.take(10))
+        } else {
+            val instant = if (epoch in -99_999_999_999L..99_999_999_999L) {
+                Instant.ofEpochSecond(epoch)
+            } else {
+                Instant.ofEpochMilli(epoch)
+            }
+            instant.atZone(ZoneOffset.UTC).toLocalDate()
+        }
         val pattern = if (language.startsWith("en")) "MMM dd, yyyy" else "dd/MM/yyyy"
         date.format(DateTimeFormatter.ofPattern(pattern, Locale.forLanguageTag(language)))
     }.getOrDefault(dateStr)

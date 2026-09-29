@@ -249,7 +249,11 @@ def convert(tables, uploads, source_type, allow_missing, stream_blobs=False):
                 report["brokenRelations"].append({"id": record["id"], "field": key, "target": record[key]})
     for row in tables.get("Attachment", []):
         file_id = str(row["id"])
-        related = row.get("contractId") or row.get("vendorId") or row.get("venueId") or row.get("ownerId")
+        owner_type = str(row.get("ownerType") or "").upper()
+        preferred = ({"CONTRACT": "contractId", "VENDOR": "vendorId", "VENUE": "venueId"}
+                     .get(owner_type))
+        related = ((row.get(preferred) or row.get("ownerId")) if preferred else None) or \
+            row.get("contractId") or row.get("vendorId") or row.get("venueId") or row.get("ownerId")
         if related not in ids:
             report["brokenRelations"].append({"id": file_id, "field": "recordId", "target": related})
             related = None
@@ -285,7 +289,7 @@ def convert(tables, uploads, source_type, allow_missing, stream_blobs=False):
         files.append({"id": file_id, "recordId": related, "kind": str(row.get("kind") or "OTHER"),
                       "fileName": str(row.get("filename") or path.name), "mimeType": str(row.get("mimeType") or "application/octet-stream"),
                       "byteSize": size, "sha256": digest, "createdAt": millis(row.get("createdAt")) or now,
-                      "deletedAt": millis(row.get("deletedAt"))})
+                      "deletedAt": millis(row.get("deletedAt")), "version": int(row.get("version") or 1)})
         blobs[file_id] = path if stream_blobs else data
     for field, path_key, name_key, mime_key in (
         ("invitation", "invitationFilePath", "invitationFileName", "invitationFileMime"),
@@ -325,7 +329,7 @@ def convert(tables, uploads, source_type, allow_missing, stream_blobs=False):
     report["warnings"].append("Links públicos antigos de RSVP param de funcionar ao desligar o servidor web.")
     if report["brokenRelations"]:
         raise ConversionError(f"{len(report['brokenRelations'])} relações inválidas; consulte o relatório", report)
-    if report["missingFiles"] and not allow_missing and source_type == "sqlite":
+    if report["missingFiles"] and not allow_missing:
         raise ConversionError(f"{len(report['missingFiles'])} arquivos ausentes ou alterados; consulte o relatório", report)
     return records, files, settings, audits, blobs, report, settings_row
 

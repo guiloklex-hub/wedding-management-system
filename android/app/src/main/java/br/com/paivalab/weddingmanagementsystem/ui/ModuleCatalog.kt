@@ -57,7 +57,7 @@ val modules = listOf(
     ModuleDefinition(Kinds.HONEYMOON_ITEM, R.string.honeymoon_items, Icons.Default.Inventory, listOf("PLANNED", "BOOKED", "CONFIRMED", "PAID", "CANCELLED"), true, true, parentKind = Kinds.HONEYMOON),
     ModuleDefinition(Kinds.TROUSSEAU, R.string.trousseau, Icons.Default.Inventory, listOf("TO_BUY", "BOUGHT", "GIFTED"), true),
     ModuleDefinition(Kinds.TABLE, R.string.seating, Icons.Default.TableRestaurant, hasAmount = true),
-    ModuleDefinition(Kinds.CONTRACT, R.string.contracts, Icons.Default.EditNote, listOf("DRAFT", "SIGNED", "EXPIRED"), true, true, parentKind = Kinds.VENDOR),
+    ModuleDefinition(Kinds.CONTRACT, R.string.contracts, Icons.Default.EditNote, listOf("DRAFT", "SENT", "NEGOTIATING", "SIGNED_DIGITAL", "SIGNED_PHYSICAL", "CANCELLED"), true, true, parentKind = Kinds.VENDOR),
     ModuleDefinition(Kinds.CONTACT, R.string.contacts, Icons.Default.Person, hasContact = true, parentKind = Kinds.VENDOR),
     ModuleDefinition(Kinds.VENUE_CHECK, R.string.venue_check, Icons.Default.CheckCircle, listOf("TODO", "DONE"), parentKind = Kinds.VENUE),
     ModuleDefinition(Kinds.VENDOR_NOTE, R.string.vendor_notes, Icons.Default.EditNote, parentKind = Kinds.VENDOR),

@@ -44,14 +44,17 @@ fun statusLabel(status: String, language: String): String {
         "SIGNED" -> R.string.status_signed
         "EXPIRED" -> R.string.status_expired
         "SENT" -> R.string.status_sent
+        "NEGOTIATING" -> R.string.status_negotiation
+        "SIGNED_DIGITAL" -> R.string.status_signed_digital
+        "SIGNED_PHYSICAL" -> R.string.status_signed_physical
         else -> return status
     }
     return localized(resource, language)
 }
 
 fun statusColor(status: String): Color = when (status) {
-    "DONE", "PAID", "CONFIRMED", "FINALIZED", "SIGNED", "RECEIVED", "PROCESSED", "BOUGHT", "GIFTED", "THANKED", "SENT" -> PlannerEmerald
-    "IN_PROGRESS", "NEGOTIATION", "CONTRACTED", "INVITED", "MAYBE", "PENDING", "EXPECTED", "BOOKED", "PLANNED" -> PlannerChampagne
+    "DONE", "PAID", "CONFIRMED", "FINALIZED", "SIGNED", "SIGNED_DIGITAL", "SIGNED_PHYSICAL", "RECEIVED", "PROCESSED", "BOUGHT", "GIFTED", "THANKED", "SENT" -> PlannerEmerald
+    "IN_PROGRESS", "NEGOTIATION", "NEGOTIATING", "CONTRACTED", "INVITED", "MAYBE", "PENDING", "EXPECTED", "BOOKED", "PLANNED" -> PlannerChampagne
     "BLOCKED", "DECLINED", "CANCELLED", "EXPIRED" -> PlannerRose
     else -> PlannerMuted
 }

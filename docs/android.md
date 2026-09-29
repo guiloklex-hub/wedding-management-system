@@ -1,9 +1,11 @@
-# Android nativo (`v1.0.0`)
+# Android nativo (`v1.1.0`)
 
-O projeto [android/](../android/README.md) usa Kotlin, Jetpack Compose, Room/SQLite, DataStore e WorkManager. Seu `applicationId` e namespace são `br.com.paivalab.weddingmanagementsystem`, com `minSdk 30` (`Android 11+`), `targetSdk 36`, `versionCode 2` e `versionName "1.0.0"`. O aplicativo roda 100% offline no aparelho sem depender de Next.js, Node/npm ou hospedagem externa.
+O inventário tela a tela, com diferenças ainda abertas, está em [android-paridade.md](android-paridade.md).
 
-- **Download do APK assinado (`v1.0.0`):** [`wedding-finance-planner-v1.0.0.apk`](https://github.com/guiloklex-hub/wedding-management-system/releases/download/v1.0.0/wedding-finance-planner-v1.0.0.apk)
-- **SHA-256 do APK:** `ad4d56ae472c3904c04d48ce6e384b49e5eac3d6f44d542ffaf49b13bfee7be7`
+O projeto [android/](../android/README.md) usa Kotlin, Jetpack Compose, Room/SQLite, DataStore e WorkManager. Seu `applicationId` e namespace são `br.com.paivalab.weddingmanagementsystem`, com `minSdk 30` (`Android 11+`), `targetSdk 36`, `versionCode 3` e `versionName "1.1.0"`. O aplicativo roda 100% offline no aparelho sem depender de Next.js, Node/npm ou hospedagem externa.
+
+- **Download do APK assinado (`v1.1.0`):** [`wedding-finance-planner-v1.1.0.apk`](https://github.com/guiloklex-hub/wedding-management-system/releases/download/v1.1.0/wedding-finance-planner-v1.1.0.apk)
+- **SHA-256 do APK:** `00b70745c825a29a1d7ffdda93f086390eae56773d8df61d8e35125d718b818e`
 - **Certificado de assinatura (SHA-256):** `ef0404a400b46675cfc9fcf62421273ddbad7e22e16a15e57eb617b89db65633` (`CN=Wedding Finance Planner, OU=Mobile, O=PaivaLab, L=Sao Paulo, ST=SP, C=BR`, RSA 4096 bits, APK Signature Scheme v3)
 
 ## O que está implementado
@@ -16,13 +18,14 @@ O projeto [android/](../android/README.md) usa Kotlin, Jetpack Compose, Room/SQL
 - Receitas podem ser registradas uma vez ou como recorrência mensal, considerada na projeção de caixa.
 - Insights com indicadores, radar de riscos, demografia para buffet e exportação CSV dos registros ativos pelo seletor de documentos.
 - Anexos privados em BLOB no Room, exportáveis pelo seletor de documentos.
-- Contratos exibem e permitem editar o número da versão. O histórico detalhado de versões dos anexos do web é preservado integralmente no cofre `.wfpbackup` v2.
-- Desbloqueio com biometria forte ou credencial do aparelho, retomado após cinco minutos em segundo plano.
+- Contratos exibem e permitem editar o número da versão. Os PDFs atuais e versões anteriores arquivadas aparecem no detalhe do fornecedor com seu número de versão e podem ser abertos ou exportados. Datas de contrato importadas do SQLite web são apresentadas como datas locais, inclusive quando o backup traz segundos Unix. Backups v2 anteriores sem o campo de versão recuperam essa versão a partir do SQLite web preservado.
+- No convite com anexo selecionado, a ação de compartilhamento mostra “Compartilhar com anexo” quando o convidado não tem telefone cadastrado; o usuário escolhe o WhatsApp e o destinatário no sistema de compartilhamento.
+- Tela de desbloqueio com arte de casamento exclusiva, cartão escuro de alto contraste e botão acessível para biometria forte ou credencial do aparelho. A proteção é retomada após cinco minutos em segundo plano; a ilustração fica em `android/app/src/main/res/drawable-nodpi/unlock_background.webp` e não contém texto nem dados do usuário.
 - Convites individuais por WhatsApp ou compartilhamento, com confirmação manual de envio.
 - Gerador nativo de **PIX Copia e Cola (EMV® QRCPS-MPM + CRC16-CCITT)** e **QR Code ISO/IEC 18004** em `Canvas` para presentes e pagamentos (com valor exato embutido ou valor livre), além de compartilhamento e baixa manual; atalhos para discador, WhatsApp e mapas em fornecedores, contatos e locais. O endereço de locais pode ser editado no Android.
 - Comparação de fornecedores por categoria, avaliação (1 a 5 estrelas), situação, orçamento previsto/real e pagamentos confirmados.
 - Lembretes locais aproximados via WorkManager; verificação ao abrir, aviso semanal de backup quando há mudanças e exportação `.ics` de tarefas e pagamentos.
-- Backup `.wfpbackup` v2 aceito pelo web e Android, com registros, anexos, artes, histórico, todos os uploads e estado web preservado; AES-256-GCM, PBKDF2-HMAC-SHA256 (600 mil iterações), senha escolhida na exportação e prévia validada antes da substituição.
+- Backup `.wfpbackup` v2 aceito pelo web e Android, com registros, anexos, artes, histórico, todos os uploads e estado web preservado; AES-256-GCM, PBKDF2-HMAC-SHA256 (600 mil iterações), senha escolhida na exportação e prévia validada antes da substituição. A validação compara IDs, associações e hashes de cada anexo, além da presença de todos os contratos; a prévia móvel informa quantos contratos e PDFs de contrato serão restaurados.
 - Cofre Android Keystore para SQLite/arquivos web exclusivos e cópia privada de reversão antes de cada substituição. A última reversão pode ser exportada pela tela de Backup.
 - Ferramenta `android/tools/portable_v2.py` para cópia do SQLite web + `uploads/`; importação JSON v2/v3 e `.wfpbackup` v1 ficam como recuperação parcial. O relatório lista contagens, omissões e inconsistências.
 
@@ -30,7 +33,7 @@ O projeto [android/](../android/README.md) usa Kotlin, Jetpack Compose, Room/SQL
 
 Testes unitários e instrumentados verificam motores de domínio (`PixBrCode`, `QrCodeMatrix`, `PaymentAdjustment`, `RiskRadar`, `GuestDemographics`, `VenueChecklistTemplates`), Room, restauração nativa, fixture Python v2, arquivo corrompido e migração v1→v2. Uma cópia dos dados reais da Área de Trabalho passou pela importação no emulador Android e voltou a ser validada no web: 339 registros móveis, 10 arquivos, 31 tabelas web sem linhas alteradas e 10 hashes de uploads idênticos. Uma edição móvel de convidado sobreviveu ao ciclo web → Android → web → Android; um pacote criado em Android vazio também percorreu Android → web → Android com fornecedor, convidada e anexo.
 
-O Room tem esquema v2 com migração explícita da v1, testada em emulador. Migrações futuras precisam de teste com esquema exportado; nunca usar `fallbackToDestructiveMigration`. A restauração substitui o banco em uma transação Room, incluindo BLOBs, e valida o pacote antes. O relatório CSV móvel exporta os campos essenciais de cada módulo e a alocação de mesas é feita por seletor de mesa (sem drag-and-drop gráfico).
+O Room tem esquema v3 com migrações explícitas v1→v2→v3, testadas em emulador. Migrações futuras precisam de teste com esquema exportado; nunca usar `fallbackToDestructiveMigration`. A restauração substitui o banco em uma transação Room, incluindo BLOBs, e valida o pacote antes. O relatório CSV móvel exporta os campos essenciais de cada módulo e a alocação de mesas é feita por seletor de mesa (sem drag-and-drop gráfico).
 
 ## Migração segura
 
@@ -38,4 +41,4 @@ Pare alterações no web, preserve o banco original e `uploads/`, e execute a fe
 
 ## Assinatura e distribuição
 
-A chave de produção (`RSA 4096 bits`) fica fora do Git (`~/.android/wedding-planner-release.jks`), referenciada localmente por `android/keystore.properties` (ignorado pelo Git). Quando `keystore.properties` está presente, `./gradlew :app:assembleRelease` aplica R8/shrinking e assina automaticamente `app-release.apk`. A CI compila e valida `assembleRelease` sem a chave e publica o artefato de depuração; o APK assinado oficial (`wedding-finance-planner-v1.0.0.apk`) e seu arquivo `.sha256` são publicados em [GitHub Releases](https://github.com/guiloklex-hub/wedding-management-system/releases/latest). Mantenha o mesmo `applicationId` (`br.com.paivalab.weddingmanagementsystem`) e certificado para atualizar versões futuras sem perder o banco local.
+A chave de produção (`RSA 4096 bits`) fica fora do Git (`~/.android/wedding-planner-release.jks`), referenciada localmente por `android/keystore.properties` (ignorado pelo Git). Quando `keystore.properties` está presente, `./gradlew :app:assembleRelease` aplica R8/shrinking e assina automaticamente `app-release.apk`. A CI compila e valida `assembleRelease` sem a chave e publica o artefato de depuração; o APK assinado oficial (`wedding-finance-planner-v1.1.0.apk`) e seu arquivo `.sha256` são publicados em [GitHub Releases](https://github.com/guiloklex-hub/wedding-management-system/releases/latest). Mantenha o mesmo `applicationId` (`br.com.paivalab.weddingmanagementsystem`) e certificado para atualizar versões futuras sem perder o banco local.

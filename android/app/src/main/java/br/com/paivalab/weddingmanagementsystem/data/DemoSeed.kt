@@ -586,7 +586,7 @@ object DemoSeed {
         val file = PlannerFile(
             id = "seed-file-1",
             recordId = "seed-contract-1",
-            kind = "ATTACHMENT",
+            kind = "CONTRACT",
             fileName = "Contrato-Fazenda-Vila-Rica-2027.pdf",
             mimeType = "application/pdf",
             byteSize = pdfBytes.size.toLong(),

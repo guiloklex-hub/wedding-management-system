@@ -8,24 +8,10 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
@@ -39,7 +25,7 @@ import br.com.paivalab.weddingmanagementsystem.backup.BackupArchive
 import br.com.paivalab.weddingmanagementsystem.ui.PlannerApp
 import br.com.paivalab.weddingmanagementsystem.ui.PlannerTheme
 import br.com.paivalab.weddingmanagementsystem.ui.PlannerViewModel
-import br.com.paivalab.weddingmanagementsystem.ui.localized
+import br.com.paivalab.weddingmanagementsystem.ui.UnlockScreen
 import br.com.paivalab.weddingmanagementsystem.ui.localizedText
 import br.com.paivalab.weddingmanagementsystem.notifications.ReminderWorker
 import kotlinx.coroutines.flow.collect
@@ -83,27 +69,12 @@ class MainActivity : FragmentActivity() {
                         onLoadDemoSeed = { model.loadDemoSeed(database) },
                     )
                 } else {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(
-                            modifier = Modifier.padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(20.dp),
-                        ) {
-                            Icon(Icons.Default.Favorite, null, tint = MaterialTheme.colorScheme.primary)
-                            Text(localized(R.string.unlock_title, language), style = MaterialTheme.typography.headlineSmall)
-                            val available = BiometricManager.from(this@MainActivity).canAuthenticate(authenticators) == BiometricManager.BIOMETRIC_SUCCESS
-                            if (!available) {
-                                Text(localized(R.string.device_lock_required, language))
-                                Button(onClick = { startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS)) }) {
-                                    Text(localized(R.string.settings, language))
-                                }
-                            } else {
-                                Button(onClick = { authenticate() }) {
-                                    Text(localized(R.string.unlock_button, language))
-                                }
-                            }
-                        }
-                    }
+                    UnlockScreen(
+                        language = language,
+                        canAuthenticate = BiometricManager.from(this@MainActivity).canAuthenticate(authenticators) == BiometricManager.BIOMETRIC_SUCCESS,
+                        onUnlock = { authenticate() },
+                        onOpenSettings = { startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS)) },
+                    )
                 }
             }
         }
@@ -126,7 +97,7 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun handleDebugIntent(intent: Intent?) {
-        if (intent == null) return
+        if (!BuildConfig.DEBUG || intent == null) return
         if (intent.getBooleanExtra("skip_auth", false)) {
             unlocked = true
         }

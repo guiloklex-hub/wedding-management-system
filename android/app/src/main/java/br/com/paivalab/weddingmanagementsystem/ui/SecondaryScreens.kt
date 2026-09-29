@@ -565,6 +565,30 @@ fun HelpScreen(language: String) {
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = PlannerSurface),
+                border = BorderStroke(1.dp, PlannerBorder),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(localized(R.string.help_mobile_details_title, language), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
+                    Text(localized(R.string.help_mobile_details_body, language), style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = PlannerSurface),
+                border = BorderStroke(1.dp, PlannerBorder),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(localized(R.string.help_mobile_share_title, language), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerRose)
+                    Text(localized(R.string.help_mobile_share_body, language), style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = PlannerSurface),
                 border = BorderStroke(1.dp, PlannerChampagne.copy(alpha = 0.28f)),
                 modifier = Modifier.fillMaxWidth(),
             ) {

@@ -50,6 +50,7 @@ data class PlannerFile(
     val sha256: String,
     val createdAt: Long = System.currentTimeMillis(),
     val deletedAt: Long? = null,
+    val version: Int = 1,
 )
 
 @Entity(tableName = "file_blobs")
@@ -92,6 +93,9 @@ interface PlannerDao {
 
     @Query("SELECT * FROM files WHERE deletedAt IS NULL ORDER BY createdAt DESC")
     fun observeFiles(): Flow<List<PlannerFile>>
+
+    @Query("SELECT * FROM files ORDER BY createdAt DESC")
+    fun observeAllFiles(): Flow<List<PlannerFile>>
 
     @Query("SELECT * FROM file_blobs WHERE id = :id LIMIT 1")
     suspend fun blob(id: String): PlannerBlob?
@@ -160,7 +164,7 @@ interface PlannerDao {
 @Database(
     entities = [PlannerRecord::class, PlannerFile::class, PlannerBlob::class, PlannerSetting::class, PlannerAudit::class,
         PortableState::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class PlannerDatabase : RoomDatabase() {
@@ -175,12 +179,18 @@ abstract class PlannerDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `files` ADD COLUMN `version` INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
         fun get(context: Context): PlannerDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(
                 context.applicationContext,
                 PlannerDatabase::class.java,
                 "wedding-planner.db",
-            ).addMigrations(MIGRATION_1_2).build().also { instance = it }
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
         }
     }
 }

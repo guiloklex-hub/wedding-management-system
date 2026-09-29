@@ -127,6 +127,25 @@ class MigrationTest(unittest.TestCase):
                 migration.convert(tables, Path(directory), "sqlite", False)
             self.assertEqual("ausente", raised.exception.report["missingFiles"][0]["reason"])
 
+    def test_json_without_uploads_refuses_to_drop_contract_pdf(self):
+        tables = {"Vendor": [{"id": "v1", "name": "Buffet"}],
+                  "Contract": [{"id": "c1", "vendorId": "v1", "title": "Contrato"}],
+                  "Attachment": [{"id": "a1", "ownerType": "CONTRACT", "ownerId": "c1",
+                                  "vendorId": "v1", "storagePath": "contract.pdf"}]}
+        with self.assertRaises(migration.ConversionError) as raised:
+            migration.convert(tables, None, "json", False)
+        self.assertEqual("JSON sem arquivos", raised.exception.report["missingFiles"][0]["reason"])
+
+    def test_contract_owner_wins_over_vendor_reference(self):
+        tables = {"Vendor": [{"id": "v1", "name": "Buffet"}],
+                  "Contract": [{"id": "c1", "vendorId": "v1", "title": "Contrato"}],
+                  "Attachment": [{"id": "a1", "ownerType": "CONTRACT", "ownerId": "c1",
+                                  "vendorId": "v1", "storagePath": "contract.pdf"}]}
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / "contract.pdf").write_bytes(b"PDF")
+            _, files, _, _, _, _, _ = migration.convert(tables, Path(directory), "sqlite", False)
+        self.assertEqual("c1", files[0]["recordId"])
+
     def test_budget_preserves_estimate_and_actual_separately(self):
         tables = {"BudgetItem": [{"id": "b1", "title": "Buffet", "estimatedValue": 1000.25,
                                    "actualValue": 1120.10}], "User": [{"id": "u1"}]}

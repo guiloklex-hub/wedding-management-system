@@ -200,6 +200,9 @@ fun BackupScreen(
                         .replace("{records}", preview.records.toString())
                         .replace("{files}", preview.files.toString())
                         .replace("{tables}", preview.webTables.toString()) + "\n" +
+                        localized(R.string.backup_contract_preview, language)
+                            .replace("{contracts}", preview.contracts.toString())
+                            .replace("{pdfs}", preview.contractPdfs.toString()) + "\n" +
                         localized(R.string.backup_preview_details, language)
                             .replace("{areas}", preview.areas.entries.joinToString { "${it.key}: ${it.value}" })
                             .replace("{bytes}", preview.requiredBytes.toString())

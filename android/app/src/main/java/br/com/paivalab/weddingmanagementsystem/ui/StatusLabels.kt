@@ -20,8 +20,11 @@ import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
+import br.com.paivalab.weddingmanagementsystem.data.RiskAlertItem
 
 @Composable
 fun statusLabel(status: String, language: String): String {
@@ -159,3 +162,13 @@ fun PlannerProgressBar(ratio: Float, color: Color, height: Dp = 8.dp) {
         drawRoundRect(color, size = Size(size.width * value, size.height), cornerRadius = radius)
     }
 }
+
+@Composable
+fun riskTitle(alert: RiskAlertItem): String = alert.titleQuantity?.let {
+    pluralStringResource(alert.title, it, *alert.titleArgs.toTypedArray())
+} ?: stringResource(alert.title, *alert.titleArgs.toTypedArray())
+
+@Composable
+fun riskBody(alert: RiskAlertItem): String = alert.bodyQuantity?.let {
+    pluralStringResource(alert.body, it, *alert.bodyArgs.toTypedArray())
+} ?: stringResource(alert.body, *alert.bodyArgs.toTypedArray())

@@ -2,6 +2,7 @@ package br.com.paivalab.weddingmanagementsystem.ui
 
 import android.content.Context
 import android.net.Uri
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -10,11 +11,45 @@ import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRepository
 import br.com.paivalab.weddingmanagementsystem.data.GuestImportPreview
+import br.com.paivalab.weddingmanagementsystem.R
+import br.com.paivalab.weddingmanagementsystem.data.DEMO_REQUIRES_EMPTY
+import br.com.paivalab.weddingmanagementsystem.data.HONEYMOON_NOT_DELETABLE
+import br.com.paivalab.weddingmanagementsystem.data.PARENT_DELETED
+import br.com.paivalab.weddingmanagementsystem.data.PAYMENT_NEEDS_VENDOR
+import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
+import br.com.paivalab.weddingmanagementsystem.data.UndoSnapshot
+import br.com.paivalab.weddingmanagementsystem.data.VENDOR_NEEDS_CATEGORY
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+data class UserMessage(
+    @StringRes val text: Int,
+    val args: List<Any> = emptyList(),
+    val undo: UndoSnapshot? = null,
+    /** Quando não nulo, `text` é um recurso `plurals`. */
+    val quantity: Int? = null,
+)
+
+/** Traduz os códigos de erro do repositório em mensagens para o usuário. */
+@StringRes
+fun errorMessage(code: String?): Int = when (code) {
+    "Mesa sem lugares" -> R.string.table_full
+    PAYMENT_NEEDS_VENDOR -> R.string.payment_needs_vendor
+    VENDOR_NEEDS_CATEGORY -> R.string.vendor_needs_category
+    HONEYMOON_NOT_DELETABLE -> R.string.honeymoon_not_deletable
+    PARENT_DELETED -> R.string.parent_deleted
+    DEMO_REQUIRES_EMPTY -> R.string.demo_requires_empty
+    "Presente já lançado" -> R.string.gift_already_processed
+    else -> R.string.error_generic
+}
 
 class PlannerViewModel(
     private val repository: PlannerRepository,
@@ -24,6 +59,9 @@ class PlannerViewModel(
     val files = repository.files.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val allFiles = repository.allFiles.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val audits = repository.audits.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val index = combine(repository.records, repository.files) { records, files -> RecordIndex(records, files) }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RecordIndex.EMPTY)
     val locale = preferences.locale.stateIn(viewModelScope, SharingStarted.Eagerly, "pt-BR")
     val currency = preferences.currency.stateIn(viewModelScope, SharingStarted.Eagerly, "BRL")
     val themeMode = preferences.themeMode.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
@@ -45,12 +83,12 @@ class PlannerViewModel(
     val pixCity = _pixCity.asStateFlow()
     private val _contingencyPercent = MutableStateFlow(10)
     val contingencyPercent = _contingencyPercent.asStateFlow()
-    private val _error = MutableStateFlow<String?>(null)
-    val error = _error.asStateFlow()
+    private val _messages = MutableSharedFlow<UserMessage>(extraBufferCapacity = 16)
+    /** Mensagens para o snackbar; `undo` habilita o botão "Desfazer". */
+    val messages = _messages.asSharedFlow()
+    val deleted = repository.deleted.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     private val _guestImport = MutableStateFlow<GuestImportPreview?>(null)
     val guestImport = _guestImport.asStateFlow()
-    private val _guestImportResult = MutableStateFlow<Pair<Int, Int>?>(null)
-    val guestImportResult = _guestImportResult.asStateFlow()
 
     init {
         refreshEvent()
@@ -70,22 +108,42 @@ class PlannerViewModel(
         }
     }
 
-    fun clearError() { _error.value = null }
+    private fun notify(text: Int, vararg args: Any, undo: UndoSnapshot? = null, quantity: Int? = null) {
+        _messages.tryEmit(UserMessage(text, args.toList(), undo?.takeUnless { it.isEmpty }, quantity))
+    }
 
     fun save(record: PlannerRecord, done: () -> Unit = {}) = launchAction {
         repository.save(record)
+        notify(R.string.msg_saved)
         done()
     }
 
     fun delete(id: String, done: () -> Unit = {}) = launchAction {
-        repository.delete(id)
+        val undo = repository.delete(id)
+        notify(R.string.msg_deleted, undo = undo)
         done()
     }
 
-    fun setStatus(id: String, status: String) = launchAction { repository.setStatus(id, status) }
-    fun setGroupRsvp(id: String, status: String) = launchAction { repository.setGroupRsvp(id, status) }
-    fun markPaid(id: String) = launchAction { repository.markPaid(id) }
-    fun convertGift(id: String, targetKind: String) = launchAction { repository.convertGift(id, targetKind) }
+    fun undo(snapshot: UndoSnapshot) = launchAction {
+        repository.undo(snapshot)
+        notify(R.string.msg_undone)
+    }
+
+    fun restore(id: String) = launchAction {
+        repository.restore(id)
+        notify(R.string.msg_restored)
+    }
+
+    fun setStatus(id: String, status: String) = launchAction {
+        notify(R.string.msg_status_changed, undo = repository.setStatus(id, status))
+    }
+    fun setGroupRsvp(id: String, status: String) = launchAction {
+        notify(R.string.msg_group_rsvp, undo = repository.setGroupRsvp(id, status))
+    }
+    fun markPaid(id: String) = launchAction { notify(R.string.msg_paid, undo = repository.markPaid(id)) }
+    fun convertGift(id: String, targetKind: String) = launchAction {
+        notify(R.string.msg_gift_posted, undo = repository.convertGift(id, targetKind))
+    }
     fun assignGuest(guestId: String, tableId: String?) = launchAction { repository.assignGuestToTable(guestId, tableId) }
     fun confirmInvitationSent(templateId: String, guestId: String, channel: String) = launchAction {
         repository.confirmInvitationSent(templateId, guestId, channel)
@@ -96,20 +154,27 @@ class PlannerViewModel(
     fun dismissGuestImport() { _guestImport.value = null }
     fun commitGuestImport() = launchAction {
         val preview = _guestImport.value ?: return@launchAction
-        _guestImportResult.value = repository.importGuests(preview)
+        val (added, skipped) = repository.importGuests(preview)
         _guestImport.value = null
+        notify(R.string.guest_import_result_format, added, skipped)
     }
     fun seedTaskTemplates() = launchAction {
-        val date = java.time.LocalDate.parse(_eventDate.value)
-        repository.seedTaskTemplates(date)
+        val date = runCatching { java.time.LocalDate.parse(_eventDate.value) }.getOrNull()
+        if (date == null) {
+            notify(R.string.report_event_date_needed)
+            return@launchAction
+        }
+        val count = repository.seedTaskTemplates(date)
+        notify(R.plurals.msg_templates_added, count, quantity = count)
     }
-    fun seedVenueChecklist(venueId: String, onDone: (Int) -> Unit = {}) = launchAction {
+    fun seedVenueChecklist(venueId: String) = launchAction {
         val count = repository.seedVenueChecklist(venueId)
-        onDone(count)
+        notify(R.plurals.msg_checklist_added, count, quantity = count)
     }
     fun createInstallments(vendorId: String?, title: String, totalCents: Long,
                            count: Int, firstDueDate: java.time.LocalDate) = launchAction {
         repository.createInstallments(vendorId, title, totalCents, count, firstDueDate)
+        notify(R.plurals.msg_installments_created, count, quantity = count)
     }
     fun saveWeddingDay(schedule: String, rainPlan: String, specialNotes: String) = launchAction {
         repository.setSetting("daySchedule", schedule.take(8000))
@@ -119,7 +184,7 @@ class PlannerViewModel(
         _rainPlan.value = rainPlan.take(8000)
         _specialNotes.value = specialNotes.take(8000)
     }
-    fun checkInGuest(id: String) = launchAction { repository.checkInGuest(id) }
+    fun checkInGuest(id: String) = launchAction { notify(R.string.msg_checked_in, undo = repository.checkInGuest(id)) }
     fun addAttachment(context: Context, recordId: String, uri: Uri) = launchAction {
         repository.addAttachment(context, recordId, uri)
     }
@@ -159,7 +224,7 @@ class PlannerViewModel(
 
     private fun launchAction(block: suspend () -> Unit) {
         viewModelScope.launch {
-            try { block() } catch (error: Exception) { _error.value = error.message ?: "Erro" }
+            try { block() } catch (error: Exception) { _messages.tryEmit(UserMessage(errorMessage(error.message))) }
         }
     }
 

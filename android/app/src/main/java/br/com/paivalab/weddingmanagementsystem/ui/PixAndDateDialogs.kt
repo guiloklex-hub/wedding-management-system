@@ -44,6 +44,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -215,18 +217,21 @@ fun DatePickerOutlinedField(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
+    error: String? = null,
 ) {
-    var openPicker by remember { mutableStateOf(false) }
+    var openPicker by rememberSaveable { mutableStateOf(false) }
 
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
-        placeholder = { Text("AAAA-MM-DD ou DD/MM/AAAA") },
+        placeholder = { Text(stringResource(R.string.date_placeholder)) },
         singleLine = true,
+        isError = error != null,
+        supportingText = error?.let { { Text(it) } },
         trailingIcon = {
             IconButton(onClick = { openPicker = true }) {
-                Icon(Icons.Default.CalendarMonth, contentDescription = "Selecionar data no calendário", tint = PlannerChampagne)
+                Icon(Icons.Default.CalendarMonth, contentDescription = stringResource(R.string.pick_date), tint = PlannerChampagne)
             }
         },
         modifier = modifier.fillMaxWidth(),
@@ -252,12 +257,12 @@ fun DatePickerOutlinedField(
                         openPicker = false
                     },
                 ) {
-                    Text("Selecionar")
+                    Text(stringResource(R.string.select))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { openPicker = false }) {
-                    Text("Cancelar")
+                    Text(stringResource(R.string.cancel))
                 }
             },
         ) {

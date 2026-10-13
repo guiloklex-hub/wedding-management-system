@@ -1,5 +1,6 @@
 package br.com.paivalab.weddingmanagementsystem.data
 
+import br.com.paivalab.weddingmanagementsystem.R
 import java.text.Normalizer
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -307,12 +308,20 @@ object PaymentAdjustment {
     }
 }
 
+/**
+ * Alerta do radar. Os textos são recursos (`R.plurals` quando `quantity` não é nulo)
+ * para a interface traduzir; `formatMoney` já entra formatado nos argumentos.
+ */
 data class RiskAlertItem(
     val id: String,
     val severity: String, // "HIGH" or "MEDIUM"
-    val title: String,
-    val body: String,
+    val title: Int,
+    val titleArgs: List<Any> = emptyList(),
+    val body: Int,
+    val bodyArgs: List<Any> = emptyList(),
     val targetSection: String,
+    val titleQuantity: Int? = null,
+    val bodyQuantity: Int? = null,
 )
 
 /** Port de `src/lib/reports/risk-radar.ts`: mesmas regras, limites e severidades. */
@@ -339,8 +348,11 @@ object RiskRadar {
                 RiskAlertItem(
                     id = "overdue-payments",
                     severity = "HIGH",
-                    title = "${overduePayments.size} pagamento(s) vencido(s)",
-                    body = "Soma de ${formatMoney(total)}. Possível incidência de juros e multas.",
+                    title = R.plurals.risk_overdue_payments,
+                    titleArgs = listOf(overduePayments.size),
+                    titleQuantity = overduePayments.size,
+                    body = R.string.risk_overdue_payments_body,
+                    bodyArgs = listOf(formatMoney(total)),
                     targetSection = Kinds.PAYMENT,
                 ),
             )
@@ -351,8 +363,9 @@ object RiskRadar {
                 RiskAlertItem(
                     id = "negative-cashflow",
                     severity = "HIGH",
-                    title = "Projeção de caixa negativa",
-                    body = "O mês ${negative.month} fecha em ${formatMoney(negative.endingCents)}.",
+                    title = R.string.risk_negative_cashflow,
+                    body = R.string.risk_negative_cashflow_body,
+                    bodyArgs = listOf(negative.month.toString(), formatMoney(negative.endingCents)),
                     targetSection = "insights",
                 ),
             )
@@ -369,8 +382,11 @@ object RiskRadar {
                     RiskAlertItem(
                         id = "contract-${contract.id}",
                         severity = if (daysLeft <= 30L) "HIGH" else "MEDIUM",
-                        title = "Contrato sem assinatura: $vendorName",
-                        body = "Vence em $daysLeft dia(s) e está com status ${contract.status}.",
+                        title = R.string.risk_contract_unsigned,
+                        titleArgs = listOf(vendorName),
+                        body = R.plurals.risk_contract_unsigned_body,
+                        bodyArgs = listOf(daysLeft.toInt()),
+                        bodyQuantity = daysLeft.toInt(),
                         targetSection = Kinds.CONTRACT,
                     ),
                 )
@@ -387,8 +403,10 @@ object RiskRadar {
                     RiskAlertItem(
                         id = "vendor-creep-${vendor.id}",
                         severity = if (actual * 100 > estimated * 130) "HIGH" else "MEDIUM",
-                        title = "${vendor.title} estourou orçamento",
-                        body = "Atual ${formatMoney(actual)} vs estimado ${formatMoney(estimated)} ($overPct%).",
+                        title = R.string.risk_vendor_creep,
+                        titleArgs = listOf(vendor.title),
+                        body = R.string.risk_vendor_creep_body,
+                        bodyArgs = listOf(formatMoney(actual), formatMoney(estimated), overPct.toInt()),
                         targetSection = Kinds.VENDOR,
                     ),
                 )
@@ -404,8 +422,11 @@ object RiskRadar {
                 RiskAlertItem(
                     id = "urgent-tasks-late",
                     severity = "HIGH",
-                    title = "${tasks.size} tarefa(s) urgente(s) atrasada(s)",
-                    body = tasks.take(3).joinToString(" · ") { it.title },
+                    title = R.plurals.risk_urgent_tasks,
+                    titleArgs = listOf(tasks.size),
+                    titleQuantity = tasks.size,
+                    body = R.string.risk_task_list,
+                    bodyArgs = listOf(tasks.take(3).joinToString(" · ") { it.title }),
                     targetSection = Kinds.TASK,
                 ),
             )
@@ -415,8 +436,11 @@ object RiskRadar {
                 RiskAlertItem(
                     id = "high-tasks-late",
                     severity = "MEDIUM",
-                    title = "${tasks.size} tarefa(s) de alta prioridade atrasada(s)",
-                    body = tasks.take(3).joinToString(" · ") { it.title },
+                    title = R.plurals.risk_high_tasks,
+                    titleArgs = listOf(tasks.size),
+                    titleQuantity = tasks.size,
+                    body = R.string.risk_task_list,
+                    bodyArgs = listOf(tasks.take(3).joinToString(" · ") { it.title }),
                     targetSection = Kinds.TASK,
                 ),
             )
@@ -429,8 +453,10 @@ object RiskRadar {
                     RiskAlertItem(
                         id = "vendors-not-finalized",
                         severity = "MEDIUM",
-                        title = "${pendingFinalize.size} fornecedor(es) ainda não finalizado(s)",
-                        body = "Próximo ao evento, confirme entregáveis e itens pendentes.",
+                        title = R.plurals.risk_vendors_not_finalized,
+                        titleArgs = listOf(pendingFinalize.size),
+                        titleQuantity = pendingFinalize.size,
+                        body = R.string.risk_vendors_not_finalized_body,
                         targetSection = Kinds.VENDOR,
                     ),
                 )

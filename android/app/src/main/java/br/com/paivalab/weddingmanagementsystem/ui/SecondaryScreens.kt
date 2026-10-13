@@ -476,8 +476,8 @@ fun InsightsScreen(
                                 modifier = Modifier.fillMaxWidth().clickable { onNavigateSection(alert.targetSection) },
                             ) {
                                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Text(alert.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = accent)
-                                    Text(alert.body, style = MaterialTheme.typography.bodySmall, color = PlannerMuted)
+                                    Text(riskTitle(alert), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = accent)
+                                    Text(riskBody(alert), style = MaterialTheme.typography.bodySmall, color = PlannerMuted)
                                 }
                             }
                         }

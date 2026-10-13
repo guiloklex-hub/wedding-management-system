@@ -88,6 +88,9 @@ interface PlannerDao {
     @Query("SELECT * FROM records WHERE id = :id LIMIT 1")
     suspend fun findAny(id: String): PlannerRecord?
 
+    @Query("SELECT * FROM records WHERE deletedAt IS NOT NULL AND kind NOT IN ('invitation_log', 'save_the_date_log') ORDER BY deletedAt DESC LIMIT 500")
+    fun observeDeleted(): Flow<List<PlannerRecord>>
+
     @Query("SELECT * FROM records ORDER BY createdAt ASC")
     suspend fun allRecords(): List<PlannerRecord>
 

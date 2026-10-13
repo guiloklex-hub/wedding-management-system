@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
     private var unlocked by mutableStateOf(false)
     private var requestedSection by mutableStateOf<String?>(null)
+    private var requestedRecordId by mutableStateOf<String?>(null)
     private var lastBackgroundAt = 0L
     private var afterAuthentication: (() -> Unit)? = null
     private var unlockLanguage = "pt-BR"
@@ -65,7 +66,7 @@ class MainActivity : AppCompatActivity() {
             this,
             PlannerViewModel.Factory(PlannerRepository(database), preferences),
         )[PlannerViewModel::class.java]
-        handleDebugIntent(intent)
+        handleIntent(intent)
         setContent {
             val themeMode by model.themeMode.collectAsState()
             val dark = isPlannerDark(themeMode)
@@ -83,7 +84,8 @@ class MainActivity : AppCompatActivity() {
                         archive = archive,
                         authenticate = ::authenticate,
                         externalSection = requestedSection,
-                        onExternalSectionConsumed = { requestedSection = null },
+                        externalRecordId = requestedRecordId,
+                        onExternalConsumed = { requestedSection = null; requestedRecordId = null },
                         onLoadDemoSeed = { model.loadDemoSeed(database) },
                     )
                 } else {
@@ -114,11 +116,13 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleDebugIntent(intent)
+        handleIntent(intent)
     }
 
-    private fun handleDebugIntent(intent: Intent?) {
-        if (!BuildConfig.DEBUG || intent == null) return
+    private fun handleIntent(intent: Intent?) {
+        if (intent == null) return
+        intent.getStringExtra(EXTRA_RECORD_ID)?.takeIf { it.length in 1..100 }?.let { requestedRecordId = it }
+        if (!BuildConfig.DEBUG) return
         if (intent.getBooleanExtra("skip_auth", false)) {
             unlocked = true
         }
@@ -178,8 +182,10 @@ class MainActivity : AppCompatActivity() {
         prompt.authenticate(info)
     }
 
-    private companion object {
-        const val STATE_UNLOCKED = "unlocked"
-        const val STATE_BACKGROUND_AT = "background_at"
+    companion object {
+        /** Abre o registro indicado após o desbloqueio; usado pelas notificações. */
+        const val EXTRA_RECORD_ID = "record_id"
+        private const val STATE_UNLOCKED = "unlocked"
+        private const val STATE_BACKGROUND_AT = "background_at"
     }
 }

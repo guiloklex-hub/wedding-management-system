@@ -95,3 +95,39 @@ fun InfoBadge(text: String, color: Color = PlannerChampagne) {
         )
     }
 }
+
+@Composable
+fun webValueLabel(value: String, language: String): String {
+    val resource = when (value) {
+        "URGENT" -> R.string.priority_urgent
+        "HIGH" -> R.string.priority_high
+        "MEDIUM" -> R.string.priority_medium
+        "LOW" -> R.string.priority_low
+        "ESSENTIAL" -> R.string.priority_essential
+        "NICE_TO_HAVE" -> R.string.priority_nice_to_have
+        "LUXURY" -> R.string.priority_luxury
+        "PIX" -> R.string.method_pix
+        "BOLETO" -> R.string.method_boleto
+        "CREDIT" -> R.string.method_credit
+        "TRANSFER" -> R.string.method_transfer
+        "CASH" -> R.string.method_cash
+        "NOIVA" -> R.string.side_bride
+        "NOIVO" -> R.string.side_groom
+        "AMBOS" -> R.string.side_both
+        "KITCHEN" -> R.string.room_kitchen
+        "BATHROOM" -> R.string.room_bathroom
+        "BEDROOM" -> R.string.room_bedroom
+        "LIVING" -> R.string.room_living
+        "LAUNDRY" -> R.string.room_laundry
+        "ELECTRONICS" -> R.string.room_electronics
+        "OTHER" -> R.string.room_other
+        else -> return value
+    }
+    return localized(resource, language)
+}
+
+fun priorityColor(priority: String): Color = when (priority) {
+    "URGENT", "ESSENTIAL" -> PlannerRose
+    "HIGH" -> PlannerChampagne
+    else -> PlannerMuted
+}

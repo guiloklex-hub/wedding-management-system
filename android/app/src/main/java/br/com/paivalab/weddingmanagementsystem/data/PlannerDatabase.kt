@@ -85,6 +85,9 @@ interface PlannerDao {
     @Query("SELECT * FROM records WHERE id = :id AND deletedAt IS NULL LIMIT 1")
     suspend fun find(id: String): PlannerRecord?
 
+    @Query("SELECT * FROM records WHERE id = :id LIMIT 1")
+    suspend fun findAny(id: String): PlannerRecord?
+
     @Query("SELECT * FROM records ORDER BY createdAt ASC")
     suspend fun allRecords(): List<PlannerRecord>
 
@@ -164,7 +167,7 @@ interface PlannerDao {
 @Database(
     entities = [PlannerRecord::class, PlannerFile::class, PlannerBlob::class, PlannerSetting::class, PlannerAudit::class,
         PortableState::class],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class PlannerDatabase : RoomDatabase() {
@@ -185,12 +188,40 @@ abstract class PlannerDatabase : RoomDatabase() {
             }
         }
 
+        /** Só dados: alinha `extraJson` aos valores web e desfaz padrões gravados pela v1.1.0. */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val baseline = db.query("SELECT value FROM portable_state WHERE `key` = 'baseline'").use { cursor ->
+                    if (cursor.moveToFirst()) LegacyRepair.baselineExtras(cursor.getString(0)) else emptyMap()
+                }
+                val giftIds = db.query("SELECT id FROM records WHERE kind = 'gift'").use { cursor ->
+                    buildSet { while (cursor.moveToNext()) add(cursor.getString(0)) }
+                }
+                db.query("SELECT id, kind, title, extraJson, parentId FROM records").use { cursor ->
+                    while (cursor.moveToNext()) {
+                        val id = cursor.getString(0)
+                        val kind = cursor.getString(1)
+                        val extra = cursor.getString(3)
+                        val parentId = if (cursor.isNull(4)) null else cursor.getString(4)
+                        val record = PlannerRecord(id, kind, cursor.getString(2), extraJson = extra, parentId = parentId)
+                        val fixed = WebValues.normalize(LegacyRepair.repair(record, baseline[id]))
+                        if (fixed.extraJson != extra) {
+                            db.execSQL("UPDATE records SET extraJson = ? WHERE id = ?", arrayOf(fixed.extraJson, id))
+                        }
+                        if (kind == Kinds.ASSET && parentId in giftIds) {
+                            db.execSQL("UPDATE records SET parentId = NULL WHERE id = ?", arrayOf(id))
+                        }
+                    }
+                }
+            }
+        }
+
         fun get(context: Context): PlannerDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(
                 context.applicationContext,
                 PlannerDatabase::class.java,
                 "wedding-planner.db",
-            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
         }
     }
 }

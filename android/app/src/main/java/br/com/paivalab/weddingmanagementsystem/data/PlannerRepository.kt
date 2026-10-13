@@ -41,6 +41,13 @@ object Kinds {
     const val SAVE_THE_DATE = "save_the_date"
 }
 
+const val PAYMENT_NEEDS_VENDOR = "PAYMENT_NEEDS_VENDOR"
+const val VENDOR_NEEDS_CATEGORY = "VENDOR_NEEDS_CATEGORY"
+const val HONEYMOON_NOT_DELETABLE = "HONEYMOON_NOT_DELETABLE"
+
+private val VENDOR_OWNED = setOf(Kinds.BUDGET, Kinds.PAYMENT, Kinds.CONTACT, Kinds.VENDOR_NOTE, Kinds.CONTRACT)
+private val UNLINK_ON_DELETE = setOf(Kinds.GOAL, Kinds.VENDOR, Kinds.GUEST)
+
 object Money {
     fun parseToCents(input: String): Long {
         val normalized = input.trim().replace(',', '.')
@@ -141,7 +148,7 @@ class PlannerRepository(private val database: PlannerDatabase) {
     suspend fun createInstallments(vendorId: String?, title: String, totalCents: Long,
                                    count: Int, firstDueDate: LocalDate) = database.withTransaction {
         require(title.isNotBlank() && title.length <= 160)
-        require(vendorId == null || dao.find(vendorId)?.kind == Kinds.VENDOR)
+        require(vendorId != null && dao.find(vendorId)?.kind == Kinds.VENDOR) { PAYMENT_NEEDS_VENDOR }
         val payments = InstallmentMath.split(totalCents, count).mapIndexed { index, amount ->
             PlannerRecord(UUID.randomUUID().toString(), Kinds.PAYMENT, title,
                 amountCents = amount, date = firstDueDate.plusMonths(index.toLong()).toString(),
@@ -218,11 +225,17 @@ class PlannerRepository(private val database: PlannerDatabase) {
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), null, "SETTING", details = key))
     }
 
-    suspend fun save(record: PlannerRecord) = database.withTransaction {
+    suspend fun save(input: PlannerRecord) = database.withTransaction {
+        val record = WebValues.normalize(input)
         require(record.title.isNotBlank() && record.title.length <= 160)
         require(record.date == null || runCatching { LocalDate.parse(record.date) }.isSuccess)
         require(record.amountCents == null || record.amountCents >= 0)
-        require(record.parentId == null || (record.parentId != record.id && dao.find(record.parentId) != null))
+        require(record.parentId == null || (record.parentId != record.id && dao.findAny(record.parentId) != null))
+        if (record.deletedAt == null) when (record.kind) {
+            Kinds.PAYMENT -> require(record.date != null && record.parentId != null &&
+                dao.find(record.parentId)?.kind == Kinds.VENDOR) { PAYMENT_NEEDS_VENDOR }
+            Kinds.VENDOR -> require(record.subtitle.isNotBlank()) { VENDOR_NEEDS_CATEGORY }
+        }
         require(record.guestGroupId == null || dao.find(record.guestGroupId)?.kind == Kinds.GROUP)
         require(record.seatingTableId == null || dao.find(record.seatingTableId)?.kind == Kinds.TABLE)
         require(record.plusOnesAllowed in 0..10 && record.plusOnesConfirmed in 0..record.plusOnesAllowed)
@@ -247,9 +260,24 @@ class PlannerRepository(private val database: PlannerDatabase) {
         return record
     }
 
+    /** Exclusão lógica com os mesmos efeitos colaterais das Server Actions web. */
     suspend fun delete(id: String) = database.withTransaction {
         val current = dao.find(id) ?: return@withTransaction
-        dao.save(current.copy(deletedAt = System.currentTimeMillis()))
+        require(current.kind != Kinds.HONEYMOON) { HONEYMOON_NOT_DELETABLE }
+        val now = System.currentTimeMillis()
+        val children = dao.allRecords().filter { it.deletedAt == null && it.id != id }
+        children.forEach { child ->
+            val updated = when {
+                child.parentId == id && current.kind == Kinds.VENDOR && child.kind in VENDOR_OWNED ->
+                    child.copy(deletedAt = now, updatedAt = now)
+                child.parentId == id && current.kind in UNLINK_ON_DELETE -> child.copy(parentId = null, updatedAt = now)
+                child.guestGroupId == id -> child.copy(guestGroupId = null, updatedAt = now)
+                child.seatingTableId == id -> child.copy(seatingTableId = null, updatedAt = now)
+                else -> null
+            }
+            if (updated != null) dao.save(updated)
+        }
+        dao.save(current.copy(deletedAt = now, updatedAt = now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "DELETE"))
     }
 
@@ -274,7 +302,9 @@ class PlannerRepository(private val database: PlannerDatabase) {
         val payment = dao.find(id) ?: error("Pagamento não encontrado")
         require(payment.kind == Kinds.PAYMENT)
         if (payment.status != "PAID") {
-            dao.save(payment.copy(status = "PAID", updatedAt = System.currentTimeMillis()))
+            val now = System.currentTimeMillis()
+            val extra = ExtraFields.parse(payment.extraJson).put("paidAt", now)
+            dao.save(payment.copy(status = "PAID", extraJson = extra.toString(), updatedAt = now))
             dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "MARK_PAID"))
         }
     }
@@ -283,12 +313,16 @@ class PlannerRepository(private val database: PlannerDatabase) {
         require(targetKind == Kinds.INCOME || targetKind == Kinds.ASSET)
         val gift = dao.find(id) ?: error("Presente não encontrado")
         require(gift.kind == Kinds.GIFT && gift.amountCents != null)
-        require(gift.status != "PROCESSED") { "Presente já lançado" }
+        val giftExtra = ExtraFields.parse(gift.extraJson)
+        require(gift.status != "PROCESSED" && !ExtraFields.has(giftExtra, "processedAt")) { "Presente já lançado" }
+        val now = System.currentTimeMillis()
         val target = PlannerRecord(UUID.randomUUID().toString(), targetKind, gift.title,
-            amountCents = gift.amountCents, date = LocalDate.now().toString(), parentId = gift.id,
-            status = if (targetKind == Kinds.INCOME) "RECEIVED" else "SAVED")
+            amountCents = gift.amountCents, date = LocalDate.now().toString(),
+            status = if (targetKind == Kinds.INCOME) "RECEIVED" else "",
+            subtitle = if (targetKind == Kinds.INCOME) "GIFT" else "",
+            extraJson = if (targetKind == Kinds.INCOME) JSONObject().put("frequency", "ONE_TIME").toString() else "{}")
         dao.save(target)
-        dao.save(gift.copy(status = "PROCESSED", updatedAt = System.currentTimeMillis()))
+        dao.save(gift.copy(extraJson = giftExtra.put("processedAt", now).toString(), updatedAt = now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "CONVERT_TO_FINANCE", details = target.id))
     }
 
@@ -324,8 +358,8 @@ class PlannerRepository(private val database: PlannerDatabase) {
     suspend fun checkInGuest(guestId: String) = database.withTransaction {
         val guest = dao.find(guestId) ?: error("Convidado não encontrado")
         require(guest.kind == Kinds.GUEST && guest.status == "CONFIRMED")
-        val extra = JSONObject(guest.extraJson)
-        if (!extra.has("checkedInAt")) {
+        val extra = ExtraFields.parse(guest.extraJson)
+        if (!ExtraFields.has(extra, "checkedInAt")) {
             extra.put("checkedInAt", System.currentTimeMillis())
             dao.save(guest.copy(extraJson = extra.toString(), updatedAt = System.currentTimeMillis()))
             dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), guestId, "CHECK_IN"))

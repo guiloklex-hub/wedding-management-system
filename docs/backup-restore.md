@@ -44,7 +44,22 @@ Ela pede e confirma uma nova senha sem exibi-la. O relatório traz as 31 tabelas
 
 O fluxo binário começa com `WFPBAK01`, iterações (big endian), salt de 16 bytes, nonce GCM de 12 bytes, ZIP cifrado e tag GCM de 16 bytes. O ZIP contém `manifest.json`, `records.json`, `baseline.json`, `files.json`, `settings.json`, `audit.json`, `blobs/<id>`, e, se houver origem web, `web.sqlite` e `uploads/<caminho>`. O manifesto inclui origem, linhagem, geração, versões, contagens e SHA-256 por arquivo. Caminhos absolutos, `..`, barras invertidas e entradas inesperadas são rejeitados.
 
-Campos equivalentes são aplicados ao SQLite de origem usando `baseline.json` como referência. O conversor só modifica colunas móveis alteradas; campos web não editados no Android ficam como estavam. Novos registros são verificados contra colunas obrigatórias e chaves estrangeiras antes de substituir o destino. Os arquivos de uploads sem vínculo permanecem no pacote. O web não remove automaticamente anexos antigos nem artes para não tornar um backup posterior incompleto.
+Campos equivalentes são aplicados ao SQLite de origem usando `baseline.json` como referência. O conversor só modifica colunas móveis alteradas; campos web não editados no Android ficam como estavam.
+
+### Campos detalhados (`extraJson`) e `fieldMap`
+
+O mapeamento único fica em [src/lib/portable-fields.ts](../src/lib/portable-fields.ts) (`EXTRA_FIELDS`) e é espelhado em `android/tools/migrate_web.py` e no Android (`data/RecordFields.kt`). As chaves do `extraJson` são os nomes das colunas Prisma e os valores usam os enums web (`NOIVA/NOIVO/AMBOS`, `PIX/BOLETO/CREDIT/TRANSFER/CASH`, cômodos e prioridades do enxoval etc.).
+
+- **Web → Android:** booleanos saem como `true/false`, datas de calendário como `AAAA-MM-DD`, instantes em milissegundos, e chaves nulas são omitidas.
+- **Android → web:** a partir do Android v1.1.1, o manifesto traz `fieldMap: 1`. Só nesse caso a restauração aplica os campos detalhados alterados em registros já existentes. Valores fora do domínio (enum desconhecido, número fora da faixa) são ignorados em vez de sobrescrever o web. Valores gravados pelo Android v1.1.0 (`BRIDE`, `CREDIT_CARD`, `itemKind`, prioridades `HIGH/MEDIUM/LOW` no enxoval) são convertidos.
+- **Sem `fieldMap`** (backups da v1.1.0): apenas as colunas fixas são aplicadas, como antes. Novos registros sempre recebem os campos detalhados normalizados.
+- O título do pagamento volta como `Payment.notes`; as notas da tarefa voltam como `Task.description`. Uma lua de mel criada no Android vira o registro `singleton` do web e seus itens são religados. Um ativo gerado de presente não aponta mais para o presente (`goalId` fica nulo).
+
+Ao atualizar para a v1.1.1, a migração Room v3→v4 normaliza os registros guardados e desfaz padrões que o editor da v1.1.0 gravava sem intenção do usuário (booleanos 0/1 lidos como falso; lado "BOTH", multa 2%/juros 1% e método PIX inseridos em campos vazios), usando o `baseline` importado como referência. O mesmo reparo roda ao restaurar um backup Android sem `fieldMap`.
+
+### Avisos de perda na prévia
+
+A prévia web compara o banco atual com a cópia web embutida no pacote e informa quantas linhas alteradas no web depois da exportação serão substituídas (`webChangesLost`). Quando o pacote Android não traz banco web, a prévia avisa que todos os dados do web serão apagados antes da importação (`replacesAllWebData`). Novos registros são verificados contra colunas obrigatórias e chaves estrangeiras antes de substituir o destino. Os arquivos de uploads sem vínculo permanecem no pacote. O web não remove automaticamente anexos antigos nem artes para não tornar um backup posterior incompleto.
 
 | Rota web | Função |
 |---|---|

@@ -105,4 +105,16 @@ describe("computeAdjustedAmount", () => {
     expect(result.adjusted).toBe(500);
     expect(result.hasAdjustment).toBe(false);
   });
+
+  it("conta dias de calendário: vencimento hoje não está atrasado", () => {
+    const payment = {
+      amount: 1000,
+      dueDate: new Date("2026-06-01T00:00:00Z"),
+      status: "PENDING",
+      lateFeePercent: 2,
+      interestPercentPerMonth: 1,
+    };
+    expect(computeAdjustedAmount(payment, new Date("2026-06-01T15:30:00Z")).lateDays).toBe(0);
+    expect(computeAdjustedAmount(payment, new Date("2026-06-02T09:00:00Z")).lateDays).toBe(1);
+  });
 });

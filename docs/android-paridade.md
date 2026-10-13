@@ -33,6 +33,14 @@ Legenda: **sim** = fluxo principal equivalente; **parcial** = tela existe, mas f
 
 O convite móvel agora seleciona um anexo do modelo, verifica o tamanho e SHA-256 do arquivo guardado no Room e compartilha uma URI `content://` temporária, com permissão apenas de leitura. A ação `ACTION_SEND` inclui `EXTRA_STREAM`, o tipo MIME e o texto personalizado. Sem anexo, o link `wa.me` continua abrindo diretamente a conversa do número informado. Com mídia, o WhatsApp exige que o usuário selecione e confira o destinatário. Abrir o WhatsApp não comprova a entrega; a marcação de envio permanece manual.
 
+## Integridade da ida e volta (Android v1.1.1)
+
+- Campos detalhados editados no Android (lado, VIP, padrinho, criança, dieta e check-in do convidado; forma de pagamento, multa, juros e `paidAt`; prioridade e descrição da tarefa; frequência da receita; cláusulas e validade do contrato; detalhes do local; avaliação do fornecedor; cômodo e prioridade do enxoval; `processedAt` do presente) voltam ao web quando o backup traz `fieldMap: 1`. Veja [backup-restore.md](backup-restore.md#campos-detalhados-extrajson-e-fieldmap).
+- O Android grava os enums web (`NOIVA/NOIVO/AMBOS`, `CREDIT`, `CASH`, cômodos `KITCHEN…`, prioridades `ESSENTIAL/NICE_TO_HAVE/LUXURY` e `URGENT` nas tarefas) e lê booleanos 0/1 e datas em milissegundos vindos do SQLite web.
+- Pagamentos exigem fornecedor e vencimento, e fornecedores exigem categoria, já no Android; antes isso só falhava na restauração web.
+- Excluir no Android tem os mesmos efeitos do web: fornecedor leva orçamento, pagamentos, contatos, notas e contratos; meta, grupo, mesa e convidado apenas desvinculam os filhos.
+- Radar de riscos, fluxo de caixa (só pagamentos pendentes), totais de orçamento e dias de atraso usam as mesmas regras do web.
+
 ## Próximas lacunas de paridade
 
 1. Definir se as funções que dependem do servidor serão sincronizadas no Android ou terão apenas alternativas locais.

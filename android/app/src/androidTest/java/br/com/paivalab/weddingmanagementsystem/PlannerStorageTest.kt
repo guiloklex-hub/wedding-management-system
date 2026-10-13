@@ -8,6 +8,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import br.com.paivalab.weddingmanagementsystem.backup.BackupArchive
+import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.GuestImport
 import br.com.paivalab.weddingmanagementsystem.data.PlannerBlob
@@ -56,7 +57,7 @@ class PlannerStorageTest {
 
         repository.save(PlannerRecord("gift", Kinds.GIFT, "Presente", amountCents = 5_000))
         repository.convertGift("gift", Kinds.INCOME)
-        assertEquals("PROCESSED", database.dao().find("gift")?.status)
+        assertTrue(ExtraFields.has(ExtraFields.parse(database.dao().find("gift")!!.extraJson), "processedAt"))
         assertNotNull(runCatching { repository.convertGift("gift", Kinds.INCOME) }.exceptionOrNull())
         assertEquals(1, database.dao().allRecords().count { it.kind == Kinds.INCOME })
     }
@@ -72,7 +73,7 @@ class PlannerStorageTest {
     }
 
     @Test fun replacementTransactionRollsBackAfterFailure() = runBlocking {
-        repository.save(PlannerRecord("original", Kinds.VENDOR, "Fornecedor original"))
+        repository.save(PlannerRecord("original", Kinds.VENDOR, "Fornecedor original", subtitle = "Buffet"))
         assertNotNull(runCatching {
             database.withTransaction {
                 database.dao().clearRecords()
@@ -99,7 +100,7 @@ class PlannerStorageTest {
     @Test fun backupRestoresRecordsAndRealBytesAndRejectsWrongPassword() = runBlocking {
         val bytes = "PDF test".toByteArray()
         val hash = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-        repository.save(PlannerRecord("vendor", Kinds.VENDOR, "Buffet"))
+        repository.save(PlannerRecord("vendor", Kinds.VENDOR, "Buffet", subtitle = "Buffet"))
         repository.save(PlannerRecord("tag", Kinds.TAG, "Padrinhos"))
         repository.save(PlannerRecord("guest", Kinds.GUEST, "Ana",
             extraJson = """{"tagIds":["tag"]}"""))

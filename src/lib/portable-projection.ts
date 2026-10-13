@@ -1,5 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
+import { mobileExtra } from "./portable-fields";
 import { sha256File, type PortableEntry } from "./portable-format";
 
 export type Row = Record<string, string | number | bigint | null>;
@@ -178,8 +179,8 @@ export async function projectWeb(tables: Record<string, Row[]>, uploadsRoot: str
       item.createdAt = milliseconds(row.createdAt) ?? now;
       item.updatedAt = milliseconds(row.updatedAt) ?? now;
       item.deletedAt = milliseconds(row.deletedAt);
-      item.extraJson = JSON.stringify(Object.fromEntries(Object.entries(row).filter(([key]) =>
-        key !== "id" && !hiddenFields.has(key))));
+      item.extraJson = JSON.stringify(mobileExtra(spec.kind, Object.fromEntries(Object.entries(row).filter(([key]) =>
+        key !== "id" && !hiddenFields.has(key)))));
       records.push(item);
     }
   }

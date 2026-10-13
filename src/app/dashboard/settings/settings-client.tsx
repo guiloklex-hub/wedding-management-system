@@ -2027,6 +2027,8 @@ type PortablePreview = {
   changedRecords: number;
   createdRecords: number;
   deletedRecords: number;
+  webChangesLost: number;
+  replacesAllWebData: boolean;
   blockers: string[];
 };
 
@@ -2133,6 +2135,10 @@ function PortableBackupSection({ isAdmin, toast }: { isAdmin: boolean; toast: Re
             <p>{t("changes", { changed: preview.changedRecords,
               created: preview.createdRecords, deleted: preview.deletedRecords })}</p>
             <p>{t("space", { bytes: preview.requiredBytes.toLocaleString() })}</p>
+            {preview.replacesAllWebData ? <p role="alert" className="font-medium text-amber-200">{t("replacesAllWebData")}</p> : null}
+            {preview.webChangesLost > 0 ? <p role="alert" className="font-medium text-amber-200">
+              {t("webChangesLost", { count: preview.webChangesLost })}
+            </p> : null}
             {preview.blockers.length ? <ul className="list-disc pl-5 text-amber-200">
               {preview.blockers.map((blocker) => <li key={blocker}>{blocker}</li>)}
             </ul> : <p className="text-emerald-300">{t("noOmissions")}</p>}

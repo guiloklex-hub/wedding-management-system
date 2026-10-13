@@ -164,4 +164,199 @@
     <string name="priority_luxury">Luxury</string>
     <string name="audit_invite_sent">Invitation send confirmed</string>
     <string name="audit_venue_checklist">Venue checklist created</string>
+    <string name="theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="hm_flight">Flight</string>
+    <string name="hm_hotel">Hotel</string>
+    <string name="hm_transfer">Transfer</string>
+    <string name="hm_activity">Activity</string>
+    <string name="hm_document">Document</string>
+    <string name="hm_baggage">Baggage</string>
+    <string name="hm_other">Other</string>
+    <string name="linked_to">Linked to: %1$s</string>
+    <string name="rating_value">Rated %1$d out of 5</string>
+    <string name="installment_of">Installment %1$d of %2$d</string>
+    <plurals name="late_days_adjusted"><item quantity="one">%1$d day late · updated: %2$s</item><item quantity="other">%1$d days late · updated: %2$s</item></plurals>
+    <plurals name="overdue_days"><item quantity="one">Overdue by %1$d day</item><item quantity="other">Overdue by %1$d days</item></plurals>
+    <plurals name="guest_seats"><item quantity="one">%1$d seat · plus-ones %2$d/%3$d</item><item quantity="other">%1$d seats · plus-ones %2$d/%3$d</item></plurals>
+    <string name="guest_vip">VIP</string>
+    <string name="guest_padrinho">Wedding party</string>
+    <string name="guest_child">Child</string>
+    <string name="guest_dietary_value">Diet: %1$s</string>
+    <string name="group_value">Group: %1$s</string>
+    <string name="table_value">Table: %1$s</string>
+    <plurals name="group_members"><item quantity="one">%1$d guest · %2$d seats</item><item quantity="other">%1$d guests · %2$d seats</item></plurals>
+    <plurals name="tag_guests"><item quantity="one">%1$d guest tagged</item><item quantity="other">%1$d guests tagged</item></plurals>
+    <string name="saved_amount">Saved: %1$s</string>
+    <string name="honeymoon_items_total">Linked items: %1$s</string>
+    <string name="booking_code">Booking: %1$s</string>
+    <string name="err_required">Required field</string>
+    <string name="err_date">Use a valid date (YYYY-MM-DD or DD/MM/YYYY)</string>
+    <string name="err_money">Invalid amount (0 to 1,000,000)</string>
+    <string name="err_range">Number out of the allowed range</string>
+    <string name="err_percent">Enter a percentage between 0 and 100</string>
+    <string name="err_phone">Invalid phone: use digits, +, parentheses, hyphens and spaces</string>
+    <string name="err_email">Invalid email</string>
+    <string name="err_url">The link must start with https:// or http://</string>
+    <string name="err_vendor_required">Choose the vendor for this payment</string>
+    <string name="err_plus_confirmed">Confirmed can\'t exceed allowed</string>
+    <string name="late_fee_percent">Late fee (%)</string>
+    <string name="interest_percent_month">Monthly interest (%)</string>
+    <string name="honeymoon_item_kind">Item type</string>
+    <string name="booking_code_label">Booking / confirmation code</string>
+    <string name="store">Store / brand</string>
+    <string name="guest_side">Couple\'s side</string>
+    <string name="guest_dietary">Dietary restriction</string>
+    <string name="guest_dietary_hint">E.g. vegan, lactose-free</string>
+    <string name="guest_city">City</string>
+    <string name="none_option">None</string>
+    <string name="discard_changes_title">Discard changes?</string>
+    <string name="discard_changes_body">Changes in this form haven\'t been saved yet.</string>
+    <string name="discard">Discard</string>
+    <string name="keep_editing">Keep editing</string>
+    <string name="date_placeholder">YYYY-MM-DD or DD/MM/YYYY</string>
+    <string name="pick_date">Pick a date from the calendar</string>
+    <string name="select">Select</string>
+    <string name="close">Close</string>
+    <string name="clear_search">Clear search</string>
+    <string name="sort_by">Sort:</string>
+    <string name="sort_recent">Recent</string>
+    <string name="sort_name">Name</string>
+    <string name="sort_date">Date</string>
+    <string name="filter_all">All (%1$d)</string>
+    <string name="filter_overdue">Overdue (%1$d)</string>
+    <string name="empty_module">No records in %1$s yet.</string>
+    <string name="empty_filtered">No records match the search or filter.</string>
+    <string name="add_first">Add the first one</string>
+    <string name="delete_named">Delete %1$s</string>
+    <string name="mark_received">Mark received</string>
+    <string name="whatsapp">WhatsApp</string>
+    <string name="summary_budget">Planned: %1$s · Actual: %2$s</string>
+    <string name="summary_saving">Saving of %1$s</string>
+    <string name="summary_overrun">Overrun of %1$s</string>
+    <string name="summary_paid">Paid: %1$s</string>
+    <string name="summary_open">Outstanding: %1$s</string>
+    <string name="summary_received">Received: %1$s</string>
+    <string name="summary_expected">Expected: %1$s</string>
+    <string name="summary_cash">Total cash: %1$s</string>
+    <plurals name="summary_reserves"><item quantity="one">%1$d reserve</item><item quantity="other">%1$d reserves</item></plurals>
+    <string name="summary_goals">Goals: %1$s</string>
+    <string name="summary_goals_saved">Saved: %1$s (%2$d%%)</string>
+    <string name="summary_guests">%1$d of %2$d invitations confirmed</string>
+    <plurals name="summary_seats"><item quantity="one">Total confirmed: %1$d seat</item><item quantity="other">Total confirmed: %1$d seats</item></plurals>
+    <plurals name="summary_tables"><item quantity="one">%1$d table</item><item quantity="other">%1$d tables</item></plurals>
+    <string name="summary_occupancy">Occupancy: %1$d of %2$d seats</string>
+    <plurals name="risk_overdue_payments"><item quantity="one">%1$d overdue payment</item><item quantity="other">%1$d overdue payments</item></plurals>
+    <string name="risk_overdue_payments_body">Total of %1$s. Interest and late fees may apply.</string>
+    <string name="risk_negative_cashflow">Negative cash projection</string>
+    <string name="risk_negative_cashflow_body">Month %1$s closes at %2$s.</string>
+    <string name="risk_contract_unsigned">Unsigned contract: %1$s</string>
+    <plurals name="risk_contract_unsigned_body"><item quantity="one">Expires in %1$d day and isn\'t signed yet.</item><item quantity="other">Expires in %1$d days and isn\'t signed yet.</item></plurals>
+    <string name="risk_vendor_creep">%1$s is over budget</string>
+    <string name="risk_vendor_creep_body">Actual %1$s vs planned %2$s (%3$d%%).</string>
+    <plurals name="risk_urgent_tasks"><item quantity="one">%1$d urgent task overdue</item><item quantity="other">%1$d urgent tasks overdue</item></plurals>
+    <plurals name="risk_high_tasks"><item quantity="one">%1$d high-priority task overdue</item><item quantity="other">%1$d high-priority tasks overdue</item></plurals>
+    <string name="risk_task_list">%1$s</string>
+    <plurals name="risk_vendors_not_finalized"><item quantity="one">%1$d vendor not finalized yet</item><item quantity="other">%1$d vendors not finalized yet</item></plurals>
+    <string name="risk_vendors_not_finalized_body">Close to the event, confirm deliverables and pending items.</string>
+    <string name="big_day">Big day: %1$s</string>
+    <string name="event_date_missing">Set the wedding date in Settings</string>
+    <plurals name="days_left"><item quantity="one">%1$d day to go</item><item quantity="other">%1$d days to go</item></plurals>
+    <string name="financial_progress">Financial progress: %1$d%% paid</string>
+    <string name="risk_radar_count">Risk radar (%1$d)</string>
+    <string name="risk_critical">Critical</string>
+    <string name="risk_warning">Warning</string>
+    <plurals name="budget_items"><item quantity="one">%1$d budget item</item><item quantity="other">%1$d budget items</item></plurals>
+    <string name="percent_of_budget">%1$d%% of budget</string>
+    <plurals name="tasks_done"><item quantity="one">%1$d done</item><item quantity="other">%1$d done</item></plurals>
+    <plurals name="seats_confirmed"><item quantity="one">%1$d seat confirmed</item><item quantity="other">%1$d seats confirmed</item></plurals>
+    <plurals name="pending_count"><item quantity="one">%1$d pending</item><item quantity="other">%1$d pending</item></plurals>
+    <string name="no_upcoming">No pending tasks or payments with a date.</string>
+    <string name="more_management">Management and dashboards</string>
+    <string name="more_modules">Modules</string>
+    <string name="trash">Trash</string>
+    <string name="msg_saved">Record saved.</string>
+    <string name="msg_deleted">Record moved to trash.</string>
+    <string name="msg_undone">Action undone.</string>
+    <string name="msg_restored">Record restored.</string>
+    <string name="msg_status_changed">Status updated.</string>
+    <string name="msg_group_rsvp">Group response applied to all members.</string>
+    <string name="msg_paid">Payment marked as paid.</string>
+    <string name="msg_gift_posted">Gift added to finances.</string>
+    <string name="msg_checked_in">Check-in recorded.</string>
+    <string name="undo">Undo</string>
+    <string name="guest_import_result_format">%1$d guests imported; %2$d duplicates skipped.</string>
+    <plurals name="msg_templates_added"><item quantity="one">%1$d task template added.</item><item quantity="other">%1$d task templates added.</item></plurals>
+    <plurals name="msg_checklist_added"><item quantity="one">%1$d checklist item added.</item><item quantity="other">%1$d checklist items added.</item></plurals>
+    <plurals name="msg_installments_created"><item quantity="one">%1$d installment created.</item><item quantity="other">%1$d installments created.</item></plurals>
+    <string name="parent_deleted">Restore the parent record this item belongs to first.</string>
+    <string name="demo_requires_empty">Demo data can only be loaded on an empty device.</string>
+    <string name="back">Back</string>
+    <string name="only_not_sent">Only not yet sent</string>
+    <plurals name="guest_import_preview_count"><item quantity="one">%1$d guest found in %2$s. Existing names and groups will be skipped.</item><item quantity="other">%1$d guests found in %2$s. Existing names and groups will be skipped.</item></plurals>
+    <string name="restore">Restore</string>
+    <string name="trash_hint">Deleted records stay here. Restoring a vendor also brings back the contacts, notes, contracts, budget items and payments deleted with it.</string>
+    <string name="trash_empty">Trash is empty.</string>
+    <string name="installments_preview">%1$d× %2$s</string>
+    <string name="compare_saving_total">Total savings: %1$s</string>
+    <string name="compare_overrun_total">Over the plan by %1$s</string>
+    <string name="compare_no_budget">No linked budget</string>
+    <string name="compare_on_target">On target</string>
+    <string name="percent_paid">%1$d%% paid</string>
+    <string name="contingency_percent">Contingency reserve (%)</string>
+    <string name="pix_settings_title">Pix (copy-paste code and QR)</string>
+    <string name="pix_city">Account holder\'s city</string>
+    <string name="view_qr_code">View QR code</string>
+    <string name="settings_security_title">Security, backup and data</string>
+    <string name="contingency_value">Contingency (%1$d%%): %2$s</string>
+    <string name="health_excellent">Excellent financial and operational balance</string>
+    <string name="health_good">Healthy planning; watch the next installments</string>
+    <string name="health_attention">Watch cash flow and pending tasks</string>
+    <plurals name="alerts_count"><item quantity="one">%1$d alert</item><item quantity="other">%1$d alerts</item></plurals>
+    <string name="insights_funnel_title">Vendor funnel</string>
+    <string name="insights_demographics_title">Guests and dietary restrictions</string>
+    <string name="insights_dietary_title">Dietary restrictions for catering (%1$d):</string>
+    <string name="progress_of">%1$s · %2$d of %3$d</string>
+    <string name="cashflow_in">In: %1$s</string>
+    <string name="cashflow_out">Out: %1$s</string>
+    <string name="help_private_title">Private and offline on your phone</string>
+    <string name="help_invites_title">Invitations, RSVP and WhatsApp</string>
+    <string name="help_backup_title">Encrypted backup (.wfpbackup)</string>
+    <string name="help_backup_body">Backups are protected with PBKDF2-HMAC-SHA256 (600k iterations) and AES-256-GCM. Before any restore, the app keeps a rollback copy protected by the Android Keystore.</string>
+    <string name="audit_task_templates">Task templates added</string>
+    <string name="audit_installments">Installments created</string>
+    <string name="audit_setting">Setting updated</string>
+    <string name="audit_gift_posted">Gift added to finances</string>
+    <string name="audit_assign_table">Guest seated at a table</string>
+    <string name="audit_demo">Demo data loaded</string>
+    <string name="audit_check_in">Guest check-in</string>
+    <string name="audit_group_rsvp">Group RSVP updated</string>
+    <string name="audit_undo">Action undone</string>
+    <string name="audit_restore">Record restored from trash</string>
+    <string name="msg_event_saved">Wedding details saved.</string>
+    <string name="msg_pix_saved">Pix settings saved.</string>
+    <string name="backup_vault_title">Encrypted backup (AES-256-GCM)</string>
+    <string name="show_password">Show</string>
+    <string name="hide_password">Hide</string>
+    <string name="backup_password_empty">Enter a strong password (at least 12 characters) to export or restore.</string>
+    <plurals name="backup_password_missing"><item quantity="one">%1$d more character needed to create a backup.</item><item quantity="other">%1$d more characters needed to create a backup.</item></plurals>
+    <string name="backup_password_mismatch">Repeat the same password in the second field to enable export.</string>
+    <string name="backup_password_ok">Password valid and confirmed.</string>
+    <string name="wedding_day_plan_title">Day schedule and plan B</string>
+    <string name="msg_wedding_day_saved">Schedule and plan B saved.</string>
+    <string name="checked_in_at">Checked in at %1$s</string>
+    <string name="pix_dialog_title">Pix QR code and copy-paste code</string>
+    <string name="pix_dialog_subtitle">Central Bank BR Code standard (EMV, CRC16)</string>
+    <string name="pix_key_value">Key: %1$s</string>
+    <string name="not_configured">not set</string>
+    <string name="pix_receiver_value">Receiver: %1$s · City: %2$s</string>
+    <string name="pix_amount_optional">Optional amount (empty = any amount)</string>
+    <string name="pix_copy_paste_code">Pix copy-paste code</string>
+    <string name="pix_copied">Pix code copied.</string>
+    <string name="copy_code">Copy code</string>
+    <string name="share">Share</string>
+    <string name="pix_share_text">Gift via Pix (%1$s)\n\nKey: %2$s\n\nPix copy-paste code:\n%3$s</string>
+    <string name="add_to_section">Add to %1$s</string>
 </resources>

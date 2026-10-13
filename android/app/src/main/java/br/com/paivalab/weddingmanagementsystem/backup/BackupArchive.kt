@@ -4,10 +4,10 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import androidx.room.withTransaction
+import br.com.paivalab.weddingmanagementsystem.data.BlobStore
 import br.com.paivalab.weddingmanagementsystem.data.FIELD_MAP_VERSION
 import br.com.paivalab.weddingmanagementsystem.data.LegacyRepair
 import br.com.paivalab.weddingmanagementsystem.data.PlannerAudit
-import br.com.paivalab.weddingmanagementsystem.data.PlannerBlob
 import br.com.paivalab.weddingmanagementsystem.data.PlannerDatabase
 import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
 import br.com.paivalab.weddingmanagementsystem.data.PlannerPreferences
@@ -74,6 +74,7 @@ class BackupArchive(
     private val preferences: PlannerPreferences,
 ) {
     private val dao = database.dao()
+    private val blobs = BlobStore(context)
     private val idPattern = Regex("^[A-Za-z0-9_-]{1,100}$")
     private val vault = PortableVault(context)
 
@@ -122,7 +123,7 @@ class BackupArchive(
                     writeJson(zip, "audit.json", JSONArray().also { array -> audits.forEach { array.put(it.asJson()) } })
                     files.forEach { file ->
                         require(idPattern.matches(file.id)) { "ID de anexo inválido" }
-                        val bytes = dao.blob(file.id)?.bytes ?: error("Anexo ausente: ${file.fileName}")
+                        val bytes = blobs.read(file.id, dao) ?: error("Anexo ausente: ${file.fileName}")
                         require(bytes.size.toLong() == file.byteSize && sha256(bytes) == file.sha256) {
                             "Anexo alterado: ${file.fileName}"
                         }
@@ -206,7 +207,9 @@ class BackupArchive(
         } finally { reversalArchive.delete() }
         val oldVault = dao.portableState("webVault")?.value
         val stagedVault = if (backup.webEntries.isNotEmpty()) vault.seal(zip, backup.webEntries) else null
+        val stagedBlobs = blobs.stage()
         try {
+            backup.files.forEach { file -> stagedBlobs.write(file.id, readBytes(zip, "blobs/${file.id}", Int.MAX_VALUE)) }
             database.withTransaction {
                 dao.clearBlobs()
                 dao.clearFiles()
@@ -223,7 +226,6 @@ class BackupArchive(
                 dao.saveFiles(backup.files)
                 dao.saveSettings(backup.settings)
                 dao.addAudit(backup.audits)
-                backup.files.forEach { file -> dao.saveBlob(PlannerBlob(file.id, readBytes(zip, "blobs/${file.id}", Int.MAX_VALUE))) }
                 dao.savePortableState(PortableState("lastReversal", reversalName))
                 if (stagedVault != null) {
                     dao.savePortableState(PortableState("webVault", stagedVault))
@@ -232,9 +234,11 @@ class BackupArchive(
                 }
             }
         } catch (error: Exception) {
+            stagedBlobs.discard()
             vault.delete(stagedVault)
             throw error
         }
+        stagedBlobs.commit()
         if (oldVault != stagedVault) vault.delete(oldVault)
         val locale = backup.manifest.optString("locale", "pt-BR")
         val currency = backup.manifest.optString("currency", "BRL")

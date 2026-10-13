@@ -41,6 +41,10 @@ O convite móvel agora seleciona um anexo do modelo, verifica o tamanho e SHA-25
 - Excluir no Android tem os mesmos efeitos do web: fornecedor leva orçamento, pagamentos, contatos, notas e contratos; meta, grupo, mesa e convidado apenas desvinculam os filhos.
 - Radar de riscos, fluxo de caixa (só pagamentos pendentes), totais de orçamento e dias de atraso usam as mesmas regras do web.
 
+## Fundação da interface (Fase 1)
+
+Navegação tipada com estado preservado, editor em tela cheia com validação igual à da web, "Desfazer" e lixeira, temas claro/escuro, layout para telas largas, textos nos três idiomas e anexos fora do SQLite. Detalhes em [android.md](android.md#arquitetura-da-interface). Ainda falta o layout de lista e detalhe lado a lado em tablets.
+
 ## Próximas lacunas de paridade
 
 1. Definir se as funções que dependem do servidor serão sincronizadas no Android ou terão apenas alternativas locais.

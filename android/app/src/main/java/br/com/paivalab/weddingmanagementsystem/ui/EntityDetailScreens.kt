@@ -20,6 +20,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
@@ -43,8 +51,11 @@ private fun DetailSection(title: String, onAdd: (() -> Unit)? = null, content: @
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                if (onAdd != null) TextButton(onClick = onAdd) { Text("+") }
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.semantics { heading() })
+                if (onAdd != null) IconButton(onClick = onAdd) {
+                    Icon(Icons.Default.Add, stringResource(R.string.add_to_section, title), tint = PlannerRose)
+                }
             }
             content()
         }
@@ -64,7 +75,7 @@ private fun DetailValue(label: String, value: String) {
 @Composable
 private fun FileActions(file: PlannerFile, language: String, onOpen: (PlannerFile) -> Unit, onExport: (PlannerFile) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text("📎 ${file.fileName}" + (if (file.kind == "CONTRACT") " · v${file.version}" else "") +
+        Text(file.fileName + (if (file.kind == "CONTRACT") " · v${file.version}" else "") +
             (if (file.deletedAt != null) " · ${localized(R.string.archived_version, language)}" else ""),
             modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
         TextButton(onClick = { onOpen(file) }) { Text(localized(R.string.open_file, language)) }
@@ -107,7 +118,11 @@ fun VendorDetailScreen(
                 DetailValue(localized(R.string.category, language), vendor.subtitle)
                 if (vendor.status.isNotBlank()) StatusBadge(vendor.status, language)
                 val rating = vendorFields.optInt("rating", 0)
-                if (rating in 1..5) Text("${"★".repeat(rating)}${"☆".repeat(5 - rating)}", color = PlannerChampagne)
+                if (rating in 1..5) {
+                    val ratingDescription = stringResource(R.string.rating_value, rating)
+                    Text("★".repeat(rating) + "☆".repeat(5 - rating), color = PlannerChampagne,
+                        modifier = Modifier.semantics { contentDescription = ratingDescription })
+                }
                 DetailValue(localized(R.string.indicated_by, language), vendorFields.text("indicatedBy"))
                 DetailValue(localized(R.string.tags, language), vendorFields.text("tags"))
                 DetailValue(localized(R.string.notes, language), vendor.notes)
@@ -117,7 +132,7 @@ fun VendorDetailScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { onEdit(vendor) }) { Text(localized(R.string.edit, language)) }
                     if (vendor.phone.isNotBlank()) OutlinedButton(onClick = { onDial(vendor.phone) }) { Text(localized(R.string.call_phone, language)) }
-                    if (vendor.phone.isNotBlank()) OutlinedButton(onClick = { onWhatsApp(vendor) }) { Text("WhatsApp") }
+                    if (vendor.phone.isNotBlank()) OutlinedButton(onClick = { onWhatsApp(vendor) }) { Text(stringResource(R.string.whatsapp)) }
                 }
                 DetailValue(localized(R.string.phone, language), vendor.phone)
                 DetailValue(localized(R.string.email, language), vendor.email)

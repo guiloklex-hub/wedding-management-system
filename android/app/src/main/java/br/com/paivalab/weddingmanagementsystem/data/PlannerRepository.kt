@@ -48,6 +48,17 @@ const val HONEYMOON_NOT_DELETABLE = "HONEYMOON_NOT_DELETABLE"
 private val VENDOR_OWNED = setOf(Kinds.BUDGET, Kinds.PAYMENT, Kinds.CONTACT, Kinds.VENDOR_NOTE, Kinds.CONTRACT)
 private val UNLINK_ON_DELETE = setOf(Kinds.GOAL, Kinds.VENDOR, Kinds.GUEST)
 
+const val PARENT_DELETED = "PARENT_DELETED"
+
+/** Estado anterior de uma ação, para o botão "Desfazer". */
+data class UndoSnapshot(val previous: List<PlannerRecord>, val created: List<String> = emptyList()) {
+    val isEmpty: Boolean get() = previous.isEmpty() && created.isEmpty()
+
+    companion object {
+        val EMPTY = UndoSnapshot(emptyList())
+    }
+}
+
 object Money {
     fun parseToCents(input: String): Long {
         val normalized = input.trim().replace(',', '.')
@@ -60,7 +71,7 @@ object Money {
         BigDecimal.valueOf(number).movePointRight(2).setScale(0, RoundingMode.HALF_UP).longValueExact()
 }
 
-class PlannerRepository(private val database: PlannerDatabase) {
+class PlannerRepository(private val database: PlannerDatabase, private val blobs: BlobStore) {
     private val dao = database.dao()
     val records: Flow<List<PlannerRecord>> = dao.observeRecords()
     val files: Flow<List<PlannerFile>> = dao.observeFiles()
@@ -186,22 +197,27 @@ class PlannerRepository(private val database: PlannerDatabase) {
             if (contractFile) "application/pdf" else resolver.getType(uri) ?: "application/octet-stream",
             bytes.size.toLong(), hash,
             version = if (contractFile) JSONObject(record.extraJson).optInt("version", 1).coerceAtLeast(1) else 1)
-        database.withTransaction {
-            dao.saveFile(file)
-            dao.saveBlob(PlannerBlob(file.id, bytes))
-            dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), recordId, "ADD_FILE", details = file.id))
+        blobs.write(file.id, bytes)
+        try {
+            database.withTransaction {
+                dao.saveFile(file)
+                dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), recordId, "ADD_FILE", details = file.id))
+            }
+        } catch (error: Exception) {
+            blobs.delete(file.id)
+            throw error
         }
     }
 
     suspend fun exportAttachment(context: Context, file: PlannerFile, destination: Uri) {
-        val bytes = dao.blob(file.id)?.bytes ?: error("Arquivo ausente")
+        val bytes = blobs.read(file.id, dao) ?: error("Arquivo ausente")
         require(bytes.size.toLong() == file.byteSize)
         context.contentResolver.openOutputStream(destination, "w")?.use { it.write(bytes) }
             ?: error("Não foi possível salvar o arquivo")
     }
 
     suspend fun prepareSharedFile(context: Context, file: PlannerFile): Uri = withContext(Dispatchers.IO) {
-        val bytes = dao.blob(file.id)?.bytes ?: error("Arquivo ausente")
+        val bytes = blobs.read(file.id, dao) ?: error("Arquivo ausente")
         require(bytes.size.toLong() == file.byteSize) { "Tamanho do arquivo divergente" }
         val actualHash = MessageDigest.getInstance("SHA-256").digest(bytes)
             .joinToString("") { "%02x".format(it) }
@@ -261,10 +277,11 @@ class PlannerRepository(private val database: PlannerDatabase) {
     }
 
     /** Exclusão lógica com os mesmos efeitos colaterais das Server Actions web. */
-    suspend fun delete(id: String) = database.withTransaction {
-        val current = dao.find(id) ?: return@withTransaction
+    suspend fun delete(id: String): UndoSnapshot = database.withTransaction {
+        val current = dao.find(id) ?: return@withTransaction UndoSnapshot.EMPTY
         require(current.kind != Kinds.HONEYMOON) { HONEYMOON_NOT_DELETABLE }
         val now = System.currentTimeMillis()
+        val previous = mutableListOf(current)
         val children = dao.allRecords().filter { it.deletedAt == null && it.id != id }
         children.forEach { child ->
             val updated = when {
@@ -275,41 +292,69 @@ class PlannerRepository(private val database: PlannerDatabase) {
                 child.seatingTableId == id -> child.copy(seatingTableId = null, updatedAt = now)
                 else -> null
             }
-            if (updated != null) dao.save(updated)
+            if (updated != null) {
+                previous.add(child)
+                dao.save(updated)
+            }
         }
         dao.save(current.copy(deletedAt = now, updatedAt = now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "DELETE"))
+        UndoSnapshot(previous)
     }
 
-    suspend fun setStatus(id: String, status: String) = database.withTransaction {
+    /** Volta os registros ao estado anterior e exclui o que a ação tinha criado. */
+    suspend fun undo(snapshot: UndoSnapshot) = database.withTransaction {
+        if (snapshot.previous.isEmpty() && snapshot.created.isEmpty()) return@withTransaction
+        val now = System.currentTimeMillis()
+        dao.saveRecords(snapshot.previous.map { it.copy(updatedAt = now) })
+        snapshot.created.forEach { id -> dao.findAny(id)?.let { dao.save(it.copy(deletedAt = now, updatedAt = now)) } }
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), snapshot.previous.firstOrNull()?.id, "UNDO"))
+    }
+
+    val deleted: Flow<List<PlannerRecord>> = dao.observeDeleted()
+
+    /** Restaura da lixeira junto com os filhos excluídos em cascata no mesmo instante. */
+    suspend fun restore(id: String) = database.withTransaction {
+        val record = dao.findAny(id) ?: return@withTransaction
+        val deletedAt = record.deletedAt ?: return@withTransaction
+        record.parentId?.let { parent -> require(dao.find(parent) != null) { PARENT_DELETED } }
+        val now = System.currentTimeMillis()
+        val cascade = dao.allRecords().filter { it.parentId == id && it.deletedAt == deletedAt }
+        dao.saveRecords((cascade + record).map { it.copy(deletedAt = null, updatedAt = now) })
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "RESTORE"))
+    }
+
+    suspend fun setStatus(id: String, status: String): UndoSnapshot = database.withTransaction {
         val current = dao.find(id) ?: error("Registro não encontrado")
         dao.save(current.copy(status = status, updatedAt = System.currentTimeMillis()))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "STATUS", details = status))
+        UndoSnapshot(listOf(current))
     }
 
-    suspend fun setGroupRsvp(groupId: String, status: String) = database.withTransaction {
+    suspend fun setGroupRsvp(groupId: String, status: String): UndoSnapshot = database.withTransaction {
         require(status in setOf("CONFIRMED", "DECLINED", "MAYBE"))
         val group = dao.find(groupId) ?: error("Grupo não encontrado")
         require(group.kind == Kinds.GROUP)
         val now = System.currentTimeMillis()
+        val members = dao.allRecords().filter { it.kind == Kinds.GUEST && it.guestGroupId == groupId && it.deletedAt == null }
         dao.save(group.copy(status = status, updatedAt = now))
-        dao.allRecords().filter { it.kind == Kinds.GUEST && it.guestGroupId == groupId && it.deletedAt == null }
-            .forEach { guest -> dao.save(guest.copy(status = status, updatedAt = now)) }
+        members.forEach { guest -> dao.save(guest.copy(status = status, updatedAt = now)) }
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), groupId, "GROUP_RSVP", details = status))
+        UndoSnapshot(listOf(group) + members)
     }
 
-    suspend fun markPaid(id: String) = database.withTransaction {
+    suspend fun markPaid(id: String): UndoSnapshot = database.withTransaction {
         val payment = dao.find(id) ?: error("Pagamento não encontrado")
         require(payment.kind == Kinds.PAYMENT)
-        if (payment.status != "PAID") {
-            val now = System.currentTimeMillis()
-            val extra = ExtraFields.parse(payment.extraJson).put("paidAt", now)
-            dao.save(payment.copy(status = "PAID", extraJson = extra.toString(), updatedAt = now))
-            dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "MARK_PAID"))
-        }
+        if (payment.status == "PAID") return@withTransaction UndoSnapshot.EMPTY
+        val now = System.currentTimeMillis()
+        val extra = ExtraFields.parse(payment.extraJson).put("paidAt", now)
+        dao.save(payment.copy(status = "PAID", extraJson = extra.toString(), updatedAt = now))
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "MARK_PAID"))
+        UndoSnapshot(listOf(payment))
     }
 
-    suspend fun convertGift(id: String, targetKind: String) = database.withTransaction {
+    suspend fun convertGift(id: String, targetKind: String): UndoSnapshot = database.withTransaction {
         require(targetKind == Kinds.INCOME || targetKind == Kinds.ASSET)
         val gift = dao.find(id) ?: error("Presente não encontrado")
         require(gift.kind == Kinds.GIFT && gift.amountCents != null)
@@ -324,6 +369,7 @@ class PlannerRepository(private val database: PlannerDatabase) {
         dao.save(target)
         dao.save(gift.copy(extraJson = giftExtra.put("processedAt", now).toString(), updatedAt = now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "CONVERT_TO_FINANCE", details = target.id))
+        UndoSnapshot(listOf(gift), listOf(target.id))
     }
 
     suspend fun assignGuestToTable(guestId: String, tableId: String?) = database.withTransaction {
@@ -355,14 +401,14 @@ class PlannerRepository(private val database: PlannerDatabase) {
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), log.id, "CONFIRM_SENT", details = channel))
     }
 
-    suspend fun checkInGuest(guestId: String) = database.withTransaction {
+    suspend fun checkInGuest(guestId: String): UndoSnapshot = database.withTransaction {
         val guest = dao.find(guestId) ?: error("Convidado não encontrado")
         require(guest.kind == Kinds.GUEST && guest.status == "CONFIRMED")
         val extra = ExtraFields.parse(guest.extraJson)
-        if (!ExtraFields.has(extra, "checkedInAt")) {
-            extra.put("checkedInAt", System.currentTimeMillis())
-            dao.save(guest.copy(extraJson = extra.toString(), updatedAt = System.currentTimeMillis()))
-            dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), guestId, "CHECK_IN"))
-        }
+        if (ExtraFields.has(extra, "checkedInAt")) return@withTransaction UndoSnapshot.EMPTY
+        extra.put("checkedInAt", System.currentTimeMillis())
+        dao.save(guest.copy(extraJson = extra.toString(), updatedAt = System.currentTimeMillis()))
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), guestId, "CHECK_IN"))
+        UndoSnapshot(listOf(guest))
     }
 }

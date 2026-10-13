@@ -33,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.backup.BackupArchive
@@ -124,8 +126,8 @@ fun BackupScreen(
         ) {
             Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Cofre Criptografado AES-256-GCM", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
-                    InfoBadge("${password.length}/12 chars", if (validLength) PlannerEmerald else PlannerChampagne)
+                    Text(stringResource(R.string.backup_vault_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
+                    InfoBadge("${password.length}/12", if (validLength) PlannerEmerald else PlannerChampagne)
                 }
                 Text(localized(R.string.backup_password_hint, language), style = MaterialTheme.typography.bodySmall, color = PlannerMuted)
                 OutlinedTextField(
@@ -136,7 +138,7 @@ fun BackupScreen(
                     singleLine = true,
                     trailingIcon = {
                         TextButton(onClick = { showPassword = !showPassword }) {
-                            Text(if (showPassword) "Ocultar" else "Mostrar", style = MaterialTheme.typography.labelSmall)
+                            Text(stringResource(if (showPassword) R.string.hide_password else R.string.show_password), style = MaterialTheme.typography.labelSmall)
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -150,10 +152,10 @@ fun BackupScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 val helperText = when {
-                    password.isEmpty() -> "Informe uma senha forte (mínimo de 12 caracteres) para exportar ou restaurar."
-                    !validLength -> "Para criar novo backup, faltam ${12 - password.length} caractere(s)."
-                    !passwordsMatch -> "Confirme a mesma senha no segundo campo para habilitar a exportação."
-                    else -> "Senha válida e confirmada para exportação criptografada."
+                    password.isEmpty() -> stringResource(R.string.backup_password_empty)
+                    !validLength -> plural(R.plurals.backup_password_missing, 12 - password.length, 12 - password.length)
+                    !passwordsMatch -> stringResource(R.string.backup_password_mismatch)
+                    else -> stringResource(R.string.backup_password_ok)
                 }
                 Text(
                     helperText,

@@ -112,8 +112,8 @@ fun ReportDetailScreen(
                         modifier = Modifier.fillMaxWidth().clickable { onNavigate(alert.targetSection) },
                     ) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(alert.title, fontWeight = FontWeight.Bold)
-                            Text(alert.body, style = MaterialTheme.typography.bodySmall)
+                            Text(riskTitle(alert), fontWeight = FontWeight.Bold)
+                            Text(riskBody(alert), style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
@@ -186,7 +186,7 @@ fun ReportDetailScreen(
                 val byId = active.associateBy { it.id }
                 if (audits.isEmpty()) item { Text(localized(R.string.empty, language), color = PlannerMuted) }
                 items(audits.take(100), key = { it.id }) { audit ->
-                    ReportMetric("${formatTimestamp(audit.at, language)} · ${byId[audit.recordId]?.title ?: audit.action}", audit.action)
+                    ReportMetric("${formatTimestamp(audit.at, language)} · ${byId[audit.recordId]?.title.orEmpty()}", auditLabel(audit.action, language))
                 }
             }
         }

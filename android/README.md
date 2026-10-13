@@ -43,7 +43,7 @@ No APK, vá a **Ajustes → Backup → Restaurar backup**, selecione o arquivo e
 
 Em **Ajustes → Backup**, escolha senha nova, confirme e selecione o destino com o seletor de documentos. O `.wfpbackup` v2 contém registros, configurações, histórico, anexos e artes; após importar uma origem web, também conserva seu SQLite e todos os uploads no cofre privado cifrado pelo Android Keystore. A senha do arquivo não é guardada; sem ela o arquivo não pode ser restaurado em outro aparelho. O cabeçalho `WFPBAK01` é autenticado como AAD; o pacote usa PBKDF2-HMAC-SHA256 (600 mil iterações) e AES-256-GCM. O Android Auto Backup está desativado.
 
-Antes de substituir dados, o app guarda uma cópia de reversão cifrada pelo Keystore. A tela permite exportar a última reversão com nova senha. O Room tem migrações explícitas v1→v2→v3; a v3 guarda o número da versão de cada PDF. Veja [backup e restauração](../docs/backup-restore.md) para o formato e os limites.
+Antes de substituir dados, o app guarda uma cópia de reversão cifrada pelo Keystore. A tela permite exportar a última reversão com nova senha. O Room tem migrações explícitas v1→v2→v3→v4→v5: a v3 guarda o número da versão de cada PDF, a v4 alinha os metadados aos valores web e a v5 indexa a exclusão lógica. Os anexos ficam em arquivos privados do app. Veja [backup e restauração](../docs/backup-restore.md) para o formato e os limites.
 
 ## Desenvolvimento e entrega
 

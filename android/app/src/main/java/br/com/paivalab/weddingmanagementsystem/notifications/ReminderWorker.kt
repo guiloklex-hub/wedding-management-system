@@ -53,13 +53,15 @@ class ReminderWorker(context: Context, parameters: WorkerParameters) : Coroutine
                 !it.isBefore(today) && !it.isAfter(today.plusDays(2)) } == true }
             .take(10).forEach { record ->
                 send(manager, (record.id + today.toString()).hashCode(),
-                    localizedText(applicationContext, R.string.upcoming, language), record.title)
+                    localizedText(applicationContext, R.string.upcoming, language), record.title, record.id)
             }
         return Result.success()
     }
 
-    private fun send(manager: NotificationManager, id: Int, title: String, body: String) {
+    private fun send(manager: NotificationManager, id: Int, title: String, body: String, recordId: String? = null) {
         val intent = Intent(applicationContext, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        if (recordId != null) intent.putExtra(MainActivity.EXTRA_RECORD_ID, recordId)
         val pending = PendingIntent.getActivity(applicationContext, id, intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val notification = NotificationCompat.Builder(applicationContext, "planner_reminders")

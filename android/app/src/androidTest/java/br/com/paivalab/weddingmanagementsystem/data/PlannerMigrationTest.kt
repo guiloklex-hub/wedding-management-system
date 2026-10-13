@@ -35,7 +35,7 @@ class PlannerMigrationTest {
             database.version = 1
         }
         val migrated = Room.databaseBuilder(context, PlannerDatabase::class.java, name)
-            .addMigrations(PlannerDatabase.MIGRATION_1_2, PlannerDatabase.MIGRATION_2_3, PlannerDatabase.MIGRATION_3_4).build()
+            .addMigrations(PlannerDatabase.MIGRATION_1_2, PlannerDatabase.MIGRATION_2_3, PlannerDatabase.MIGRATION_3_4, PlannerDatabase.MIGRATION_4_5).build()
         try {
             assertEquals("BRL", migrated.dao().allSettings().first { it.key == "currency" }.value)
             migrated.dao().savePortableState(PortableState("lineage", "v3"))
@@ -69,7 +69,7 @@ class PlannerMigrationTest {
             database.version = 2
         }
         val migrated = Room.databaseBuilder(context, PlannerDatabase::class.java, name)
-            .addMigrations(PlannerDatabase.MIGRATION_1_2, PlannerDatabase.MIGRATION_2_3, PlannerDatabase.MIGRATION_3_4).build()
+            .addMigrations(PlannerDatabase.MIGRATION_1_2, PlannerDatabase.MIGRATION_2_3, PlannerDatabase.MIGRATION_3_4, PlannerDatabase.MIGRATION_4_5).build()
         try {
             assertEquals(1, migrated.dao().allFiles().single().version)
             assertEquals("contrato.pdf", migrated.dao().allFiles().single().fileName)
@@ -108,7 +108,7 @@ class PlannerMigrationTest {
             database.version = 3
         }
         val migrated = Room.databaseBuilder(context, PlannerDatabase::class.java, name)
-            .addMigrations(PlannerDatabase.MIGRATION_1_2, PlannerDatabase.MIGRATION_2_3, PlannerDatabase.MIGRATION_3_4).build()
+            .addMigrations(PlannerDatabase.MIGRATION_1_2, PlannerDatabase.MIGRATION_2_3, PlannerDatabase.MIGRATION_3_4, PlannerDatabase.MIGRATION_4_5).build()
         try {
             val records = migrated.dao().allRecords().associateBy { it.id }
             val vip = JSONObject(records.getValue("vip").extraJson)

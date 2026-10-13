@@ -1,111 +1,104 @@
 package br.com.paivalab.weddingmanagementsystem.ui
 
 import android.app.Activity
-import android.content.ClipData
-import android.content.Intent
-import android.net.Uri
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.backup.BackupArchive
 import br.com.paivalab.weddingmanagementsystem.data.CalendarExport
-import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
-import br.com.paivalab.weddingmanagementsystem.data.FinanceRules
-import br.com.paivalab.weddingmanagementsystem.data.HONEYMOON_NOT_DELETABLE
-import br.com.paivalab.weddingmanagementsystem.data.PAYMENT_NEEDS_VENDOR
-import br.com.paivalab.weddingmanagementsystem.data.VENDOR_NEEDS_CATEGORY
-import br.com.paivalab.weddingmanagementsystem.data.WebValues
-import br.com.paivalab.weddingmanagementsystem.data.InstallmentMath
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
-import br.com.paivalab.weddingmanagementsystem.data.Money
-import br.com.paivalab.weddingmanagementsystem.data.PaymentAdjustment
 import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
-import br.com.paivalab.weddingmanagementsystem.data.RiskRadar
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
-import java.util.UUID
-import kotlin.math.roundToInt
+import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
 import kotlinx.coroutines.launch
-import org.json.JSONArray
-import org.json.JSONObject
 
-private val primaryTabs = listOf(Kinds.TASK, Kinds.VENDOR, Kinds.GUEST)
+private data class Tab(val section: String, val route: Any, val label: Int, val icon: ImageVector)
+
+private val tabs = listOf(
+    Tab("dashboard", DashboardRoute, R.string.dashboard, Icons.Default.Dashboard),
+    Tab(Kinds.TASK, TasksTabRoute, R.string.tasks, modules.first { it.kind == Kinds.TASK }.icon),
+    Tab(Kinds.VENDOR, VendorsTabRoute, R.string.vendors, modules.first { it.kind == Kinds.VENDOR }.icon),
+    Tab(Kinds.GUEST, GuestsTabRoute, R.string.guests, modules.first { it.kind == Kinds.GUEST }.icon),
+    Tab("more", MoreRoute, R.string.more, Icons.Default.MoreHoriz),
+)
+
+private fun NavDestination?.isTab(tab: Tab): Boolean = this?.hierarchy?.any { it.hasRoute(tab.route::class) } == true
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,279 +108,300 @@ fun PlannerApp(
     archive: BackupArchive,
     authenticate: ((() -> Unit)?) -> Unit,
     externalSection: String? = null,
-    onExternalSectionConsumed: () -> Unit = {},
+    externalRecordId: String? = null,
+    onExternalConsumed: () -> Unit = {},
     onLoadDemoSeed: () -> Unit = {},
 ) {
-    val allRecords by model.records.collectAsState()
-    val allFiles by model.files.collectAsState()
-    val storedFiles by model.allFiles.collectAsState()
-    val allAudits by model.audits.collectAsState()
-    val language by model.locale.collectAsState()
-    val currency by model.currency.collectAsState()
-    val coupleNames by model.coupleNames.collectAsState()
-    val eventDate by model.eventDate.collectAsState()
-    val contingencyPercent by model.contingencyPercent.collectAsState()
-    val pixKey by model.pixKey.collectAsState()
-    val pixHolder by model.pixHolderName.collectAsState()
-    val pixCity by model.pixCity.collectAsState()
-    val error by model.error.collectAsState()
-    val guestImport by model.guestImport.collectAsState()
-    val guestImportResult by model.guestImportResult.collectAsState()
-    var section by remember { mutableStateOf("dashboard") }
-    var detailId by remember { mutableStateOf<String?>(null) }
-    var editor by remember { mutableStateOf<PlannerRecord?>(null) }
-    var creating by remember { mutableStateOf(false) }
-    var creatingKind by remember { mutableStateOf<String?>(null) }
-    var creatingParentId by remember { mutableStateOf<String?>(null) }
-    var deleteTarget by remember { mutableStateOf<PlannerRecord?>(null) }
-    var attachmentTarget by remember { mutableStateOf<PlannerRecord?>(null) }
-    var exportTarget by remember { mutableStateOf<PlannerFile?>(null) }
-    var inviteTemplate by remember { mutableStateOf<PlannerRecord?>(null) }
-    var inviteAttachmentId by remember { mutableStateOf<String?>(null) }
-    var pendingInvite by remember { mutableStateOf<Triple<PlannerRecord, PlannerRecord, String>?>(null) }
-    var installments by remember { mutableStateOf(false) }
-    var showPixDialog by remember { mutableStateOf(false) }
-    var pixGiftId by remember { mutableStateOf<String?>(null) }
+    val nav = rememberNavController()
+    val index by model.index.collectAsStateWithLifecycle()
+    val storedFiles by model.allFiles.collectAsStateWithLifecycle()
+    val audits by model.audits.collectAsStateWithLifecycle()
+    val language by model.locale.collectAsStateWithLifecycle()
+    val currency by model.currency.collectAsStateWithLifecycle()
+    val coupleNames by model.coupleNames.collectAsStateWithLifecycle()
+    val eventDate by model.eventDate.collectAsStateWithLifecycle()
+    val contingencyPercent by model.contingencyPercent.collectAsStateWithLifecycle()
+    val pixKey by model.pixKey.collectAsStateWithLifecycle()
+    val pixHolder by model.pixHolderName.collectAsStateWithLifecycle()
+    val pixCity by model.pixCity.collectAsStateWithLifecycle()
+    val guestImport by model.guestImport.collectAsStateWithLifecycle()
+    val records = index.active
+
+    var deleteTargetId by rememberSaveable { mutableStateOf<String?>(null) }
+    var attachmentTargetId by rememberSaveable { mutableStateOf<String?>(null) }
+    var exportTargetId by rememberSaveable { mutableStateOf<String?>(null) }
+    var inviteTemplateId by rememberSaveable { mutableStateOf<String?>(null) }
+    var inviteAttachmentId by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingInvite by rememberSaveable { mutableStateOf<List<String>?>(null) }
+    var installments by rememberSaveable { mutableStateOf(false) }
+    var showPixDialog by rememberSaveable { mutableStateOf(false) }
+    var pixGiftId by rememberSaveable { mutableStateOf<String?>(null) }
+
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val notify: (String) -> Unit = { msg -> scope.launch { snackbar.showSnackbar(msg) } }
-    val guestResultMessage = localized(R.string.guest_import_result, language)
-    val genericError = localized(R.string.error_generic, language)
-    val recipientPrompt = localized(R.string.select_whatsapp_recipient, language)
-    val tableFullError = localized(R.string.table_full, language)
+    val notify: (String) -> Unit = { message -> scope.launch { snackbar.showSnackbar(message) } }
+    val genericError = stringResource(R.string.error_generic)
+    val undoLabel = stringResource(R.string.undo)
+    val recipientPrompt = stringResource(R.string.select_whatsapp_recipient)
+    val resources = activity.resources
+
     val importFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        val target = attachmentTarget
-        if (uri != null && target != null) model.addAttachment(activity, target.id, uri)
-        attachmentTarget = null
+        val target = attachmentTargetId
+        if (uri != null && target != null) model.addAttachment(activity, target, uri)
+        attachmentTargetId = null
     }
     val exportFile = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
-        val target = exportTarget
+        val target = storedFiles.firstOrNull { it.id == exportTargetId }
         if (uri != null && target != null) model.exportAttachment(activity, target, uri)
-        exportTarget = null
+        exportTargetId = null
     }
     val calendarFile = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/calendar")) { uri ->
-        if (uri != null) runCatching {
-            activity.contentResolver.openOutputStream(uri, "w")?.use { stream ->
-                stream.write(CalendarExport.generate(allRecords).toByteArray(Charsets.UTF_8))
-            } ?: error("calendar")
+        if (uri != null) {
+            val written = runCatching {
+                activity.contentResolver.openOutputStream(uri, "w")?.use { stream ->
+                    stream.write(CalendarExport.generate(records).toByteArray(Charsets.UTF_8))
+                } ?: error("calendar")
+            }
+            if (written.isFailure) notify(genericError)
         }
     }
     val guestFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) model.previewGuestImport(activity, uri)
     }
-    val openAttachment: (PlannerFile) -> Unit = { file ->
-        model.prepareSharedFile(activity, file) { uri ->
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, file.mimeType.ifBlank { "application/octet-stream" })
-                clipData = ClipData.newUri(activity.contentResolver, file.fileName, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            if (runCatching { activity.startActivity(intent) }.isFailure) notify(genericError)
-        }
+    val openFile: (PlannerFile) -> Unit = { file ->
+        model.prepareSharedFile(activity, file) { uri -> if (!viewFile(activity, file, uri)) notify(genericError) }
     }
+    val attach: (PlannerRecord) -> Unit = { record -> attachmentTargetId = record.id; importFile.launch(arrayOf("*/*")) }
+    val export: (PlannerFile) -> Unit = { file -> exportTargetId = file.id; exportFile.launch(file.fileName) }
+    val openRecord: (PlannerRecord) -> Unit = { record -> nav.openRecord(record.kind, record.id) }
 
-    LaunchedEffect(externalSection) {
-        if (!externalSection.isNullOrBlank()) {
-            editor = null
-            creating = false
-            detailId = null
-            section = externalSection
-            onExternalSectionConsumed()
-        }
-    }
-    LaunchedEffect(error) {
-        if (error != null) {
-            snackbar.showSnackbar(when (error) {
-                "Mesa sem lugares" -> tableFullError
-                PAYMENT_NEEDS_VENDOR -> localizedText(activity, R.string.payment_needs_vendor, language)
-                VENDOR_NEEDS_CATEGORY -> localizedText(activity, R.string.vendor_needs_category, language)
-                HONEYMOON_NOT_DELETABLE -> localizedText(activity, R.string.honeymoon_not_deletable, language)
-                "Presente já lançado" -> localizedText(activity, R.string.gift_already_processed, language)
-                else -> genericError
-            })
-            model.clearError()
-        }
-    }
-    LaunchedEffect(guestImportResult) {
-        guestImportResult?.let { (added, skipped) ->
-            snackbar.showSnackbar(guestResultMessage
-                .replace("{added}", added.toString()).replace("{skipped}", skipped.toString()))
-        }
-    }
-    BackHandler(section != "dashboard" || editor != null || creating || detailId != null) {
-        when {
-            editor != null || creating -> { editor = null; creating = false; creatingKind = null; creatingParentId = null }
-            detailId != null -> detailId = null
-            section.startsWith("report-") -> section = "reports"
-            else -> section = "dashboard"
-        }
-    }
-
-    val currentModule = modules.find { it.kind == section }
-    val detailRecord = allRecords.firstOrNull { it.id == detailId && it.deletedAt == null }
-    val title = when (section) {
-        "dashboard" -> localized(R.string.dashboard, language)
-        "more" -> localized(R.string.more, language)
-        "settings" -> localized(R.string.settings, language)
-        "insights" -> localized(R.string.insights, language)
-        "reports" -> localized(R.string.reports, language)
-        in mobileReports.map { it.route } -> localized(mobileReports.first { it.route == section }.title, language)
-        "help" -> localized(R.string.help, language)
-        "audit" -> localized(R.string.audit, language)
-        "vendor-compare" -> localized(R.string.vendor_compare, language)
-        "wedding-day" -> localized(R.string.wedding_day, language)
-        "backup" -> localized(R.string.backup, language)
-        else -> detailRecord?.title ?: currentModule?.let { localized(it.title, language) } ?: section
-    }
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Favorite, null, tint = PlannerRose, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(10.dp))
-                        Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
-                    }
-                },
-                navigationIcon = {
-                    if (detailId != null || (section !in listOf("dashboard", "more") && section !in primaryTabs)) {
-                        IconButton(onClick = { if (detailId != null) detailId = null else section = if (section.startsWith("report-")) "reports" else "more" }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = PlannerBackground),
+    LaunchedEffect(model) {
+        model.messages.collect { message ->
+            val text = message.quantity?.let { resources.getQuantityString(message.text, pluralQuantity(it), *message.args.toTypedArray()) }
+                ?: resources.getString(message.text, *message.args.toTypedArray())
+            val undo = message.undo
+            val result = snackbar.showSnackbar(
+                message = text,
+                actionLabel = if (undo != null) undoLabel else null,
+                duration = if (undo != null) SnackbarDuration.Long else SnackbarDuration.Short,
             )
-        },
-        bottomBar = {
-            NavigationBar(containerColor = Color(0xFF0C0C0F)) {
-                val tabs = listOf(
-                    Triple("dashboard", R.string.dashboard, Icons.Default.Dashboard),
-                    Triple(Kinds.TASK, R.string.tasks, modules.first { it.kind == Kinds.TASK }.icon),
-                    Triple(Kinds.VENDOR, R.string.vendors, modules.first { it.kind == Kinds.VENDOR }.icon),
-                    Triple(Kinds.GUEST, R.string.guests, modules.first { it.kind == Kinds.GUEST }.icon),
-                    Triple("more", R.string.more, Icons.Default.MoreHoriz),
-                )
-                tabs.forEach { (key, label, icon) ->
-                    NavigationBarItem(
-                        selected = section == key || (key == "more" && section !in tabs.map { it.first }),
-                        onClick = { detailId = null; section = key },
-                        icon = { Icon(icon, localized(label, language)) },
-                        label = { Text(localized(label, language), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = PlannerRose,
-                            selectedTextColor = PlannerRose,
-                            indicatorColor = PlannerRose.copy(alpha = 0.18f),
-                            unselectedIconColor = PlannerMuted,
-                            unselectedTextColor = PlannerMuted,
-                        ),
+            if (result == SnackbarResult.ActionPerformed && undo != null) model.undo(undo)
+        }
+    }
+    LaunchedEffect(externalSection, externalRecordId, index) {
+        if (externalSection == null && externalRecordId == null) return@LaunchedEffect
+        externalSection?.takeIf { it.isNotBlank() }?.let(nav::openSection)
+        if (externalRecordId != null) {
+            val record = index.find(externalRecordId) ?: return@LaunchedEffect
+            openRecord(record)
+        }
+        onExternalConsumed()
+    }
+
+    val backStack by nav.currentBackStackEntryAsState()
+    val destination = backStack?.destination
+    val moduleKind = when {
+        destination?.hasRoute(ModuleRoute::class) == true -> backStack?.toRoute<ModuleRoute>()?.kind
+        destination?.hasRoute(TasksTabRoute::class) == true -> Kinds.TASK
+        destination?.hasRoute(VendorsTabRoute::class) == true -> Kinds.VENDOR
+        destination?.hasRoute(GuestsTabRoute::class) == true -> Kinds.GUEST
+        else -> null
+    }
+    val isEditor = destination?.hasRoute(EditorRoute::class) == true
+    val isTabRoot = destination == null || tabs.any { destination.isTab(it) }
+    val stack by nav.currentBackStack.collectAsStateWithLifecycle()
+    val selectedTab = stack.lastOrNull { entry -> tabs.any { entry.destination.isTab(it) } }?.destination
+    val dynamicTitle = backStack?.let { entry ->
+        when {
+            destination?.hasRoute(DetailRoute::class) == true -> index.find(entry.toRoute<DetailRoute>().id)?.title
+            destination?.hasRoute(ReportRoute::class) == true ->
+                mobileReports.firstOrNull { it.route == entry.toRoute<ReportRoute>().route }?.title?.let { stringResource(it) }
+            else -> null
+        }
+    }
+    val title = screenTitle(destination, dynamicTitle, moduleKind)
+    val wide = LocalConfiguration.current.screenWidthDp >= 840
+
+    val moduleContent: @Composable (String) -> Unit = { kind ->
+        val module = modules.first { it.kind == kind }
+        val listModel: ModuleListViewModel = viewModel(
+            factory = viewModelFactory { initializer { ModuleListViewModel(createSavedStateHandle(), kind, model.index) } },
+        )
+        ModuleScreen(
+            module, index, listModel, currency, language,
+            ModuleActions(
+                open = openRecord,
+                add = { nav.navigate(EditorRoute(kind)) },
+                delete = { deleteTargetId = it.id },
+                setStatus = { record, status -> model.setStatus(record.id, status) },
+                markPaid = { model.markPaid(it.id) },
+                whatsApp = { if (!openWhatsApp(activity, it)) notify(genericError) },
+                dial = { if (!dialPhone(activity, it.phone)) notify(genericError) },
+                maps = { if (!openMap(activity, it)) notify(genericError) },
+                attach = attach,
+                openFile = openFile,
+                postGift = { model.convertGift(it.id, Kinds.INCOME) },
+                invite = { template ->
+                    inviteTemplateId = template.id
+                    inviteAttachmentId = index.files(template.id).maxByOrNull { it.createdAt }?.id
+                },
+                importGuests = { guestFile.launch(arrayOf("*/*")) },
+                seedTasks = model::seedTaskTemplates,
+                seedVenueChecklist = model::seedVenueChecklist,
+                installments = { installments = true },
+                groupRsvp = { record, status -> model.setGroupRsvp(record.id, status) },
+                compare = { nav.navigate(VendorCompareRoute) },
+                sharePix = { pixGiftId = null; showPixDialog = true },
+                giftPix = { gift -> pixGiftId = gift.id; showPixDialog = true },
+                pixConfigured = pixKey.isNotBlank(),
+            ),
+        )
+    }
+
+    Row(Modifier.fillMaxSize()) {
+        if (wide && !isEditor) {
+            NavigationRail(containerColor = PlannerSurface) {
+                tabs.forEach { tab ->
+                    NavigationRailItem(
+                        selected = selectedTab.isTab(tab),
+                        onClick = { nav.openTab(tab.route) },
+                        icon = { Icon(tab.icon, null) },
+                        label = { Text(stringResource(tab.label)) },
                     )
                 }
             }
-        },
-        snackbarHost = { SnackbarHost(snackbar) },
-        floatingActionButton = {
-            if (currentModule != null && detailId == null) {
-                ExtendedFloatingActionButton(
-                    onClick = { creatingKind = section; creatingParentId = null; creating = true },
-                    containerColor = PlannerRose,
-                    contentColor = Color.White,
-                    icon = { Icon(Icons.Default.Add, null) },
-                    text = { Text(localized(R.string.add, language), fontWeight = FontWeight.SemiBold) },
-                )
-            }
-        },
-    ) { inner ->
-        Box(Modifier.fillMaxSize().padding(inner)) {
-            if (detailRecord?.kind == Kinds.VENDOR) {
-                VendorDetailScreen(
-                    vendor = detailRecord, records = allRecords, files = storedFiles,
-                    language = language, currency = currency,
-                    onEdit = { editor = it },
-                    onAddRelated = { kind, parentId -> creatingKind = kind; creatingParentId = parentId; creating = true },
-                    onDelete = { deleteTarget = it },
-                    onAttach = { record -> attachmentTarget = record; importFile.launch(arrayOf("*/*")) },
-                    onOpenFile = openAttachment,
-                    onExportFile = { file -> exportTarget = file; exportFile.launch(file.fileName) },
-                    onPaid = model::markPaid,
-                    onDial = { phone -> dialPhone(activity, phone) },
-                    onWhatsApp = { record -> openWhatsApp(activity, record) },
-                    onOpenLink = { url ->
-                        val uri = Uri.parse(url)
-                        if (uri.scheme in listOf("http", "https")) {
-                            if (runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, uri)) }.isFailure) notify(genericError)
-                        } else notify(genericError)
+        }
+        Scaffold(
+            modifier = Modifier.weight(1f),
+            topBar = {
+                if (!isEditor) TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Favorite, null, tint = PlannerRose, modifier = Modifier.size(20.dp))
+                            Box(Modifier.width(10.dp))
+                            Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
+                        }
                     },
+                    navigationIcon = {
+                        if (!isTabRoot) IconButton(onClick = { nav.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = PlannerBackground),
                 )
-            } else if (detailRecord?.kind == Kinds.VENUE) {
-                VenueDetailScreen(
-                    venue = detailRecord, records = allRecords, files = allFiles,
-                    language = language, currency = currency,
-                    onEdit = { editor = it },
-                    onAddRelated = { kind, parentId -> creatingKind = kind; creatingParentId = parentId; creating = true },
-                    onAttach = { record -> attachmentTarget = record; importFile.launch(arrayOf("*/*")) },
-                    onOpenFile = openAttachment,
-                    onExportFile = { file -> exportTarget = file; exportFile.launch(file.fileName) },
-                    onChecklistStatus = model::setStatus,
-                    onSeedChecklist = { id -> model.seedVenueChecklist(id) },
-                    onMaps = { record -> openMap(activity, record) },
-                )
-            } else when (section) {
-                "dashboard" -> DashboardScreen(allRecords, coupleNames, eventDate, currency, language) { section = it }
-                "more" -> MoreScreen(allRecords, language) { section = it }
-                "settings" -> SettingsScreen(
-                    model = model,
-                    language = language,
-                    currency = currency,
-                    authenticate = authenticate,
-                    onExportCalendar = { calendarFile.launch("wedding-finance.ics") },
-                    onLoadDemoSeed = onLoadDemoSeed,
-                    onNotify = notify,
-                ) { section = it }
-                "insights" -> InsightsScreen(allRecords, language, currency, eventDate, contingencyPercent) { section = it }
-                "reports" -> ReportsHubScreen(language) { section = it }
-                in mobileReports.map { it.route } -> ReportDetailScreen(section, allRecords, allAudits, language, currency, eventDate) { section = it }
-                "help" -> HelpScreen(language)
-                "audit" -> AuditScreen(allAudits, allRecords, language)
-                "vendor-compare" -> VendorCompareScreen(allRecords, language, currency)
-                "wedding-day" -> WeddingDayScreen(model, allRecords, language, notify)
-                "backup" -> BackupScreen(archive, language, authenticate, model::refreshEvent)
-                else -> if (currentModule != null) {
-                    ModuleScreen(
-                        module = currentModule,
-                        records = allRecords,
-                        files = allFiles,
-                        language = language,
-                        currency = currency,
-                        onEdit = { editor = it },
-                        onDetail = { detailId = it.id },
-                        onDelete = { deleteTarget = it },
-                        onStatus = { id, status -> model.setStatus(id, status) },
-                        onPaid = model::markPaid,
-                        onWhatsApp = { record -> openWhatsApp(activity, record) },
-                        onAttach = { record -> attachmentTarget = record; importFile.launch(arrayOf("*/*")) },
-                        onExport = { file -> exportTarget = file; exportFile.launch(file.fileName) },
-                        onGift = { id -> model.convertGift(id, Kinds.INCOME) },
-                        onInvite = { template ->
-                            inviteTemplate = template
-                            inviteAttachmentId = allFiles.filter { it.recordId == template.id }
-                                .maxByOrNull { it.createdAt }?.id
-                        },
-                        onGuestImport = { guestFile.launch(arrayOf("*/*")) },
-                        onSeedTasks = model::seedTaskTemplates,
-                        onSeedVenueChecklist = { venueId ->
-                            model.seedVenueChecklist(venueId ?: "") { added ->
-                                notify("$added itens de inspeção adicionados!")
-                            }
-                        },
-                        onInstallments = { installments = true },
-                        onGroupRsvp = model::setGroupRsvp,
-                        onCompare = { section = "vendor-compare" },
-                        onSharePix = { showPixDialog = true },
-                        onGiftPix = { gift -> pixGiftId = gift.id; showPixDialog = true },
-                        pixConfigured = pixKey.isNotBlank(),
-                        onDial = { record -> dialPhone(activity, record.phone) },
-                        onMaps = { record -> openMap(activity, record) },
+            },
+            bottomBar = {
+                if (!wide && !isEditor) NavigationBar(containerColor = PlannerSurface) {
+                    tabs.forEach { tab ->
+                        NavigationBarItem(
+                            selected = selectedTab.isTab(tab),
+                            onClick = { nav.openTab(tab.route) },
+                            icon = { Icon(tab.icon, null) },
+                            label = {
+                                Text(stringResource(if (tab.section == Kinds.VENDOR) R.string.vendors_nav else tab.label), maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall)
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = PlannerRose,
+                                selectedTextColor = PlannerRose,
+                                indicatorColor = PlannerRose.copy(alpha = 0.18f),
+                                unselectedIconColor = PlannerMuted,
+                                unselectedTextColor = PlannerMuted,
+                            ),
+                        )
+                    }
+                }
+            },
+            snackbarHost = { SnackbarHost(snackbar) },
+            floatingActionButton = {
+                if (moduleKind != null) {
+                    ExtendedFloatingActionButton(
+                        onClick = { nav.navigate(EditorRoute(moduleKind)) },
+                        containerColor = PlannerRose,
+                        contentColor = PlannerOnAccent,
+                        icon = { Icon(Icons.Default.Add, null) },
+                        text = { Text(stringResource(R.string.add), fontWeight = FontWeight.SemiBold) },
                     )
                 }
+            },
+            containerColor = PlannerBackground,
+        ) { inner ->
+            NavHost(
+                nav,
+                startDestination = DashboardRoute,
+                modifier = Modifier.fillMaxSize().padding(inner).wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = 960.dp),
+            ) {
+                composable<DashboardRoute> {
+                    DashboardScreen(index, coupleNames, eventDate, currency, language, nav::openSection, openRecord)
+                }
+                composable<MoreRoute> { MoreScreen(index, nav::openSection) }
+                composable<TasksTabRoute> { moduleContent(Kinds.TASK) }
+                composable<VendorsTabRoute> { moduleContent(Kinds.VENDOR) }
+                composable<GuestsTabRoute> { moduleContent(Kinds.GUEST) }
+                composable<ModuleRoute> { entry -> moduleContent(entry.toRoute<ModuleRoute>().kind) }
+                composable<DetailRoute> { entry ->
+                    val record = index.find(entry.toRoute<DetailRoute>().id)
+                    if (record == null) {
+                        LaunchedEffect(Unit) { nav.popBackStack() }
+                        return@composable
+                    }
+                    val related: (String, String) -> Unit = { kind, parentId -> nav.navigate(EditorRoute(kind, parentId = parentId)) }
+                    val edit: (PlannerRecord) -> Unit = { nav.navigate(EditorRoute(it.kind, it.id)) }
+                    if (record.kind == Kinds.VENDOR) {
+                        VendorDetailScreen(
+                            vendor = record, records = records, files = storedFiles, language = language, currency = currency,
+                            onEdit = edit, onAddRelated = related, onDelete = { deleteTargetId = it.id }, onAttach = attach,
+                            onOpenFile = openFile, onExportFile = export, onPaid = model::markPaid,
+                            onDial = { phone -> if (!dialPhone(activity, phone)) notify(genericError) },
+                            onWhatsApp = { if (!openWhatsApp(activity, it)) notify(genericError) },
+                            onOpenLink = { url -> if (!openLink(activity, url)) notify(genericError) },
+                        )
+                    } else {
+                        VenueDetailScreen(
+                            venue = record, records = records, files = storedFiles.filter { it.deletedAt == null },
+                            language = language, currency = currency, onEdit = edit, onAddRelated = related, onAttach = attach,
+                            onOpenFile = openFile, onExportFile = export, onChecklistStatus = model::setStatus,
+                            onSeedChecklist = model::seedVenueChecklist,
+                            onMaps = { if (!openMap(activity, it)) notify(genericError) },
+                        )
+                    }
+                }
+                composable<EditorRoute> { entry ->
+                    val route = entry.toRoute<EditorRoute>()
+                    val module = modules.firstOrNull { it.kind == route.kind } ?: return@composable
+                    val initial = route.id?.let(index::find)
+                    if (route.id != null && initial == null) {
+                        LaunchedEffect(Unit) { nav.popBackStack() }
+                        return@composable
+                    }
+                    RecordEditorScreen(
+                        module = module, initial = initial, initialParentId = route.parentId, index = index, language = language,
+                        onClose = { nav.popBackStack() },
+                        onSave = { record -> model.save(record) { nav.popBackStack() } },
+                        onDelete = { deleteTargetId = it.id },
+                    )
+                }
+                composable<SettingsRoute> {
+                    SettingsScreen(
+                        model = model, language = language, currency = currency, authenticate = authenticate,
+                        onExportCalendar = { calendarFile.launch("wedding-finance.ics") },
+                        onLoadDemoSeed = onLoadDemoSeed, onNotify = notify, navigate = nav::openSection,
+                    )
+                }
+                composable<InsightsRoute> { InsightsScreen(records, language, currency, eventDate, contingencyPercent, nav::openSection) }
+                composable<ReportsRoute> { ReportsHubScreen(language, nav::openSection) }
+                composable<ReportRoute> { entry ->
+                    ReportDetailScreen(entry.toRoute<ReportRoute>().route, records, audits, language, currency, eventDate, nav::openSection)
+                }
+                composable<HelpRoute> { HelpScreen(language) }
+                composable<AuditRoute> { AuditScreen(audits, records, language) }
+                composable<TrashRoute> {
+                    val deleted by model.deleted.collectAsStateWithLifecycle()
+                    TrashScreen(deleted, language, onRestore = { model.restore(it.id) })
+                }
+                composable<VendorCompareRoute> { VendorCompareScreen(records, language, currency) }
+                composable<WeddingDayRoute> { WeddingDayScreen(model, records, language, notify) }
+                composable<BackupRoute> { BackupScreen(archive, language, authenticate, model::refreshEvent) }
             }
         }
     }
@@ -398,76 +412,161 @@ fun PlannerApp(
             pixKey = pixKey,
             pixHolderName = pixHolder.ifBlank { coupleNames.ifBlank { "CASAMENTO" } },
             pixCity = pixCity.ifBlank { "SAO PAULO" },
-            initialAmountCents = allRecords.firstOrNull { it.id == pixGiftId }?.amountCents,
+            initialAmountCents = index.find(pixGiftId)?.amountCents,
             transactionId = pixGiftId,
             language = language,
             onDismiss = { showPixDialog = false; pixGiftId = null },
             onNotify = notify,
         )
     }
-
-    if (creating || editor != null) {
-        val module = modules.find { it.kind == (editor?.kind ?: creatingKind ?: section) }
-        if (module != null) {
-            RecordEditor(
-                module = module,
-                initial = editor,
-                initialParentId = creatingParentId,
-                records = allRecords,
-                language = language,
-                onDismiss = { editor = null; creating = false; creatingKind = null; creatingParentId = null },
-                onSave = { record ->
-                    model.save(record) {
-                        editor = null
-                        creating = false
-                        creatingKind = null
-                        creatingParentId = null
-                        notify("Registro salvo com sucesso!")
-                    }
-                },
-            )
-        }
-    }
-    deleteTarget?.let { target ->
+    index.find(deleteTargetId)?.let { target ->
         AlertDialog(
-            onDismissRequest = { deleteTarget = null },
-            title = { Text(localized(R.string.confirm_delete, language)) },
+            onDismissRequest = { deleteTargetId = null },
+            title = { Text(stringResource(R.string.confirm_delete)) },
             text = { Text(target.title) },
             confirmButton = {
                 TextButton(onClick = {
-                    model.delete(target.id)
-                    deleteTarget = null
-                    notify("Registro removido")
-                }) {
-                    Text(localized(R.string.delete, language), color = PlannerRose)
+                    deleteTargetId = null
+                    val leaveScreen = destination?.hasRoute(EditorRoute::class) == true || destination?.hasRoute(DetailRoute::class) == true
+                    model.delete(target.id) { if (leaveScreen) nav.popBackStack() }
+                }) { Text(stringResource(R.string.delete), color = PlannerRose) }
+            },
+            dismissButton = { TextButton(onClick = { deleteTargetId = null }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+    index.find(inviteTemplateId)?.let { template ->
+        InviteGuestDialog(
+            template = template,
+            index = index,
+            attachmentId = inviteAttachmentId,
+            onAttachment = { inviteAttachmentId = it },
+            onDismiss = { inviteTemplateId = null },
+            onWhatsApp = { guest, file ->
+                inviteTemplateId = null
+                if (file == null) {
+                    if (openInviteWhatsApp(activity, template, guest)) pendingInvite = listOf(template.id, guest.id, "WHATSAPP")
+                    else notify(genericError)
+                } else model.prepareSharedFile(activity, file) { uri ->
+                    val channel = shareInviteAttachment(activity, template, guest, file, uri, true)
+                    if (channel != null) {
+                        notify(recipientPrompt)
+                        pendingInvite = listOf(template.id, guest.id, channel)
+                    } else notify(genericError)
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) {
-                    Text(localized(R.string.cancel, language))
+            onShare = { guest, file ->
+                inviteTemplateId = null
+                if (file == null) {
+                    if (shareInviteText(activity, template, guest)) pendingInvite = listOf(template.id, guest.id, "SHARE")
+                    else notify(genericError)
+                } else model.prepareSharedFile(activity, file) { uri ->
+                    val channel = shareInviteAttachment(activity, template, guest, file, uri, false)
+                    if (channel != null) pendingInvite = listOf(template.id, guest.id, channel) else notify(genericError)
                 }
             },
         )
     }
-    inviteTemplate?.let { template ->
-        val templateFiles = allFiles.filter { it.recordId == template.id }.sortedByDescending { it.createdAt }
+    pendingInvite?.let { (templateId, guestId, channel) ->
         AlertDialog(
-            onDismissRequest = { inviteTemplate = null },
-            title = { Text(localized(R.string.choose_guest, language)) },
-            text = {
-                LazyColumn(Modifier.heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (templateFiles.isNotEmpty()) item {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(localized(R.string.invite_attachment, language), style = MaterialTheme.typography.labelLarge)
-                            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                FilterChip(selected = inviteAttachmentId == null, onClick = { inviteAttachmentId = null }, label = { Text(localized(R.string.no_attachment, language)) })
-                                templateFiles.forEach { file ->
-                                    FilterChip(selected = inviteAttachmentId == file.id, onClick = { inviteAttachmentId = file.id }, label = { Text(file.fileName, maxLines = 1) })
-                                }
-                            }
+            onDismissRequest = { pendingInvite = null },
+            title = { Text(stringResource(R.string.sent_confirm)) },
+            text = { Text("${index.find(guestId)?.title.orEmpty()}\n${stringResource(R.string.sent_warning)}") },
+            confirmButton = {
+                TextButton(onClick = {
+                    model.confirmInvitationSent(templateId, guestId, channel)
+                    pendingInvite = null
+                }) { Text(stringResource(R.string.sent_confirm)) }
+            },
+            dismissButton = { TextButton(onClick = { pendingInvite = null }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+    guestImport?.let { preview ->
+        AlertDialog(
+            onDismissRequest = model::dismissGuestImport,
+            title = { Text(stringResource(R.string.import_guests)) },
+            text = { Text(plural(R.plurals.guest_import_preview_count, preview.guests.size, preview.guests.size, preview.source)) },
+            confirmButton = { TextButton(onClick = model::commitGuestImport) { Text(stringResource(R.string.import_guests)) } },
+            dismissButton = { TextButton(onClick = model::dismissGuestImport) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+    if (installments) {
+        InstallmentsDialog(
+            index = index,
+            currency = currency,
+            language = language,
+            onDismiss = { installments = false },
+            onSave = { vendorId, name, total, count, due ->
+                model.createInstallments(vendorId, name, total, count, due)
+                installments = false
+            },
+        )
+    }
+}
+
+@Composable
+private fun screenTitle(destination: NavDestination?, dynamic: String?, moduleKind: String?): String {
+    val module = modules.firstOrNull { it.kind == moduleKind }
+    val resource = when {
+        destination == null || destination.hasRoute(DashboardRoute::class) -> R.string.dashboard
+        destination.hasRoute(MoreRoute::class) -> R.string.more
+        destination.hasRoute(SettingsRoute::class) -> R.string.settings
+        destination.hasRoute(InsightsRoute::class) -> R.string.insights
+        destination.hasRoute(ReportsRoute::class) -> R.string.reports
+        destination.hasRoute(HelpRoute::class) -> R.string.help
+        destination.hasRoute(AuditRoute::class) -> R.string.audit
+        destination.hasRoute(TrashRoute::class) -> R.string.trash
+        destination.hasRoute(VendorCompareRoute::class) -> R.string.vendor_compare
+        destination.hasRoute(WeddingDayRoute::class) -> R.string.wedding_day
+        destination.hasRoute(BackupRoute::class) -> R.string.backup
+        module != null -> module.title
+        else -> null
+    }
+    return dynamic ?: resource?.let { stringResource(it) } ?: stringResource(R.string.app_name)
+}
+
+@Composable
+private fun InviteGuestDialog(
+    template: PlannerRecord,
+    index: RecordIndex,
+    attachmentId: String?,
+    onAttachment: (String?) -> Unit,
+    onDismiss: () -> Unit,
+    onWhatsApp: (PlannerRecord, PlannerFile?) -> Unit,
+    onShare: (PlannerRecord, PlannerFile?) -> Unit,
+) {
+    val templateFiles = index.files(template.id).filter { it.deletedAt == null }.sortedByDescending { it.createdAt }
+    val selectedFile = templateFiles.firstOrNull { it.id == attachmentId }
+    var query by rememberSaveable { mutableStateOf("") }
+    var onlyPending by rememberSaveable { mutableStateOf(true) }
+    val logKind = if (template.kind == Kinds.INVITATION) "invitation_log" else "save_the_date_log"
+    val sentGuestIds = remember(index, template.id) {
+        index.children(template.id).filter { it.kind == logKind }
+            .mapNotNull { index.extra(it).optString("guestId").takeIf(String::isNotBlank) }.toSet()
+    }
+    val guests = index.kind(Kinds.GUEST)
+        .filter { (!onlyPending || it.id !in sentGuestIds) && (query.isBlank() || it.title.contains(query, ignoreCase = true)) }
+        .sortedBy { it.title.lowercase() }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.choose_guest)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (templateFiles.isNotEmpty()) {
+                    Text(stringResource(R.string.invite_attachment), style = MaterialTheme.typography.labelLarge)
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        FilterChip(selected = selectedFile == null, onClick = { onAttachment(null) },
+                            label = { Text(stringResource(R.string.no_attachment)) })
+                        templateFiles.forEach { file ->
+                            FilterChip(selected = selectedFile?.id == file.id, onClick = { onAttachment(file.id) },
+                                label = { Text(file.fileName, maxLines = 1) })
                         }
                     }
-                    items(allRecords.filter { it.kind == Kinds.GUEST && it.deletedAt == null }) { guest ->
+                }
+                EditorTextField(query, { query = it }, stringResource(R.string.search), null)
+                ToggleChip(stringResource(R.string.only_not_sent), onlyPending) { onlyPending = it }
+                LazyColumn(Modifier.heightIn(max = 320.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (guests.isEmpty()) item { Text(stringResource(R.string.empty_filtered), color = PlannerMuted) }
+                    items(guests, key = { it.id }) { guest ->
                         Card(
                             colors = CardDefaults.cardColors(containerColor = PlannerSurface),
                             border = BorderStroke(1.dp, PlannerBorder),
@@ -475,1457 +574,21 @@ fun PlannerApp(
                         ) {
                             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(guest.title, fontWeight = FontWeight.SemiBold)
+                                if (guest.id in sentGuestIds) InfoBadge(stringResource(R.string.status_sent), PlannerEmerald)
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     if (guest.phone.isNotBlank()) {
-                                        TextButton(onClick = {
-                                            inviteTemplate = null
-                                            val file = templateFiles.firstOrNull { it.id == inviteAttachmentId }
-                                            if (file == null) {
-                                                if (openInviteWhatsApp(activity, template, guest)) pendingInvite = Triple(template, guest, "WHATSAPP")
-                                                else notify(genericError)
-                                            } else {
-                                                model.prepareSharedFile(activity, file) { uri ->
-                                                    val channel = shareInviteAttachment(activity, template, guest, file, uri, true)
-                                                    if (channel != null) {
-                                                        notify(recipientPrompt)
-                                                        pendingInvite = Triple(template, guest, channel)
-                                                    } else notify(genericError)
-                                                }
-                                            }
-                                        }) { Text(localized(R.string.share_whatsapp, language)) }
+                                        TextButton(onClick = { onWhatsApp(guest, selectedFile) }) { Text(stringResource(R.string.share_whatsapp)) }
                                     }
-                                    TextButton(onClick = {
-                                        inviteTemplate = null
-                                        val file = templateFiles.firstOrNull { it.id == inviteAttachmentId }
-                                        if (file == null) {
-                                            if (shareInviteText(activity, template, guest)) pendingInvite = Triple(template, guest, "SHARE")
-                                            else notify(genericError)
-                                        } else {
-                                            model.prepareSharedFile(activity, file) { uri ->
-                                                val channel = shareInviteAttachment(activity, template, guest, file, uri, false)
-                                                if (channel != null) pendingInvite = Triple(template, guest, channel)
-                                                else notify(genericError)
-                                            }
-                                        }
-                                    }) {
-                                        Text(localized(if (templateFiles.any { it.id == inviteAttachmentId }) R.string.share_with_attachment else R.string.share_text, language))
+                                    TextButton(onClick = { onShare(guest, selectedFile) }) {
+                                        Text(stringResource(if (selectedFile != null) R.string.share_with_attachment else R.string.share_text))
                                     }
                                 }
                             }
                         }
                     }
                 }
-            },
-            confirmButton = { TextButton(onClick = { inviteTemplate = null }) { Text(localized(R.string.cancel, language)) } },
-        )
-    }
-    pendingInvite?.let { (template, guest, channel) ->
-        AlertDialog(
-            onDismissRequest = { pendingInvite = null },
-            title = { Text(localized(R.string.sent_confirm, language)) },
-            text = { Text("${guest.title}\n${localized(R.string.sent_warning, language)}") },
-            confirmButton = {
-                TextButton(onClick = {
-                    model.confirmInvitationSent(template.id, guest.id, channel)
-                    pendingInvite = null
-                }) { Text(localized(R.string.sent_confirm, language)) }
-            },
-            dismissButton = { TextButton(onClick = { pendingInvite = null }) { Text(localized(R.string.cancel, language)) } },
-        )
-    }
-    guestImport?.let { preview ->
-        AlertDialog(
-            onDismissRequest = model::dismissGuestImport,
-            title = { Text(localized(R.string.import_guests, language)) },
-            text = {
-                Text(localized(R.string.guest_import_preview, language)
-                    .replace("{count}", preview.guests.size.toString()).replace("{source}", preview.source))
-            },
-            confirmButton = { TextButton(onClick = model::commitGuestImport) { Text(localized(R.string.import_guests, language)) } },
-            dismissButton = { TextButton(onClick = model::dismissGuestImport) { Text(localized(R.string.cancel, language)) } },
-        )
-    }
-    if (installments) {
-        InstallmentsDialog(
-            records = allRecords,
-            language = language,
-            currency = currency,
-            onDismiss = { installments = false },
-            onSave = { vendorId, name, total, count, due ->
-                model.createInstallments(vendorId, name, total, count, due)
-                installments = false
-                notify("$count parcelas geradas com sucesso!")
-            },
-        )
-    }
-}
-
-@Composable
-private fun DashboardScreen(
-    records: List<PlannerRecord>,
-    coupleNames: String,
-    eventDate: String,
-    currency: String,
-    language: String,
-    navigate: (String) -> Unit,
-) {
-    val active = records.filter { it.deletedAt == null }
-    val budget = FinanceRules.budgetEstimated(active)
-    val paid = active.filter { it.kind == Kinds.PAYMENT && it.status == "PAID" }.sumOf { it.amountCents ?: 0L }
-    val tasks = active.count { it.kind == Kinds.TASK && it.status != "DONE" }
-    val doneTasks = active.count { it.kind == Kinds.TASK && it.status == "DONE" }
-    val confirmedGuests = active.filter { it.kind == Kinds.GUEST && it.status == "CONFIRMED" }
-    val totalSeatsConfirmed = confirmedGuests.sumOf { 1 + it.plusOnesConfirmed }
-    val upcoming = active.filter { it.kind in setOf(Kinds.TASK, Kinds.PAYMENT) && it.date != null && it.status !in setOf("PAID", "DONE") }
-        .sortedBy { it.date }.take(8)
-    val paidRatio = if (budget <= 0L) 0f else (paid.toFloat() / budget.toFloat()).coerceIn(0f, 1f)
-    val daysUntil = runCatching { ChronoUnit.DAYS.between(LocalDate.now(), LocalDate.parse(eventDate)) }.getOrNull()
-    val riskAlerts = remember(active, daysUntil, currency, language) {
-        val wedding = runCatching { LocalDate.parse(eventDate) }.getOrNull()
-        RiskRadar.compute(
-            activeRecords = active,
-            cashflow = wedding?.let { FinanceRules.monthlyCashflow(active, it, LocalDate.now()) }.orEmpty(),
-            daysToEvent = daysUntil,
-            formatMoney = { localizedCurrency(it, currency, language) },
-        )
-    }
-
-    LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item {
-            Card(
-                onClick = { navigate("wedding-day") },
-                colors = CardDefaults.cardColors(containerColor = PlannerSurface),
-                border = BorderStroke(1.dp, PlannerChampagne.copy(alpha = 0.35f)),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                coupleNames.ifBlank { localized(R.string.app_name, language) },
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                            )
-                            val dateDisplay = if (eventDate.isNotBlank()) "Grande Dia: ${formatDisplayDate(eventDate, language)}"
-                            else formatDisplayDate(LocalDate.now().toString(), language)
-                            Text(dateDisplay, color = PlannerChampagne, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                        }
-                        if (daysUntil != null && daysUntil >= 0) {
-                            InfoBadge("Faltam $daysUntil dias", PlannerRose)
-                        }
-                    }
-                    HorizontalDivider(color = PlannerBorder)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Execução financeira: ${(paidRatio * 100).roundToInt()}% quitado", style = MaterialTheme.typography.labelSmall, color = PlannerMuted)
-                        Text("${localizedCurrency(paid, currency, language)} / ${localizedCurrency(budget, currency, language)}", style = MaterialTheme.typography.labelSmall, color = PlannerEmerald)
-                    }
-                    Canvas(Modifier.fillMaxWidth().height(8.dp)) {
-                        val radius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
-                        drawRoundRect(Color(0xFF27272A), cornerRadius = radius)
-                        drawRoundRect(PlannerEmerald, size = Size(size.width * paidRatio, size.height), cornerRadius = radius)
-                    }
-                }
-            }
-        }
-        if (riskAlerts.isNotEmpty()) {
-            item {
-                val topAlert = riskAlerts.first()
-                val isCritical = topAlert.severity == "HIGH"
-                val borderColor = if (isCritical) PlannerRose else PlannerChampagne
-                Card(
-                    onClick = { navigate("insights") },
-                    colors = CardDefaults.cardColors(containerColor = PlannerSurface),
-                    border = BorderStroke(1.dp, borderColor.copy(alpha = 0.55f)),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                "Radar de Riscos (${riskAlerts.size})",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = borderColor,
-                            )
-                            InfoBadge(if (isCritical) "Atenção Crítica" else "Alerta", borderColor)
-                        }
-                        Text(topAlert.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                        Text(topAlert.body, style = MaterialTheme.typography.bodySmall, color = PlannerMuted)
-                    }
-                }
-            }
-        }
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(Modifier.weight(1f)) {
-                    SummaryCard(
-                        label = localized(R.string.total_budget, language),
-                        value = localizedCurrency(budget, currency, language),
-                        subtitle = "${active.count { it.kind == Kinds.BUDGET }} categorias",
-                        accent = PlannerChampagne,
-                    ) { navigate(Kinds.BUDGET) }
-                }
-                Box(Modifier.weight(1f)) {
-                    SummaryCard(
-                        label = localized(R.string.total_paid, language),
-                        value = localizedCurrency(paid, currency, language),
-                        subtitle = "${(paidRatio * 100).roundToInt()}% do orçamento",
-                        accent = PlannerEmerald,
-                    ) { navigate(Kinds.PAYMENT) }
-                }
-            }
-        }
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(Modifier.weight(1f)) {
-                    SummaryCard(
-                        label = localized(R.string.pending_tasks, language),
-                        value = tasks.toString(),
-                        subtitle = "$doneTasks concluída(s)",
-                        accent = PlannerRose,
-                    ) { navigate(Kinds.TASK) }
-                }
-                Box(Modifier.weight(1f)) {
-                    SummaryCard(
-                        label = localized(R.string.confirmed_guests, language),
-                        value = "${confirmedGuests.size} ($totalSeatsConfirmed)",
-                        subtitle = "$totalSeatsConfirmed lugares confirmados",
-                        accent = PlannerChampagne,
-                    ) { navigate(Kinds.GUEST) }
-                }
-            }
-        }
-        item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(localized(R.string.upcoming, language), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                InfoBadge("${upcoming.size} pendentes", PlannerChampagne)
-            }
-        }
-        if (upcoming.isEmpty()) item { Text(localized(R.string.empty, language), color = PlannerMuted) }
-        items(upcoming, key = { it.id }) { record ->
-            Card(
-                onClick = { navigate(record.kind) },
-                colors = CardDefaults.cardColors(containerColor = PlannerSurface),
-                border = BorderStroke(1.dp, PlannerBorder),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Box(Modifier.padding(14.dp)) {
-                    RecordCard(record, active, currency, language, onClick = { navigate(record.kind) })
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SummaryCard(label: String, value: String, subtitle: String, accent: Color, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = PlannerSurface),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.28f)),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(label, color = PlannerMuted, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(value, color = accent, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(subtitle, color = PlannerMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-    }
-}
-
-@Composable
-private fun MoreScreen(records: List<PlannerRecord>, language: String, navigate: (String) -> Unit) {
-    val active = records.filter { it.deletedAt == null }
-    val secondaryModules = modules.filter { it.kind !in primaryTabs }
-    val systemItems = listOf(
-        Triple("insights", R.string.insights, Icons.Default.Search),
-        Triple("reports", R.string.reports, Icons.Default.Search),
-        Triple("vendor-compare", R.string.vendor_compare, Icons.Default.Search),
-        Triple("wedding-day", R.string.wedding_day, Icons.Default.Celebration),
-        Triple("settings", R.string.settings, Icons.Default.Settings),
-        Triple("backup", R.string.backup, Icons.Default.Settings),
-        Triple("audit", R.string.audit, Icons.Default.Search),
-        Triple("help", R.string.help, Icons.Default.Favorite),
-    )
-
-    LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
-            Text("Gestão & Painéis do Casamento", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
-        }
-        items(systemItems.chunked(2)) { pair ->
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                pair.forEach { (key, label, icon) ->
-                    Card(
-                        onClick = { navigate(key) },
-                        colors = CardDefaults.cardColors(containerColor = PlannerSurface),
-                        border = BorderStroke(1.dp, PlannerChampagne.copy(alpha = 0.25f)),
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(icon, null, tint = PlannerChampagne, modifier = Modifier.size(20.dp))
-                            Spacer(Modifier.width(10.dp))
-                            Text(localized(label, language), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                    }
-                }
-                if (pair.size == 1) Spacer(Modifier.weight(1f))
-            }
-        }
-        item {
-            Spacer(Modifier.height(4.dp))
-            Text("Módulos Especializados", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerRose)
-        }
-        items(secondaryModules.chunked(2)) { pair ->
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                pair.forEach { module ->
-                    val count = active.count { it.kind == module.kind }
-                    Card(
-                        onClick = { navigate(module.kind) },
-                        colors = CardDefaults.cardColors(containerColor = PlannerSurface),
-                        border = BorderStroke(1.dp, PlannerBorder),
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Icon(module.icon, null, tint = PlannerRose, modifier = Modifier.size(20.dp))
-                                InfoBadge(count.toString(), if (count > 0) PlannerChampagne else PlannerMuted)
-                            }
-                            Text(localized(module.title, language), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                    }
-                }
-                if (pair.size == 1) Spacer(Modifier.weight(1f))
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ModuleScreen(
-    module: ModuleDefinition,
-    records: List<PlannerRecord>,
-    files: List<PlannerFile>,
-    language: String,
-    currency: String,
-    onEdit: (PlannerRecord) -> Unit,
-    onDetail: (PlannerRecord) -> Unit,
-    onDelete: (PlannerRecord) -> Unit,
-    onStatus: (String, String) -> Unit,
-    onPaid: (String) -> Unit,
-    onWhatsApp: (PlannerRecord) -> Unit,
-    onAttach: (PlannerRecord) -> Unit,
-    onExport: (PlannerFile) -> Unit,
-    onGift: (String) -> Unit,
-    onInvite: (PlannerRecord) -> Unit,
-    onGuestImport: () -> Unit,
-    onSeedTasks: () -> Unit,
-    onSeedVenueChecklist: (String?) -> Unit,
-    onInstallments: () -> Unit,
-    onGroupRsvp: (String, String) -> Unit,
-    onCompare: () -> Unit,
-    onSharePix: () -> Unit,
-    onGiftPix: (PlannerRecord) -> Unit,
-    pixConfigured: Boolean,
-    onDial: (PlannerRecord) -> Unit,
-    onMaps: (PlannerRecord) -> Unit,
-) {
-    var query by remember(module.kind) { mutableStateOf("") }
-    var selectedTagId by remember(module.kind) { mutableStateOf<String?>(null) }
-    var selectedStatus by remember(module.kind) { mutableStateOf<String?>(null) }
-    val active = records.filter { it.deletedAt == null }
-    val todayStr = LocalDate.now().toString()
-    val filtered = active.filter {
-        it.kind == module.kind &&
-            (query.isBlank() || it.title.contains(query, ignoreCase = true) || it.subtitle.contains(query, ignoreCase = true)) &&
-            (module.kind != Kinds.GUEST || selectedTagId == null || selectedTagId in recordTagIds(it)) &&
-            when (selectedStatus) {
-                null -> true
-                "OVERDUE" -> !it.date.isNullOrBlank() && it.date < todayStr && it.status !in setOf("PAID", "DONE", "RECEIVED", "BOUGHT", "PROCESSED")
-                else -> it.status == selectedStatus
-            }
-    }
-
-    LazyColumn(contentPadding = PaddingValues(16.dp, 10.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
-            ModuleSummaryBanner(module.kind, active, currency, language)
-        }
-        item {
-            OutlinedTextField(
-                query,
-                { query = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(localized(R.string.search, language)) },
-                leadingIcon = { Icon(Icons.Default.Search, null) },
-                singleLine = true,
-            )
-        }
-        if (module.statuses.isNotEmpty()) item {
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                val allCount = active.count { it.kind == module.kind }
-                FilterChip(
-                    selected = selectedStatus == null,
-                    onClick = { selectedStatus = null },
-                    label = { Text("Todos ($allCount)") },
-                )
-                if (module.kind in setOf(Kinds.PAYMENT, Kinds.TASK)) {
-                    val overdueCount = active.count {
-                        it.kind == module.kind && !it.date.isNullOrBlank() && it.date < todayStr &&
-                            it.status !in setOf("PAID", "DONE")
-                    }
-                    if (overdueCount > 0) {
-                        FilterChip(
-                            selected = selectedStatus == "OVERDUE",
-                            onClick = { selectedStatus = if (selectedStatus == "OVERDUE") null else "OVERDUE" },
-                            label = { Text("⚠️ Vencidos ($overdueCount)") },
-                        )
-                    }
-                }
-                module.statuses.forEach { st ->
-                    val count = active.count { it.kind == module.kind && it.status == st }
-                    FilterChip(
-                        selected = selectedStatus == st,
-                        onClick = { selectedStatus = if (selectedStatus == st) null else st },
-                        label = { Text("${statusLabel(st, language)} ($count)") },
-                    )
-                }
-            }
-        }
-        if (module.kind == Kinds.GUEST) item {
-            OutlinedButton(onClick = onGuestImport, modifier = Modifier.fillMaxWidth()) { Text(localized(R.string.import_guests, language)) }
-        }
-        if (module.kind == Kinds.GUEST && active.any { it.kind == Kinds.TAG }) item {
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterChip(
-                    selected = selectedTagId == null,
-                    onClick = { selectedTagId = null },
-                    label = { Text(localized(R.string.all_tags, language)) },
-                )
-                active.filter { it.kind == Kinds.TAG }.sortedBy { it.title }.forEach { tag ->
-                    FilterChip(
-                        selected = selectedTagId == tag.id,
-                        onClick = { selectedTagId = tag.id },
-                        label = { Text(tag.title) },
-                    )
-                }
-            }
-        }
-        if (module.kind == Kinds.VENDOR) item {
-            OutlinedButton(onClick = onCompare, modifier = Modifier.fillMaxWidth()) { Text(localized(R.string.vendor_compare, language)) }
-        }
-        if (module.kind == Kinds.TASK) item {
-            OutlinedButton(onClick = onSeedTasks, modifier = Modifier.fillMaxWidth()) { Text(localized(R.string.add_task_templates, language)) }
-        }
-        if (module.kind == Kinds.VENUE_CHECK) item {
-            val defaultVenueId = active.firstOrNull { it.kind == Kinds.VENUE }?.id
-            OutlinedButton(
-                onClick = { onSeedVenueChecklist(defaultVenueId) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Gerar checklist padrão de inspeção (20 itens)")
-            }
-        }
-        if (module.kind == Kinds.PAYMENT) item {
-            OutlinedButton(onClick = onInstallments, modifier = Modifier.fillMaxWidth()) { Text(localized(R.string.create_installments, language)) }
-        }
-        if (module.kind == Kinds.GIFT && pixConfigured) item {
-            OutlinedButton(onClick = onSharePix, modifier = Modifier.fillMaxWidth()) {
-                Text("QR Code & Pix Copia e Cola (${localized(R.string.share_pix, language)})")
-            }
-        }
-        if (filtered.isEmpty()) item { Text(localized(R.string.empty, language), modifier = Modifier.padding(18.dp), color = PlannerMuted) }
-        items(filtered, key = { it.id }) { record ->
-            val recordFiles = files.filter { it.recordId == record.id }
-            Card(
-                colors = CardDefaults.cardColors(containerColor = PlannerSurface),
-                border = BorderStroke(1.dp, PlannerBorder),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    RecordCard(record, active, currency, language, onClick = {
-                        if (module.kind in setOf(Kinds.VENDOR, Kinds.VENUE)) onDetail(record) else onEdit(record)
-                    })
-                    HorizontalDivider(color = PlannerBorder)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Row(
-                            modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            when (module.kind) {
-                                Kinds.PAYMENT -> if (record.status != "PAID") {
-                                    TextButton(onClick = { onPaid(record.id) }) { Text(localized(R.string.mark_paid, language), color = PlannerEmerald) }
-                                }
-                                Kinds.INCOME -> if (record.status != "RECEIVED") {
-                                    TextButton(onClick = { onStatus(record.id, "RECEIVED") }) { Text("Marcar recebido", color = PlannerEmerald) }
-                                }
-                                Kinds.TASK, Kinds.VENUE_CHECK -> if (record.status != "DONE") {
-                                    TextButton(onClick = { onStatus(record.id, "DONE") }) { Text(localized(R.string.mark_done, language), color = PlannerEmerald) }
-                                }
-                                Kinds.GUEST -> {
-                                    if (record.status != "CONFIRMED") {
-                                        TextButton(onClick = { onStatus(record.id, "CONFIRMED") }) { Text(localized(R.string.confirm_guest, language), color = PlannerEmerald) }
-                                    }
-                                    if (record.phone.isNotBlank()) {
-                                        TextButton(onClick = { onWhatsApp(record) }) { Text("WhatsApp") }
-                                    }
-                                }
-                                Kinds.GIFT -> if (record.status != "PROCESSED" && record.amountCents != null) {
-                                    TextButton(onClick = { onGift(record.id) }) { Text(localized(R.string.post_gift, language), color = PlannerEmerald) }
-                                }
-                                Kinds.INVITATION, Kinds.SAVE_THE_DATE -> {
-                                    TextButton(onClick = { onInvite(record) }) { Text(localized(R.string.prepare_invite, language)) }
-                                }
-                            }
-                            if (module.kind == Kinds.GROUP) {
-                                listOf("CONFIRMED" to R.string.confirm_group, "DECLINED" to R.string.decline_group, "MAYBE" to R.string.status_maybe).forEach { (st, lbl) ->
-                                    if (record.status != st) {
-                                        TextButton(onClick = { onGroupRsvp(record.id, st) }) { Text(localized(lbl, language)) }
-                                    }
-                                }
-                            }
-                            if (module.kind in setOf(Kinds.VENDOR, Kinds.VENUE, Kinds.CONTACT, Kinds.GROUP) && record.phone.isNotBlank()) {
-                                TextButton(onClick = { onDial(record) }) { Text(localized(R.string.call_phone, language)) }
-                                TextButton(onClick = { onWhatsApp(record) }) { Text("WhatsApp") }
-                            }
-                            if (module.kind == Kinds.VENUE) {
-                                TextButton(onClick = { onMaps(record) }) { Text(localized(R.string.open_maps, language)) }
-                            }
-                            if (module.kind == Kinds.GIFT && pixConfigured) {
-                                TextButton(onClick = { onGiftPix(record) }) { Text(localized(R.string.share_pix, language)) }
-                            }
-                            if (module.kind in setOf(Kinds.VENDOR, Kinds.VENUE, Kinds.CONTRACT, Kinds.INVITATION, Kinds.SAVE_THE_DATE)) {
-                                TextButton(onClick = { onAttach(record) }) { Text(localized(R.string.attach_file, language)) }
-                            }
-                        }
-                        IconButton(onClick = { onDelete(record) }) {
-                            Icon(Icons.Default.Delete, localized(R.string.delete, language), tint = PlannerMuted)
-                        }
-                    }
-                    if (recordFiles.isNotEmpty()) {
-                        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            recordFiles.forEach { file ->
-                                OutlinedButton(onClick = { onExport(file) }) {
-                                    Text("📎 ${file.fileName}", style = MaterialTheme.typography.labelSmall)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ModuleSummaryBanner(kind: String, active: List<PlannerRecord>, currency: String, language: String) {
-    val items = active.filter { it.kind == kind }
-    if (items.isEmpty()) return
-    val summary: Triple<String, String, Color>? = when (kind) {
-        Kinds.BUDGET -> {
-            val est = FinanceRules.budgetEstimated(items)
-            val real = FinanceRules.budgetActual(items)
-            val diff = real - est
-            val detail = if (diff <= 0L) "Economia de ${localizedCurrency(-diff, currency, language)}" else "Excedente de +${localizedCurrency(diff, currency, language)}"
-            Triple("Previsto: ${localizedCurrency(est, currency, language)} · Real: ${localizedCurrency(real, currency, language)}", detail, if (diff <= 0L) PlannerEmerald else PlannerRose)
-        }
-        Kinds.PAYMENT -> {
-            val paid = items.filter { it.status == "PAID" }.sumOf { it.amountCents ?: 0L }
-            val pending = items.filter { it.status != "PAID" }.sumOf { it.amountCents ?: 0L }
-            Triple("Pago: ${localizedCurrency(paid, currency, language)}", "Em aberto: ${localizedCurrency(pending, currency, language)}", PlannerEmerald)
-        }
-        Kinds.INCOME -> {
-            val rec = items.filter { it.status == "RECEIVED" }.sumOf { it.amountCents ?: 0L }
-            val exp = items.filter { it.status != "RECEIVED" }.sumOf { it.amountCents ?: 0L }
-            Triple("Recebido: ${localizedCurrency(rec, currency, language)}", "Previsto: ${localizedCurrency(exp, currency, language)}", PlannerEmerald)
-        }
-        Kinds.ASSET -> {
-            val total = items.sumOf { it.amountCents ?: 0L }
-            Triple("Patrimônio acumulado: ${localizedCurrency(total, currency, language)}", "${items.size} reserva(s) ativas", PlannerChampagne)
-        }
-        Kinds.GOAL -> {
-            val target = items.sumOf { it.amountCents ?: 0L }
-            val goalIds = items.map { it.id }.toSet()
-            val saved = active.filter { it.kind == Kinds.ASSET && it.parentId in goalIds }.sumOf { it.amountCents ?: 0L }
-            val pct = if (target <= 0L) 0 else ((saved.toFloat() / target) * 100).roundToInt()
-            Triple("Metas: ${localizedCurrency(target, currency, language)}", "Acumulado: ${localizedCurrency(saved, currency, language)} ($pct%)", PlannerChampagne)
-        }
-        Kinds.GUEST -> {
-            val conf = items.filter { it.status == "CONFIRMED" }
-            val seats = conf.sumOf { 1 + it.plusOnesConfirmed }
-            Triple("${conf.size} de ${items.size} convites confirmados", "Total confirmado: $seats lugares", PlannerEmerald)
-        }
-        Kinds.TABLE -> {
-            val cap = items.sumOf { it.amountCents ?: 0L }
-            val occ = active.filter { it.kind == Kinds.GUEST && it.seatingTableId != null }.sumOf { 1 + it.plusOnesConfirmed }
-            Triple("${items.size} mesas configuradas", "Ocupação total: $occ / $cap lugares", PlannerChampagne)
-        }
-        else -> null
-    }
-    if (summary != null) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = PlannerSurface),
-            border = BorderStroke(1.dp, summary.third.copy(alpha = 0.30f)),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Row(Modifier.padding(14.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(summary.first, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    Text(summary.second, style = MaterialTheme.typography.labelSmall, color = summary.third)
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun RecordCard(
-    record: PlannerRecord,
-    allRecords: List<PlannerRecord>,
-    currency: String,
-    language: String,
-    onClick: () -> Unit,
-) {
-    val parent = remember(record.parentId, allRecords) {
-        record.parentId?.let { pid -> allRecords.find { it.id == pid && it.deletedAt == null } }
-    }
-    Column(Modifier.fillMaxWidth().clickable(onClick = onClick), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(record.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                if (record.subtitle.isNotBlank()) {
-                    Text(record.subtitle, maxLines = 2, overflow = TextOverflow.Ellipsis, color = PlannerMuted, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-            if (record.status.isNotBlank()) {
-                Spacer(Modifier.width(8.dp))
-                StatusBadge(record.status, language)
-            }
-        }
-
-        if (parent != null) {
-            InfoBadge("Vínculo: ${parent.title}", PlannerChampagne)
-        }
-
-        when (record.kind) {
-            Kinds.VENDOR -> {
-                val rating = runCatching { JSONObject(record.extraJson).optInt("rating", 0) }.getOrDefault(0)
-                if (rating in 1..5) {
-                    Text("${"★".repeat(rating)}${"☆".repeat(5 - rating)} ($rating/5)", color = PlannerChampagne, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
-                }
-                if (record.phone.isNotBlank() || record.email.isNotBlank()) {
-                    Text(listOf(record.phone, record.email).filter { it.isNotBlank() }.joinToString(" · "), color = PlannerMuted, style = MaterialTheme.typography.labelSmall)
-                }
-            }
-            Kinds.VENUE -> {
-                val address = runCatching { JSONObject(record.extraJson).optString("address") }.getOrDefault("")
-                if (address.isNotBlank()) Text("📍 $address", color = PlannerMuted, style = MaterialTheme.typography.bodySmall)
-            }
-            Kinds.CONTACT -> {
-                if (record.phone.isNotBlank() || record.email.isNotBlank()) {
-                    Text(listOf(record.phone, record.email).filter { it.isNotBlank() }.joinToString(" · "), color = PlannerChampagne, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-            Kinds.VENDOR_NOTE -> {
-                if (record.notes.isNotBlank()) {
-                    Text(record.notes, maxLines = 3, overflow = TextOverflow.Ellipsis, color = PlannerMuted, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-            Kinds.PAYMENT -> {
-                val json = runCatching { JSONObject(record.extraJson) }.getOrElse { JSONObject() }
-                val n = json.optInt("installmentNumber", 0)
-                val total = json.optInt("totalInstallments", 0)
-                val method = ExtraFields.text(json, "method")
-                val adj = PaymentAdjustment.compute(record)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (n > 0 && total > 0) InfoBadge("Parcela $n de $total", PlannerChampagne)
-                    if (method.isNotBlank()) InfoBadge(webValueLabel(method, language), PlannerEmerald)
-                    if (adj.lateDays > 0) {
-                        val feeText = if (adj.hasAdjustment) {
-                            "⚠️ ${adj.lateDays}d atraso · Atualizado: ${localizedCurrency(adj.adjustedCents, currency, language)}"
-                        } else {
-                            "⚠️ Vencido há ${adj.lateDays} dia(s)"
-                        }
-                        InfoBadge(feeText, PlannerRose)
-                    }
-                }
-            }
-            Kinds.TASK -> {
-                val priority = ExtraFields.text(ExtraFields.parse(record.extraJson), "priority")
-                if (priority.isNotBlank()) {
-                    InfoBadge("${localized(R.string.priority, language)}: ${webValueLabel(priority, language)}", priorityColor(priority))
-                }
-            }
-            Kinds.GUEST -> {
-                val json = ExtraFields.parse(record.extraJson)
-                val side = ExtraFields.text(json, "side")
-                val dietary = ExtraFields.text(json, "dietary")
-                val city = ExtraFields.text(json, "city")
-                val isVip = ExtraFields.bool(json, "isVIP")
-                val isPadrinho = ExtraFields.bool(json, "isPadrinho")
-                val isChild = ExtraFields.bool(json, "isChild")
-                val group = record.guestGroupId?.let { gid -> allRecords.find { it.id == gid }?.title }
-                val table = record.seatingTableId?.let { tid -> allRecords.find { it.id == tid }?.title }
-                val tags = recordTagIds(record).mapNotNull { tid -> allRecords.find { it.id == tid }?.title }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    InfoBadge("${1 + record.plusOnesConfirmed} lugar(es) (+${record.plusOnesConfirmed}/${record.plusOnesAllowed} acomp.)", PlannerEmerald)
-                    if (side.isNotBlank()) InfoBadge(webValueLabel(side, language), PlannerChampagne)
-                    if (isVip) InfoBadge("⭐ VIP", PlannerRose)
-                    if (isPadrinho) InfoBadge("💍 Padrinho", PlannerChampagne)
-                    if (isChild) InfoBadge("🧒 Criança", PlannerEmerald)
-                    if (dietary.isNotBlank()) InfoBadge("🥗 $dietary", PlannerRose)
-                    if (city.isNotBlank()) InfoBadge("🏙️ $city", PlannerMuted)
-                    if (!group.isNullOrBlank()) InfoBadge("👥 $group", PlannerChampagne)
-                    if (!table.isNullOrBlank()) InfoBadge("🪑 $table", PlannerChampagne)
-                    tags.forEach { t -> InfoBadge("🏷️ $t", PlannerRose) }
-                }
-            }
-            Kinds.GROUP -> {
-                val members = allRecords.filter { it.kind == Kinds.GUEST && it.guestGroupId == record.id }
-                val seats = members.sumOf { 1 + it.plusOnesConfirmed }
-                InfoBadge("${members.size} convidado(s) · $seats lugar(es)", PlannerChampagne)
-            }
-            Kinds.TAG -> {
-                val count = allRecords.count { it.kind == Kinds.GUEST && record.id in recordTagIds(it) }
-                InfoBadge("$count convidado(s) marcado(s)", PlannerChampagne)
-            }
-            Kinds.GOAL -> {
-                val target = record.amountCents ?: 0L
-                val saved = allRecords.filter { it.kind == Kinds.ASSET && it.parentId == record.id }.sumOf { it.amountCents ?: 0L }
-                val ratio = if (target <= 0L) 0f else (saved.toFloat() / target.toFloat()).coerceIn(0f, 1f)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Acumulado: ${localizedCurrency(saved, currency, language)}", style = MaterialTheme.typography.labelSmall, color = PlannerEmerald)
-                    Text("${(ratio * 100).roundToInt()}%", style = MaterialTheme.typography.labelSmall, color = PlannerChampagne, fontWeight = FontWeight.Bold)
-                }
-                Canvas(Modifier.fillMaxWidth().height(8.dp)) {
-                    val radius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
-                    drawRoundRect(Color(0xFF27272A), cornerRadius = radius)
-                    drawRoundRect(PlannerEmerald, size = Size(size.width * ratio, size.height), cornerRadius = radius)
-                }
-            }
-            Kinds.HONEYMOON -> {
-                val itemsTotal = allRecords.filter { it.kind == Kinds.HONEYMOON_ITEM && it.parentId == record.id }.sumOf { it.amountCents ?: 0L }
-                if (itemsTotal > 0L) {
-                    InfoBadge("Itens vinculados: ${localizedCurrency(itemsTotal, currency, language)}", PlannerEmerald)
-                }
-            }
-            Kinds.HONEYMOON_ITEM -> {
-                val json = ExtraFields.parse(record.extraJson)
-                val itemKind = ExtraFields.text(json, "kind")
-                val confirmationNumber = ExtraFields.text(json, "confirmationNumber")
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (itemKind.isNotBlank()) {
-                        val label = when (itemKind) {
-                            "FLIGHT" -> "✈️ Voo"
-                            "HOTEL" -> "🏨 Hospedagem"
-                            "ACTIVITY" -> "🗺️ Passeio"
-                            "TRANSFER" -> "🚗 Transfer"
-                            "DOCUMENT" -> "🛂 Documento"
-                            "BAGGAGE" -> "🧳 Bagagem"
-                            else -> "📄 Outro"
-                        }
-                        InfoBadge(label, PlannerChampagne)
-                    }
-                    if (confirmationNumber.isNotBlank()) {
-                        InfoBadge("Reserva: $confirmationNumber", PlannerEmerald)
-                    }
-                }
-            }
-            Kinds.TROUSSEAU -> {
-                val json = ExtraFields.parse(record.extraJson)
-                val room = ExtraFields.text(json, "room")
-                val store = ExtraFields.text(json, "store")
-                val priority = ExtraFields.text(json, "priority")
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (room.isNotBlank()) InfoBadge(webValueLabel(room, language), PlannerChampagne)
-                    if (store.isNotBlank()) InfoBadge("🛍️ $store", PlannerEmerald)
-                    if (priority.isNotBlank()) InfoBadge("${localized(R.string.priority, language)}: ${webValueLabel(priority, language)}", priorityColor(priority))
-                }
-            }
-            Kinds.INVITATION, Kinds.SAVE_THE_DATE -> {
-                val count = allRecords.count { it.parentId == record.id && it.kind in setOf("invitation_log", "save_the_date_log") }
-                InfoBadge("${localized(R.string.confirmed_sends, language)}: $count", PlannerChampagne)
-                if (record.notes.isNotBlank()) {
-                    Text(record.notes, maxLines = 2, overflow = TextOverflow.Ellipsis, color = PlannerMuted, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-
-        if (record.kind in setOf(Kinds.BUDGET, Kinds.TROUSSEAU)) {
-            val est = record.estimatedCents ?: 0L
-            val act = record.amountCents ?: 0L
-            val isOver = est > 0L && act > est
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (record.estimatedCents != null || record.kind == Kinds.BUDGET) {
-                    Text(
-                        "${localized(R.string.report_estimated, language)}: ${localizedCurrency(est, currency, language)}",
-                        color = PlannerMuted,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-                if (record.amountCents != null) {
-                    Text(
-                        "${localized(R.string.budget_actual, language)}: ${localizedCurrency(act, currency, language)}",
-                        color = if (isOver) PlannerRose else PlannerEmerald,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-            }
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (record.kind !in setOf(Kinds.BUDGET, Kinds.TROUSSEAU) && record.amountCents != null) {
-                if (record.kind == Kinds.TABLE) {
-                    val occupied = allRecords.filter { it.kind == Kinds.GUEST && it.seatingTableId == record.id }.sumOf { 1 + it.plusOnesConfirmed }
-                    val capacity = record.amountCents
-                    InfoBadge("$occupied / $capacity ${localized(R.string.seats, language)}", if (occupied <= capacity) PlannerEmerald else PlannerRose)
-                } else {
-                    Text(
-                        localizedCurrency(record.amountCents, currency, language),
-                        color = PlannerChampagne,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            }
-            if (!record.date.isNullOrBlank()) {
-                Text("📅 ${formatDisplayDate(record.date, language)}", style = MaterialTheme.typography.bodySmall, color = PlannerMuted)
-            }
-        }
-    }
-}
-
-private data class EditorFormState(
-    val title: String,
-    val subtitle: String,
-    val amount: String,
-    val estimated: String,
-    val date: String,
-    val status: String,
-    val phone: String,
-    val email: String,
-    val notes: String,
-    val venueAddress: String,
-    val venueCapacitySeated: String,
-    val venueCapacityStanding: String,
-    val venuePricingNotes: String,
-    val venueRestrictions: String,
-    val venuePros: String,
-    val venueCons: String,
-    val venueContactName: String,
-    val venueMapsUrl: String,
-    val venueShortlisted: Boolean,
-    val rating: String,
-    val vendorIndicatedBy: String,
-    val vendorTags: String,
-    val vendorContractLink: String,
-    val incomeFrequency: String,
-    val contractVersion: String,
-    val contractExpiresAt: String,
-    val contractPaymentTerms: String,
-    val contractCancellationPolicy: String,
-    val contractIncludedItems: String,
-    val contractExcludedItems: String,
-    val contactRole: String,
-    val contactPrimary: Boolean,
-    val guestSide: String,
-    val guestDietary: String,
-    val guestCity: String,
-    val guestIsVip: Boolean,
-    val guestIsPadrinho: Boolean,
-    val guestIsChild: Boolean,
-    val paymentMethod: String,
-    val lateFeePercent: String,
-    val interestPercentPerMonth: String,
-    val honeymoonItemKind: String,
-    val honeymoonConfirmation: String,
-    val trousseauRoom: String,
-    val trousseauStore: String,
-    val itemPriority: String,
-    val parentId: String?,
-    val guestGroupId: String?,
-    val seatingTableId: String?,
-    val plusAllowed: String,
-    val plusConfirmed: String,
-    val selectedTagIds: Set<String>,
-    val localError: String = "",
-)
-
-@Composable
-private fun RecordEditor(
-    module: ModuleDefinition,
-    initial: PlannerRecord?,
-    initialParentId: String?,
-    records: List<PlannerRecord>,
-    language: String,
-    onDismiss: () -> Unit,
-    onSave: (PlannerRecord) -> Unit,
-) {
-    val invalidMessage = localized(R.string.invalid_fields, language)
-    var form by remember(initial?.id, module.kind) {
-        val json = ExtraFields.parse(WebValues.normalizeExtra(module.kind, initial?.extraJson ?: "{}"))
-        mutableStateOf(
-            EditorFormState(
-                title = initial?.title.orEmpty(),
-                subtitle = initial?.subtitle.orEmpty(),
-                amount = initial?.amountCents?.let {
-                    if (module.kind == Kinds.TABLE) it.toString() else java.math.BigDecimal.valueOf(it, 2).toPlainString()
-                }.orEmpty(),
-                estimated = initial?.estimatedCents?.let {
-                    java.math.BigDecimal.valueOf(it, 2).toPlainString()
-                }.orEmpty(),
-                date = initial?.date.orEmpty(),
-                status = initial?.status ?: module.statuses.firstOrNull().orEmpty(),
-                phone = initial?.phone.orEmpty(),
-                email = initial?.email.orEmpty(),
-                notes = initial?.notes.orEmpty(),
-                venueAddress = json.optString("address"),
-                venueCapacitySeated = json.optString("capacitySeated", ""),
-                venueCapacityStanding = json.optString("capacityStanding", ""),
-                venuePricingNotes = json.optString("pricingNotes", ""),
-                venueRestrictions = json.optString("restrictions", ""),
-                venuePros = json.optString("pros", ""),
-                venueCons = json.optString("cons", ""),
-                venueContactName = json.optString("contactName", ""),
-                venueMapsUrl = json.optString("mapsUrl", ""),
-                venueShortlisted = ExtraFields.bool(json, "isShortlisted"),
-                rating = ExtraFields.int(json, "rating")?.takeIf { it > 0 }?.toString().orEmpty(),
-                vendorIndicatedBy = json.optString("indicatedBy", ""),
-                vendorTags = json.optString("tags", ""),
-                vendorContractLink = json.optString("contractLink", ""),
-                incomeFrequency = json.optString("frequency", "ONE_TIME"),
-                contractVersion = (ExtraFields.int(json, "version") ?: 1).toString(),
-                contractExpiresAt = ExtraFields.day(json, "expiresAt")?.toString().orEmpty(),
-                contractPaymentTerms = json.optString("paymentTerms", ""),
-                contractCancellationPolicy = json.optString("cancellationPolicy", ""),
-                contractIncludedItems = json.optString("includedItems", ""),
-                contractExcludedItems = json.optString("excludedItems", ""),
-                contactRole = json.optString("role", ""),
-                contactPrimary = ExtraFields.bool(json, "isPrimary"),
-                guestSide = ExtraFields.text(json, "side"),
-                guestDietary = json.optString("dietary", ""),
-                guestCity = json.optString("city", ""),
-                guestIsVip = ExtraFields.bool(json, "isVIP"),
-                guestIsPadrinho = ExtraFields.bool(json, "isPadrinho"),
-                guestIsChild = ExtraFields.bool(json, "isChild"),
-                paymentMethod = ExtraFields.text(json, "method"),
-                lateFeePercent = ExtraFields.double(json, "lateFeePercent")?.toString().orEmpty(),
-                interestPercentPerMonth = ExtraFields.double(json, "interestPercentPerMonth")?.toString().orEmpty(),
-                honeymoonItemKind = ExtraFields.text(json, "kind", "FLIGHT"),
-                honeymoonConfirmation = json.optString("confirmationNumber", ""),
-                trousseauRoom = ExtraFields.text(json, "room", "OTHER"),
-                trousseauStore = json.optString("store", ""),
-                itemPriority = ExtraFields.text(json, "priority", if (module.kind == Kinds.TROUSSEAU) "NICE_TO_HAVE" else "MEDIUM"),
-                parentId = initial?.parentId ?: initialParentId,
-                guestGroupId = initial?.guestGroupId,
-                seatingTableId = initial?.seatingTableId,
-                plusAllowed = initial?.plusOnesAllowed?.toString() ?: "0",
-                plusConfirmed = initial?.plusOnesConfirmed?.toString() ?: "0",
-                selectedTagIds = initial?.let(::recordTagIds).orEmpty(),
-            ),
-        )
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(localized(if (initial == null) R.string.add else R.string.edit, language) + " · " + localized(module.title, language)) },
-        text = {
-            Column(
-                Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                OutlinedTextField(form.title, { form = form.copy(title = it.take(160)) }, label = { Text(localized(R.string.title, language)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(form.subtitle, { form = form.copy(subtitle = it.take(500)) }, label = {
-                    Text(localized(if (module.kind == Kinds.VENDOR) R.string.category else R.string.subtitle, language))
-                }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                if (module.kind in setOf(Kinds.BUDGET, Kinds.TROUSSEAU)) {
-                    OutlinedTextField(
-                        form.estimated,
-                        { form = form.copy(estimated = it) },
-                        label = { Text(localized(R.string.report_estimated, language)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                if (module.hasAmount) {
-                    OutlinedTextField(
-                        form.amount,
-                        { form = form.copy(amount = it) },
-                        label = {
-                            Text(localized(when (module.kind) {
-                                Kinds.TABLE -> R.string.capacity
-                                Kinds.BUDGET, Kinds.TROUSSEAU -> R.string.budget_actual
-                                else -> R.string.amount
-                            }, language))
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = if (module.kind == Kinds.TABLE) KeyboardType.Number else KeyboardType.Decimal),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                if (module.hasDate) {
-                    DatePickerOutlinedField(
-                        value = form.date,
-                        onValueChange = { form = form.copy(date = it) },
-                        label = localized(R.string.date, language),
-                    )
-                }
-                if (module.kind == Kinds.INCOME) {
-                    Text(localized(R.string.frequency, language), style = MaterialTheme.typography.labelLarge)
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FilterChip(selected = form.incomeFrequency == "ONE_TIME", onClick = { form = form.copy(incomeFrequency = "ONE_TIME") }, label = { Text(localized(R.string.one_time, language)) })
-                        FilterChip(selected = form.incomeFrequency == "MONTHLY", onClick = { form = form.copy(incomeFrequency = "MONTHLY") }, label = { Text(localized(R.string.monthly, language)) })
-                    }
-                }
-                if (module.statuses.isNotEmpty()) {
-                    Text(localized(R.string.status, language), style = MaterialTheme.typography.labelLarge)
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        module.statuses.forEach { option ->
-                            FilterChip(selected = form.status == option, onClick = { form = form.copy(status = option) }, label = { Text(statusLabel(option, language)) })
-                        }
-                    }
-                }
-                if (module.kind == Kinds.PAYMENT) {
-                    Text(localized(R.string.payment_method, language), style = MaterialTheme.typography.labelLarge)
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        WebValues.paymentMethods.forEach { key ->
-                            FilterChip(selected = form.paymentMethod == key,
-                                onClick = { form = form.copy(paymentMethod = if (form.paymentMethod == key) "" else key) },
-                                label = { Text(webValueLabel(key, language)) })
-                        }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            form.lateFeePercent,
-                            { form = form.copy(lateFeePercent = it.take(5)) },
-                            label = { Text("Multa (%)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                        )
-                        OutlinedTextField(
-                            form.interestPercentPerMonth,
-                            { form = form.copy(interestPercentPerMonth = it.take(5)) },
-                            label = { Text("Juros a.m. (%)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                }
-                if (module.kind == Kinds.HONEYMOON_ITEM) {
-                    Text("Tipo de Item", style = MaterialTheme.typography.labelLarge)
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf(
-                            "FLIGHT" to "✈️ Voo",
-                            "HOTEL" to "🏨 Hotel",
-                            "ACTIVITY" to "🗺️ Passeio",
-                            "TRANSFER" to "🚗 Transfer",
-                            "DOCUMENT" to "🛂 Documento",
-                            "BAGGAGE" to "🧳 Bagagem",
-                            "OTHER" to "📄 Outro",
-                        ).forEach { (key, lbl) ->
-                            FilterChip(selected = form.honeymoonItemKind == key, onClick = { form = form.copy(honeymoonItemKind = key) }, label = { Text(lbl) })
-                        }
-                    }
-                    OutlinedTextField(
-                        form.honeymoonConfirmation,
-                        { form = form.copy(honeymoonConfirmation = it.take(80)) },
-                        label = { Text("Código Localizador / Reserva") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                if (module.kind == Kinds.TROUSSEAU) {
-                    Text(localized(R.string.trousseau_room, language), style = MaterialTheme.typography.labelLarge)
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        WebValues.trousseauRooms.forEach { key ->
-                            FilterChip(selected = form.trousseauRoom == key, onClick = { form = form.copy(trousseauRoom = key) }, label = { Text(webValueLabel(key, language)) })
-                        }
-                    }
-                    OutlinedTextField(
-                        form.trousseauStore,
-                        { form = form.copy(trousseauStore = it.take(80)) },
-                        label = { Text("Loja / Marca") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                if (module.kind in setOf(Kinds.TASK, Kinds.TROUSSEAU)) {
-                    val priorities = if (module.kind == Kinds.TASK) WebValues.taskPriorities else WebValues.trousseauPriorities
-                    Text(localized(R.string.priority, language), style = MaterialTheme.typography.labelLarge)
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        priorities.forEach { key ->
-                            FilterChip(selected = form.itemPriority == key, onClick = { form = form.copy(itemPriority = key) }, label = { Text(webValueLabel(key, language)) })
-                        }
-                    }
-                }
-                if (module.hasContact) {
-                    OutlinedTextField(
-                        form.phone,
-                        { form = form.copy(phone = it.take(30)) },
-                        label = { Text(localized(R.string.phone, language)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    OutlinedTextField(
-                        form.email,
-                        { form = form.copy(email = it.take(120)) },
-                        label = { Text(localized(R.string.email, language)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                if (module.kind == Kinds.VENUE) {
-                    OutlinedTextField(form.venueAddress, { form = form.copy(venueAddress = it.take(240)) }, label = { Text(localized(R.string.address, language)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(form.venueMapsUrl, { form = form.copy(venueMapsUrl = it.take(1000)) }, label = { Text(localized(R.string.venue_maps_url, language)) }, modifier = Modifier.fillMaxWidth())
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(form.venueCapacitySeated, { form = form.copy(venueCapacitySeated = it.filter(Char::isDigit).take(6)) }, label = { Text(localized(R.string.venue_capacity_seated, language)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f))
-                        OutlinedTextField(form.venueCapacityStanding, { form = form.copy(venueCapacityStanding = it.filter(Char::isDigit).take(6)) }, label = { Text(localized(R.string.venue_capacity_standing, language)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f))
-                    }
-                    OutlinedTextField(form.venueContactName, { form = form.copy(venueContactName = it.take(120)) }, label = { Text(localized(R.string.venue_contact_name, language)) }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(form.venuePricingNotes, { form = form.copy(venuePricingNotes = it.take(2000)) }, label = { Text(localized(R.string.venue_pricing, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(form.venueRestrictions, { form = form.copy(venueRestrictions = it.take(2000)) }, label = { Text(localized(R.string.venue_restrictions, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(form.venuePros, { form = form.copy(venuePros = it.take(2000)) }, label = { Text(localized(R.string.venue_pros, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(form.venueCons, { form = form.copy(venueCons = it.take(2000)) }, label = { Text(localized(R.string.venue_cons, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
-                    FilterChip(selected = form.venueShortlisted, onClick = { form = form.copy(venueShortlisted = !form.venueShortlisted) }, label = { Text(localized(R.string.venue_shortlisted, language)) })
-                }
-                if (module.kind == Kinds.VENDOR) {
-                    OutlinedTextField(
-                        form.rating,
-                        { form = form.copy(rating = it.take(1)) },
-                        label = { Text(localized(R.string.rating, language)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    OutlinedTextField(form.vendorIndicatedBy, { form = form.copy(vendorIndicatedBy = it.take(120)) }, label = { Text(localized(R.string.indicated_by, language)) }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(form.vendorTags, { form = form.copy(vendorTags = it.take(500)) }, label = { Text(localized(R.string.tags, language)) }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(form.vendorContractLink, { form = form.copy(vendorContractLink = it.take(1000)) }, label = { Text(localized(R.string.contract_link, language)) }, modifier = Modifier.fillMaxWidth())
-                }
-                if (module.kind == Kinds.CONTRACT) {
-                    OutlinedTextField(
-                        form.contractVersion,
-                        { form = form.copy(contractVersion = it.take(3)) },
-                        label = { Text(localized(R.string.contract_version, language)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    DatePickerOutlinedField(value = form.contractExpiresAt, onValueChange = { form = form.copy(contractExpiresAt = it) }, label = localized(R.string.contract_expires, language))
-                    OutlinedTextField(form.contractPaymentTerms, { form = form.copy(contractPaymentTerms = it.take(2000)) }, label = { Text(localized(R.string.payment_terms, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(form.contractCancellationPolicy, { form = form.copy(contractCancellationPolicy = it.take(2000)) }, label = { Text(localized(R.string.cancellation_policy, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(form.contractIncludedItems, { form = form.copy(contractIncludedItems = it.take(2000)) }, label = { Text(localized(R.string.included_items, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(form.contractExcludedItems, { form = form.copy(contractExcludedItems = it.take(2000)) }, label = { Text(localized(R.string.excluded_items, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
-                }
-                if (module.kind == Kinds.CONTACT) {
-                    OutlinedTextField(form.contactRole, { form = form.copy(contactRole = it.take(120)) }, label = { Text(localized(R.string.contact_role, language)) }, modifier = Modifier.fillMaxWidth())
-                    FilterChip(selected = form.contactPrimary, onClick = { form = form.copy(contactPrimary = !form.contactPrimary) }, label = { Text(localized(R.string.primary_contact, language)) })
-                }
-                if (module.parentKind != null) {
-                    Text(localized(modules.first { it.kind == module.parentKind }.title, language), style = MaterialTheme.typography.labelLarge)
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (module.kind != Kinds.PAYMENT) {
-                            FilterChip(selected = form.parentId == null, onClick = { form = form.copy(parentId = null) }, label = { Text("—") })
-                        }
-                        records.filter { it.kind == module.parentKind && it.deletedAt == null }.forEach { parent ->
-                            FilterChip(selected = form.parentId == parent.id, onClick = { form = form.copy(parentId = parent.id) }, label = { Text(parent.title) })
-                        }
-                    }
-                }
-                if (module.kind == Kinds.GUEST) {
-                    Text("Lado do Casal & Perfil", style = MaterialTheme.typography.labelLarge)
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        WebValues.guestSides.forEach { key ->
-                            FilterChip(selected = form.guestSide == key,
-                                onClick = { form = form.copy(guestSide = if (form.guestSide == key) "" else key) },
-                                label = { Text(webValueLabel(key, language)) })
-                        }
-                    }
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FilterChip(selected = form.guestIsVip, onClick = { form = form.copy(guestIsVip = !form.guestIsVip) }, label = { Text("⭐ VIP") })
-                        FilterChip(selected = form.guestIsPadrinho, onClick = { form = form.copy(guestIsPadrinho = !form.guestIsPadrinho) }, label = { Text("💍 Padrinho/Madrinha") })
-                        FilterChip(selected = form.guestIsChild, onClick = { form = form.copy(guestIsChild = !form.guestIsChild) }, label = { Text("🧒 Criança") })
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            form.guestDietary,
-                            { form = form.copy(guestDietary = it.take(80)) },
-                            label = { Text("Restrição alimentar") },
-                            placeholder = { Text("Ex: Vegano, Sem lactose") },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                        )
-                        OutlinedTextField(
-                            form.guestCity,
-                            { form = form.copy(guestCity = it.take(80)) },
-                            label = { Text("Cidade") },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    Text(localized(R.string.groups, language), style = MaterialTheme.typography.labelLarge)
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FilterChip(selected = form.guestGroupId == null, onClick = { form = form.copy(guestGroupId = null) }, label = { Text("—") })
-                        records.filter { it.kind == Kinds.GROUP && it.deletedAt == null }.forEach { group ->
-                            FilterChip(selected = form.guestGroupId == group.id, onClick = { form = form.copy(guestGroupId = group.id) }, label = { Text(group.title) })
-                        }
-                    }
-                    Text(localized(R.string.tags, language), style = MaterialTheme.typography.labelLarge)
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        records.filter { it.kind == Kinds.TAG && it.deletedAt == null }.sortedBy { it.title }.forEach { tag ->
-                            FilterChip(
-                                selected = tag.id in form.selectedTagIds,
-                                onClick = {
-                                    val next = if (tag.id in form.selectedTagIds) form.selectedTagIds - tag.id else form.selectedTagIds + tag.id
-                                    form = form.copy(selectedTagIds = next)
-                                },
-                                label = { Text(tag.title) },
-                            )
-                        }
-                    }
-                    OutlinedTextField(
-                        form.plusAllowed,
-                        { form = form.copy(plusAllowed = it) },
-                        label = { Text(localized(R.string.plus_allowed, language)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    OutlinedTextField(
-                        form.plusConfirmed,
-                        { form = form.copy(plusConfirmed = it) },
-                        label = { Text(localized(R.string.plus_confirmed, language)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Text(localized(R.string.seating, language), style = MaterialTheme.typography.labelLarge)
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FilterChip(selected = form.seatingTableId == null, onClick = { form = form.copy(seatingTableId = null) }, label = { Text("—") })
-                        records.filter { it.kind == Kinds.TABLE && it.deletedAt == null }.forEach { table ->
-                            FilterChip(selected = form.seatingTableId == table.id, onClick = { form = form.copy(seatingTableId = table.id) }, label = { Text(table.title) })
-                        }
-                    }
-                }
-                OutlinedTextField(form.notes, { form = form.copy(notes = it.take(8000)) }, label = { Text(localized(R.string.notes, language)) }, minLines = 2, modifier = Modifier.fillMaxWidth())
-                if (form.localError.isNotEmpty()) Text(form.localError, color = MaterialTheme.colorScheme.error)
             }
         },
-        confirmButton = {
-            TextButton(onClick = {
-                try {
-                    require(form.title.isNotBlank())
-                    val normalizedDate = normalizeDateInput(form.date)
-                    val parsedAmount = if (!module.hasAmount || form.amount.isBlank()) null else
-                        if (module.kind == Kinds.TABLE) form.amount.toLong().also { require(it in 1..1000) } else Money.parseToCents(form.amount)
-                    val parsedEstimated = when (module.kind) {
-                        Kinds.BUDGET -> Money.parseToCents(form.estimated)
-                        Kinds.TROUSSEAU -> form.estimated.takeIf { it.isNotBlank() }?.let(Money::parseToCents)
-                        else -> initial?.estimatedCents
-                    }
-                    val parsedRating = form.rating.takeIf { it.isNotBlank() }?.toInt()?.also { require(it in 1..5) }
-                    val parsedContractVersion = if (module.kind == Kinds.CONTRACT)
-                        form.contractVersion.toInt().also { require(it in 1..999) } else 1
-                    val contractExpiresAt = if (module.kind == Kinds.CONTRACT) normalizeDateInput(form.contractExpiresAt) else ""
-                    if (contractExpiresAt.isNotBlank()) LocalDate.parse(contractExpiresAt)
-                    if (normalizedDate.isNotBlank()) LocalDate.parse(normalizedDate)
-                    val lateFee = form.lateFeePercent.takeIf { it.isNotBlank() }?.replace(',', '.')?.toDouble()?.also { require(it in 0.0..100.0) }
-                    val interest = form.interestPercentPerMonth.takeIf { it.isNotBlank() }?.replace(',', '.')?.toDouble()?.also { require(it in 0.0..100.0) }
-                    val updatedJson = ExtraFields.parse(WebValues.normalizeExtra(module.kind, initial?.extraJson ?: "{}")).apply {
-                        when (module.kind) {
-                            Kinds.VENUE -> {
-                                put("address", form.venueAddress.trim())
-                                put("mapsUrl", form.venueMapsUrl.trim())
-                                put("capacitySeated", form.venueCapacitySeated.toIntOrNull() ?: JSONObject.NULL)
-                                put("capacityStanding", form.venueCapacityStanding.toIntOrNull() ?: JSONObject.NULL)
-                                put("contactName", form.venueContactName.trim())
-                                put("pricingNotes", form.venuePricingNotes.trim())
-                                put("restrictions", form.venueRestrictions.trim())
-                                put("pros", form.venuePros.trim())
-                                put("cons", form.venueCons.trim())
-                                put("isShortlisted", form.venueShortlisted)
-                            }
-                            Kinds.VENDOR -> {
-                                put("rating", parsedRating ?: JSONObject.NULL)
-                                put("indicatedBy", form.vendorIndicatedBy.trim())
-                                put("tags", form.vendorTags.trim())
-                                put("contractLink", form.vendorContractLink.trim())
-                            }
-                            Kinds.GUEST -> {
-                                put("tagIds", JSONArray(form.selectedTagIds.sorted()))
-                                if (form.guestSide.isBlank()) remove("side") else put("side", form.guestSide)
-                                put("dietary", form.guestDietary.trim())
-                                put("city", form.guestCity.trim())
-                                put("isVIP", form.guestIsVip)
-                                put("isPadrinho", form.guestIsPadrinho)
-                                put("isChild", form.guestIsChild)
-                            }
-                            Kinds.PAYMENT -> {
-                                if (form.paymentMethod.isBlank()) remove("method") else put("method", form.paymentMethod)
-                                put("lateFeePercent", lateFee ?: JSONObject.NULL)
-                                put("interestPercentPerMonth", interest ?: JSONObject.NULL)
-                            }
-                            Kinds.HONEYMOON_ITEM -> {
-                                put("kind", form.honeymoonItemKind)
-                                put("confirmationNumber", form.honeymoonConfirmation.trim())
-                            }
-                            Kinds.TROUSSEAU -> {
-                                put("room", form.trousseauRoom)
-                                put("store", form.trousseauStore.trim())
-                                put("priority", form.itemPriority)
-                            }
-                            Kinds.TASK -> put("priority", form.itemPriority)
-                            Kinds.INCOME -> put("frequency", form.incomeFrequency)
-                            Kinds.CONTRACT -> {
-                                put("version", parsedContractVersion)
-                                put("expiresAt", contractExpiresAt)
-                                put("paymentTerms", form.contractPaymentTerms.trim())
-                                put("cancellationPolicy", form.contractCancellationPolicy.trim())
-                                put("includedItems", form.contractIncludedItems.trim())
-                                put("excludedItems", form.contractExcludedItems.trim())
-                            }
-                            Kinds.CONTACT -> {
-                                put("role", form.contactRole.trim())
-                                put("isPrimary", form.contactPrimary)
-                            }
-                        }
-                    }.toString()
-                    val record = (initial ?: PlannerRecord(UUID.randomUUID().toString(), module.kind, form.title)).copy(
-                        title = form.title.trim(), subtitle = form.subtitle.trim(), amountCents = parsedAmount,
-                        estimatedCents = parsedEstimated,
-                        date = normalizedDate.ifBlank { null }, status = form.status, phone = form.phone.trim(), email = form.email.trim(),
-                        notes = form.notes.trim(), parentId = form.parentId, guestGroupId = form.guestGroupId, seatingTableId = form.seatingTableId,
-                        plusOnesAllowed = if (module.kind == Kinds.GUEST) form.plusAllowed.toInt() else 0,
-                        plusOnesConfirmed = if (module.kind == Kinds.GUEST) form.plusConfirmed.toInt() else 0,
-                        extraJson = updatedJson,
-                    )
-                    onSave(record)
-                } catch (_: Exception) { form = form.copy(localError = invalidMessage) }
-            }) { Text(localized(R.string.save, language)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(localized(R.string.cancel, language)) } },
-    )
-}
-
-private fun recordTagIds(record: PlannerRecord): Set<String> = runCatching {
-    val array = JSONObject(record.extraJson).optJSONArray("tagIds") ?: return@runCatching emptySet()
-    (0 until array.length()).map { array.getString(it) }.toSet()
-}.getOrDefault(emptySet())
-
-private fun openWhatsApp(activity: Activity, record: PlannerRecord) {
-    val number = record.phone.filter { it.isDigit() }
-    if (number.isBlank()) return
-    val uri = Uri.parse("https://wa.me/$number")
-    runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
-}
-
-private fun dialPhone(activity: Activity, phone: String) {
-    val number = phone.filter { it.isDigit() || it == '+' }
-    if (number.isNotBlank()) runCatching { activity.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number"))) }
-}
-
-private fun openMap(activity: Activity, record: PlannerRecord) {
-    val details = runCatching { JSONObject(record.extraJson) }.getOrElse { JSONObject() }
-    val mapsUrl = Uri.parse(details.optString("mapsUrl"))
-    if (mapsUrl.scheme in listOf("http", "https") &&
-        runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, mapsUrl)) }.isSuccess) return
-    val address = details.optString("address")
-    val query = address.ifBlank { record.title }
-    val geo = Uri.parse("geo:0,0?q=${Uri.encode(query)}")
-    if (runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, geo)) }.isFailure) {
-        val web = Uri.parse("https://www.google.com/maps/search/?api=1&query=${Uri.encode(query)}")
-        runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, web)) }
-    }
-}
-
-@Composable
-private fun InstallmentsDialog(
-    records: List<PlannerRecord>,
-    language: String,
-    currency: String,
-    onDismiss: () -> Unit,
-    onSave: (String?, String, Long, Int, LocalDate) -> Unit,
-) {
-    var title by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    var count by remember { mutableStateOf("2") }
-    var firstDate by remember { mutableStateOf(LocalDate.now().toString()) }
-    var vendorId by remember { mutableStateOf<String?>(null) }
-    var invalid by remember { mutableStateOf(false) }
-    val errorText = localized(R.string.invalid_fields, language)
-
-    val previewSplit = remember(amount, count) {
-        runCatching {
-            val cents = Money.parseToCents(amount)
-            val n = count.toInt().also { require(it in 1..120) }
-            InstallmentMath.split(cents, n)
-        }.getOrNull()
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(localized(R.string.create_installments, language)) },
-        text = {
-            Column(
-                Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                OutlinedTextField(title, { title = it.take(160) }, label = { Text(localized(R.string.title, language)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(
-                    amount,
-                    { amount = it },
-                    label = { Text(localized(R.string.amount, language)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    count,
-                    { count = it },
-                    label = { Text(localized(R.string.installment_count, language)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                DatePickerOutlinedField(
-                    value = firstDate,
-                    onValueChange = { firstDate = it },
-                    label = localized(R.string.first_due_date, language),
-                )
-                if (!previewSplit.isNullOrEmpty()) {
-                    InfoBadge("${previewSplit.size}x de ${localizedCurrency(previewSplit.first(), currency, language)}", PlannerEmerald)
-                }
-                Text(localized(R.string.vendors, language), style = MaterialTheme.typography.labelLarge)
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    FilterChip(selected = vendorId == null, onClick = { vendorId = null }, label = { Text("—") })
-                    records.filter { it.kind == Kinds.VENDOR && it.deletedAt == null }.forEach { vendor ->
-                        FilterChip(selected = vendorId == vendor.id, onClick = { vendorId = vendor.id }, label = { Text(vendor.title) })
-                    }
-                }
-                if (invalid) Text(errorText, color = MaterialTheme.colorScheme.error)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                try {
-                    require(title.isNotBlank())
-                    val total = Money.parseToCents(amount)
-                    val installmentsCount = count.toInt().also { require(it in 1..120) }
-                    val normalizedDate = normalizeDateInput(firstDate)
-                    onSave(vendorId, title.trim(), total, installmentsCount, LocalDate.parse(normalizedDate))
-                } catch (_: Exception) { invalid = true }
-            }) { Text(localized(R.string.save, language)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(localized(R.string.cancel, language)) } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }

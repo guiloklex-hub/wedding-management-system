@@ -164,4 +164,199 @@
     <string name="priority_luxury">Lujo</string>
     <string name="audit_invite_sent">Envío de invitación confirmado</string>
     <string name="audit_venue_checklist">Checklist del lugar creado</string>
+    <string name="theme">Tema</string>
+    <string name="theme_system">Sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="hm_flight">Vuelo</string>
+    <string name="hm_hotel">Alojamiento</string>
+    <string name="hm_transfer">Traslado</string>
+    <string name="hm_activity">Paseo</string>
+    <string name="hm_document">Documento</string>
+    <string name="hm_baggage">Equipaje</string>
+    <string name="hm_other">Otro</string>
+    <string name="linked_to">Vinculado a: %1$s</string>
+    <string name="rating_value">Valoración %1$d de 5</string>
+    <string name="installment_of">Cuota %1$d de %2$d</string>
+    <plurals name="late_days_adjusted"><item quantity="one">%1$d día de atraso · actualizado: %2$s</item><item quantity="other">%1$d días de atraso · actualizado: %2$s</item></plurals>
+    <plurals name="overdue_days"><item quantity="one">Vencido hace %1$d día</item><item quantity="other">Vencido hace %1$d días</item></plurals>
+    <plurals name="guest_seats"><item quantity="one">%1$d lugar · acompañantes %2$d/%3$d</item><item quantity="other">%1$d lugares · acompañantes %2$d/%3$d</item></plurals>
+    <string name="guest_vip">VIP</string>
+    <string name="guest_padrinho">Padrino/Madrina</string>
+    <string name="guest_child">Niño/a</string>
+    <string name="guest_dietary_value">Dieta: %1$s</string>
+    <string name="group_value">Grupo: %1$s</string>
+    <string name="table_value">Mesa: %1$s</string>
+    <plurals name="group_members"><item quantity="one">%1$d invitado · %2$d lugares</item><item quantity="other">%1$d invitados · %2$d lugares</item></plurals>
+    <plurals name="tag_guests"><item quantity="one">%1$d invitado etiquetado</item><item quantity="other">%1$d invitados etiquetados</item></plurals>
+    <string name="saved_amount">Acumulado: %1$s</string>
+    <string name="honeymoon_items_total">Elementos vinculados: %1$s</string>
+    <string name="booking_code">Reserva: %1$s</string>
+    <string name="err_required">Campo obligatorio</string>
+    <string name="err_date">Usa una fecha válida (AAAA-MM-DD o DD/MM/AAAA)</string>
+    <string name="err_money">Importe no válido (de 0 a 1.000.000)</string>
+    <string name="err_range">Número fuera del rango permitido</string>
+    <string name="err_percent">Indica un porcentaje entre 0 y 100</string>
+    <string name="err_phone">Teléfono no válido: usa números, +, paréntesis, guiones y espacios</string>
+    <string name="err_email">Email no válido</string>
+    <string name="err_url">El enlace debe empezar por https:// o http://</string>
+    <string name="err_vendor_required">Elige el proveedor de este pago</string>
+    <string name="err_plus_confirmed">Los confirmados no pueden superar a los permitidos</string>
+    <string name="late_fee_percent">Multa (%)</string>
+    <string name="interest_percent_month">Interés mensual (%)</string>
+    <string name="honeymoon_item_kind">Tipo de elemento</string>
+    <string name="booking_code_label">Código de reserva / localizador</string>
+    <string name="store">Tienda / marca</string>
+    <string name="guest_side">Lado de la pareja</string>
+    <string name="guest_dietary">Restricción alimentaria</string>
+    <string name="guest_dietary_hint">Ej.: vegano, sin lactosa</string>
+    <string name="guest_city">Ciudad</string>
+    <string name="none_option">Ninguno</string>
+    <string name="discard_changes_title">¿Descartar cambios?</string>
+    <string name="discard_changes_body">Los cambios de este formulario aún no se guardaron.</string>
+    <string name="discard">Descartar</string>
+    <string name="keep_editing">Seguir editando</string>
+    <string name="date_placeholder">AAAA-MM-DD o DD/MM/AAAA</string>
+    <string name="pick_date">Elegir fecha en el calendario</string>
+    <string name="select">Seleccionar</string>
+    <string name="close">Cerrar</string>
+    <string name="clear_search">Borrar búsqueda</string>
+    <string name="sort_by">Ordenar:</string>
+    <string name="sort_recent">Recientes</string>
+    <string name="sort_name">Nombre</string>
+    <string name="sort_date">Fecha</string>
+    <string name="filter_all">Todos (%1$d)</string>
+    <string name="filter_overdue">Vencidos (%1$d)</string>
+    <string name="empty_module">Aún no hay registros en %1$s.</string>
+    <string name="empty_filtered">Ningún registro coincide con la búsqueda o el filtro.</string>
+    <string name="add_first">Añadir el primero</string>
+    <string name="delete_named">Eliminar %1$s</string>
+    <string name="mark_received">Marcar recibido</string>
+    <string name="whatsapp">WhatsApp</string>
+    <string name="summary_budget">Previsto: %1$s · Real: %2$s</string>
+    <string name="summary_saving">Ahorro de %1$s</string>
+    <string name="summary_overrun">Exceso de %1$s</string>
+    <string name="summary_paid">Pagado: %1$s</string>
+    <string name="summary_open">Pendiente: %1$s</string>
+    <string name="summary_received">Recibido: %1$s</string>
+    <string name="summary_expected">Previsto: %1$s</string>
+    <string name="summary_cash">Total en caja: %1$s</string>
+    <plurals name="summary_reserves"><item quantity="one">%1$d reserva</item><item quantity="other">%1$d reservas</item></plurals>
+    <string name="summary_goals">Metas: %1$s</string>
+    <string name="summary_goals_saved">Acumulado: %1$s (%2$d%%)</string>
+    <string name="summary_guests">%1$d de %2$d invitaciones confirmadas</string>
+    <plurals name="summary_seats"><item quantity="one">Total confirmado: %1$d lugar</item><item quantity="other">Total confirmado: %1$d lugares</item></plurals>
+    <plurals name="summary_tables"><item quantity="one">%1$d mesa</item><item quantity="other">%1$d mesas</item></plurals>
+    <string name="summary_occupancy">Ocupación: %1$d de %2$d lugares</string>
+    <plurals name="risk_overdue_payments"><item quantity="one">%1$d pago vencido</item><item quantity="other">%1$d pagos vencidos</item></plurals>
+    <string name="risk_overdue_payments_body">Suma de %1$s. Pueden aplicarse intereses y multas.</string>
+    <string name="risk_negative_cashflow">Proyección de caja negativa</string>
+    <string name="risk_negative_cashflow_body">El mes %1$s cierra en %2$s.</string>
+    <string name="risk_contract_unsigned">Contrato sin firmar: %1$s</string>
+    <plurals name="risk_contract_unsigned_body"><item quantity="one">Vence en %1$d día y aún no está firmado.</item><item quantity="other">Vence en %1$d días y aún no está firmado.</item></plurals>
+    <string name="risk_vendor_creep">%1$s superó el presupuesto</string>
+    <string name="risk_vendor_creep_body">Actual %1$s frente a previsto %2$s (%3$d%%).</string>
+    <plurals name="risk_urgent_tasks"><item quantity="one">%1$d tarea urgente atrasada</item><item quantity="other">%1$d tareas urgentes atrasadas</item></plurals>
+    <plurals name="risk_high_tasks"><item quantity="one">%1$d tarea de alta prioridad atrasada</item><item quantity="other">%1$d tareas de alta prioridad atrasadas</item></plurals>
+    <string name="risk_task_list">%1$s</string>
+    <plurals name="risk_vendors_not_finalized"><item quantity="one">%1$d proveedor aún sin finalizar</item><item quantity="other">%1$d proveedores aún sin finalizar</item></plurals>
+    <string name="risk_vendors_not_finalized_body">Cerca del evento, confirma entregas y elementos pendientes.</string>
+    <string name="big_day">Gran día: %1$s</string>
+    <string name="event_date_missing">Define la fecha de la boda en Ajustes</string>
+    <plurals name="days_left"><item quantity="one">Falta %1$d día</item><item quantity="other">Faltan %1$d días</item></plurals>
+    <string name="financial_progress">Ejecución financiera: %1$d%% pagado</string>
+    <string name="risk_radar_count">Radar de riesgos (%1$d)</string>
+    <string name="risk_critical">Atención crítica</string>
+    <string name="risk_warning">Alerta</string>
+    <plurals name="budget_items"><item quantity="one">%1$d partida de presupuesto</item><item quantity="other">%1$d partidas de presupuesto</item></plurals>
+    <string name="percent_of_budget">%1$d%% del presupuesto</string>
+    <plurals name="tasks_done"><item quantity="one">%1$d completada</item><item quantity="other">%1$d completadas</item></plurals>
+    <plurals name="seats_confirmed"><item quantity="one">%1$d lugar confirmado</item><item quantity="other">%1$d lugares confirmados</item></plurals>
+    <plurals name="pending_count"><item quantity="one">%1$d pendiente</item><item quantity="other">%1$d pendientes</item></plurals>
+    <string name="no_upcoming">No hay tareas ni pagos pendientes con fecha.</string>
+    <string name="more_management">Gestión y paneles</string>
+    <string name="more_modules">Módulos</string>
+    <string name="trash">Papelera</string>
+    <string name="msg_saved">Registro guardado.</string>
+    <string name="msg_deleted">Registro movido a la papelera.</string>
+    <string name="msg_undone">Acción deshecha.</string>
+    <string name="msg_restored">Registro restaurado.</string>
+    <string name="msg_status_changed">Estado actualizado.</string>
+    <string name="msg_group_rsvp">Respuesta del grupo aplicada a todos los miembros.</string>
+    <string name="msg_paid">Pago marcado como pagado.</string>
+    <string name="msg_gift_posted">Regalo registrado en las finanzas.</string>
+    <string name="msg_checked_in">Check-in registrado.</string>
+    <string name="undo">Deshacer</string>
+    <string name="guest_import_result_format">%1$d invitados importados; %2$d repetidos omitidos.</string>
+    <plurals name="msg_templates_added"><item quantity="one">%1$d plantilla de tarea añadida.</item><item quantity="other">%1$d plantillas de tarea añadidas.</item></plurals>
+    <plurals name="msg_checklist_added"><item quantity="one">%1$d elemento de checklist añadido.</item><item quantity="other">%1$d elementos de checklist añadidos.</item></plurals>
+    <plurals name="msg_installments_created"><item quantity="one">%1$d cuota creada.</item><item quantity="other">%1$d cuotas creadas.</item></plurals>
+    <string name="parent_deleted">Restaura primero el registro principal al que pertenece este elemento.</string>
+    <string name="demo_requires_empty">Los datos de demostración solo se pueden cargar con el dispositivo vacío.</string>
+    <string name="back">Volver</string>
+    <string name="only_not_sent">Solo quien aún no recibió</string>
+    <plurals name="guest_import_preview_count"><item quantity="one">%1$d invitado encontrado en %2$s. Se omitirán nombres y grupos existentes.</item><item quantity="other">%1$d invitados encontrados en %2$s. Se omitirán nombres y grupos existentes.</item></plurals>
+    <string name="restore">Restaurar</string>
+    <string name="trash_hint">Los registros eliminados quedan aquí. Restaurar un proveedor también recupera los contactos, notas, contratos, presupuestos y pagos eliminados con él.</string>
+    <string name="trash_empty">La papelera está vacía.</string>
+    <string name="installments_preview">%1$d× de %2$s</string>
+    <string name="compare_saving_total">Ahorro acumulado: %1$s</string>
+    <string name="compare_overrun_total">Exceso sobre lo previsto: %1$s</string>
+    <string name="compare_no_budget">Sin presupuesto vinculado</string>
+    <string name="compare_on_target">Dentro de lo previsto</string>
+    <string name="percent_paid">%1$d%% pagado</string>
+    <string name="contingency_percent">Reserva de contingencia (%)</string>
+    <string name="pix_settings_title">Pix (copia y pega y código QR)</string>
+    <string name="pix_city">Ciudad del titular</string>
+    <string name="view_qr_code">Ver código QR</string>
+    <string name="settings_security_title">Seguridad, copia y datos</string>
+    <string name="contingency_value">Contingencia (%1$d%%): %2$s</string>
+    <string name="health_excellent">Excelente equilibrio financiero y operativo</string>
+    <string name="health_good">Planificación saludable; atención a las próximas cuotas</string>
+    <string name="health_attention">Atención al flujo de caja y a las tareas pendientes</string>
+    <plurals name="alerts_count"><item quantity="one">%1$d alerta</item><item quantity="other">%1$d alertas</item></plurals>
+    <string name="insights_funnel_title">Embudo de proveedores</string>
+    <string name="insights_demographics_title">Invitados y restricciones alimentarias</string>
+    <string name="insights_dietary_title">Restricciones alimentarias para el catering (%1$d):</string>
+    <string name="progress_of">%1$s · %2$d de %3$d</string>
+    <string name="cashflow_in">Entradas: %1$s</string>
+    <string name="cashflow_out">Salidas: %1$s</string>
+    <string name="help_private_title">Privado y sin conexión en tu teléfono</string>
+    <string name="help_invites_title">Invitaciones, RSVP y WhatsApp</string>
+    <string name="help_backup_title">Copia cifrada (.wfpbackup)</string>
+    <string name="help_backup_body">Las copias se protegen con PBKDF2-HMAC-SHA256 (600 mil iteraciones) y AES-256-GCM. Antes de cualquier restauración, la aplicación guarda una copia de reversión protegida por el Android Keystore.</string>
+    <string name="audit_task_templates">Plantillas de tareas añadidas</string>
+    <string name="audit_installments">Cuotas generadas</string>
+    <string name="audit_setting">Configuración actualizada</string>
+    <string name="audit_gift_posted">Regalo registrado en las finanzas</string>
+    <string name="audit_assign_table">Invitado asignado a una mesa</string>
+    <string name="audit_demo">Datos de demostración cargados</string>
+    <string name="audit_check_in">Check-in de invitado</string>
+    <string name="audit_group_rsvp">RSVP del grupo actualizado</string>
+    <string name="audit_undo">Acción deshecha</string>
+    <string name="audit_restore">Registro restaurado de la papelera</string>
+    <string name="msg_event_saved">Datos de la boda guardados.</string>
+    <string name="msg_pix_saved">Configuración de Pix guardada.</string>
+    <string name="backup_vault_title">Copia cifrada (AES-256-GCM)</string>
+    <string name="show_password">Mostrar</string>
+    <string name="hide_password">Ocultar</string>
+    <string name="backup_password_empty">Indica una contraseña segura (mínimo 12 caracteres) para exportar o restaurar.</string>
+    <plurals name="backup_password_missing"><item quantity="one">Falta %1$d carácter para crear una copia.</item><item quantity="other">Faltan %1$d caracteres para crear una copia.</item></plurals>
+    <string name="backup_password_mismatch">Repite la misma contraseña en el segundo campo para habilitar la exportación.</string>
+    <string name="backup_password_ok">Contraseña válida y confirmada.</string>
+    <string name="wedding_day_plan_title">Programa del día y plan B</string>
+    <string name="msg_wedding_day_saved">Programa y plan B guardados.</string>
+    <string name="checked_in_at">Check-in el %1$s</string>
+    <string name="pix_dialog_title">Código QR y Pix copia y pega</string>
+    <string name="pix_dialog_subtitle">Estándar BR Code del Banco Central (EMV, CRC16)</string>
+    <string name="pix_key_value">Clave: %1$s</string>
+    <string name="not_configured">no configurada</string>
+    <string name="pix_receiver_value">Receptor: %1$s · Ciudad: %2$s</string>
+    <string name="pix_amount_optional">Importe opcional (vacío = importe libre)</string>
+    <string name="pix_copy_paste_code">Código Pix copia y pega</string>
+    <string name="pix_copied">Código Pix copiado.</string>
+    <string name="copy_code">Copiar código</string>
+    <string name="share">Compartir</string>
+    <string name="pix_share_text">Regalo vía Pix (%1$s)\n\nClave: %2$s\n\nPix copia y pega:\n%3$s</string>
+    <string name="add_to_section">Añadir en %1$s</string>
 </resources>

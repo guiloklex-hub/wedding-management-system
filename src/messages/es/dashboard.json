@@ -1535,7 +1535,9 @@
         "exportInput": "Introduce la contraseña de la cuenta y una contraseña de copia de al menos 12 caracteres.",
         "validateInput": "Selecciona un archivo e introduce su contraseña.",
         "restoreInput": "Selecciona un archivo, introduce ambas contraseñas y confirma la sustitución.",
-        "accountPasswordInvalid": "La contraseña de la cuenta es incorrecta."
+        "accountPasswordInvalid": "La contraseña de la cuenta es incorrecta.",
+        "webChangesLost": "{count, plural, one {# registro modificado en la web después de esta exportación será sustituido. Exporta antes una copia de la web si quieres conservarlo.} other {# registros modificados en la web después de esta exportación serán sustituidos. Exporta antes una copia de la web si quieres conservarlos.}}",
+        "replacesAllWebData": "Esta copia viene de un Android sin copia de la base web: todos los datos actuales de la web se borrarán y se sustituirán por los del teléfono."
       },
       "exportTitle": "Exportar copia de seguridad",
       "exportSubtitle": "JSON parcial antiguo: incluye registros seleccionados y checksum, pero no los bytes de uploads/, diseños huérfanos ni todas las tablas actuales.",

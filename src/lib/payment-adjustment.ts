@@ -31,9 +31,12 @@ function round2(cents: number): number {
   return Math.round(cents) / 100;
 }
 
+function utcDay(date: Date): number {
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+}
+
 function dayDiff(later: Date, earlier: Date): number {
-  const ms = later.getTime() - earlier.getTime();
-  return Math.ceil(ms / 86_400_000);
+  return Math.round((utcDay(later) - utcDay(earlier)) / 86_400_000);
 }
 
 export function computeAdjustedAmount(

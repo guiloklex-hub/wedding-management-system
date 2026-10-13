@@ -1535,7 +1535,9 @@
         "exportInput": "Informe a senha da conta e uma senha de backup com pelo menos 12 caracteres.",
         "validateInput": "Informe o arquivo e sua senha de backup.",
         "restoreInput": "Informe o arquivo, as duas senhas e confirme a substituição.",
-        "accountPasswordInvalid": "Senha da conta incorreta."
+        "accountPasswordInvalid": "Senha da conta incorreta.",
+        "webChangesLost": "{count, plural, one {# registro alterado no web depois desta exportação será substituído. Exporte um backup do web antes, se quiser guardá-lo.} other {# registros alterados no web depois desta exportação serão substituídos. Exporte um backup do web antes, se quiser guardá-los.}}",
+        "replacesAllWebData": "Este backup veio de um Android sem cópia do banco web: todos os dados atuais do web serão apagados e substituídos pelos do celular."
       },
       "exportTitle": "Exportar backup",
       "exportSubtitle": "JSON legado parcial: inclui registros selecionados e checksum, mas não traz os bytes de uploads/, artes órfãs ou todas as tabelas atuais.",

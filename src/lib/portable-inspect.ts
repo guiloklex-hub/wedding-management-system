@@ -4,7 +4,7 @@ import path from "node:path";
 import { backup, DatabaseSync } from "node:sqlite";
 import { safeArchiveName, sha256File, sqliteSchemaHash, withPortableFile, type OpenPortable, type PortableManifest } from "./portable-format";
 import { assertWebContractCoverage, type MobileFile, type MobileRecord, type Row } from "./portable-projection";
-import { mergeMobileRecords, prepareAndroidBase } from "./portable-merge";
+import { countWebDrift, mergeMobileRecords, prepareAndroidBase, type MergeOptions } from "./portable-merge";
 import { databasePath } from "./portable-export";
 
 export type PortablePreview = {
@@ -17,6 +17,10 @@ export type PortablePreview = {
   changedRecords: number;
   createdRecords: number;
   deletedRecords: number;
+  /** Linhas do banco web atual que serão sobrescritas por estarem diferentes da base do backup. */
+  webChangesLost: number;
+  /** Backup sem banco web: todas as tabelas de dados do web serão esvaziadas antes da importação. */
+  replacesAllWebData: boolean;
   blockers: string[];
 };
 
@@ -27,6 +31,24 @@ export type InspectedPortable = {
   files: MobileFile[];
   archive: OpenPortable;
 };
+
+export function mergeOptions(manifest: PortableManifest): MergeOptions {
+  return { applyExtras: manifest.origin === "android" && (manifest.fieldMap ?? 0) >= 1 };
+}
+
+function liveDrift(snapshot: DatabaseSync): number {
+  let live: DatabaseSync | null = null;
+  try {
+    live = new DatabaseSync(databasePath(), { readOnly: true });
+    return countWebDrift(snapshot, live);
+  } catch (error) {
+    console.error("[portable-inspect] não foi possível comparar com o banco atual:", (error as Error).message);
+    return 0;
+  } finally {
+    live?.close();
+    snapshot.close();
+  }
+}
 
 function failUnless(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -69,6 +91,7 @@ export async function inspectPortable<T>(source: string, password: string,
     }
     const expected = new Set(["manifest.json", "records.json", "baseline.json", "files.json", "settings.json", "audit.json"]);
     const blockers: string[] = [];
+    let webChangesLost = 0;
     let uploadBytes = 0;
     for (const file of files) {
       failUnless(typeof file.id === "string" && /^[A-Za-z0-9_-]{1,100}$/.test(file.id), "ID de arquivo inválido");
@@ -133,21 +156,25 @@ export async function inspectPortable<T>(source: string, password: string,
         } finally {
           db.close();
         }
+        webChangesLost = liveDrift(new DatabaseSync(snapshot, { readOnly: true }));
         const writable = new DatabaseSync(snapshot);
         try {
-          try { mergeMobileRecords(writable, records, baseline); }
+          try { mergeMobileRecords(writable, records, baseline, mergeOptions(manifest)); }
           catch (error) { blockers.push((error as Error).message); }
         } finally { writable.close(); }
       } else {
         failUnless(Object.keys(manifest.webTables).length === 0, "Banco web ausente");
         const sourceDb = new DatabaseSync(databasePath(), { readOnly: true });
         const stagedDb = path.join(temporary, "android-base.sqlite");
-        try { await backup(sourceDb, stagedDb); } finally { sourceDb.close(); }
+        try {
+          webChangesLost = countWebDrift(null, sourceDb);
+          await backup(sourceDb, stagedDb);
+        } finally { sourceDb.close(); }
         const writable = new DatabaseSync(stagedDb);
         try {
           try {
             prepareAndroidBase(writable);
-            mergeMobileRecords(writable, records, baseline);
+            mergeMobileRecords(writable, records, baseline, mergeOptions(manifest));
           } catch (error) { blockers.push((error as Error).message); }
         } finally { writable.close(); }
       }
@@ -166,6 +193,7 @@ export async function inspectPortable<T>(source: string, password: string,
         files.reduce((sum, file) => sum + file.byteSize, 0),
       changedRecords, createdRecords: records.filter((record) => !prior.has(record.id)).length,
       deletedRecords: baseline.filter((record) => !current.has(record.id)).length,
+      webChangesLost, replacesAllWebData: !manifest.webDatabase,
       blockers,
     };
     return operation({ preview, records, baseline, files, archive });

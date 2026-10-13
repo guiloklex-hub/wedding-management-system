@@ -5,9 +5,12 @@ import java.security.MessageDigest
 import org.json.JSONArray
 import org.json.JSONObject
 
+const val DEMO_REQUIRES_EMPTY = "DEMO_REQUIRES_EMPTY"
+
 object DemoSeed {
     suspend fun populate(database: PlannerDatabase, preferences: PlannerPreferences) {
         val dao = database.dao()
+        require(dao.allRecords().none { it.deletedAt == null }) { DEMO_REQUIRES_EMPTY }
         val now = System.currentTimeMillis()
 
         preferences.setLocale("pt-BR")
@@ -16,7 +19,7 @@ object DemoSeed {
         val settings = listOf(
             PlannerSetting("coupleNames", "Guilherme & Marina"),
             PlannerSetting("eventDate", "2027-05-15"),
-            PlannerSetting("pixKey", "casamento@guilhermeemarina.com.br"),
+            PlannerSetting("pixKey", "demo@exemplo.com.br"),
             PlannerSetting("pixHolderName", "Guilherme S. Paiva"),
             PlannerSetting("pixCity", "ITU"),
             PlannerSetting("contingencyPercent", "10"),
@@ -503,7 +506,7 @@ object DemoSeed {
                 date = "2027-05-17",
                 status = "PAID",
                 parentId = "seed-honeymoon-1",
-                extraJson = JSONObject().put("itemKind", "FLIGHT").put("confirmationNumber", "LA-99482BR").toString(),
+                extraJson = JSONObject().put("kind", "FLIGHT").put("confirmationNumber", "LA-99482BR").toString(),
             ),
             PlannerRecord(
                 id = "seed-honeymoon-item-2",
@@ -514,7 +517,7 @@ object DemoSeed {
                 date = "2027-05-18",
                 status = "BOOKED",
                 parentId = "seed-honeymoon-1",
-                extraJson = JSONObject().put("itemKind", "HOTEL").put("confirmationNumber", "VC-7721IT").toString(),
+                extraJson = JSONObject().put("kind", "HOTEL").put("confirmationNumber", "VC-7721IT").toString(),
             ),
             // Trousseau
             PlannerRecord(
@@ -596,7 +599,7 @@ object DemoSeed {
 
         database.withTransaction {
             dao.saveSettings(settings)
-            dao.saveRecords(records)
+            dao.saveRecords(records.map(WebValues::normalize))
             dao.saveFile(file)
             dao.saveBlob(PlannerBlob(file.id, pdfBytes))
             dao.addAudit(

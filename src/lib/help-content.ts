@@ -743,10 +743,12 @@ export const HELP_ARTICLES: HelpArticle[] = [
     steps: [
       { title: "Exporte na instalação ativa", body: "Em Ajustes → Backup completo, confirme a senha da conta e crie uma senha de arquivo com ao menos 12 caracteres. No Android, confirme a biometria ou credencial do aparelho." },
       { title: "Leve o arquivo manualmente", body: "Na outra instalação, selecione o .wfpbackup, informe a senha de arquivo e verifique a prévia de tabelas, arquivos, contratos, PDFs de contrato, mudanças e bloqueios. O Android recusa o arquivo se algum contrato ou PDF do SQLite web não estiver na representação móvel." },
-      { title: "Substitua somente depois da conferência", body: "A restauração guarda automaticamente uma cópia de reversão do destino. Use web e Android um de cada vez." },
+      { title: "Substitua somente depois da conferência", body: "A restauração guarda automaticamente uma cópia de reversão do destino. Use web e Android um de cada vez. Se a prévia avisar que registros alterados no web depois da exportação serão substituídos, exporte um backup do web antes de continuar." },
     ],
     warnings: [
       "Sem a senha do arquivo, não há recuperação. O pacote inclui contas e 2FA web; proteja-o como segredo.",
+      "Backups do Android a partir da v1.1.1 também levam ao web os campos detalhados (lado e perfil do convidado, forma de pagamento, multa e juros, prioridade da tarefa, cláusulas do contrato, detalhes do local, cômodo do enxoval). Backups de versões anteriores só atualizam os campos básicos.",
+      "Um backup do Android sem cópia do banco web apaga os dados atuais do web antes da importação; a prévia avisa quando isso acontece.",
       "O backup não inclui .env nem .whatsapp-auth. Links públicos antigos de RSVP dependem do servidor web.",
       "Dados criados no Android sem campos obrigatórios web bloqueiam a transferência; a prévia mostra o que completar.",
     ],

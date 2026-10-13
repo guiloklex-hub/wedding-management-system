@@ -164,4 +164,8 @@
     <string name="priority_luxury">Luxury</string>
     <string name="audit_invite_sent">Invitation send confirmed</string>
     <string name="audit_venue_checklist">Venue checklist created</string>
+    <string name="theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
 </resources>

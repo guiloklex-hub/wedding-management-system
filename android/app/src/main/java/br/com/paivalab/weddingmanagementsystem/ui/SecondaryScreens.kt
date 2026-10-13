@@ -155,11 +155,7 @@ fun VendorCompareScreen(records: List<PlannerRecord>, language: String, currency
                         InfoBadge(deltaText, if (diff <= 0L) PlannerEmerald else PlannerRose)
                         Text("${(paidRatio * 100).roundToInt()}% quitado", style = MaterialTheme.typography.labelSmall, color = PlannerMuted)
                     }
-                    Canvas(Modifier.fillMaxWidth().height(8.dp)) {
-                        val radius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
-                        drawRoundRect(Color(0xFF27272A), cornerRadius = radius)
-                        drawRoundRect(PlannerEmerald, size = Size(size.width * paidRatio, size.height), cornerRadius = radius)
-                    }
+                    PlannerProgressBar(paidRatio, PlannerEmerald, 8.dp)
                 }
             }
         }
@@ -304,6 +300,14 @@ fun SettingsScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("BRL" to "R$ (BRL)", "USD" to "US$ (USD)", "EUR" to "€ (EUR)").forEach { (option, label) ->
                             FilterChip(selected = currency == option, onClick = { model.setCurrency(option) }, label = { Text(label) })
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    val themeMode by model.themeMode.collectAsState()
+                    Text(localized(R.string.theme, language), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("system" to R.string.theme_system, "light" to R.string.theme_light, "dark" to R.string.theme_dark).forEach { (option, label) ->
+                            FilterChip(selected = themeMode == option, onClick = { model.setThemeMode(option) }, label = { Text(localized(label, language)) })
                         }
                     }
                 }
@@ -467,7 +471,7 @@ fun InsightsScreen(
                         riskAlerts.forEach { alert ->
                             val accent = if (alert.severity == "HIGH") PlannerRose else PlannerChampagne
                             Card(
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E191D)),
+                                colors = CardDefaults.cardColors(containerColor = PlannerRaised),
                                 border = BorderStroke(1.dp, accent.copy(alpha = 0.35f)),
                                 modifier = Modifier.fillMaxWidth().clickable { onNavigateSection(alert.targetSection) },
                             ) {
@@ -537,11 +541,7 @@ fun InsightsScreen(
                         Text("$label · $current de $total", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                         InfoBadge("$pct%", barColor)
                     }
-                    Canvas(Modifier.fillMaxWidth().height(10.dp)) {
-                        val radius = CornerRadius(5.dp.toPx(), 5.dp.toPx())
-                        drawRoundRect(Color(0xFF27272A), cornerRadius = radius)
-                        drawRoundRect(barColor, size = Size(size.width * ratio, size.height), cornerRadius = radius)
-                    }
+                    PlannerProgressBar(ratio, barColor, 10.dp)
                 }
             }
         }
@@ -560,7 +560,7 @@ fun InsightsScreen(
                         Text(formatYearMonth(point.month.toString(), language), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Text(
                             localizedCurrency(point.endingCents, currency, language),
-                            color = if (point.negative) Color(0xFFF87171) else PlannerEmerald,
+                            color = if (point.negative) PlannerDanger else PlannerEmerald,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                         )

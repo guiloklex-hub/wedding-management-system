@@ -157,7 +157,7 @@ fun PixQrDialog(
 
                 if (brCode.isNotBlank()) {
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF121216)),
+                        colors = CardDefaults.cardColors(containerColor = PlannerRaised),
                         border = BorderStroke(1.dp, PlannerBorder),
                         modifier = Modifier.fillMaxWidth(),
                     ) {

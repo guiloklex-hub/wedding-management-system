@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.content.Intent
 import android.os.Build
+import android.graphics.Color
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
@@ -14,8 +15,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.activity.compose.setContent
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.DisposableEffect
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -27,12 +33,13 @@ import br.com.paivalab.weddingmanagementsystem.ui.PlannerApp
 import br.com.paivalab.weddingmanagementsystem.ui.PlannerTheme
 import br.com.paivalab.weddingmanagementsystem.ui.PlannerViewModel
 import br.com.paivalab.weddingmanagementsystem.ui.UnlockScreen
+import br.com.paivalab.weddingmanagementsystem.ui.isPlannerDark
 import br.com.paivalab.weddingmanagementsystem.ui.localizedText
 import br.com.paivalab.weddingmanagementsystem.notifications.ReminderWorker
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-class MainActivity : FragmentActivity() {
+class MainActivity : AppCompatActivity() {
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
     private var unlocked by mutableStateOf(false)
     private var requestedSection by mutableStateOf<String?>(null)
@@ -46,7 +53,10 @@ class MainActivity : FragmentActivity() {
         BiometricManager.Authenticators.DEVICE_CREDENTIAL
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        unlocked = savedInstanceState?.getBoolean(STATE_UNLOCKED) ?: false
+        lastBackgroundAt = savedInstanceState?.getLong(STATE_BACKGROUND_AT) ?: 0L
         database = PlannerDatabase.get(this)
         val preferences = PlannerPreferences(this)
         val archive = BackupArchive(this, database, preferences)
@@ -57,7 +67,14 @@ class MainActivity : FragmentActivity() {
         )[PlannerViewModel::class.java]
         handleDebugIntent(intent)
         setContent {
-            PlannerTheme {
+            val themeMode by model.themeMode.collectAsState()
+            val dark = isPlannerDark(themeMode)
+            DisposableEffect(dark) {
+                val style = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark }
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+                onDispose { }
+            }
+            PlannerTheme(darkTheme = dark) {
                 val language by model.locale.collectAsState()
                 if (unlocked) {
                     PlannerApp(
@@ -83,6 +100,9 @@ class MainActivity : FragmentActivity() {
             var initial = true
             preferences.locale.collect { language ->
                 unlockLanguage = language
+                if (AppCompatDelegate.getApplicationLocales().toLanguageTags() != language) {
+                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language))
+                }
                 if (initial) {
                     initial = false
                     if (!unlocked) authenticate()
@@ -119,6 +139,12 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(STATE_UNLOCKED, unlocked)
+        outState.putLong(STATE_BACKGROUND_AT, lastBackgroundAt)
+    }
+
     override fun onStop() {
         lastBackgroundAt = System.currentTimeMillis()
         super.onStop()
@@ -150,5 +176,10 @@ class MainActivity : FragmentActivity() {
             .setAllowedAuthenticators(authenticators)
             .build()
         prompt.authenticate(info)
+    }
+
+    private companion object {
+        const val STATE_UNLOCKED = "unlocked"
+        const val STATE_BACKGROUND_AT = "background_at"
     }
 }

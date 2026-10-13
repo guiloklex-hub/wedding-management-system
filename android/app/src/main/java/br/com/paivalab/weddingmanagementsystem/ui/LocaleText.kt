@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -13,8 +13,13 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/**
+ * O idioma da activity vem de `AppCompatDelegate.setApplicationLocales`; o parâmetro
+ * `language` só garante recomposição enquanto a activity é recriada.
+ */
+@Suppress("UNUSED_PARAMETER")
 @Composable
-fun localized(@StringRes id: Int, language: String): String = localizedText(LocalContext.current, id, language)
+fun localized(@StringRes id: Int, language: String): String = stringResource(id)
 
 fun localizedText(context: Context, @StringRes id: Int, language: String): String {
     val configuration = Configuration(context.resources.configuration)

@@ -13,11 +13,13 @@ private val Context.plannerPreferences by preferencesDataStore("planner_preferen
 class PlannerPreferences(private val context: Context) {
     private val localeKey = stringPreferencesKey("locale")
     private val currencyKey = stringPreferencesKey("currency")
+    private val themeKey = stringPreferencesKey("theme_mode")
     private val lastBackupKey = longPreferencesKey("last_backup_at")
     private val lastReminderKey = longPreferencesKey("last_backup_reminder_at")
 
     val locale: Flow<String> = context.plannerPreferences.data.map { it[localeKey] ?: "pt-BR" }
     val currency: Flow<String> = context.plannerPreferences.data.map { it[currencyKey] ?: "BRL" }
+    val themeMode: Flow<String> = context.plannerPreferences.data.map { it[themeKey] ?: "system" }
     val lastBackupAt: Flow<Long> = context.plannerPreferences.data.map { it[lastBackupKey] ?: 0L }
     val lastBackupReminderAt: Flow<Long> = context.plannerPreferences.data.map { it[lastReminderKey] ?: 0L }
 
@@ -29,6 +31,11 @@ class PlannerPreferences(private val context: Context) {
     suspend fun setCurrency(value: String) {
         require(value in setOf("BRL", "USD", "EUR"))
         context.plannerPreferences.edit { it[currencyKey] = value }
+    }
+
+    suspend fun setThemeMode(value: String) {
+        require(value in setOf("system", "light", "dark"))
+        context.plannerPreferences.edit { it[themeKey] = value }
     }
 
     suspend fun markBackup() {

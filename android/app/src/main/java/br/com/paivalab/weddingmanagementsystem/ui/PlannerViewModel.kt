@@ -26,6 +26,7 @@ class PlannerViewModel(
     val audits = repository.audits.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val locale = preferences.locale.stateIn(viewModelScope, SharingStarted.Eagerly, "pt-BR")
     val currency = preferences.currency.stateIn(viewModelScope, SharingStarted.Eagerly, "BRL")
+    val themeMode = preferences.themeMode.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
     private val _coupleNames = MutableStateFlow("")
     val coupleNames = _coupleNames.asStateFlow()
     private val _eventDate = MutableStateFlow("")
@@ -130,6 +131,7 @@ class PlannerViewModel(
     }
     fun setLocale(value: String) = launchAction { preferences.setLocale(value) }
     fun setCurrency(value: String) = launchAction { preferences.setCurrency(value) }
+    fun setThemeMode(value: String) = launchAction { preferences.setThemeMode(value) }
     fun savePix(key: String, holderName: String, city: String = "SAO PAULO") = launchAction {
         require(key.length <= 120 && holderName.length <= 120 && city.length <= 60)
         repository.setSetting("pixKey", key.trim())

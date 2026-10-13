@@ -7,9 +7,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 
@@ -52,6 +62,8 @@ fun statusLabel(status: String, language: String): String {
     return localized(resource, language)
 }
 
+@Composable
+@ReadOnlyComposable
 fun statusColor(status: String): Color = when (status) {
     "DONE", "PAID", "CONFIRMED", "FINALIZED", "SIGNED", "SIGNED_DIGITAL", "SIGNED_PHYSICAL", "RECEIVED", "PROCESSED", "BOUGHT", "GIFTED", "THANKED", "SENT" -> PlannerEmerald
     "IN_PROGRESS", "NEGOTIATION", "NEGOTIATING", "CONTRACTED", "INVITED", "MAYBE", "PENDING", "EXPECTED", "BOOKED", "PLANNED" -> PlannerChampagne
@@ -126,8 +138,24 @@ fun webValueLabel(value: String, language: String): String {
     return localized(resource, language)
 }
 
+@Composable
+@ReadOnlyComposable
 fun priorityColor(priority: String): Color = when (priority) {
     "URGENT", "ESSENTIAL" -> PlannerRose
     "HIGH" -> PlannerChampagne
     else -> PlannerMuted
+}
+
+/** Barra de progresso com semântica de acessibilidade (o leitor de tela anuncia o percentual). */
+@Composable
+fun PlannerProgressBar(ratio: Float, color: Color, height: Dp = 8.dp) {
+    val track = PlannerTrack
+    val value = ratio.coerceIn(0f, 1f)
+    Canvas(
+        Modifier.fillMaxWidth().height(height).semantics { progressBarRangeInfo = ProgressBarRangeInfo(value, 0f..1f) },
+    ) {
+        val radius = CornerRadius(size.height / 2, size.height / 2)
+        drawRoundRect(track, cornerRadius = radius)
+        drawRoundRect(color, size = Size(size.width * value, size.height), cornerRadius = radius)
+    }
 }

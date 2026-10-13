@@ -258,7 +258,7 @@ fun PlannerApp(
             )
         },
         bottomBar = {
-            NavigationBar(containerColor = Color(0xFF0C0C0F)) {
+            NavigationBar(containerColor = PlannerSurface) {
                 val tabs = listOf(
                     Triple("dashboard", R.string.dashboard, Icons.Default.Dashboard),
                     Triple(Kinds.TASK, R.string.tasks, modules.first { it.kind == Kinds.TASK }.icon),
@@ -289,7 +289,7 @@ fun PlannerApp(
                 ExtendedFloatingActionButton(
                     onClick = { creatingKind = section; creatingParentId = null; creating = true },
                     containerColor = PlannerRose,
-                    contentColor = Color.White,
+                    contentColor = PlannerOnAccent,
                     icon = { Icon(Icons.Default.Add, null) },
                     text = { Text(localized(R.string.add, language), fontWeight = FontWeight.SemiBold) },
                 )
@@ -605,7 +605,7 @@ private fun DashboardScreen(
                                 coupleNames.ifBlank { localized(R.string.app_name, language) },
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = PlannerOnSurface,
                             )
                             val dateDisplay = if (eventDate.isNotBlank()) "Grande Dia: ${formatDisplayDate(eventDate, language)}"
                             else formatDisplayDate(LocalDate.now().toString(), language)
@@ -620,11 +620,7 @@ private fun DashboardScreen(
                         Text("Execução financeira: ${(paidRatio * 100).roundToInt()}% quitado", style = MaterialTheme.typography.labelSmall, color = PlannerMuted)
                         Text("${localizedCurrency(paid, currency, language)} / ${localizedCurrency(budget, currency, language)}", style = MaterialTheme.typography.labelSmall, color = PlannerEmerald)
                     }
-                    Canvas(Modifier.fillMaxWidth().height(8.dp)) {
-                        val radius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
-                        drawRoundRect(Color(0xFF27272A), cornerRadius = radius)
-                        drawRoundRect(PlannerEmerald, size = Size(size.width * paidRatio, size.height), cornerRadius = radius)
-                    }
+                    PlannerProgressBar(paidRatio, PlannerEmerald, 8.dp)
                 }
             }
         }
@@ -1202,11 +1198,7 @@ private fun RecordCard(
                     Text("Acumulado: ${localizedCurrency(saved, currency, language)}", style = MaterialTheme.typography.labelSmall, color = PlannerEmerald)
                     Text("${(ratio * 100).roundToInt()}%", style = MaterialTheme.typography.labelSmall, color = PlannerChampagne, fontWeight = FontWeight.Bold)
                 }
-                Canvas(Modifier.fillMaxWidth().height(8.dp)) {
-                    val radius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
-                    drawRoundRect(Color(0xFF27272A), cornerRadius = radius)
-                    drawRoundRect(PlannerEmerald, size = Size(size.width * ratio, size.height), cornerRadius = radius)
-                }
+                PlannerProgressBar(ratio, PlannerEmerald, 8.dp)
             }
             Kinds.HONEYMOON -> {
                 val itemsTotal = allRecords.filter { it.kind == Kinds.HONEYMOON_ITEM && it.parentId == record.id }.sumOf { it.amountCents ?: 0L }

@@ -474,7 +474,7 @@ fun InsightsScreen(
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Text(stringResource(R.string.report_risk), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerRose)
-                            InfoBadge(pluralStringResource(R.plurals.alerts_count, riskAlerts.size, riskAlerts.size), PlannerRose)
+                            InfoBadge(plural(R.plurals.alerts_count, riskAlerts.size, riskAlerts.size), PlannerRose)
                         }
                         riskAlerts.forEach { alert ->
                             val accent = if (alert.severity == "HIGH") PlannerRose else PlannerChampagne
@@ -510,7 +510,7 @@ fun InsightsScreen(
                     HorizontalDivider(color = PlannerBorder)
                     Text(stringResource(R.string.insights_demographics_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        InfoBadge(pluralStringResource(R.plurals.seats_confirmed, demographics.confirmedSeats, demographics.confirmedSeats), PlannerEmerald)
+                        InfoBadge(plural(R.plurals.seats_confirmed, demographics.confirmedSeats, demographics.confirmedSeats), PlannerEmerald)
                         InfoBadge("${stringResource(R.string.side_bride)}: ${demographics.brideSideCount}", PlannerRose)
                         InfoBadge("${stringResource(R.string.side_groom)}: ${demographics.groomSideCount}", PlannerChampagne)
                         if (demographics.bothSideCount > 0) InfoBadge("${stringResource(R.string.side_both)}: ${demographics.bothSideCount}", PlannerMuted)

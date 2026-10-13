@@ -339,7 +339,7 @@ private fun ModuleSummaryBanner(kind: String, index: RecordIndex, currency: Stri
         )
         Kinds.ASSET -> Triple(
             stringResource(R.string.summary_cash, money(items.sumOf { it.amountCents ?: 0L })),
-            pluralStringResource(R.plurals.summary_reserves, items.size, items.size),
+            plural(R.plurals.summary_reserves, items.size, items.size),
             PlannerChampagne,
         )
         Kinds.GOAL -> {
@@ -353,12 +353,12 @@ private fun ModuleSummaryBanner(kind: String, index: RecordIndex, currency: Stri
             val confirmed = items.filter { it.status == "CONFIRMED" }
             val seats = confirmed.sumOf { 1 + it.plusOnesConfirmed }
             Triple(stringResource(R.string.summary_guests, confirmed.size, items.size),
-                pluralStringResource(R.plurals.summary_seats, seats, seats), PlannerEmerald)
+                plural(R.plurals.summary_seats, seats, seats), PlannerEmerald)
         }
         Kinds.TABLE -> {
             val capacity = items.sumOf { it.amountCents ?: 0L }.toInt()
             val occupied = items.sumOf { index.tableOccupancy(it.id) }
-            Triple(pluralStringResource(R.plurals.summary_tables, items.size, items.size),
+            Triple(plural(R.plurals.summary_tables, items.size, items.size),
                 stringResource(R.string.summary_occupancy, occupied, capacity), PlannerChampagne)
         }
         else -> null

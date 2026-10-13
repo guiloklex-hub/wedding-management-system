@@ -165,10 +165,10 @@ fun PlannerProgressBar(ratio: Float, color: Color, height: Dp = 8.dp) {
 
 @Composable
 fun riskTitle(alert: RiskAlertItem): String = alert.titleQuantity?.let {
-    pluralStringResource(alert.title, it, *alert.titleArgs.toTypedArray())
+    plural(alert.title, it, *alert.titleArgs.toTypedArray())
 } ?: stringResource(alert.title, *alert.titleArgs.toTypedArray())
 
 @Composable
 fun riskBody(alert: RiskAlertItem): String = alert.bodyQuantity?.let {
-    pluralStringResource(alert.body, it, *alert.bodyArgs.toTypedArray())
+    plural(alert.body, it, *alert.bodyArgs.toTypedArray())
 } ?: stringResource(alert.body, *alert.bodyArgs.toTypedArray())

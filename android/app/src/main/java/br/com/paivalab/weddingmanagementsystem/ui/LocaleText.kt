@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
+import androidx.annotation.PluralsRes
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import java.time.Instant
 import java.time.LocalDate
@@ -79,3 +81,9 @@ fun normalizeDateInput(input: String): String {
     }
     return trimmed
 }
+
+/** CLDR trata 0 como "one" em pt-BR ("0 pendente"); zero usa a forma plural nos três idiomas. */
+fun pluralQuantity(count: Int): Int = if (count == 0) 2 else count
+
+@Composable
+fun plural(@PluralsRes id: Int, count: Int, vararg args: Any): String = pluralStringResource(id, pluralQuantity(count), *args)

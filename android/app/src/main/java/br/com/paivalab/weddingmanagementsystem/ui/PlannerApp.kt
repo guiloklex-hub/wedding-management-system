@@ -177,7 +177,7 @@ fun PlannerApp(
 
     LaunchedEffect(model) {
         model.messages.collect { message ->
-            val text = message.quantity?.let { resources.getQuantityString(message.text, it, *message.args.toTypedArray()) }
+            val text = message.quantity?.let { resources.getQuantityString(message.text, pluralQuantity(it), *message.args.toTypedArray()) }
                 ?: resources.getString(message.text, *message.args.toTypedArray())
             val undo = message.undo
             val result = snackbar.showSnackbar(
@@ -484,7 +484,7 @@ fun PlannerApp(
         AlertDialog(
             onDismissRequest = model::dismissGuestImport,
             title = { Text(stringResource(R.string.import_guests)) },
-            text = { Text(pluralStringResource(R.plurals.guest_import_preview_count, preview.guests.size, preview.guests.size, preview.source)) },
+            text = { Text(plural(R.plurals.guest_import_preview_count, preview.guests.size, preview.guests.size, preview.source)) },
             confirmButton = { TextButton(onClick = model::commitGuestImport) { Text(stringResource(R.string.import_guests)) } },
             dismissButton = { TextButton(onClick = model::dismissGuestImport) { Text(stringResource(R.string.cancel)) } },
         )

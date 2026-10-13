@@ -101,7 +101,7 @@ internal fun DashboardScreen(
                         }
                         if (daysUntil != null && daysUntil >= 0) {
                             val days = daysUntil.toInt()
-                            InfoBadge(pluralStringResource(R.plurals.days_left, days, days), countdownColor(days))
+                            InfoBadge(plural(R.plurals.days_left, days, days), countdownColor(days))
                         }
                     }
                     HorizontalDivider(color = PlannerBorder)
@@ -141,7 +141,7 @@ internal fun DashboardScreen(
                     SummaryCard(
                         label = stringResource(R.string.total_budget),
                         value = localizedCurrency(budget, currency, language),
-                        subtitle = pluralStringResource(R.plurals.budget_items, index.count(Kinds.BUDGET), index.count(Kinds.BUDGET)),
+                        subtitle = plural(R.plurals.budget_items, index.count(Kinds.BUDGET), index.count(Kinds.BUDGET)),
                         accent = PlannerChampagne,
                     ) { navigate(Kinds.BUDGET) }
                 }
@@ -161,7 +161,7 @@ internal fun DashboardScreen(
                     SummaryCard(
                         label = stringResource(R.string.pending_tasks),
                         value = pendingTasks.toString(),
-                        subtitle = pluralStringResource(R.plurals.tasks_done, doneTasks, doneTasks),
+                        subtitle = plural(R.plurals.tasks_done, doneTasks, doneTasks),
                         accent = PlannerRose,
                     ) { navigate(Kinds.TASK) }
                 }
@@ -169,7 +169,7 @@ internal fun DashboardScreen(
                     SummaryCard(
                         label = stringResource(R.string.confirmed_guests),
                         value = confirmedGuests.size.toString(),
-                        subtitle = pluralStringResource(R.plurals.seats_confirmed, seatsConfirmed, seatsConfirmed),
+                        subtitle = plural(R.plurals.seats_confirmed, seatsConfirmed, seatsConfirmed),
                         accent = PlannerChampagne,
                     ) { navigate(Kinds.GUEST) }
                 }
@@ -179,7 +179,7 @@ internal fun DashboardScreen(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.upcoming), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
                     modifier = Modifier.semantics { heading() })
-                InfoBadge(pluralStringResource(R.plurals.pending_count, upcoming.size, upcoming.size), PlannerChampagne)
+                InfoBadge(plural(R.plurals.pending_count, upcoming.size, upcoming.size), PlannerChampagne)
             }
         }
         if (upcoming.isEmpty()) item { Text(stringResource(R.string.no_upcoming), color = PlannerMuted) }

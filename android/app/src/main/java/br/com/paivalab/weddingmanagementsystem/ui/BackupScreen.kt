@@ -153,7 +153,7 @@ fun BackupScreen(
                 )
                 val helperText = when {
                     password.isEmpty() -> stringResource(R.string.backup_password_empty)
-                    !validLength -> pluralStringResource(R.plurals.backup_password_missing, 12 - password.length, 12 - password.length)
+                    !validLength -> plural(R.plurals.backup_password_missing, 12 - password.length, 12 - password.length)
                     !passwordsMatch -> stringResource(R.string.backup_password_mismatch)
                     else -> stringResource(R.string.backup_password_ok)
                 }

@@ -107,9 +107,9 @@ internal fun RecordCard(
                         val days = adjustment.lateDays.toInt()
                         InfoBadge(
                             if (adjustment.hasAdjustment) {
-                                pluralStringResource(R.plurals.late_days_adjusted, days, days,
+                                plural(R.plurals.late_days_adjusted, days, days,
                                     localizedCurrency(adjustment.adjustedCents, currency, language))
-                            } else pluralStringResource(R.plurals.overdue_days, days, days),
+                            } else plural(R.plurals.overdue_days, days, days),
                             PlannerRose,
                         )
                     }
@@ -127,7 +127,7 @@ internal fun RecordCard(
                 val city = ExtraFields.text(extra, "city")
                 val seats = 1 + record.plusOnesConfirmed
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    InfoBadge(pluralStringResource(R.plurals.guest_seats, seats, seats, record.plusOnesConfirmed, record.plusOnesAllowed), PlannerEmerald)
+                    InfoBadge(plural(R.plurals.guest_seats, seats, seats, record.plusOnesConfirmed, record.plusOnesAllowed), PlannerEmerald)
                     if (side.isNotBlank()) InfoBadge(webValueLabel(side, language), PlannerChampagne)
                     if (ExtraFields.bool(extra, "isVIP")) InfoBadge(stringResource(R.string.guest_vip), PlannerRose)
                     if (ExtraFields.bool(extra, "isPadrinho")) InfoBadge(stringResource(R.string.guest_padrinho), PlannerChampagne)
@@ -141,12 +141,12 @@ internal fun RecordCard(
             }
             Kinds.GROUP -> {
                 val members = index.groupMembers(record.id)
-                InfoBadge(pluralStringResource(R.plurals.group_members, members.size, members.size,
+                InfoBadge(plural(R.plurals.group_members, members.size, members.size,
                     members.sumOf { 1 + it.plusOnesConfirmed }), PlannerChampagne)
             }
             Kinds.TAG -> {
                 val count = index.guestsWithTag(record.id)
-                InfoBadge(pluralStringResource(R.plurals.tag_guests, count, count), PlannerChampagne)
+                InfoBadge(plural(R.plurals.tag_guests, count, count), PlannerChampagne)
             }
             Kinds.GOAL -> {
                 val target = record.amountCents ?: 0L

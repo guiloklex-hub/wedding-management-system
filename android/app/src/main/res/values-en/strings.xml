@@ -358,4 +358,5 @@
     <string name="copy_code">Copy code</string>
     <string name="share">Share</string>
     <string name="pix_share_text">Gift via Pix (%1$s)\n\nKey: %2$s\n\nPix copy-paste code:\n%3$s</string>
+    <string name="add_to_section">Add to %1$s</string>
 </resources>

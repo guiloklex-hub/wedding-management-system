@@ -23,6 +23,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
@@ -46,8 +51,11 @@ private fun DetailSection(title: String, onAdd: (() -> Unit)? = null, content: @
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                if (onAdd != null) TextButton(onClick = onAdd) { Text("+") }
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.semantics { heading() })
+                if (onAdd != null) IconButton(onClick = onAdd) {
+                    Icon(Icons.Default.Add, stringResource(R.string.add_to_section, title), tint = PlannerRose)
+                }
             }
             content()
         }
@@ -67,7 +75,7 @@ private fun DetailValue(label: String, value: String) {
 @Composable
 private fun FileActions(file: PlannerFile, language: String, onOpen: (PlannerFile) -> Unit, onExport: (PlannerFile) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text("📎 ${file.fileName}" + (if (file.kind == "CONTRACT") " · v${file.version}" else "") +
+        Text(file.fileName + (if (file.kind == "CONTRACT") " · v${file.version}" else "") +
             (if (file.deletedAt != null) " · ${localized(R.string.archived_version, language)}" else ""),
             modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
         TextButton(onClick = { onOpen(file) }) { Text(localized(R.string.open_file, language)) }

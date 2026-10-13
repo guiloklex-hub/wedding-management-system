@@ -358,4 +358,5 @@
     <string name="copy_code">Copiar código</string>
     <string name="share">Compartir</string>
     <string name="pix_share_text">Regalo vía Pix (%1$s)\n\nClave: %2$s\n\nPix copia y pega:\n%3$s</string>
+    <string name="add_to_section">Añadir en %1$s</string>
 </resources>

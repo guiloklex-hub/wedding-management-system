@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
@@ -39,6 +40,7 @@ fun WeddingDayScreen(
     language: String,
     onNotify: (String) -> Unit = {},
 ) {
+    val savedMessage = stringResource(R.string.msg_wedding_day_saved)
     val storedSchedule by model.daySchedule.collectAsState()
     val storedRain by model.rainPlan.collectAsState()
     val storedNotes by model.specialNotes.collectAsState()
@@ -58,7 +60,7 @@ fun WeddingDayScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Roteiro Operacional & Plano de Contingência", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
+                    Text(stringResource(R.string.wedding_day_plan_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
                     OutlinedTextField(
                         schedule,
                         { schedule = it.take(8000) },
@@ -83,7 +85,7 @@ fun WeddingDayScreen(
                     Button(
                         onClick = {
                             model.saveWeddingDay(schedule, rain, notes)
-                            onNotify("Cronograma e Plano B salvos com sucesso!")
+                            onNotify(savedMessage)
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -146,7 +148,7 @@ fun WeddingDayScreen(
                         Text(guest.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         Text("${1 + guest.plusOnesConfirmed} ${localized(R.string.seats, language)}", style = MaterialTheme.typography.bodySmall, color = PlannerMuted)
                         if (isChecked) {
-                            Text("Check-in realizado em ${formatTimestamp(checkedAt, language)}", style = MaterialTheme.typography.labelSmall, color = PlannerEmerald)
+                            Text(stringResource(R.string.checked_in_at, formatTimestamp(checkedAt, language)), style = MaterialTheme.typography.labelSmall, color = PlannerEmerald)
                         }
                     }
                     if (isChecked) {
@@ -154,7 +156,6 @@ fun WeddingDayScreen(
                     } else {
                         OutlinedButton(onClick = {
                             model.checkInGuest(guest.id)
-                            onNotify("Check-in confirmado: ${guest.title}")
                         }) {
                             Text(localized(R.string.check_in, language))
                         }

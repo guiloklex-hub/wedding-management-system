@@ -45,6 +45,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.FinanceRules
@@ -91,8 +96,8 @@ fun VendorCompareScreen(records: List<PlannerRecord>, language: String, currency
                             )
                         }
                     }
-                    val diffLabel = if (totalDiff <= 0L) "Economia acumulada: ${localizedCurrency(-totalDiff, currency, language)}"
-                    else "Excedente sobre o estimado: +${localizedCurrency(totalDiff, currency, language)}"
+                    val diffLabel = if (totalDiff <= 0L) stringResource(R.string.compare_saving_total, localizedCurrency(-totalDiff, currency, language))
+                    else stringResource(R.string.compare_overrun_total, localizedCurrency(totalDiff, currency, language))
                     InfoBadge(diffLabel, if (totalDiff <= 0L) PlannerEmerald else PlannerRose)
                 }
             }
@@ -102,11 +107,11 @@ fun VendorCompareScreen(records: List<PlannerRecord>, language: String, currency
             val vendor = vendors[index]
             val budgets = active.filter { it.kind == Kinds.BUDGET && it.parentId == vendor.id }
             val payments = active.filter { it.kind == Kinds.PAYMENT && it.parentId == vendor.id }
-            val planned = budgets.sumOf { it.estimatedCents ?: 0L }
-            val actual = budgets.sumOf { it.amountCents ?: 0L }
+            val planned = FinanceRules.budgetEstimated(budgets)
+            val actual = FinanceRules.budgetActual(budgets)
             val paid = payments.filter { it.status == "PAID" }.sumOf { it.amountCents ?: 0L }
             val diff = actual - planned
-            val rating = runCatching { JSONObject(vendor.extraJson).optInt("rating", 0) }.getOrDefault(0)
+            val rating = ExtraFields.int(ExtraFields.parse(vendor.extraJson), "rating") ?: 0
             val paidRatio = if (actual <= 0L) 0f else (paid.toFloat() / actual.toFloat()).coerceIn(0f, 1f)
 
             Card(
@@ -123,8 +128,9 @@ fun VendorCompareScreen(records: List<PlannerRecord>, language: String, currency
                         if (vendor.status.isNotBlank()) StatusBadge(vendor.status, language)
                     }
                     if (rating in 1..5) {
-                        val stars = "★".repeat(rating) + "☆".repeat(5 - rating)
-                        Text("$stars  ($rating/5)", color = PlannerChampagne, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                        val ratingDescription = stringResource(R.string.rating_value, rating)
+                        Text("★".repeat(rating) + "☆".repeat(5 - rating), color = PlannerChampagne, style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium, modifier = Modifier.semantics { contentDescription = ratingDescription })
                     }
                     HorizontalDivider(color = PlannerBorder)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -147,13 +153,13 @@ fun VendorCompareScreen(records: List<PlannerRecord>, language: String, currency
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         val deltaText = when {
-                            planned == 0L && actual == 0L -> "Sem orçamento vinculado"
-                            diff < 0L -> "Economia: -${localizedCurrency(-diff, currency, language)}"
-                            diff > 0L -> "Acima: +${localizedCurrency(diff, currency, language)}"
-                            else -> "Dentro da meta"
+                            planned == 0L && actual == 0L -> stringResource(R.string.compare_no_budget)
+                            diff < 0L -> stringResource(R.string.summary_saving, localizedCurrency(-diff, currency, language))
+                            diff > 0L -> stringResource(R.string.summary_overrun, localizedCurrency(diff, currency, language))
+                            else -> stringResource(R.string.compare_on_target)
                         }
                         InfoBadge(deltaText, if (diff <= 0L) PlannerEmerald else PlannerRose)
-                        Text("${(paidRatio * 100).roundToInt()}% quitado", style = MaterialTheme.typography.labelSmall, color = PlannerMuted)
+                        Text(stringResource(R.string.percent_paid, (paidRatio * 100).roundToInt()), style = MaterialTheme.typography.labelSmall, color = PlannerMuted)
                     }
                     PlannerProgressBar(paidRatio, PlannerEmerald, 8.dp)
                 }
@@ -188,6 +194,8 @@ fun SettingsScreen(
     var pixHolder by remember(storedPixHolder) { mutableStateOf(storedPixHolder) }
     var pixCity by remember(storedPixCity) { mutableStateOf(storedPixCity) }
     var showPixDialog by remember { mutableStateOf(false) }
+    val savedEventMessage = stringResource(R.string.msg_event_saved)
+    val savedPixMessage = stringResource(R.string.msg_pix_saved)
     var confirmDemo by remember { mutableStateOf(false) }
     val records by model.records.collectAsState()
 
@@ -236,7 +244,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = contingencyText,
                         onValueChange = { contingencyText = it.filter { ch -> ch.isDigit() }.take(2) },
-                        label = { Text("Reserva de contingência recomendada (%)") },
+                        label = { Text(stringResource(R.string.contingency_percent)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
@@ -247,7 +255,7 @@ fun SettingsScreen(
                             val pct = contingencyText.toIntOrNull()?.coerceIn(0, 50) ?: 10
                             date = normalized
                             model.saveEvent(names, normalized, pct)
-                            onNotify("Dados do casamento e contingência ($pct%) salvos!")
+                            onNotify(savedEventMessage)
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text(localized(R.string.save, language)) }
@@ -261,23 +269,23 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Pix EMV (Copia e Cola + QR Code)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
+                    Text(stringResource(R.string.pix_settings_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
                     OutlinedTextField(pixKey, { pixKey = it.take(120) }, label = { Text(localized(R.string.pix_key, language)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(pixHolder, { pixHolder = it.take(120) }, label = { Text(localized(R.string.pix_holder, language)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(pixCity, { pixCity = it.take(40) }, label = { Text("Cidade do titular (para BR Code EMV)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(pixCity, { pixCity = it.take(40) }, label = { Text(stringResource(R.string.pix_city)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     Text(localized(R.string.pix_manual_warning, language), color = PlannerMuted, style = MaterialTheme.typography.bodySmall)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = {
                                 model.savePix(pixKey, pixHolder, pixCity)
-                                onNotify("Configuração Pix EMV salva!")
+                                onNotify(savedPixMessage)
                             },
                             modifier = Modifier.weight(1f),
                         ) { Text(localized(R.string.save, language)) }
                         OutlinedButton(
                             onClick = { showPixDialog = true },
                             modifier = Modifier.weight(1f),
-                        ) { Text("Ver QR Code") }
+                        ) { Text(stringResource(R.string.view_qr_code)) }
                     }
                 }
             }
@@ -320,7 +328,7 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Segurança, Backup & Dados", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
+                    Text(stringResource(R.string.settings_security_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
                     Button(onClick = { navigate("backup") }, modifier = Modifier.fillMaxWidth()) {
                         Text(localized(R.string.backup, language))
                     }
@@ -410,7 +418,7 @@ fun InsightsScreen(
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Text(localized(R.string.total_budget, language), color = PlannerMuted, style = MaterialTheme.typography.labelLarge)
-                        InfoBadge("Contingência ($contingencyPercent%): ${localizedCurrency(contingencyCents, currency, language)}", PlannerChampagne)
+                        InfoBadge(stringResource(R.string.contingency_value, contingencyPercent, localizedCurrency(contingencyCents, currency, language)), PlannerChampagne)
                     }
                     Text(
                         localizedCurrency(expected, currency, language),
@@ -445,9 +453,9 @@ fun InsightsScreen(
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(localized(R.string.health_score, language), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         val statusDesc = when {
-                            score >= 80 -> "Excelente equilíbrio financeiro e operacional"
-                            score >= 60 -> "Planejamento saudável — atenção às próximas parcelas"
-                            else -> "Atenção ao fluxo de caixa e tarefas pendentes"
+                            score >= 80 -> stringResource(R.string.health_excellent)
+                            score >= 60 -> stringResource(R.string.health_good)
+                            else -> stringResource(R.string.health_attention)
                         }
                         Text(statusDesc, style = MaterialTheme.typography.bodySmall, color = PlannerMuted)
                     }
@@ -465,8 +473,8 @@ fun InsightsScreen(
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("⚠️ Radar de Riscos & Alertas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerRose)
-                            InfoBadge("${riskAlerts.size} alerta(s)", PlannerRose)
+                            Text(stringResource(R.string.report_risk), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerRose)
+                            InfoBadge(pluralStringResource(R.plurals.alerts_count, riskAlerts.size, riskAlerts.size), PlannerRose)
                         }
                         riskAlerts.forEach { alert ->
                             val accent = if (alert.severity == "HIGH") PlannerRose else PlannerChampagne
@@ -493,28 +501,28 @@ fun InsightsScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Funil de Fornecedores & Mapa do Buffet", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
+                    Text(stringResource(R.string.insights_funnel_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        InfoBadge("Negociação: $negotiationCount", PlannerChampagne)
-                        InfoBadge("Contratados: $contractedOnlyCount", PlannerEmerald)
-                        InfoBadge("Finalizados: $finalizedCount", PlannerEmerald)
+                        InfoBadge("${statusLabel("NEGOTIATION", language)}: $negotiationCount", PlannerChampagne)
+                        InfoBadge("${statusLabel("CONTRACTED", language)}: $contractedOnlyCount", PlannerEmerald)
+                        InfoBadge("${statusLabel("FINALIZED", language)}: $finalizedCount", PlannerEmerald)
                     }
                     HorizontalDivider(color = PlannerBorder)
-                    Text("Demografia de Convidados & Restrições Alimentares", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.insights_demographics_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        InfoBadge("Confirmados: ${demographics.confirmedSeats} lugares", PlannerEmerald)
-                        InfoBadge("Lado Noiva: ${demographics.brideSideCount}", PlannerRose)
-                        InfoBadge("Lado Noivo: ${demographics.groomSideCount}", PlannerChampagne)
-                        if (demographics.bothSideCount > 0) InfoBadge("Ambos: ${demographics.bothSideCount}", PlannerMuted)
-                        if (demographics.vipCount > 0) InfoBadge("VIPs: ${demographics.vipCount}", PlannerChampagne)
-                        if (demographics.padrinhosCount > 0) InfoBadge("Padrinhos: ${demographics.padrinhosCount}", PlannerEmerald)
-                        if (demographics.childrenCount > 0) InfoBadge("Crianças: ${demographics.childrenCount}", PlannerMuted)
+                        InfoBadge(pluralStringResource(R.plurals.seats_confirmed, demographics.confirmedSeats, demographics.confirmedSeats), PlannerEmerald)
+                        InfoBadge("${stringResource(R.string.side_bride)}: ${demographics.brideSideCount}", PlannerRose)
+                        InfoBadge("${stringResource(R.string.side_groom)}: ${demographics.groomSideCount}", PlannerChampagne)
+                        if (demographics.bothSideCount > 0) InfoBadge("${stringResource(R.string.side_both)}: ${demographics.bothSideCount}", PlannerMuted)
+                        if (demographics.vipCount > 0) InfoBadge("${stringResource(R.string.guest_vip)}: ${demographics.vipCount}", PlannerChampagne)
+                        if (demographics.padrinhosCount > 0) InfoBadge("${stringResource(R.string.guest_padrinho)}: ${demographics.padrinhosCount}", PlannerEmerald)
+                        if (demographics.childrenCount > 0) InfoBadge("${stringResource(R.string.guest_child)}: ${demographics.childrenCount}", PlannerMuted)
                     }
                     if (demographics.dietaryItems.isNotEmpty()) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Restrições Alimentares para o Buffet (${demographics.dietaryItems.size}):", style = MaterialTheme.typography.labelSmall, color = PlannerChampagne)
+                            Text(stringResource(R.string.insights_dietary_title, demographics.dietaryItems.size), style = MaterialTheme.typography.labelSmall, color = PlannerChampagne)
                             demographics.dietaryItems.forEach { (guestName, restriction) ->
-                                Text("🍽️ $guestName — $restriction", style = MaterialTheme.typography.bodySmall)
+                                Text("$guestName — $restriction", style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
@@ -538,7 +546,7 @@ fun InsightsScreen(
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("$label · $current de $total", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.progress_of, label, current, total), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                         InfoBadge("$pct%", barColor)
                     }
                     PlannerProgressBar(ratio, barColor, 10.dp)
@@ -566,8 +574,8 @@ fun InsightsScreen(
                         )
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Entradas: +${localizedCurrency(point.incomeCents, currency, language)}", style = MaterialTheme.typography.bodySmall, color = PlannerEmerald)
-                        Text("Saídas: -${localizedCurrency(point.outflowCents, currency, language)}", style = MaterialTheme.typography.bodySmall, color = PlannerRose)
+                        Text(stringResource(R.string.cashflow_in, localizedCurrency(point.incomeCents, currency, language)), style = MaterialTheme.typography.bodySmall, color = PlannerEmerald)
+                        Text(stringResource(R.string.cashflow_out, localizedCurrency(point.outflowCents, currency, language)), style = MaterialTheme.typography.bodySmall, color = PlannerRose)
                     }
                 }
             }
@@ -609,7 +617,7 @@ fun HelpScreen(language: String) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("100% Privado & Offline no seu Smartphone", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
+                    Text(stringResource(R.string.help_private_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerChampagne)
                     Text(localized(R.string.help_body, language), style = MaterialTheme.typography.bodyMedium)
                 }
             }
@@ -621,7 +629,7 @@ fun HelpScreen(language: String) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Convites, RSVP & WhatsApp", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerRose)
+                    Text(stringResource(R.string.help_invites_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerRose)
                     Text(localized(R.string.web_rsvp_warning, language), style = MaterialTheme.typography.bodyMedium, color = PlannerMuted)
                 }
             }
@@ -633,9 +641,9 @@ fun HelpScreen(language: String) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Backup Cifrado (.wfpbackup v2)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerEmerald)
+                    Text(stringResource(R.string.help_backup_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PlannerEmerald)
                     Text(
-                        "Seus backups são protegidos com PBKDF2-HMAC-SHA256 (600 mil iterações) e AES-256-GCM. Antes de qualquer restauração, o aplicativo salva automaticamente uma cópia de reversão no Android Keystore.",
+                        stringResource(R.string.help_backup_body),
                         style = MaterialTheme.typography.bodyMedium,
                         color = PlannerMuted,
                     )
@@ -652,25 +660,7 @@ fun AuditScreen(audits: List<PlannerAudit>, records: List<PlannerRecord>, langua
         if (audits.isEmpty()) item { Text(localized(R.string.empty, language)) }
         items(audits.size) { index ->
             val audit = audits[index]
-            val label = when (audit.action) {
-                "SAVE" -> localized(R.string.audit_save, language)
-                "DELETE" -> localized(R.string.audit_delete, language)
-                "STATUS" -> localized(R.string.audit_status, language)
-                "MARK_PAID" -> localized(R.string.audit_paid, language)
-                "ADD_FILE" -> localized(R.string.audit_file, language)
-                "IMPORT_GUESTS" -> "Importação de lista de convidados"
-                "SEED_TASK_TEMPLATES" -> "Modelos de tarefas adicionados"
-                "CREATE_INSTALLMENTS" -> "Parcelamento financeiro gerado"
-                "SETTING" -> "Configuração do evento atualizada"
-                "CONVERT_TO_FINANCE" -> "Presente convertido em receita/caixa"
-                "ASSIGN_TABLE" -> "Convidado alocado em mesa"
-                "SEED_DEMO" -> "Dados de demonstração (Seed) carregados"
-                "CHECK_IN" -> "Check-in de convidado no evento"
-                "GROUP_RSVP" -> "RSVP do grupo atualizado"
-                "CONFIRM_SENT", "CONFIRM_INVITE" -> localized(R.string.audit_invite_sent, language)
-                "SEED_VENUE_CHECKLIST" -> localized(R.string.audit_venue_checklist, language)
-                else -> audit.action.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }
-            }
+            val label = auditLabel(audit.action, language)
             val recordTitle = names[audit.recordId].orEmpty()
             Card(
                 colors = CardDefaults.cardColors(containerColor = PlannerSurface),
@@ -689,5 +679,30 @@ fun AuditScreen(audits: List<PlannerAudit>, records: List<PlannerRecord>, langua
                 }
             }
         }
+    }
+}
+
+@Composable
+fun auditLabel(action: String, language: String): String {
+    return when (action) {
+        "SAVE" -> localized(R.string.audit_save, language)
+        "DELETE" -> localized(R.string.audit_delete, language)
+        "STATUS" -> localized(R.string.audit_status, language)
+        "MARK_PAID" -> localized(R.string.audit_paid, language)
+        "ADD_FILE" -> localized(R.string.audit_file, language)
+        "IMPORT_GUESTS" -> localized(R.string.audit_import, language)
+        "SEED_TASK_TEMPLATES" -> stringResource(R.string.audit_task_templates)
+        "CREATE_INSTALLMENTS" -> stringResource(R.string.audit_installments)
+        "SETTING" -> stringResource(R.string.audit_setting)
+        "CONVERT_TO_FINANCE" -> stringResource(R.string.audit_gift_posted)
+        "ASSIGN_TABLE" -> stringResource(R.string.audit_assign_table)
+        "SEED_DEMO" -> stringResource(R.string.audit_demo)
+        "CHECK_IN" -> stringResource(R.string.audit_check_in)
+        "GROUP_RSVP" -> stringResource(R.string.audit_group_rsvp)
+        "UNDO" -> stringResource(R.string.audit_undo)
+        "RESTORE" -> stringResource(R.string.audit_restore)
+        "CONFIRM_SENT", "CONFIRM_INVITE" -> localized(R.string.audit_invite_sent, language)
+        "SEED_VENUE_CHECKLIST" -> localized(R.string.audit_venue_checklist, language)
+        else -> action.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }
     }
 }

@@ -186,7 +186,7 @@ fun ReportDetailScreen(
                 val byId = active.associateBy { it.id }
                 if (audits.isEmpty()) item { Text(localized(R.string.empty, language), color = PlannerMuted) }
                 items(audits.take(100), key = { it.id }) { audit ->
-                    ReportMetric("${formatTimestamp(audit.at, language)} · ${byId[audit.recordId]?.title ?: audit.action}", audit.action)
+                    ReportMetric("${formatTimestamp(audit.at, language)} · ${byId[audit.recordId]?.title.orEmpty()}", auditLabel(audit.action, language))
                 }
             }
         }

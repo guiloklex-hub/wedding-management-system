@@ -20,6 +20,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
@@ -107,7 +110,11 @@ fun VendorDetailScreen(
                 DetailValue(localized(R.string.category, language), vendor.subtitle)
                 if (vendor.status.isNotBlank()) StatusBadge(vendor.status, language)
                 val rating = vendorFields.optInt("rating", 0)
-                if (rating in 1..5) Text("${"★".repeat(rating)}${"☆".repeat(5 - rating)}", color = PlannerChampagne)
+                if (rating in 1..5) {
+                    val ratingDescription = stringResource(R.string.rating_value, rating)
+                    Text("★".repeat(rating) + "☆".repeat(5 - rating), color = PlannerChampagne,
+                        modifier = Modifier.semantics { contentDescription = ratingDescription })
+                }
                 DetailValue(localized(R.string.indicated_by, language), vendorFields.text("indicatedBy"))
                 DetailValue(localized(R.string.tags, language), vendorFields.text("tags"))
                 DetailValue(localized(R.string.notes, language), vendor.notes)
@@ -117,7 +124,7 @@ fun VendorDetailScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { onEdit(vendor) }) { Text(localized(R.string.edit, language)) }
                     if (vendor.phone.isNotBlank()) OutlinedButton(onClick = { onDial(vendor.phone) }) { Text(localized(R.string.call_phone, language)) }
-                    if (vendor.phone.isNotBlank()) OutlinedButton(onClick = { onWhatsApp(vendor) }) { Text("WhatsApp") }
+                    if (vendor.phone.isNotBlank()) OutlinedButton(onClick = { onWhatsApp(vendor) }) { Text(stringResource(R.string.whatsapp)) }
                 }
                 DetailValue(localized(R.string.phone, language), vendor.phone)
                 DetailValue(localized(R.string.email, language), vendor.email)

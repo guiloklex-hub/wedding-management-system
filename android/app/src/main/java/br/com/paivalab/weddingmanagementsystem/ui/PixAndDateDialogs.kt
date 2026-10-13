@@ -91,6 +91,9 @@ fun PixQrDialog(
             )
         }.getOrElse { "" }
     }
+    val copiedMessage = stringResource(R.string.pix_copied)
+    val shareTemplate = stringResource(R.string.pix_share_text)
+    val shareTitle = stringResource(R.string.share_pix)
     val matrix = remember(brCode) {
         if (brCode.isNotBlank()) runCatching { QrCodeMatrix.encode(brCode) }.getOrNull() else null
     }
@@ -99,8 +102,8 @@ fun PixQrDialog(
         onDismissRequest = onDismiss,
         title = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("QR Code & Pix Copia e Cola", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("Padrão oficial EMVCo BACEN (CRC16)", style = MaterialTheme.typography.labelSmall, color = PlannerChampagne)
+                Text(stringResource(R.string.pix_dialog_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.pix_dialog_subtitle), style = MaterialTheme.typography.labelSmall, color = PlannerChampagne)
             }
         },
         text = {
@@ -140,9 +143,9 @@ fun PixQrDialog(
                 }
 
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    InfoBadge("Chave: ${pixKey.ifBlank { "Não configurada" }}", PlannerChampagne)
+                    InfoBadge(stringResource(R.string.pix_key_value, pixKey.ifBlank { stringResource(R.string.not_configured) }), PlannerChampagne)
                     Text(
-                        "Recebedor: ${pixHolderName.ifBlank { "Casal" }} · Cidade: ${pixCity.ifBlank { "SAO PAULO" }}",
+                        stringResource(R.string.pix_receiver_value, pixHolderName, pixCity),
                         style = MaterialTheme.typography.labelSmall,
                         color = PlannerMuted,
                     )
@@ -151,7 +154,7 @@ fun PixQrDialog(
                 OutlinedTextField(
                     value = customAmountText,
                     onValueChange = { customAmountText = it },
-                    label = { Text("Valor opcional em R$ (vazio = valor livre)") },
+                    label = { Text(stringResource(R.string.pix_amount_optional)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
@@ -164,7 +167,7 @@ fun PixQrDialog(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Código EMV Pix Copia e Cola", style = MaterialTheme.typography.labelSmall, color = PlannerEmerald)
+                            Text(stringResource(R.string.pix_copy_paste_code), style = MaterialTheme.typography.labelSmall, color = PlannerEmerald)
                             Text(
                                 brCode,
                                 style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
@@ -179,33 +182,32 @@ fun PixQrDialog(
                             onClick = {
                                 val clipboard = activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 clipboard.setPrimaryClip(ClipData.newPlainText("Pix Copia e Cola", brCode))
-                                onNotify("Código Pix Copia e Cola copiado!")
+                                onNotify(copiedMessage)
                             },
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("Copiar código")
+                            Text(stringResource(R.string.copy_code))
                         }
                         OutlinedButton(
                             onClick = {
-                                val msg = "Presente via Pix (${pixHolderName.ifBlank { "Casamento" }})\n\n" +
-                                    "Chave: $pixKey\n\nPix Copia e Cola:\n$brCode"
+                                val msg = shareTemplate.format(pixHolderName, pixKey, brCode)
                                 activity.startActivity(
                                     Intent.createChooser(
                                         Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, msg),
-                                        "Compartilhar Pix",
+                                        shareTitle,
                                     ),
                                 )
                             },
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("Compartilhar")
+                            Text(stringResource(R.string.share))
                         }
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Fechar") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
         },
     )
 }

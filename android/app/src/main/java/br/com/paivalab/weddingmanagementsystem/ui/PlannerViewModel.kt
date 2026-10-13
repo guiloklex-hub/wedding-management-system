@@ -217,8 +217,11 @@ class PlannerViewModel(
         _contingencyPercent.value = cleanPct
     }
 
-    fun loadDemoSeed(database: br.com.paivalab.weddingmanagementsystem.data.PlannerDatabase) = launchAction {
-        br.com.paivalab.weddingmanagementsystem.data.DemoSeed.populate(database, preferences)
+    fun loadDemoSeed(
+        database: br.com.paivalab.weddingmanagementsystem.data.PlannerDatabase,
+        blobs: br.com.paivalab.weddingmanagementsystem.data.BlobStore,
+    ) = launchAction {
+        br.com.paivalab.weddingmanagementsystem.data.DemoSeed.populate(database, preferences, blobs)
         refreshEvent()
     }
 

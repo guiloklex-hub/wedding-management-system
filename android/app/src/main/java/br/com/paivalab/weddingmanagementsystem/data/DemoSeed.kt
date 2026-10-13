@@ -8,7 +8,7 @@ import org.json.JSONObject
 const val DEMO_REQUIRES_EMPTY = "DEMO_REQUIRES_EMPTY"
 
 object DemoSeed {
-    suspend fun populate(database: PlannerDatabase, preferences: PlannerPreferences) {
+    suspend fun populate(database: PlannerDatabase, preferences: PlannerPreferences, blobs: BlobStore) {
         val dao = database.dao()
         require(dao.allRecords().none { it.deletedAt == null }) { DEMO_REQUIRES_EMPTY }
         val now = System.currentTimeMillis()
@@ -597,11 +597,11 @@ object DemoSeed {
             createdAt = now - 86_400_000L * 10,
         )
 
+        blobs.write(file.id, pdfBytes)
         database.withTransaction {
             dao.saveSettings(settings)
             dao.saveRecords(records.map(WebValues::normalize))
             dao.saveFile(file)
-            dao.saveBlob(PlannerBlob(file.id, pdfBytes))
             dao.addAudit(
                 PlannerAudit(
                     id = "seed-audit-1",

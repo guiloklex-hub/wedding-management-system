@@ -8,6 +8,7 @@ import br.com.paivalab.weddingmanagementsystem.data.PlannerDatabase
 import br.com.paivalab.weddingmanagementsystem.data.PlannerPreferences
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
+import br.com.paivalab.weddingmanagementsystem.data.BlobStore
 import br.com.paivalab.weddingmanagementsystem.data.PlannerBlob
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRepository
 import java.io.File
@@ -79,9 +80,9 @@ class PortableTransferTest {
             assertEquals(2, database.dao().observeAllFiles().first().size)
             assertEquals(1, database.dao().observeFiles().first().size)
             val previous = files.first { it.id == "file-2" }
-            val sharedUri = PlannerRepository(database).prepareSharedFile(context, previous)
+            val sharedUri = PlannerRepository(database, BlobStore(context)).prepareSharedFile(context, previous)
             assertTrue(context.contentResolver.openInputStream(sharedUri)!!.use { it.readBytes() }
-                .contentEquals(database.dao().blob("file-2")!!.bytes))
+                .contentEquals(BlobStore(context).read("file-2", database.dao())!!))
             assertTrue(archive.hasReversal())
             val exported = File(context.cacheDir, "android-roundtrip.wfpbackup")
             archive.export(Uri.fromFile(exported), password)

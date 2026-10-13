@@ -71,7 +71,7 @@ object Money {
         BigDecimal.valueOf(number).movePointRight(2).setScale(0, RoundingMode.HALF_UP).longValueExact()
 }
 
-class PlannerRepository(private val database: PlannerDatabase) {
+class PlannerRepository(private val database: PlannerDatabase, private val blobs: BlobStore) {
     private val dao = database.dao()
     val records: Flow<List<PlannerRecord>> = dao.observeRecords()
     val files: Flow<List<PlannerFile>> = dao.observeFiles()
@@ -197,22 +197,27 @@ class PlannerRepository(private val database: PlannerDatabase) {
             if (contractFile) "application/pdf" else resolver.getType(uri) ?: "application/octet-stream",
             bytes.size.toLong(), hash,
             version = if (contractFile) JSONObject(record.extraJson).optInt("version", 1).coerceAtLeast(1) else 1)
-        database.withTransaction {
-            dao.saveFile(file)
-            dao.saveBlob(PlannerBlob(file.id, bytes))
-            dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), recordId, "ADD_FILE", details = file.id))
+        blobs.write(file.id, bytes)
+        try {
+            database.withTransaction {
+                dao.saveFile(file)
+                dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), recordId, "ADD_FILE", details = file.id))
+            }
+        } catch (error: Exception) {
+            blobs.delete(file.id)
+            throw error
         }
     }
 
     suspend fun exportAttachment(context: Context, file: PlannerFile, destination: Uri) {
-        val bytes = dao.blob(file.id)?.bytes ?: error("Arquivo ausente")
+        val bytes = blobs.read(file.id, dao) ?: error("Arquivo ausente")
         require(bytes.size.toLong() == file.byteSize)
         context.contentResolver.openOutputStream(destination, "w")?.use { it.write(bytes) }
             ?: error("Não foi possível salvar o arquivo")
     }
 
     suspend fun prepareSharedFile(context: Context, file: PlannerFile): Uri = withContext(Dispatchers.IO) {
-        val bytes = dao.blob(file.id)?.bytes ?: error("Arquivo ausente")
+        val bytes = blobs.read(file.id, dao) ?: error("Arquivo ausente")
         require(bytes.size.toLong() == file.byteSize) { "Tamanho do arquivo divergente" }
         val actualHash = MessageDigest.getInstance("SHA-256").digest(bytes)
             .joinToString("") { "%02x".format(it) }

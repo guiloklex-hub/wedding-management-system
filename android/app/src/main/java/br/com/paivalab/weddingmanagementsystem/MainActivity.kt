@@ -7,6 +7,7 @@ import android.os.Build
 import android.graphics.Color
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
@@ -25,6 +26,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import br.com.paivalab.weddingmanagementsystem.data.BlobStore
 import br.com.paivalab.weddingmanagementsystem.data.PlannerDatabase
 import br.com.paivalab.weddingmanagementsystem.data.PlannerPreferences
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRepository
@@ -37,6 +39,7 @@ import br.com.paivalab.weddingmanagementsystem.ui.isPlannerDark
 import br.com.paivalab.weddingmanagementsystem.ui.localizedText
 import br.com.paivalab.weddingmanagementsystem.notifications.ReminderWorker
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -48,6 +51,7 @@ class MainActivity : AppCompatActivity() {
     private var afterAuthentication: (() -> Unit)? = null
     private var unlockLanguage = "pt-BR"
     private lateinit var database: PlannerDatabase
+    private lateinit var blobs: BlobStore
     private lateinit var model: PlannerViewModel
 
     private val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or
@@ -59,12 +63,17 @@ class MainActivity : AppCompatActivity() {
         unlocked = savedInstanceState?.getBoolean(STATE_UNLOCKED) ?: false
         lastBackgroundAt = savedInstanceState?.getLong(STATE_BACKGROUND_AT) ?: 0L
         database = PlannerDatabase.get(this)
+        blobs = BlobStore(this)
+        lifecycleScope.launch(Dispatchers.IO) {
+            runCatching { blobs.migrateFromDatabase(database.dao()) }
+                .onFailure { Log.e("MainActivity", "[blobs] migração de anexos falhou", it) }
+        }
         val preferences = PlannerPreferences(this)
         val archive = BackupArchive(this, database, preferences)
         ReminderWorker.schedule(this)
         model = ViewModelProvider(
             this,
-            PlannerViewModel.Factory(PlannerRepository(database), preferences),
+            PlannerViewModel.Factory(PlannerRepository(database, blobs), preferences),
         )[PlannerViewModel::class.java]
         handleIntent(intent)
         setContent {
@@ -86,7 +95,7 @@ class MainActivity : AppCompatActivity() {
                         externalSection = requestedSection,
                         externalRecordId = requestedRecordId,
                         onExternalConsumed = { requestedSection = null; requestedRecordId = null },
-                        onLoadDemoSeed = { model.loadDemoSeed(database) },
+                        onLoadDemoSeed = { model.loadDemoSeed(database, blobs) },
                     )
                 } else {
                     UnlockScreen(
@@ -128,7 +137,7 @@ class MainActivity : AppCompatActivity() {
         }
         if (intent.getBooleanExtra("seed_demo", false)) {
             unlocked = true
-            model.loadDemoSeed(database)
+            model.loadDemoSeed(database, blobs)
         }
         intent.getStringExtra("section")?.takeIf { it.isNotBlank() }?.let { target ->
             unlocked = true

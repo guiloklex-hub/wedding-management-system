@@ -8,6 +8,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import br.com.paivalab.weddingmanagementsystem.backup.BackupArchive
+import br.com.paivalab.weddingmanagementsystem.data.BlobStore
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.GuestImport
@@ -41,7 +42,7 @@ class PlannerStorageTest {
     @Before fun setUp() {
         context = ApplicationProvider.getApplicationContext()
         database = Room.inMemoryDatabaseBuilder(context, PlannerDatabase::class.java).build()
-        repository = PlannerRepository(database)
+        repository = PlannerRepository(database, BlobStore(context))
     }
 
     @After fun tearDown() { database.close() }
@@ -132,7 +133,7 @@ class PlannerStorageTest {
             archive.restore(uri, "correct horse battery".toCharArray())
             assertEquals("Buffet", database.dao().find("vendor")?.title)
             assertEquals("""{"tagIds":["tag"]}""", database.dao().find("guest")?.extraJson)
-            assertEquals(bytes.toList(), database.dao().blob("file")?.bytes?.toList())
+            assertEquals(bytes.toList(), BlobStore(context).read("file", database.dao())?.toList())
         } finally {
             target.delete()
         }
@@ -162,7 +163,7 @@ class PlannerStorageTest {
             val archive = BackupArchive(context, database, PlannerPreferences(context))
             archive.restore(Uri.fromFile(source), "correct horse battery".toCharArray())
             assertEquals("Fornecedor migrado", database.dao().find("interop-vendor")?.title)
-            assertEquals("attachment from desktop converter", String(database.dao().blob("interop-file")!!.bytes))
+            assertEquals("attachment from desktop converter", String(BlobStore(context).read("interop-file", database.dao())!!))
         } finally {
             source.delete()
         }
@@ -193,7 +194,7 @@ class PlannerStorageTest {
                 val files = database.dao().allFiles()
                 assertEquals(expectedFiles, files.size)
                 files.forEach { file ->
-                    val bytes = database.dao().blob(file.id)?.bytes
+                    val bytes = BlobStore(context).read(file.id, database.dao())
                     assertNotNull(bytes)
                     val digest = MessageDigest.getInstance("SHA-256").digest(bytes!!)
                         .joinToString("") { "%02x".format(it) }
@@ -237,5 +238,16 @@ class PlannerStorageTest {
         } finally {
             source.delete()
         }
+    }
+
+    @Test fun legacyBlobLargerThanCursorWindowMovesToFile() = runBlocking {
+        val bytes = ByteArray(3 * 1024 * 1024) { (it % 251).toByte() }
+        database.dao().saveBlob(PlannerBlob("legacy-big", bytes))
+        val blobs = BlobStore(context)
+        blobs.delete("legacy-big")
+        blobs.migrateFromDatabase(database.dao())
+        assertTrue(bytes.contentEquals(blobs.read("legacy-big")!!))
+        assertTrue(database.dao().legacyBlobIds().isEmpty())
+        blobs.delete("legacy-big")
     }
 }

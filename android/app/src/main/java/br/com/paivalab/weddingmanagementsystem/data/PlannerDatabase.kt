@@ -15,7 +15,10 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
-@Entity(tableName = "records", indices = [Index("kind"), Index("parentId"), Index("guestGroupId"), Index("seatingTableId"), Index("date")])
+@Entity(
+    tableName = "records",
+    indices = [Index("kind"), Index("parentId"), Index("guestGroupId"), Index("seatingTableId"), Index("date"), Index("deletedAt")],
+)
 data class PlannerRecord(
     @PrimaryKey val id: String,
     val kind: String,
@@ -106,6 +109,19 @@ interface PlannerDao {
     @Query("SELECT * FROM file_blobs WHERE id = :id LIMIT 1")
     suspend fun blob(id: String): PlannerBlob?
 
+    @Query("SELECT id FROM file_blobs")
+    suspend fun legacyBlobIds(): List<String>
+
+    @Query("SELECT length(bytes) FROM file_blobs WHERE id = :id")
+    suspend fun legacyBlobSize(id: String): Long?
+
+    /** `start` é 1-based, como em `substr` do SQLite. */
+    @Query("SELECT substr(bytes, :start, :length) FROM file_blobs WHERE id = :id")
+    suspend fun legacyBlobChunk(id: String, start: Long, length: Long): ByteArray?
+
+    @Query("DELETE FROM file_blobs WHERE id = :id")
+    suspend fun deleteLegacyBlob(id: String)
+
     @Query("SELECT * FROM settings ORDER BY key")
     suspend fun allSettings(): List<PlannerSetting>
 
@@ -170,7 +186,7 @@ interface PlannerDao {
 @Database(
     entities = [PlannerRecord::class, PlannerFile::class, PlannerBlob::class, PlannerSetting::class, PlannerAudit::class,
         PortableState::class],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class PlannerDatabase : RoomDatabase() {
@@ -219,12 +235,18 @@ abstract class PlannerDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_records_deletedAt` ON `records` (`deletedAt`)")
+            }
+        }
+
         fun get(context: Context): PlannerDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(
                 context.applicationContext,
                 PlannerDatabase::class.java,
                 "wedding-planner.db",
-            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build().also { instance = it }
         }
     }
 }

@@ -8,7 +8,7 @@ Legenda: **sim** = fluxo principal equivalente; **parcial** = tela existe, mas f
 
 | Tela/fluxo web | Android atual | Diferença relevante |
 |---|---|---|
-| `/dashboard` | Parcial | Indicadores e próximas ações existem; os cartões de RSVP, presentes, risco e atividade não têm todos os mesmos recortes da web. |
+| `/dashboard` | Parcial | Mesmos números da web (orçamento com contingência, pago, saldo devedor, cobertura de caixa), alerta de quitação, próximas ações com os 7 tipos, funil, RSVP, presentes e próximos vencimentos. Falta o gráfico de distribuição por categoria. |
 | `/dashboard/insights` | Parcial | Indicadores, caixa e riscos locais existem; Curva S, burndown e waterfall detalhados não foram portados. |
 | `/dashboard/reports` e 10 entradas | Parcial | Há um hub móvel e telas resumidas para fluxo de caixa, funil, riscos, convidados, presentes, tarefas, lua de mel, enxoval e atividade. Gráficos, séries temporais e filtros da web ainda diferem. |
 | `/dashboard/vendors` | Sim | Lista, edição, filtros e comparação locais. |
@@ -16,15 +16,15 @@ Legenda: **sim** = fluxo principal equivalente; **parcial** = tela existe, mas f
 | `/dashboard/vendors/[id]` | Parcial | Página dedicada móvel reúne contatos, observações, cláusulas, contratos, PDFs, inclusive versões anteriores arquivadas, orçamento e pagamentos. Assinatura formal da web ainda não tem fluxo móvel. |
 | `/dashboard/venues` | Sim | Cadastro, busca e edição locais. |
 | `/dashboard/venues/[id]` | Parcial | Página dedicada móvel mostra condições, restrições, checklist e anexos; faltam alguns campos de edição da web. |
-| `/dashboard/tasks` | Parcial | Tarefas, prazos, prioridades e modelos locais; automações/avisos dependentes do servidor diferem. |
-| `/dashboard/payments` | Parcial | Parcelas, status, multa e juros locais; notificações por email/WhatsApp da web não rodam offline. |
+| `/dashboard/tasks` | Sim | Lista e Kanban, filtros "em aberto", "atrasadas" e "próximos 7 dias", barra de fases, responsável, fornecedor, local e `completedAt`. Avisos por email/WhatsApp são da web. |
+| `/dashboard/payments` | Sim | Lista e calendário mensal com resumo do ano, marcar e desfazer pagamento, sinal + saldo, parcelas com intervalo em dias, forma de pagamento, multa e juros. Avisos por email/WhatsApp são da web. |
 | `/dashboard/income`, `/assets`, `/goals` | Sim | Cadastros e totais locais; projeção e visualização têm diferenças. |
 | `/dashboard/guests`, `/guests/groups`, `/guests/import` | Parcial | Lista, grupos, RSVP manual, CSV e XLSX Wedy; importação e envio em lote da web têm fluxos distintos. |
 | `/dashboard/gifts`, `/gifts/[id]/pix` | Parcial | Presente e Pix individual com valor e identificador do presente; baixa continua manual, sem confirmação automática. |
 | `/dashboard/wedding-day`, `/wedding-day/seating` | Parcial | Cronograma, plano B, check-in e mesas locais; não há arrastar e soltar da web. |
 | `/dashboard/honeymoon`, `/trousseau` | Parcial | Cadastro e resumos locais; alguns campos, moedas de item e gráficos ainda diferem. |
 | `/dashboard/save-the-date`, `/invitations` | Parcial | Modelo local, anexo, envio individual pelo compartilhamento do Android e confirmação manual. Disparos em lote, controle de entrega, PIN e links públicos de RSVP exigem o servidor web. |
-| `/dashboard/settings`, `/onboarding` | Local | Ajustes do evento, idioma, moeda, Pix, backup e segurança do aparelho. O wizard e configurações de servidor da web não foram reproduzidos. |
+| `/dashboard/settings`, `/onboarding` | Local | Assistente na primeira execução (casal, data, moeda, idioma, contingência, tarefas recomendadas ou dados de exemplo). Ajustes do evento, idioma, moeda, Pix, backup e segurança do aparelho; configurações de servidor (SMTP, WhatsApp) são da web. |
 | `/dashboard/profile`, `/profile/change-password` | Não | Contas, senha e 2FA são conceitos do servidor; o Android offline usa biometria ou PIN do aparelho. |
 | `/dashboard/help` | Parcial | Ajuda móvel curta; conteúdo extenso e histórico da web não foram portados. |
 | `/login`, recuperação de senha e `/rsvp/[token]` | Não | Autenticação e RSVP público dependem de servidor acessível. O Android registra respostas manualmente. |
@@ -44,6 +44,13 @@ O convite móvel agora seleciona um anexo do modelo, verifica o tamanho e SHA-25
 ## Fundação da interface (Fase 1)
 
 Navegação tipada com estado preservado, editor em tela cheia com validação igual à da web, "Desfazer" e lixeira, temas claro/escuro, layout para telas largas, textos nos três idiomas e anexos fora do SQLite. Detalhes em [android.md](android.md#arquitetura-da-interface). Ainda falta o layout de lista e detalhe lado a lado em tablets.
+
+## Painel, tarefas e pagamentos (Fase 2, parte 1)
+
+- O painel usa `DashboardMetrics` e `ActionStream`, portas de `src/lib/reports/dashboard-data.ts` e `src/lib/action-stream.ts`: o orçamento total soma os itens de fornecedores ativos (`actualValue ?? estimatedValue`) mais a contingência sobre o contratado, como na web.
+- `completedAt` da tarefa segue a Server Action: gravado ao concluir, preservado em edições e apagado ao reabrir.
+- Parcelas usam intervalo em dias (padrão 30) e no máximo 60 parcelas, como `generateInstallments`; "Sinal + saldo" grava o sinal pago hoje e o saldo pendente, como `createSplitPayment`.
+- Na web, o fluxo de ações deixou de mostrar contratos assinados (`SIGNED_DIGITAL`/`SIGNED_PHYSICAL`) e cancelados como "a expirar".
 
 ## Próximas lacunas de paridade
 

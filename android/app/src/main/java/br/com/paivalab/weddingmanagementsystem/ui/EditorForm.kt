@@ -62,6 +62,8 @@ data class EditorFormState(
     val trousseauRoom: String = "OTHER",
     val trousseauStore: String = "",
     val itemPriority: String = "MEDIUM",
+    val taskResponsible: String = "",
+    val taskVenueId: String? = null,
     val parentId: String? = null,
     val guestGroupId: String? = null,
     val seatingTableId: String? = null,
@@ -148,6 +150,8 @@ fun editorFormFrom(module: ModuleDefinition, initial: PlannerRecord?, parentId: 
         trousseauRoom = text("room", "OTHER"),
         trousseauStore = text("store"),
         itemPriority = text("priority", if (module.kind == Kinds.TROUSSEAU) "NICE_TO_HAVE" else "MEDIUM"),
+        taskResponsible = text("responsible"),
+        taskVenueId = text("venueId").ifBlank { null },
         parentId = initial?.parentId ?: parentId,
         guestGroupId = initial?.guestGroupId,
         seatingTableId = initial?.seatingTableId,
@@ -281,7 +285,12 @@ fun buildEditorRecord(
                 putText("store", form.trousseauStore)
                 put("priority", form.itemPriority)
             }
-            Kinds.TASK -> put("priority", form.itemPriority)
+            Kinds.TASK -> {
+                put("priority", form.itemPriority)
+                putText("responsible", form.taskResponsible)
+                val venueId = form.taskVenueId?.takeIf { index.find(it)?.kind == Kinds.VENUE }
+                if (venueId == null) remove("venueId") else put("venueId", venueId)
+            }
             Kinds.INCOME -> put("frequency", form.incomeFrequency)
             Kinds.CONTRACT -> {
                 put("version", version ?: 1)

@@ -41,7 +41,8 @@ data class ModuleDefinition(
 )
 
 val modules = listOf(
-    ModuleDefinition(Kinds.TASK, R.string.tasks, Icons.Default.TaskAlt, listOf("TODO", "IN_PROGRESS", "DONE", "BLOCKED"), hasDate = true),
+    ModuleDefinition(Kinds.TASK, R.string.tasks, Icons.Default.TaskAlt, listOf("TODO", "IN_PROGRESS", "DONE", "BLOCKED"), hasDate = true,
+        parentKind = Kinds.VENDOR),
     ModuleDefinition(Kinds.VENDOR, R.string.vendors, Icons.Default.People, listOf("NEGOTIATION", "CONTRACTED", "FINALIZED"), hasContact = true),
     ModuleDefinition(Kinds.GUEST, R.string.guests, Icons.Default.Person, listOf("NOT_INVITED", "INVITED", "CONFIRMED", "DECLINED", "MAYBE"), hasContact = true),
     ModuleDefinition(Kinds.VENUE, R.string.venues, Icons.Default.Hotel, hasAmount = true, hasContact = true),

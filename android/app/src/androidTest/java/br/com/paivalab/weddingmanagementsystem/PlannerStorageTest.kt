@@ -12,6 +12,7 @@ import br.com.paivalab.weddingmanagementsystem.data.BlobStore
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.GuestImport
+import br.com.paivalab.weddingmanagementsystem.data.InstallmentPlan
 import br.com.paivalab.weddingmanagementsystem.data.PlannerBlob
 import br.com.paivalab.weddingmanagementsystem.data.PlannerDatabase
 import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
@@ -20,6 +21,7 @@ import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRepository
 import java.io.File
 import java.security.MessageDigest
+import java.time.LocalDate
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlinx.coroutines.runBlocking
@@ -61,6 +63,47 @@ class PlannerStorageTest {
         assertTrue(ExtraFields.has(ExtraFields.parse(database.dao().find("gift")!!.extraJson), "processedAt"))
         assertNotNull(runCatching { repository.convertGift("gift", Kinds.INCOME) }.exceptionOrNull())
         assertEquals(1, database.dao().allRecords().count { it.kind == Kinds.INCOME })
+    }
+
+    @Test fun paymentFlowsMatchTheWeb() = runBlocking {
+        repository.save(PlannerRecord("vendor", Kinds.VENDOR, "Buffet", subtitle = "Buffet"))
+        val created = repository.createInstallments(InstallmentPlan("vendor", "Buffet", 100_000, 3,
+            LocalDate.parse("2027-01-31"), intervalDays = 30, method = "BOLETO", lateFeePercent = 2.0))
+        assertEquals(3, created)
+        val installments = database.dao().allRecords().filter { it.kind == Kinds.PAYMENT }.sortedBy { it.date }
+        assertEquals(listOf("2027-01-31", "2027-03-02", "2027-04-01"), installments.map { it.date })
+        val extra = ExtraFields.parse(installments.last().extraJson)
+        assertEquals("BOLETO", extra.getString("method"))
+        assertEquals(2.0, ExtraFields.double(extra, "lateFeePercent")!!, 0.0)
+        assertTrue(!extra.has("interestPercentPerMonth"))
+
+        val id = installments.first().id
+        repository.markPaid(id)
+        val undo = repository.undoPaid(id)
+        val reverted = database.dao().find(id)!!
+        assertEquals("PENDING", reverted.status)
+        assertTrue(!ExtraFields.parse(reverted.extraJson).has("paidAt"))
+        repository.undo(undo)
+        assertEquals("PAID", database.dao().find(id)!!.status)
+
+        val split = repository.createSplitPayment("vendor", "Fotografia", 30_000, "PIX", 70_000, LocalDate.parse("2027-05-01"), "CASH")
+        val parts = split.created.map { database.dao().find(it)!! }
+        assertEquals(listOf("PAID", "PENDING"), parts.map { it.status })
+        assertTrue(ExtraFields.has(ExtraFields.parse(parts[0].extraJson), "paidAt"))
+        assertEquals("2027-05-01", parts[1].date)
+        repository.undo(split)
+        assertTrue(split.created.all { database.dao().find(it) == null })
+    }
+
+    @Test fun taskCompletedAtFollowsStatus() = runBlocking {
+        repository.save(PlannerRecord("task", Kinds.TASK, "Provar bolo", status = "TODO"))
+        repository.setStatus("task", "DONE")
+        val completed = ExtraFields.instant(ExtraFields.parse(database.dao().find("task")!!.extraJson), "completedAt")
+        assertNotNull(completed)
+        repository.save(database.dao().find("task")!!.copy(title = "Provar bolo e doces", extraJson = "{}"))
+        assertEquals(completed, ExtraFields.instant(ExtraFields.parse(database.dao().find("task")!!.extraJson), "completedAt"))
+        repository.setStatus("task", "IN_PROGRESS")
+        assertTrue(!ExtraFields.parse(database.dao().find("task")!!.extraJson).has("completedAt"))
     }
 
     @Test fun groupRsvpUpdatesMembersOnly() = runBlocking {

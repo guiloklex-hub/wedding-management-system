@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -111,7 +112,22 @@ fun PlannerApp(
     externalRecordId: String? = null,
     onExternalConsumed: () -> Unit = {},
     onLoadDemoSeed: () -> Unit = {},
+    onStartWithDemo: () -> Unit = {},
 ) {
+    val onboarding by model.onboardingNeeded.collectAsStateWithLifecycle()
+    when (onboarding) {
+        null -> {
+            Box(Modifier.fillMaxSize().background(PlannerBackground))
+            return
+        }
+        true -> {
+            val language by model.locale.collectAsStateWithLifecycle()
+            val currency by model.currency.collectAsStateWithLifecycle()
+            OnboardingScreen(language, currency, model::setLocale, model::completeOnboarding, onStartWithDemo)
+            return
+        }
+        false -> Unit
+    }
     val nav = rememberNavController()
     val index by model.index.collectAsStateWithLifecycle()
     val storedFiles by model.allFiles.collectAsStateWithLifecycle()
@@ -134,6 +150,7 @@ fun PlannerApp(
     var inviteAttachmentId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingInvite by rememberSaveable { mutableStateOf<List<String>?>(null) }
     var installments by rememberSaveable { mutableStateOf(false) }
+    var splitPayment by rememberSaveable { mutableStateOf(false) }
     var showPixDialog by rememberSaveable { mutableStateOf(false) }
     var pixGiftId by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -209,8 +226,9 @@ fun PlannerApp(
     }
     val isEditor = destination?.hasRoute(EditorRoute::class) == true
     val isTabRoot = destination == null || tabs.any { destination.isTab(it) }
-    val stack by nav.currentBackStack.collectAsStateWithLifecycle()
-    val selectedTab = stack.lastOrNull { entry -> tabs.any { entry.destination.isTab(it) } }?.destination
+    // Telas empilhadas (detalhe, editor) mantêm destacada a aba de onde vieram.
+    var lastTab by rememberSaveable { mutableStateOf(tabs.first().section) }
+    tabs.firstOrNull { destination.isTab(it) }?.let { lastTab = it.section }
     val dynamicTitle = backStack?.let { entry ->
         when {
             destination?.hasRoute(DetailRoute::class) == true -> index.find(entry.toRoute<DetailRoute>().id)?.title
@@ -228,13 +246,14 @@ fun PlannerApp(
             factory = viewModelFactory { initializer { ModuleListViewModel(createSavedStateHandle(), kind, model.index) } },
         )
         ModuleScreen(
-            module, index, listModel, currency, language,
+            module, index, listModel, currency, language, eventDate,
             ModuleActions(
                 open = openRecord,
                 add = { nav.navigate(EditorRoute(kind)) },
                 delete = { deleteTargetId = it.id },
                 setStatus = { record, status -> model.setStatus(record.id, status) },
                 markPaid = { model.markPaid(it.id) },
+                undoPaid = { model.undoPaid(it.id) },
                 whatsApp = { if (!openWhatsApp(activity, it)) notify(genericError) },
                 dial = { if (!dialPhone(activity, it.phone)) notify(genericError) },
                 maps = { if (!openMap(activity, it)) notify(genericError) },
@@ -249,6 +268,7 @@ fun PlannerApp(
                 seedTasks = model::seedTaskTemplates,
                 seedVenueChecklist = model::seedVenueChecklist,
                 installments = { installments = true },
+                splitPayment = { splitPayment = true },
                 groupRsvp = { record, status -> model.setGroupRsvp(record.id, status) },
                 compare = { nav.navigate(VendorCompareRoute) },
                 sharePix = { pixGiftId = null; showPixDialog = true },
@@ -263,7 +283,7 @@ fun PlannerApp(
             NavigationRail(containerColor = PlannerSurface) {
                 tabs.forEach { tab ->
                     NavigationRailItem(
-                        selected = selectedTab.isTab(tab),
+                        selected = tab.section == lastTab,
                         onClick = { nav.openTab(tab.route) },
                         icon = { Icon(tab.icon, null) },
                         label = { Text(stringResource(tab.label)) },
@@ -294,7 +314,7 @@ fun PlannerApp(
                 if (!wide && !isEditor) NavigationBar(containerColor = PlannerSurface) {
                     tabs.forEach { tab ->
                         NavigationBarItem(
-                            selected = selectedTab.isTab(tab),
+                            selected = tab.section == lastTab,
                             onClick = { nav.openTab(tab.route) },
                             icon = { Icon(tab.icon, null) },
                             label = {
@@ -332,7 +352,7 @@ fun PlannerApp(
                 modifier = Modifier.fillMaxSize().padding(inner).wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = 960.dp),
             ) {
                 composable<DashboardRoute> {
-                    DashboardScreen(index, coupleNames, eventDate, currency, language, nav::openSection, openRecord)
+                    DashboardScreen(index, coupleNames, eventDate, contingencyPercent, currency, language, nav::openSection, openRecord)
                 }
                 composable<MoreRoute> { MoreScreen(index, nav::openSection) }
                 composable<TasksTabRoute> { moduleContent(Kinds.TASK) }
@@ -495,9 +515,20 @@ fun PlannerApp(
             currency = currency,
             language = language,
             onDismiss = { installments = false },
-            onSave = { vendorId, name, total, count, due ->
-                model.createInstallments(vendorId, name, total, count, due)
+            onSave = { plan ->
+                model.createInstallments(plan)
                 installments = false
+            },
+        )
+    }
+    if (splitPayment) {
+        SplitPaymentDialog(
+            index = index,
+            language = language,
+            onDismiss = { splitPayment = false },
+            onSave = { vendorId, name, deposit, depositMethod, balance, due, balanceMethod ->
+                model.createSplitPayment(vendorId, name, deposit, depositMethod, balance, due, balanceMethod)
+                splitPayment = false
             },
         )
     }

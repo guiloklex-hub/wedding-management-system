@@ -37,6 +37,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,6 +56,9 @@ import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
 /** Ações disponíveis nos cartões e no topo de uma lista de módulo. */
@@ -64,6 +68,7 @@ class ModuleActions(
     val delete: (PlannerRecord) -> Unit,
     val setStatus: (PlannerRecord, String) -> Unit,
     val markPaid: (PlannerRecord) -> Unit,
+    val undoPaid: (PlannerRecord) -> Unit,
     val whatsApp: (PlannerRecord) -> Unit,
     val dial: (PlannerRecord) -> Unit,
     val maps: (PlannerRecord) -> Unit,
@@ -75,6 +80,7 @@ class ModuleActions(
     val seedTasks: () -> Unit,
     val seedVenueChecklist: (String) -> Unit,
     val installments: () -> Unit,
+    val splitPayment: () -> Unit,
     val groupRsvp: (PlannerRecord, String) -> Unit,
     val compare: () -> Unit,
     val sharePix: () -> Unit,
@@ -89,9 +95,22 @@ fun ModuleScreen(
     viewModel: ModuleListViewModel,
     currency: String,
     language: String,
+    eventDate: String,
     actions: ModuleActions,
 ) {
     val state by viewModel.list.collectAsStateWithLifecycle()
+    val view by viewModel.view.collectAsStateWithLifecycle()
+    val month by viewModel.month.collectAsStateWithLifecycle()
+    val day by viewModel.day.collectAsStateWithLifecycle()
+    val daysToEvent = remember(eventDate) {
+        runCatching { ChronoUnit.DAYS.between(LocalDate.now(), LocalDate.parse(eventDate)) }.getOrNull()
+    }
+    val views = when (module.kind) {
+        Kinds.TASK -> listOf(ModuleListViewModel.VIEW_LIST to R.string.view_list, ModuleListViewModel.VIEW_KANBAN to R.string.view_kanban)
+        Kinds.PAYMENT -> listOf(ModuleListViewModel.VIEW_LIST to R.string.view_list, ModuleListViewModel.VIEW_CALENDAR to R.string.view_calendar)
+        else -> emptyList()
+    }
+    val activeView = views.firstOrNull { it.first == view }?.first ?: ModuleListViewModel.VIEW_LIST
     val query by viewModel.query.collectAsStateWithLifecycle()
     val selectedStatus by viewModel.status.collectAsStateWithLifecycle()
     val selectedTag by viewModel.tag.collectAsStateWithLifecycle()
@@ -100,6 +119,14 @@ fun ModuleScreen(
 
     LazyColumn(contentPadding = PaddingValues(16.dp, 10.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { ModuleSummaryBanner(module.kind, index, currency, language) }
+        if (module.kind == Kinds.TASK && daysToEvent != null) item { TaskPhaseBar(daysToEvent) }
+        if (views.isNotEmpty()) item {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                views.forEach { (key, label) ->
+                    FilterChip(selected = activeView == key, onClick = { viewModel.setView(key) }, label = { Text(stringResource(label)) })
+                }
+            }
+        }
         item {
             OutlinedTextField(
                 query,
@@ -128,7 +155,18 @@ fun ModuleScreen(
                 }
             }
         }
-        if (module.statuses.isNotEmpty()) item {
+        if (module.kind == Kinds.TASK) item {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf(
+                    null to stringResource(R.string.filter_all, state.total),
+                    ModuleListViewModel.STATUS_OPEN to stringResource(R.string.task_filter_open, state.open),
+                    ModuleListViewModel.STATUS_OVERDUE to stringResource(R.string.task_filter_overdue, state.overdue),
+                    ModuleListViewModel.STATUS_WEEK to stringResource(R.string.task_filter_week, state.week),
+                ).forEach { (key, label) ->
+                    FilterChip(selected = selectedStatus == key, onClick = { viewModel.setStatus(key) }, label = { Text(label) })
+                }
+            }
+        } else if (module.statuses.isNotEmpty()) item {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 FilterChip(selected = selectedStatus == null, onClick = { viewModel.setStatus(null) },
                     label = { Text(stringResource(R.string.filter_all, state.total)) })
@@ -177,7 +215,10 @@ fun ModuleScreen(
                 }
             }
             Kinds.PAYMENT -> item {
-                OutlinedButton(onClick = actions.installments, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.create_installments)) }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = actions.installments, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.create_installments)) }
+                    OutlinedButton(onClick = actions.splitPayment, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.split_payment)) }
+                }
             }
             Kinds.GIFT -> if (actions.pixConfigured) item {
                 OutlinedButton(onClick = actions.sharePix, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.share_pix)) }
@@ -190,8 +231,26 @@ fun ModuleScreen(
                 onAdd = actions.add,
             )
         }
-        items(state.items, key = { it.id }) { record ->
-            ModuleRecordCard(module, record, index, currency, language, actions)
+        when {
+            module.kind == Kinds.TASK && activeView == ModuleListViewModel.VIEW_KANBAN -> if (state.items.isNotEmpty()) item {
+                TaskKanban(state.items, index, language, actions.open, actions.setStatus)
+            }
+            module.kind == Kinds.PAYMENT && activeView == ModuleListViewModel.VIEW_CALENDAR -> {
+                val shownMonth = runCatching { YearMonth.parse(month) }.getOrElse { YearMonth.now() }
+                if (state.total > 0) item {
+                    PaymentCalendar(state.items, shownMonth, day, currency, language, viewModel::setMonth, viewModel::setDay)
+                }
+                val selected = state.items.filter { day != null && it.date?.take(10) == day }
+                if (day != null) item {
+                    Text(stringResource(R.string.calendar_day_title, formatDisplayDate(day, language)), style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold)
+                }
+                if (day != null && selected.isEmpty()) item { Text(stringResource(R.string.calendar_day_empty), color = PlannerMuted) }
+                items(selected, key = { it.id }) { record -> ModuleRecordCard(module, record, index, currency, language, actions) }
+            }
+            else -> items(state.items, key = { it.id }) { record ->
+                ModuleRecordCard(module, record, index, currency, language, actions)
+            }
         }
     }
 
@@ -286,6 +345,7 @@ private fun QuickActions(module: ModuleDefinition, record: PlannerRecord, index:
     }
     when (module.kind) {
         Kinds.PAYMENT -> if (record.status != "PAID") Action(R.string.mark_paid, PlannerEmerald) { actions.markPaid(record) }
+            else Action(R.string.undo_paid) { actions.undoPaid(record) }
         Kinds.INCOME -> if (record.status != "RECEIVED") Action(R.string.mark_received, PlannerEmerald) { actions.setStatus(record, "RECEIVED") }
         Kinds.TASK, Kinds.VENUE_CHECK -> if (record.status != "DONE") Action(R.string.mark_done, PlannerEmerald) { actions.setStatus(record, "DONE") }
         Kinds.GUEST -> {

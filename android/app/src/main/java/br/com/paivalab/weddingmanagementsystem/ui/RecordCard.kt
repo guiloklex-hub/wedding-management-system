@@ -117,8 +117,14 @@ internal fun RecordCard(
             }
             Kinds.TASK -> {
                 val priority = ExtraFields.text(extra, "priority")
-                if (priority.isNotBlank()) {
-                    InfoBadge("${stringResource(R.string.priority)}: ${webValueLabel(priority, language)}", priorityColor(priority))
+                val responsible = ExtraFields.text(extra, "responsible")
+                val venue = index.find(ExtraFields.text(extra, "venueId").ifBlank { null })
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (priority.isNotBlank()) {
+                        InfoBadge("${stringResource(R.string.priority)}: ${webValueLabel(priority, language)}", priorityColor(priority))
+                    }
+                    if (responsible.isNotBlank()) InfoBadge(stringResource(R.string.task_responsible_value, responsible), PlannerMuted)
+                    if (venue != null) InfoBadge(venue.title, PlannerChampagne)
                 }
             }
             Kinds.GUEST -> {

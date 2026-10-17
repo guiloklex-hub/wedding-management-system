@@ -65,3 +65,16 @@ val modules = listOf(
     ModuleDefinition(Kinds.INVITATION, R.string.invitations, Icons.Default.Mail),
     ModuleDefinition(Kinds.SAVE_THE_DATE, R.string.save_the_date, Icons.Default.CalendarMonth),
 )
+
+/** Rótulo no singular para campos que escolhem um único registro do tipo. */
+@StringRes
+fun singularLabel(kind: String): Int? = when (kind) {
+    Kinds.VENDOR -> R.string.label_vendor
+    Kinds.VENUE -> R.string.label_venue
+    Kinds.GROUP -> R.string.label_group
+    Kinds.TABLE -> R.string.label_table
+    Kinds.GUEST -> R.string.label_guest
+    Kinds.GOAL -> R.string.label_goal
+    Kinds.HONEYMOON -> R.string.label_honeymoon
+    else -> null
+}

@@ -26,10 +26,14 @@ object ReportExport {
         ("\uFEFF" + rows.joinToString("\r\n", postfix = "\r\n") { row ->
             row.joinToString(";") { cell ->
                 val first = cell.trimStart().firstOrNull()
-                val safe = if (first != null && first in "=+-@") "'$cell" else cell
+                val formula = first != null && first in "=+-@" && !cell.trim().matches(NUMBER_OR_PHONE)
+                val safe = if (formula) "'$cell" else cell
                 "\"${safe.replace("\"", "\"\"")}\""
             }
         }).toByteArray(Charsets.UTF_8)
+
+    /** Telefones (`+55 11 9999-8888`) e números negativos não executam nada no Excel. */
+    private val NUMBER_OR_PHONE = Regex("^[+-]?[0-9][0-9 ().-]*$")
 
     private fun amount(cents: Long): String = BigDecimal.valueOf(cents, 2).toPlainString()
 }

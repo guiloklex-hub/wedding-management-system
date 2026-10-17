@@ -165,7 +165,7 @@ fun RecordEditorScreen(
             if (module.parentKind != null) {
                 val parentModule = modules.first { it.kind == module.parentKind }
                 RecordPickerField(
-                    label = stringResource(parentModule.title),
+                    label = stringResource(singularLabel(module.parentKind) ?: parentModule.title),
                     selectedId = form.parentId,
                     options = index.kind(module.parentKind),
                     allowNone = module.kind != Kinds.PAYMENT,
@@ -210,7 +210,7 @@ fun RecordEditorScreen(
             if (module.kind == Kinds.TASK) {
                 EditorTextField(form.taskResponsible, { update { copy(taskResponsible = it.take(EditorLimits.NAME)) } },
                     stringResource(R.string.task_responsible), null)
-                RecordPickerField(stringResource(R.string.venues), form.taskVenueId, index.kind(Kinds.VENUE), allowNone = true) {
+                RecordPickerField(stringResource(R.string.label_venue), form.taskVenueId, index.kind(Kinds.VENUE), allowNone = true) {
                     update { copy(taskVenueId = it) }
                 }
             }
@@ -289,7 +289,7 @@ fun RecordEditorScreen(
                     error(EditorField.AGE), KeyboardType.Number)
                 ChoiceRow(stringResource(R.string.guest_language), GuestRules.languages.zip(languageOptions.map { it.second }),
                     form.guestLanguage, allowNone = true) { update { copy(guestLanguage = it) } }
-                RecordPickerField(stringResource(R.string.groups), form.guestGroupId, index.kind(Kinds.GROUP), allowNone = true) {
+                RecordPickerField(stringResource(R.string.label_group), form.guestGroupId, index.kind(Kinds.GROUP), allowNone = true) {
                     update { copy(guestGroupId = it) }
                 }
                 val tags = index.kind(Kinds.TAG).sortedBy { it.title.lowercase() }
@@ -309,7 +309,7 @@ fun RecordEditorScreen(
                     EditorTextField(form.plusConfirmed, { update { copy(plusConfirmed = it.filter(Char::isDigit).take(2)) } },
                         stringResource(R.string.plus_confirmed), error(EditorField.PLUS_CONFIRMED), KeyboardType.Number, Modifier.weight(1f))
                 }
-                RecordPickerField(stringResource(R.string.seating), form.seatingTableId, index.kind(Kinds.TABLE), allowNone = true,
+                RecordPickerField(stringResource(R.string.label_table), form.seatingTableId, index.kind(Kinds.TABLE), allowNone = true,
                     error = error(EditorField.TABLE)) { update { copy(seatingTableId = it) } }
             }
             EditorTextField(form.notes, { update { copy(notes = it.take(EditorLimits.LONG_TEXT)) } }, stringResource(R.string.notes), null,

@@ -512,4 +512,11 @@
     <plurals name="group_members_selected"><item quantity="one">%1$d selecionado</item><item quantity="other">%1$d selecionados</item></plurals>
     <string name="gift_post_title">Lançar nas finanças</string>
     <string name="group_members_in">Hoje em %1$s</string>
+    <string name="label_vendor">Fornecedor</string>
+    <string name="label_venue">Local</string>
+    <string name="label_group">Grupo</string>
+    <string name="label_table">Mesa</string>
+    <string name="label_guest">Convidado</string>
+    <string name="label_goal">Meta</string>
+    <string name="label_honeymoon">Lua de mel</string>
 </resources>

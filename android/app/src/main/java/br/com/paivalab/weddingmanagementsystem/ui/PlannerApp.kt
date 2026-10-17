@@ -186,8 +186,8 @@ fun PlannerApp(
             if (written.isFailure) notify(genericError)
         }
     }
-    val csvHeader = listOf(R.string.csv_name, R.string.phone, R.string.email, R.string.guest_side, R.string.groups, R.string.status,
-        R.string.plus_confirmed, R.string.seating, R.string.guest_dietary, R.string.guest_city, R.string.guest_padrinho,
+    val csvHeader = listOf(R.string.csv_name, R.string.phone, R.string.email, R.string.guest_side, R.string.label_group, R.string.status,
+        R.string.plus_confirmed, R.string.label_table, R.string.guest_dietary, R.string.guest_city, R.string.guest_padrinho,
         R.string.guest_vip, R.string.guest_child).map { stringResource(it) }
     val csvYes = stringResource(R.string.csv_yes)
     val guestCsv = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->

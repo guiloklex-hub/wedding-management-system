@@ -138,6 +138,37 @@ class PlannerStorageTest {
         assertTrue(!ExtraFields.parse(database.dao().find("ana")!!.extraJson).has("checkedInAt"))
     }
 
+    @Test fun vendorStatusContractSigningAndPdfVersions() = runBlocking {
+        val vendor = PlannerRecord("vendor", Kinds.VENDOR, "Foto Luz", subtitle = "Foto")
+        repository.createVendor(vendor, 800_000, "Orçamento: Foto Luz")
+        val budget = database.dao().allRecords().single { it.kind == Kinds.BUDGET }
+        assertEquals(listOf("vendor", 800_000L, "Orçamento: Foto Luz"), listOf(budget.parentId, budget.estimatedCents, budget.title))
+
+        val undo = repository.setVendorStatus("vendor", "CONTRACTED", 750_000)
+        assertEquals("CONTRACTED", database.dao().find("vendor")!!.status)
+        assertEquals(750_000L, database.dao().find(budget.id)!!.amountCents)
+        repository.undo(undo)
+        assertEquals(null, database.dao().find(budget.id)!!.amountCents)
+
+        repository.save(PlannerRecord("contract", Kinds.CONTRACT, "Contrato", status = "SENT", parentId = "vendor",
+            extraJson = """{"version":1}"""))
+        repository.signContract("contract", "PHYSICAL", LocalDate.parse("2027-01-20"))
+        val signed = database.dao().find("contract")!!
+        assertEquals(listOf("SIGNED_PHYSICAL", "2027-01-20"), listOf(signed.status, signed.date))
+
+        fun pdf(name: String) = Uri.fromFile(File(context.cacheDir, name).apply { writeBytes("%PDF-1.4 $name".toByteArray()) })
+        repository.addAttachment(context, "contract", pdf("v1.pdf"))
+        repository.addAttachment(context, "contract", pdf("v2.pdf"))
+        val files = database.dao().allFiles().filter { it.recordId == "contract" }.sortedBy { it.version }
+        assertEquals(listOf(1, 2), files.map { it.version })
+        assertNotNull(files[0].deletedAt)
+        assertNull(files[1].deletedAt)
+        assertEquals(2, ExtraFields.int(ExtraFields.parse(database.dao().find("contract")!!.extraJson), "version"))
+
+        repository.addAttachment(context, "vendor", pdf("recibo.pdf"), "RECEIPT")
+        assertEquals("RECEIPT", database.dao().allFiles().single { it.recordId == "vendor" }.kind)
+    }
+
     @Test fun groupRsvpUpdatesMembersOnly() = runBlocking {
         repository.save(PlannerRecord("group", Kinds.GROUP, "Família"))
         repository.save(PlannerRecord("member", Kinds.GUEST, "Ana", guestGroupId = "group", status = "INVITED"))

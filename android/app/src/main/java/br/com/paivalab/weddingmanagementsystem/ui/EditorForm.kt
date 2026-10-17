@@ -9,6 +9,7 @@ import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.Money
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
+import br.com.paivalab.weddingmanagementsystem.data.VendorCategories
 import br.com.paivalab.weddingmanagementsystem.data.WebValues
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -38,6 +39,7 @@ data class EditorFormState(
     val venueMapsUrl: String = "",
     val venueShortlisted: Boolean = false,
     val rating: Int = 0,
+    val vendorCategoryKey: String = "",
     val vendorIndicatedBy: String = "",
     val vendorTags: String = "",
     val vendorContractLink: String = "",
@@ -108,7 +110,7 @@ object EditorLimits {
 
 private fun centsText(cents: Long?): String = cents?.let { BigDecimal.valueOf(it, 2).toPlainString() }.orEmpty()
 
-fun editorFormFrom(module: ModuleDefinition, initial: PlannerRecord?, parentId: String?): EditorFormState {
+fun editorFormFrom(module: ModuleDefinition, initial: PlannerRecord?, parentId: String?, nextContractVersion: Int = 1): EditorFormState {
     val json = ExtraFields.parse(WebValues.normalizeExtra(module.kind, initial?.extraJson ?: "{}"))
     fun text(key: String, default: String = "") = ExtraFields.text(json, key, default)
     return EditorFormState(
@@ -132,11 +134,12 @@ fun editorFormFrom(module: ModuleDefinition, initial: PlannerRecord?, parentId: 
         venueMapsUrl = text("mapsUrl"),
         venueShortlisted = ExtraFields.bool(json, "isShortlisted"),
         rating = ExtraFields.int(json, "rating")?.coerceIn(0, 5) ?: 0,
+        vendorCategoryKey = VendorCategories.key(json).orEmpty(),
         vendorIndicatedBy = text("indicatedBy"),
         vendorTags = text("tags"),
         vendorContractLink = text("contractLink"),
         incomeFrequency = text("frequency", "ONE_TIME"),
-        contractVersion = (ExtraFields.int(json, "version") ?: 1).toString(),
+        contractVersion = (ExtraFields.int(json, "version") ?: if (initial == null) nextContractVersion else 1).toString(),
         contractExpiresAt = ExtraFields.day(json, "expiresAt")?.toString().orEmpty(),
         contractPaymentTerms = text("paymentTerms"),
         contractCancellationPolicy = text("cancellationPolicy"),
@@ -225,6 +228,8 @@ fun buildEditorRecord(
     val estimated = when (module.kind) {
         Kinds.BUDGET -> money(EditorField.ESTIMATED, form.estimated, required = true)
         Kinds.TROUSSEAU -> money(EditorField.ESTIMATED, form.estimated, required = false)
+        // Como na web, o fornecedor novo já nasce com o item de orçamento estimado.
+        Kinds.VENDOR -> if (initial == null) money(EditorField.ESTIMATED, form.estimated, required = true) else initial.estimatedCents
         else -> initial?.estimatedCents
     }
     val date = if (module.hasDate) day(EditorField.DATE, form.date) else initial?.date
@@ -273,6 +278,7 @@ fun buildEditorRecord(
             }
             Kinds.VENDOR -> {
                 if (form.rating in 1..5) put("rating", form.rating) else remove("rating")
+                putText("categoryKey", form.vendorCategoryKey.takeIf { it in VendorCategories.colors }.orEmpty())
                 putText("indicatedBy", form.vendorIndicatedBy)
                 putText("tags", form.vendorTags)
                 putText("contractLink", form.vendorContractLink)

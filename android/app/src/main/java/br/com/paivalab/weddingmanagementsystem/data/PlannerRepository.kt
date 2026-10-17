@@ -199,7 +199,7 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
         UndoSnapshot(emptyList(), listOf(deposit.id, balance.id))
     }
 
-    suspend fun addAttachment(context: Context, recordId: String, uri: Uri) {
+    suspend fun addAttachment(context: Context, recordId: String, uri: Uri, kind: String = "OTHER") {
         val record = dao.find(recordId) ?: error("Registro ausente")
         val resolver = context.contentResolver
         val bytes = resolver.openInputStream(uri)?.use { input ->
@@ -222,20 +222,34 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
             context.getString(br.com.paivalab.weddingmanagementsystem.R.string.contract_pdf_required)
         }
         val file = PlannerFile(UUID.randomUUID().toString(), recordId,
-            if (contractFile) "CONTRACT" else "ATTACHMENT", name.take(160),
+            if (contractFile) AttachmentKinds.CONTRACT else AttachmentKinds.normalize(kind), name.take(160),
             if (contractFile) "application/pdf" else resolver.getType(uri) ?: "application/octet-stream",
-            bytes.size.toLong(), hash,
-            version = if (contractFile) JSONObject(record.extraJson).optInt("version", 1).coerceAtLeast(1) else 1)
+            bytes.size.toLong(), hash)
         blobs.write(file.id, bytes)
         try {
             database.withTransaction {
-                dao.saveFile(file)
+                if (contractFile) replaceContractFile(record, file) else dao.saveFile(file)
                 dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), recordId, "ADD_FILE", details = file.id))
             }
         } catch (error: Exception) {
             blobs.delete(file.id)
             throw error
         }
+    }
+
+    /**
+     * Como `replaceContractFile` da web: o primeiro PDF fica com a versão do
+     * contrato; os seguintes arquivam o atual e incrementam a versão.
+     */
+    private suspend fun replaceContractFile(contract: PlannerRecord, file: PlannerFile) {
+        val now = System.currentTimeMillis()
+        val extra = ExtraFields.parse(contract.extraJson)
+        val current = (ExtraFields.int(extra, "version") ?: 1).coerceAtLeast(1)
+        val active = dao.allFiles().filter { it.recordId == contract.id && it.kind == AttachmentKinds.CONTRACT && it.deletedAt == null }
+        val version = if (active.isEmpty()) current else current + 1
+        active.forEach { dao.saveFile(it.copy(deletedAt = now)) }
+        dao.saveFile(file.copy(version = version))
+        if (version != current) dao.save(contract.copy(extraJson = extra.put("version", version).toString(), updatedAt = now))
     }
 
     suspend fun exportAttachment(context: Context, file: PlannerFile, destination: Uri) {
@@ -387,6 +401,43 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
         dao.save(payment.copy(status = "PAID", extraJson = extra.toString(), updatedAt = now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "MARK_PAID"))
         UndoSnapshot(listOf(payment))
+    }
+
+    /** Cria o fornecedor com o item de orçamento inicial, como `createVendor` da web. */
+    suspend fun createVendor(vendor: PlannerRecord, estimatedCents: Long?, budgetTitle: String) = database.withTransaction {
+        require(dao.findAny(vendor.id) == null)
+        save(vendor)
+        if (estimatedCents != null) {
+            dao.save(PlannerRecord(UUID.randomUUID().toString(), Kinds.BUDGET, budgetTitle.take(160), estimatedCents = estimatedCents,
+                parentId = vendor.id))
+        }
+    }
+
+    /**
+     * Muda a situação do fornecedor; ao contratar com valor informado, grava o
+     * valor real nos itens de orçamento, como `updateVendorStatus` da web.
+     */
+    suspend fun setVendorStatus(id: String, status: String, actualCents: Long?): UndoSnapshot = database.withTransaction {
+        require(status in setOf("NEGOTIATION", "CONTRACTED", "FINALIZED"))
+        val vendor = dao.find(id) ?: error("Fornecedor não encontrado")
+        require(vendor.kind == Kinds.VENDOR)
+        val now = System.currentTimeMillis()
+        val budgets = if (status == "CONTRACTED" && actualCents != null && actualCents >= 0) {
+            dao.allRecords().filter { it.kind == Kinds.BUDGET && it.parentId == id && it.deletedAt == null }
+        } else emptyList()
+        dao.save(vendor.copy(status = status, updatedAt = now))
+        dao.saveRecords(budgets.map { it.copy(amountCents = actualCents, updatedAt = now) })
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "STATUS", details = status))
+        UndoSnapshot(listOf(vendor) + budgets)
+    }
+
+    /** "Marcar assinado", como `signContract` da web. */
+    suspend fun signContract(id: String, method: String, signedAt: LocalDate): UndoSnapshot = database.withTransaction {
+        val contract = dao.find(id) ?: error("Contrato não encontrado")
+        require(contract.kind == Kinds.CONTRACT)
+        dao.save(contract.copy(status = ContractRules.signedStatus(method), date = signedAt.toString(), updatedAt = System.currentTimeMillis()))
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "SIGN_CONTRACT", details = method))
+        UndoSnapshot(listOf(contract))
     }
 
     /** Volta um pagamento para pendente, como `undoPaymentPaid` da web. */

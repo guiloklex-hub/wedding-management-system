@@ -67,4 +67,24 @@ class EditorFormTest {
         assertEquals(true, extra.getBoolean("isVIP"))
         assertEquals("en", extra.getString("language"))
     }
+
+    @Test fun newVendorNeedsEstimateAndKeepsCategoryKey() {
+        val missing = buildEditorRecord(module(Kinds.VENDOR), EditorFormState(title = "Foto Luz", subtitle = "Fotografia"), null, index)
+        assertEquals(R.string.err_required, (missing as EditorOutcome.Invalid).errors[EditorField.ESTIMATED])
+        val valid = buildEditorRecord(module(Kinds.VENDOR),
+            EditorFormState(title = "Foto Luz", subtitle = "Fotografia", estimated = "8000", vendorCategoryKey = "PHOTO_VIDEO"), null, index)
+        val record = (valid as EditorOutcome.Valid).record
+        assertEquals(800_000L, record.estimatedCents)
+        assertEquals("PHOTO_VIDEO", JSONObject(record.extraJson).getString("categoryKey"))
+        // Ao editar, o estimado fica nos itens de orçamento e não é pedido de novo.
+        val edited = buildEditorRecord(module(Kinds.VENDOR), editorFormFrom(module(Kinds.VENDOR), vendor, null), vendor, index)
+        assertTrue(edited is EditorOutcome.Valid)
+    }
+
+    @Test fun newContractStartsAtNextVendorVersion() {
+        val withContract = RecordIndex(listOf(vendor, PlannerRecord("c1", Kinds.CONTRACT, "Contrato", parentId = "v1")))
+        val form = editorFormFrom(module(Kinds.CONTRACT), null, "v1",
+            br.com.paivalab.weddingmanagementsystem.data.ContractRules.nextVersion(withContract, "v1"))
+        assertEquals("2", form.contractVersion)
+    }
 }

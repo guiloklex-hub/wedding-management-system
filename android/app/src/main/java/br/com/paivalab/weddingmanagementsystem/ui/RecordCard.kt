@@ -33,6 +33,7 @@ import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PaymentAdjustment
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
+import br.com.paivalab.weddingmanagementsystem.data.VendorCategories
 import kotlin.math.roundToInt
 
 @Composable
@@ -77,6 +78,7 @@ internal fun RecordCard(
 
         when (record.kind) {
             Kinds.VENDOR -> {
+                VendorCategories.key(extra)?.let { key -> InfoBadge(stringResource(categoryLabel(key)), categoryColor(key)) }
                 val rating = ExtraFields.int(extra, "rating") ?: 0
                 if (rating in 1..5) {
                     val description = stringResource(R.string.rating_value, rating)

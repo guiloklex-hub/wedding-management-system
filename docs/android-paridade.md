@@ -11,9 +11,9 @@ Legenda: **sim** = fluxo principal equivalente; **parcial** = tela existe, mas f
 | `/dashboard` | Parcial | Mesmos números da web (orçamento com contingência, pago, saldo devedor, cobertura de caixa), alerta de quitação, próximas ações com os 7 tipos, funil, RSVP, presentes e próximos vencimentos. Falta o gráfico de distribuição por categoria. |
 | `/dashboard/insights` | Parcial | Indicadores, caixa e riscos locais existem; Curva S, burndown e waterfall detalhados não foram portados. |
 | `/dashboard/reports` e 10 entradas | Parcial | Há um hub móvel e telas resumidas para fluxo de caixa, funil, riscos, convidados, presentes, tarefas, lua de mel, enxoval e atividade. Gráficos, séries temporais e filtros da web ainda diferem. |
-| `/dashboard/vendors` | Sim | Lista, edição, filtros e comparação locais. |
-| `/dashboard/vendors/compare` | Parcial | Comparação local mostra valores, pagamentos, avaliação e status; recortes e visualização não são idênticos. |
-| `/dashboard/vendors/[id]` | Parcial | Página dedicada móvel reúne contatos, observações, cláusulas, contratos, PDFs, inclusive versões anteriores arquivadas, orçamento e pagamentos. Assinatura formal da web ainda não tem fluxo móvel. |
+| `/dashboard/vendors` | Sim | As 23 categorias da web com cor, avaliação, situação na lista (ao contratar sem valor real, pede o valor contratado) e orçamento estimado criado junto com o fornecedor. |
+| `/dashboard/vendors/compare` | Sim | Escolha de 2 a 4 fornecedores; valores, pagamentos, saldo, avaliação, situação, indicação, tags e contagem de contatos, notas e contratos. |
+| `/dashboard/vendors/[id]` | Sim | Contatos, observações, cláusulas, contratos com "Marcar assinado" (digital ou físico), substituição do PDF com nova versão e arquivo da anterior, tipo de cada anexo, orçamento e pagamentos com exclusão. |
 | `/dashboard/venues` | Sim | Cadastro, busca e edição locais. |
 | `/dashboard/venues/[id]` | Parcial | Página dedicada móvel mostra condições, restrições, checklist e anexos; faltam alguns campos de edição da web. |
 | `/dashboard/tasks` | Sim | Lista e Kanban, filtros "em aberto", "atrasadas" e "próximos 7 dias", barra de fases, responsável, fornecedor, local e `completedAt`. Avisos por email/WhatsApp são da web. |
@@ -57,6 +57,13 @@ Navegação tipada com estado preservado, editor em tela cheia com validação i
 - Os estados de presente seguem a web: só `RECEIVED` e `THANKED`, com `thankedAt` acompanhando o estado. `PENDING` e `PROCESSED` de versões anteriores do Android viram `RECEIVED` ao salvar (o lançamento continua registrado em `processedAt`).
 - "Lançar" cria uma receita com fonte `GIFT` e `givenByName`, ou um ativo, como `convertGiftCashToIncomeOrAsset`; só presentes em dinheiro com valor podem ser lançados.
 - O resumo do grupo usa a mesma regra de contato de `summarizeGroup`: o contato do próprio grupo e, sem ele, o primeiro integrante com telefone válido (E.164) ou e-mail.
+
+## Fornecedores e contratos (Fase 2, parte 3)
+
+- `categoryKey` usa as mesmas 23 chaves e cores de `src/lib/categories.ts`; a descrição livre (`category`) acompanha a categoria escolhida até ser personalizada.
+- Novo fornecedor exige o valor estimado e cria o item "Orçamento: nome", como `createVendor`. Contratar pelo botão "Situação" grava o valor real nos itens de orçamento, como `updateVendorStatus`.
+- O primeiro PDF de um contrato fica com a versão do contrato; os seguintes arquivam o atual e incrementam a versão, como `replaceContractFile`. Contrato novo começa na versão seguinte às do fornecedor, como `createContract`.
+- Anexos comuns pedem o tipo (proposta, recibo, nota fiscal, documento, foto, outro). Na web, a restauração passou a manter a versão do PDF e a converter o tipo genérico antigo do Android.
 
 ## Próximas lacunas de paridade
 

@@ -67,7 +67,7 @@ internal fun InstallmentsDialog(
         text = {
             Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 EditorTextField(title, { title = it.take(EditorLimits.NAME) }, stringResource(R.string.title), errors["title"]?.let { stringResource(it) })
-                RecordPickerField(stringResource(R.string.vendors), vendorId, index.kind(Kinds.VENDOR), allowNone = false,
+                RecordPickerField(stringResource(R.string.label_vendor), vendorId, index.kind(Kinds.VENDOR), allowNone = false,
                     error = errors["vendor"]?.let { stringResource(it) }) { vendorId = it }
                 EditorTextField(amount, { amount = it }, stringResource(R.string.amount), errors["amount"]?.let { stringResource(it) },
                     KeyboardType.Decimal)
@@ -143,7 +143,7 @@ internal fun SplitPaymentDialog(
         text = {
             Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 EditorTextField(title, { title = it.take(EditorLimits.NAME) }, stringResource(R.string.title), errors["title"]?.let { stringResource(it) })
-                RecordPickerField(stringResource(R.string.vendors), vendorId, index.kind(Kinds.VENDOR), allowNone = false,
+                RecordPickerField(stringResource(R.string.label_vendor), vendorId, index.kind(Kinds.VENDOR), allowNone = false,
                     error = errors["vendor"]?.let { stringResource(it) }) { vendorId = it }
                 SectionLabel(stringResource(R.string.split_deposit_title))
                 EditorTextField(deposit, { deposit = it }, stringResource(R.string.split_deposit_amount), errors["deposit"]?.let { stringResource(it) },

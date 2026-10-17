@@ -155,7 +155,7 @@ fun WeddingDayScreen(
                         StatusBadge("CONFIRMED", language)
                     } else {
                         OutlinedButton(onClick = {
-                            model.checkInGuest(guest.id)
+                            model.setCheckedIn(guest.id, true)
                         }) {
                             Text(localized(R.string.check_in, language))
                         }

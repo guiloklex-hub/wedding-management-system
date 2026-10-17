@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
+import br.com.paivalab.weddingmanagementsystem.data.GuestRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
@@ -164,7 +165,7 @@ fun RecordEditorScreen(
             if (module.parentKind != null) {
                 val parentModule = modules.first { it.kind == module.parentKind }
                 RecordPickerField(
-                    label = stringResource(parentModule.title),
+                    label = stringResource(singularLabel(module.parentKind) ?: parentModule.title),
                     selectedId = form.parentId,
                     options = index.kind(module.parentKind),
                     allowNone = module.kind != Kinds.PAYMENT,
@@ -193,10 +194,23 @@ fun RecordEditorScreen(
                 EditorTextField(form.trousseauStore, { update { copy(trousseauStore = it.take(EditorLimits.NAME)) } },
                     stringResource(R.string.store), null)
             }
+            if (module.kind == Kinds.GIFT) {
+                ChoiceRow(stringResource(R.string.gift_type), listOf("CASH" to stringResource(R.string.gift_type_cash),
+                    "ITEM" to stringResource(R.string.gift_type_item)), form.giftType) { update { copy(giftType = it) } }
+                EditorTextField(form.giftGiverName, { update { copy(giftGiverName = it.take(EditorLimits.NAME)) } },
+                    stringResource(R.string.gift_giver_name), null)
+                if (form.giftType == "CASH") {
+                    ToggleChip(stringResource(R.string.gift_honeymoon_share), form.giftHoneymoonShare) { update { copy(giftHoneymoonShare = it) } }
+                }
+            }
+            if (module.kind == Kinds.GROUP) {
+                EditorTextField(form.groupContactName, { update { copy(groupContactName = it.take(EditorLimits.NAME)) } },
+                    stringResource(R.string.group_contact_name), null)
+            }
             if (module.kind == Kinds.TASK) {
                 EditorTextField(form.taskResponsible, { update { copy(taskResponsible = it.take(EditorLimits.NAME)) } },
                     stringResource(R.string.task_responsible), null)
-                RecordPickerField(stringResource(R.string.venues), form.taskVenueId, index.kind(Kinds.VENUE), allowNone = true) {
+                RecordPickerField(stringResource(R.string.label_venue), form.taskVenueId, index.kind(Kinds.VENUE), allowNone = true) {
                     update { copy(taskVenueId = it) }
                 }
             }
@@ -271,7 +285,11 @@ fun RecordEditorScreen(
                 EditorTextField(form.guestDietary, { update { copy(guestDietary = it.take(EditorLimits.TEXT)) } },
                     stringResource(R.string.guest_dietary), null, placeholder = stringResource(R.string.guest_dietary_hint))
                 EditorTextField(form.guestCity, { update { copy(guestCity = it.take(EditorLimits.NAME)) } }, stringResource(R.string.guest_city), null)
-                RecordPickerField(stringResource(R.string.groups), form.guestGroupId, index.kind(Kinds.GROUP), allowNone = true) {
+                EditorTextField(form.guestAge, { update { copy(guestAge = it.filter(Char::isDigit).take(3)) } }, stringResource(R.string.guest_age),
+                    error(EditorField.AGE), KeyboardType.Number)
+                ChoiceRow(stringResource(R.string.guest_language), GuestRules.languages.zip(languageOptions.map { it.second }),
+                    form.guestLanguage, allowNone = true) { update { copy(guestLanguage = it) } }
+                RecordPickerField(stringResource(R.string.label_group), form.guestGroupId, index.kind(Kinds.GROUP), allowNone = true) {
                     update { copy(guestGroupId = it) }
                 }
                 val tags = index.kind(Kinds.TAG).sortedBy { it.title.lowercase() }
@@ -291,7 +309,7 @@ fun RecordEditorScreen(
                     EditorTextField(form.plusConfirmed, { update { copy(plusConfirmed = it.filter(Char::isDigit).take(2)) } },
                         stringResource(R.string.plus_confirmed), error(EditorField.PLUS_CONFIRMED), KeyboardType.Number, Modifier.weight(1f))
                 }
-                RecordPickerField(stringResource(R.string.seating), form.seatingTableId, index.kind(Kinds.TABLE), allowNone = true,
+                RecordPickerField(stringResource(R.string.label_table), form.seatingTableId, index.kind(Kinds.TABLE), allowNone = true,
                     error = error(EditorField.TABLE)) { update { copy(seatingTableId = it) } }
             }
             EditorTextField(form.notes, { update { copy(notes = it.take(EditorLimits.LONG_TEXT)) } }, stringResource(R.string.notes), null,

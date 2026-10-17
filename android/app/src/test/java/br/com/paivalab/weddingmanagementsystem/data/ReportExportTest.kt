@@ -1,5 +1,6 @@
 package br.com.paivalab.weddingmanagementsystem.data
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -23,5 +24,11 @@ class ReportExportTest {
         val csv = String(ReportExport.generate(listOf(PlannerRecord("1", Kinds.VENDOR, "=HYPERLINK(\"x\")")),
             listOf("Tipo", "Título", "Valor", "Previsto", "Data", "Estado", "Notas"), emptyMap()), Charsets.UTF_8)
         assertTrue(csv.contains("\"'=HYPERLINK(\"\"x\"\")\""))
+    }
+
+    @Test fun phonesAndNumbersAreNotTreatedAsFormulas() {
+        val line = String(ReportExport.csv(listOf(listOf("+55 (11) 98888-1004", "-12.50", "=SOMA(A1)", "+cmd", "@x"))), Charsets.UTF_8)
+            .removePrefix("\uFEFF").trim()
+        assertEquals("\"+55 (11) 98888-1004\";\"-12.50\";\"'=SOMA(A1)\";\"'+cmd\";\"'@x\"", line)
     }
 }

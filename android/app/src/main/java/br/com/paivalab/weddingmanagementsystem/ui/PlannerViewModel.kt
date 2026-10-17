@@ -14,6 +14,8 @@ import br.com.paivalab.weddingmanagementsystem.data.PlannerRepository
 import br.com.paivalab.weddingmanagementsystem.data.GuestImportPreview
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.DEMO_REQUIRES_EMPTY
+import br.com.paivalab.weddingmanagementsystem.data.GIFT_ALREADY_POSTED
+import br.com.paivalab.weddingmanagementsystem.data.GIFT_NOT_CASH
 import br.com.paivalab.weddingmanagementsystem.data.HONEYMOON_NOT_DELETABLE
 import br.com.paivalab.weddingmanagementsystem.data.PARENT_DELETED
 import br.com.paivalab.weddingmanagementsystem.data.PAYMENT_NEEDS_VENDOR
@@ -48,7 +50,8 @@ fun errorMessage(code: String?): Int = when (code) {
     HONEYMOON_NOT_DELETABLE -> R.string.honeymoon_not_deletable
     PARENT_DELETED -> R.string.parent_deleted
     DEMO_REQUIRES_EMPTY -> R.string.demo_requires_empty
-    "Presente já lançado" -> R.string.gift_already_processed
+    GIFT_ALREADY_POSTED -> R.string.gift_already_processed
+    GIFT_NOT_CASH -> R.string.gift_not_cash
     else -> R.string.error_generic
 }
 
@@ -183,8 +186,14 @@ class PlannerViewModel(
     }
     fun markPaid(id: String) = launchAction { notify(R.string.msg_paid, undo = repository.markPaid(id)) }
     fun undoPaid(id: String) = launchAction { notify(R.string.msg_payment_reverted, undo = repository.undoPaid(id)) }
-    fun convertGift(id: String, targetKind: String) = launchAction {
-        notify(R.string.msg_gift_posted, undo = repository.convertGift(id, targetKind))
+    fun convertGift(id: String, targetKind: String, title: String, date: java.time.LocalDate, notes: String) = launchAction {
+        notify(R.string.msg_gift_posted, undo = repository.convertGift(id, targetKind, title, date, notes))
+    }
+    fun setGiftThanked(id: String, thanked: Boolean) = launchAction {
+        notify(if (thanked) R.string.msg_gift_thanked else R.string.msg_gift_unthanked, undo = repository.setGiftThanked(id, thanked))
+    }
+    fun setGroupMembers(groupId: String, guestIds: Set<String>) = launchAction {
+        notify(R.string.msg_group_members_saved, undo = repository.setGroupMembers(groupId, guestIds))
     }
     fun assignGuest(guestId: String, tableId: String?) = launchAction { repository.assignGuestToTable(guestId, tableId) }
     fun confirmInvitationSent(templateId: String, guestId: String, channel: String) = launchAction {
@@ -232,7 +241,9 @@ class PlannerViewModel(
         _rainPlan.value = rainPlan.take(8000)
         _specialNotes.value = specialNotes.take(8000)
     }
-    fun checkInGuest(id: String) = launchAction { notify(R.string.msg_checked_in, undo = repository.checkInGuest(id)) }
+    fun setCheckedIn(id: String, present: Boolean) = launchAction {
+        notify(if (present) R.string.msg_checked_in else R.string.msg_check_in_undone, undo = repository.setCheckedIn(id, present))
+    }
     fun addAttachment(context: Context, recordId: String, uri: Uri) = launchAction {
         repository.addAttachment(context, recordId, uri)
     }

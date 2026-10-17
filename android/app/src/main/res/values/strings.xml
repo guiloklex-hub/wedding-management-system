@@ -53,7 +53,7 @@
     <string name="backup_partial_preview">Backup antigo e parcial: {records} registros e {files} anexos. Só pode ser restaurado em uma instalação vazia.</string>
     <string name="backup_preview_details">Áreas: {areas}. Espaço mínimo: {bytes} bytes. Alterados: {changed}; criados: {created}; excluídos: {deleted}. Uma cópia de reversão será guardada.</string>
     <string name="backup_export_reversal">Exportar última cópia de reversão</string>
-    <string name="attach_file">Adicionar anexo</string><string name="post_gift">Lançar presente na receita</string>
+    <string name="attach_file">Adicionar anexo</string><string name="post_gift">Lançar</string>
     <string name="health_score">Saúde do planejamento</string><string name="cashflow">Fluxo de caixa mensal</string>
     <string name="choose_guest">Escolha um convidado</string><string name="prepare_invite">Preparar envio</string>
     <string name="confirmed_sends">Envios confirmados</string>
@@ -461,4 +461,62 @@
     <plurals name="rsvp_plus_ones"><item quantity="one">+%1$d acompanhante confirmado</item><item quantity="other">+%1$d acompanhantes confirmados</item></plurals>
     <plurals name="calendar_day_payments"><item quantity="one">%1$s: %2$d pagamento</item><item quantity="other">%1$s: %2$d pagamentos</item></plurals>
     <string name="onboarding_summary_seeded">Lista recomendada</string>
+    <string name="group_contact_name">Nome do contato</string>
+    <string name="group_contact_value">Contato: %1$s</string>
+    <string name="group_rsvp_summary">Confirmados: %1$d · recusas: %2$d · pendentes: %3$d</string>
+    <string name="group_no_contact">Sem telefone nem e-mail</string>
+    <string name="group_contact_fallback">Usa o contato de %1$s</string>
+    <string name="group_members_edit">Integrantes</string>
+    <string name="group_members_title">Integrantes de %1$s</string>
+    <string name="group_members_moves_from">Sai do grupo %1$s</string>
+    <string name="msg_group_members_saved">Integrantes atualizados</string>
+    <string name="guest_age">Idade</string>
+    <string name="guest_language">Idioma do convidado</string>
+    <string name="guest_checked_in">Chegou</string>
+    <string name="undo_check_in">Desfazer check-in</string>
+    <string name="msg_check_in_undone">Check-in desfeito.</string>
+    <string name="guest_filter_confirmed">Confirmados (%1$d)</string>
+    <string name="guest_filter_pending">Pendentes (%1$d)</string>
+    <string name="guest_filter_padrinhos">Padrinhos (%1$d)</string>
+    <string name="guest_filter_children">Crianças (%1$d)</string>
+    <string name="guest_filter_checked_in">Presentes no evento (%1$d)</string>
+    <string name="export_guests_csv">Exportar CSV</string>
+    <string name="csv_name">Nome</string>
+    <string name="csv_yes">Sim</string>
+    <string name="summary_guests_detail">%1$s · pendentes: %2$d · recusas: %3$d · crianças: %4$d · com restrição alimentar: %5$d</string>
+    <string name="gift_type">Tipo de presente</string>
+    <string name="gift_type_cash">Dinheiro</string>
+    <string name="gift_type_item">Item</string>
+    <string name="gift_giver_name">Quem deu (se não for convidado)</string>
+    <string name="gift_anonymous">Anônimo</string>
+    <string name="gift_honeymoon_share">Cota da lua de mel</string>
+    <string name="gift_posted">Lançado nas finanças</string>
+    <string name="gift_mark_thanked">Marcar agradecido</string>
+    <string name="gift_unmark_thanked">Desmarcar agradecido</string>
+    <string name="gift_filter_pending_thank">Falta agradecer (%1$d)</string>
+    <string name="gift_not_cash">Só presentes em dinheiro com valor podem ser lançados.</string>
+    <string name="gift_post_as">Lançar como</string>
+    <string name="gift_post_amount">Valor: %1$s</string>
+    <string name="gift_post_default_title">Presente de %1$s</string>
+    <string name="gift_post_notes">Lançado a partir do presente \"%1$s\".</string>
+    <string name="gift_post_once">Cada presente só pode ser lançado uma vez.</string>
+    <string name="msg_gift_thanked">Agradecimento registrado.</string>
+    <string name="msg_gift_unthanked">Agradecimento desmarcado.</string>
+    <string name="summary_gifts_cash">Em dinheiro: %1$s · a lançar: %2$s</string>
+    <string name="summary_gifts_detail">Itens recebidos: %1$d · sem agradecimento: %2$d</string>
+    <string name="audit_gift_thanked">Presente agradecido</string>
+    <string name="audit_gift_unthanked">Agradecimento desfeito</string>
+    <string name="audit_group_members">Integrantes do grupo</string>
+    <string name="audit_check_in_undone">Check-in desfeito</string>
+    <plurals name="guest_age_value"><item quantity="one">%1$d ano</item><item quantity="other">%1$d anos</item></plurals>
+    <plurals name="group_members_selected"><item quantity="one">%1$d selecionado</item><item quantity="other">%1$d selecionados</item></plurals>
+    <string name="gift_post_title">Lançar nas finanças</string>
+    <string name="group_members_in">Hoje em %1$s</string>
+    <string name="label_vendor">Fornecedor</string>
+    <string name="label_venue">Local</string>
+    <string name="label_group">Grupo</string>
+    <string name="label_table">Mesa</string>
+    <string name="label_guest">Convidado</string>
+    <string name="label_goal">Meta</string>
+    <string name="label_honeymoon">Lua de mel</string>
 </resources>

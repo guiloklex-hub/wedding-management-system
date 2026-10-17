@@ -52,6 +52,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import br.com.paivalab.weddingmanagementsystem.data.FinanceRules
+import br.com.paivalab.weddingmanagementsystem.data.GiftRules
+import br.com.paivalab.weddingmanagementsystem.data.GuestRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
@@ -77,6 +79,10 @@ class ModuleActions(
     val postGift: (PlannerRecord) -> Unit,
     val invite: (PlannerRecord) -> Unit,
     val importGuests: () -> Unit,
+    val exportGuests: () -> Unit,
+    val setCheckedIn: (PlannerRecord, Boolean) -> Unit,
+    val setThanked: (PlannerRecord, Boolean) -> Unit,
+    val editMembers: (PlannerRecord) -> Unit,
     val seedTasks: () -> Unit,
     val seedVenueChecklist: (String) -> Unit,
     val installments: () -> Unit,
@@ -117,6 +123,16 @@ fun ModuleScreen(
     val sort by viewModel.sort.collectAsStateWithLifecycle()
     var pickVenueForChecklist by rememberSaveable { mutableStateOf(false) }
 
+    val quickFilters: List<Pair<String, String>>? = when (module.kind) {
+        Kinds.GUEST -> listOf(
+            GuestRules.FILTER_CONFIRMED to R.string.guest_filter_confirmed, GuestRules.FILTER_PENDING to R.string.guest_filter_pending,
+            GuestRules.FILTER_PADRINHOS to R.string.guest_filter_padrinhos, GuestRules.FILTER_CHILDREN to R.string.guest_filter_children,
+            GuestRules.FILTER_CHECKED_IN to R.string.guest_filter_checked_in,
+        ).map { (key, label) -> key to stringResource(label, state.quick[key] ?: 0) }
+        Kinds.GIFT -> listOf(GiftRules.FILTER_PENDING_THANK to
+            stringResource(R.string.gift_filter_pending_thank, state.quick[GiftRules.FILTER_PENDING_THANK] ?: 0))
+        else -> null
+    }
     LazyColumn(contentPadding = PaddingValues(16.dp, 10.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { ModuleSummaryBanner(module.kind, index, currency, language) }
         if (module.kind == Kinds.TASK && daysToEvent != null) item { TaskPhaseBar(daysToEvent) }
@@ -155,7 +171,16 @@ fun ModuleScreen(
                 }
             }
         }
-        if (module.kind == Kinds.TASK) item {
+        if (quickFilters != null) item {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                FilterChip(selected = selectedStatus == null, onClick = { viewModel.setStatus(null) },
+                    label = { Text(stringResource(R.string.filter_all, state.total)) })
+                quickFilters.forEach { (key, label) ->
+                    FilterChip(selected = selectedStatus == key, onClick = { viewModel.setStatus(if (selectedStatus == key) null else key) },
+                        label = { Text(label) })
+                }
+            }
+        } else if (module.kind == Kinds.TASK) item {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOf(
                     null to stringResource(R.string.filter_all, state.total),
@@ -189,7 +214,12 @@ fun ModuleScreen(
         }
         if (module.kind == Kinds.GUEST) {
             item {
-                OutlinedButton(onClick = actions.importGuests, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.import_guests)) }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = actions.importGuests, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.import_guests)) }
+                    OutlinedButton(onClick = actions.exportGuests, enabled = state.total > 0, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.export_guests_csv))
+                    }
+                }
             }
             val tags = index.kind(Kinds.TAG).sortedBy { it.title.lowercase() }
             if (tags.isNotEmpty()) item {
@@ -349,17 +379,25 @@ private fun QuickActions(module: ModuleDefinition, record: PlannerRecord, index:
         Kinds.INCOME -> if (record.status != "RECEIVED") Action(R.string.mark_received, PlannerEmerald) { actions.setStatus(record, "RECEIVED") }
         Kinds.TASK, Kinds.VENUE_CHECK -> if (record.status != "DONE") Action(R.string.mark_done, PlannerEmerald) { actions.setStatus(record, "DONE") }
         Kinds.GUEST -> {
+            val extra = index.extra(record)
             if (record.status != "CONFIRMED") Action(R.string.confirm_guest, PlannerEmerald) { actions.setStatus(record, "CONFIRMED") }
+            else if (ExtraFields.has(extra, "checkedInAt")) Action(R.string.undo_check_in) { actions.setCheckedIn(record, false) }
+            else Action(R.string.check_in, PlannerEmerald) { actions.setCheckedIn(record, true) }
             if (record.phone.isNotBlank()) Action(R.string.whatsapp) { actions.whatsApp(record) }
         }
         Kinds.GIFT -> {
-            val processed = record.status == "PROCESSED" || ExtraFields.has(index.extra(record), "processedAt")
-            if (!processed && record.amountCents != null) Action(R.string.post_gift, PlannerEmerald) { actions.postGift(record) }
-            if (actions.pixConfigured) Action(R.string.share_pix) { actions.giftPix(record) }
+            val extra = index.extra(record)
+            if (GiftRules.canPost(record, extra)) Action(R.string.post_gift, PlannerEmerald) { actions.postGift(record) }
+            if (record.status == "THANKED") Action(R.string.gift_unmark_thanked) { actions.setThanked(record, false) }
+            else Action(R.string.gift_mark_thanked, PlannerEmerald) { actions.setThanked(record, true) }
+            if (actions.pixConfigured && GiftRules.type(extra) == "CASH") Action(R.string.share_pix) { actions.giftPix(record) }
         }
         Kinds.INVITATION, Kinds.SAVE_THE_DATE -> Action(R.string.prepare_invite) { actions.invite(record) }
-        Kinds.GROUP -> listOf("CONFIRMED" to R.string.confirm_group, "DECLINED" to R.string.decline_group, "MAYBE" to R.string.status_maybe)
-            .forEach { (status, label) -> if (record.status != status) Action(label) { actions.groupRsvp(record, status) } }
+        Kinds.GROUP -> {
+            Action(R.string.group_members_edit) { actions.editMembers(record) }
+            listOf("CONFIRMED" to R.string.confirm_group, "DECLINED" to R.string.decline_group, "MAYBE" to R.string.status_maybe)
+                .forEach { (status, label) -> if (record.status != status) Action(label) { actions.groupRsvp(record, status) } }
+        }
     }
     if (module.kind in setOf(Kinds.VENDOR, Kinds.VENUE, Kinds.CONTACT, Kinds.GROUP) && record.phone.isNotBlank()) {
         Action(R.string.call_phone) { actions.dial(record) }
@@ -410,10 +448,16 @@ private fun ModuleSummaryBanner(kind: String, index: RecordIndex, currency: Stri
                 PlannerChampagne)
         }
         Kinds.GUEST -> {
-            val confirmed = items.filter { it.status == "CONFIRMED" }
-            val seats = confirmed.sumOf { 1 + it.plusOnesConfirmed }
-            Triple(stringResource(R.string.summary_guests, confirmed.size, items.size),
-                plural(R.plurals.summary_seats, seats, seats), PlannerEmerald)
+            val stats = GuestRules.stats(items, index::extra)
+            Triple(stringResource(R.string.summary_guests, stats.confirmed, stats.total),
+                stringResource(R.string.summary_guests_detail, plural(R.plurals.summary_seats, stats.seats, stats.seats),
+                    stats.pending, stats.declined, stats.children, stats.dietary),
+                PlannerEmerald)
+        }
+        Kinds.GIFT -> {
+            val stats = GiftRules.stats(items, index::extra)
+            Triple(stringResource(R.string.summary_gifts_cash, money(stats.cashCents), money(stats.cashPendingCents)),
+                stringResource(R.string.summary_gifts_detail, stats.items, stats.pendingThanks), PlannerChampagne)
         }
         Kinds.TABLE -> {
             val capacity = items.sumOf { it.amountCents ?: 0L }.toInt()

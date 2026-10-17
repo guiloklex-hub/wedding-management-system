@@ -1,7 +1,6 @@
 package br.com.paivalab.weddingmanagementsystem.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +20,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -78,8 +78,10 @@ fun OnboardingScreen(
         scroll.scrollTo(0)
     }
 
+    // Fora do Scaffold não há cor de conteúdo definida; sem o Surface o título fica preto no tema escuro.
+    Surface(Modifier.fillMaxSize(), color = PlannerBackground, contentColor = PlannerOnSurface) {
     Column(
-        Modifier.fillMaxSize().background(PlannerBackground).safeDrawingPadding().verticalScroll(scroll)
+        Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(scroll)
             .wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = 640.dp).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -165,6 +167,7 @@ fun OnboardingScreen(
                 modifier = Modifier.weight(1f),
             ) { Text(stringResource(if (step < stepTitles.lastIndex) R.string.onboarding_next else R.string.onboarding_finish)) }
         }
+    }
     }
 
     if (confirmDemo) {

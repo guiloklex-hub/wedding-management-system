@@ -3,6 +3,8 @@ package br.com.paivalab.weddingmanagementsystem.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.paivalab.weddingmanagementsystem.data.GiftRules
+import br.com.paivalab.weddingmanagementsystem.data.GuestRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
@@ -22,6 +24,8 @@ data class ModuleListState(
     val overdue: Int = 0,
     val open: Int = 0,
     val week: Int = 0,
+    /** Contagens dos filtros rápidos de convidados e presentes. */
+    val quick: Map<String, Int> = emptyMap(),
 )
 
 /** Estado de busca, filtro e ordenação de uma lista de módulo; sobrevive à rotação. */
@@ -68,6 +72,8 @@ class ModuleListViewModel(
         private const val VIEW = "view"
         private const val MONTH = "month"
         private const val DAY = "day"
+        val guestFilters = listOf(GuestRules.FILTER_CONFIRMED, GuestRules.FILTER_PENDING, GuestRules.FILTER_PADRINHOS,
+            GuestRules.FILTER_CHILDREN, GuestRules.FILTER_CHECKED_IN)
         private val doneStatuses = setOf("PAID", "DONE", "RECEIVED", "BOUGHT", "PROCESSED")
 
         fun isOverdue(record: PlannerRecord, today: String = LocalDate.now().toString()): Boolean =
@@ -86,10 +92,12 @@ class ModuleListViewModel(
                     when (status) {
                         null -> true
                         STATUS_OVERDUE -> isOverdue(record, today)
+                        GiftRules.FILTER_PENDING_THANK -> record.status != "THANKED"
                         STATUS_OPEN -> record.status !in doneStatuses
                         // Como o filtro "próximos 7 dias" da web: inclui as já atrasadas.
                         STATUS_WEEK -> record.status !in doneStatuses && !record.date.isNullOrBlank() && record.date <= week
-                        else -> record.status == status
+                        else -> (if (kind == Kinds.GUEST) GuestRules.matches(record, status, index.extra(record)) else null)
+                            ?: (record.status == status)
                     }
             }.let { list ->
                 when (sort) {
@@ -105,6 +113,11 @@ class ModuleListViewModel(
                 overdue = if (kind in setOf(Kinds.PAYMENT, Kinds.TASK)) all.count { isOverdue(it, today) } else 0,
                 open = all.count { it.status !in doneStatuses },
                 week = all.count { it.status !in doneStatuses && !it.date.isNullOrBlank() && it.date <= week },
+                quick = when (kind) {
+                    Kinds.GUEST -> guestFilters.associateWith { filter -> all.count { GuestRules.matches(it, filter, index.extra(it)) == true } }
+                    Kinds.GIFT -> mapOf(GiftRules.FILTER_PENDING_THANK to all.count { it.status != "THANKED" })
+                    else -> emptyMap()
+                },
             )
         }
     }

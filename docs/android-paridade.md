@@ -19,8 +19,8 @@ Legenda: **sim** = fluxo principal equivalente; **parcial** = tela existe, mas f
 | `/dashboard/tasks` | Sim | Lista e Kanban, filtros "em aberto", "atrasadas" e "próximos 7 dias", barra de fases, responsável, fornecedor, local e `completedAt`. Avisos por email/WhatsApp são da web. |
 | `/dashboard/payments` | Sim | Lista e calendário mensal com resumo do ano, marcar e desfazer pagamento, sinal + saldo, parcelas com intervalo em dias, forma de pagamento, multa e juros. Avisos por email/WhatsApp são da web. |
 | `/dashboard/income`, `/assets`, `/goals` | Sim | Cadastros e totais locais; projeção e visualização têm diferenças. |
-| `/dashboard/guests`, `/guests/groups`, `/guests/import` | Parcial | Lista, grupos, RSVP manual, CSV e XLSX Wedy; importação e envio em lote da web têm fluxos distintos. |
-| `/dashboard/gifts`, `/gifts/[id]/pix` | Parcial | Presente e Pix individual com valor e identificador do presente; baixa continua manual, sem confirmação automática. |
+| `/dashboard/guests`, `/guests/groups`, `/guests/import` | Parcial | Indicadores, filtros (confirmados, pendentes, padrinhos, crianças, presentes no evento), exportação CSV com as colunas da web, check-in reversível, idade e idioma. Grupos com contato, resumo de RSVP, aviso de grupo sem contato e gestão de integrantes. A importação por colagem de texto e os três modos de deduplicação da web ainda diferem; o PIN e o link público de RSVP dependem do servidor. |
+| `/dashboard/gifts`, `/gifts/[id]/pix` | Sim | Tipo dinheiro ou item, quem deu, cota da lua de mel, marcar ou desmarcar agradecimento, lançar como receita ou ativo uma única vez, filtro "falta agradecer", indicadores e Pix individual. A confirmação automática do Pix é da web. |
 | `/dashboard/wedding-day`, `/wedding-day/seating` | Parcial | Cronograma, plano B, check-in e mesas locais; não há arrastar e soltar da web. |
 | `/dashboard/honeymoon`, `/trousseau` | Parcial | Cadastro e resumos locais; alguns campos, moedas de item e gráficos ainda diferem. |
 | `/dashboard/save-the-date`, `/invitations` | Parcial | Modelo local, anexo, envio individual pelo compartilhamento do Android e confirmação manual. Disparos em lote, controle de entrega, PIN e links públicos de RSVP exigem o servidor web. |
@@ -51,6 +51,12 @@ Navegação tipada com estado preservado, editor em tela cheia com validação i
 - `completedAt` da tarefa segue a Server Action: gravado ao concluir, preservado em edições e apagado ao reabrir.
 - Parcelas usam intervalo em dias (padrão 30) e no máximo 60 parcelas, como `generateInstallments`; "Sinal + saldo" grava o sinal pago hoje e o saldo pendente, como `createSplitPayment`.
 - Na web, o fluxo de ações deixou de mostrar contratos assinados (`SIGNED_DIGITAL`/`SIGNED_PHYSICAL`) e cancelados como "a expirar".
+
+## Convidados e presentes (Fase 2, parte 2)
+
+- Os estados de presente seguem a web: só `RECEIVED` e `THANKED`, com `thankedAt` acompanhando o estado. `PENDING` e `PROCESSED` de versões anteriores do Android viram `RECEIVED` ao salvar (o lançamento continua registrado em `processedAt`).
+- "Lançar" cria uma receita com fonte `GIFT` e `givenByName`, ou um ativo, como `convertGiftCashToIncomeOrAsset`; só presentes em dinheiro com valor podem ser lançados.
+- O resumo do grupo usa a mesma regra de contato de `summarizeGroup`: o contato do próprio grupo e, sem ele, o primeiro integrante com telefone válido (E.164) ou e-mail.
 
 ## Próximas lacunas de paridade
 

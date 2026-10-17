@@ -19,6 +19,8 @@ O projeto [android/](../android/README.md) usa Kotlin, Jetpack Compose, Room/SQL
 - **Painel** com os mesmos números da web: orçamento total com contingência, total pago, saldo devedor, cobertura de caixa, alerta de quitação (20 dias ou menos com saldo), próximas ações priorizadas (pagamentos, tarefas, contratos sem assinatura, RSVP e agradecimentos) que abrem o registro, funil de fornecedores, RSVP, presentes e próximos vencimentos e tarefas.
 - **Tarefas** em lista ou Kanban (mover entre colunas com "Desfazer"), filtros "em aberto", "atrasadas" e "próximos 7 dias", barra de fases do evento, responsável, fornecedor e local vinculados.
 - **Pagamentos** em lista ou calendário mensal com resumo do ano, "Desfazer pagamento", "Sinal + saldo" e parcelas com intervalo em dias, forma de pagamento, multa e juros.
+- **Convidados** com indicadores (confirmados, lugares, pendentes, recusas, crianças e restrições), filtros da web, exportação CSV, check-in reversível, idade e idioma. **Grupos** com nome do contato, resumo de RSVP, aviso de grupo sem contato e escolha de integrantes.
+- **Presentes** em dinheiro ou item, com quem deu, cota da lua de mel, agradecimento reversível, filtro "falta agradecer" e lançamento único como receita ou ativo.
 - Receitas podem ser registradas uma vez ou como recorrência mensal, considerada na projeção de caixa.
 - Insights com indicadores, radar de riscos, demografia para buffet e exportação CSV dos registros ativos pelo seletor de documentos.
 - Anexos privados em arquivos do app (`noBackupFilesDir/blobs`), abertos no app padrão ou exportados pelo seletor de documentos. Anexos gravados no SQLite por versões anteriores são migrados em blocos na primeira abertura, sem o limite de ~2 MB da `CursorWindow`.

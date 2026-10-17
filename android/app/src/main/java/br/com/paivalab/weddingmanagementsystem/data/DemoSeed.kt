@@ -478,6 +478,7 @@ object DemoSeed {
                 amountCents = 2_500_00L,
                 status = "RECEIVED",
                 parentId = "seed-guest-1",
+                extraJson = """{"type":"CASH","isHoneymoonShare":true}""",
             ),
             PlannerRecord(
                 id = "seed-gift-2",
@@ -487,6 +488,7 @@ object DemoSeed {
                 amountCents = 4_200_00L,
                 status = "THANKED",
                 parentId = "seed-guest-3",
+                extraJson = """{"type":"ITEM","thankedAt":$now}""",
             ),
             // Honeymoon & Items
             PlannerRecord(

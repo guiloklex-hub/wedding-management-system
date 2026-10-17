@@ -33,6 +33,22 @@ class ModuleListFilterTest {
         assertEquals(4, tasks.total)
     }
 
+    @Test fun guestAndGiftQuickFilters() {
+        val guests = RecordIndex(listOf(
+            PlannerRecord("p", Kinds.GUEST, "Padrinho", status = "MAYBE", extraJson = """{"isPadrinho":true}"""),
+            PlannerRecord("q", Kinds.GUEST, "Outro", status = "DECLINED"),
+            PlannerRecord("g1", Kinds.GIFT, "Pix", status = "THANKED"),
+            PlannerRecord("g2", Kinds.GIFT, "Jogo", status = "RECEIVED"),
+        ))
+        val padrinhos = ModuleListViewModel.filter(guests, Kinds.GUEST, "", "PADRINHOS", null, "name")
+        assertEquals(listOf("p"), padrinhos.items.map { it.id })
+        assertEquals(1, padrinhos.quick["GUEST_PENDING"])
+        assertEquals(listOf("q"), ModuleListViewModel.filter(guests, Kinds.GUEST, "", "DECLINED", null, "name").items.map { it.id })
+        val gifts = ModuleListViewModel.filter(guests, Kinds.GIFT, "", "PENDING_THANK", null, "name")
+        assertEquals(listOf("g2"), gifts.items.map { it.id })
+        assertEquals(1, gifts.quick["PENDING_THANK"])
+    }
+
     @Test fun taskQuickFiltersMatchTheWeb() {
         fun ids(status: String) = ModuleListViewModel.filter(index, Kinds.TASK, "", status, null, "name").items.map { it.id }
         assertEquals(listOf("f", "c", "e"), ids(ModuleListViewModel.STATUS_OPEN))

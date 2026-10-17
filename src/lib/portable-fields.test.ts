@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mobileExtra, webAttachment, webExtraColumns } from "./portable-fields";
+import { mobileExtra, webAttachment, webExtraColumns, webIncomeSource } from "./portable-fields";
 
 describe("mapeamento de campos extras web ⇄ Android", () => {
   it("normaliza booleanos, datas e nulos da linha web para o Android", () => {
@@ -22,6 +22,22 @@ describe("mapeamento de campos extras web ⇄ Android", () => {
     expect(webExtraColumns("vendor", { rating: 9, password: "x", tags: "  " })).toEqual({ tags: null });
     expect(webExtraColumns("contract", { expiresAt: "1712345678" })).toEqual({ expiresAt: 1_712_345_678_000 });
     expect(webExtraColumns("contract", { expiresAt: "não é data" })).toEqual({});
+  });
+
+  it("devolve o recebimento e quem deu a receita marcada no Android", () => {
+    expect(webExtraColumns("income", { receivedAt: 1_760_000_000_000, givenByName: "Tia Ana", frequency: "MONTHLY" }))
+      .toEqual({ receivedAt: 1_760_000_000_000, givenByName: "Tia Ana", frequency: "MONTHLY" });
+    expect(mobileExtra("income", { receivedAt: "2026-10-01T12:00:00.000Z", givenByName: null }))
+      .toEqual({ receivedAt: Date.UTC(2026, 9, 1, 12) });
+  });
+});
+
+describe("webIncomeSource", () => {
+  it("aceita só as origens da web e troca texto livre por OTHER", () => {
+    expect(webIncomeSource("GIFT")).toBe("GIFT");
+    expect(webIncomeSource(" bonus ")).toBe("BONUS");
+    expect(webIncomeSource("")).toBe("SALARY");
+    expect(webIncomeSource("Poupança conjunta")).toBe("OTHER");
   });
 });
 

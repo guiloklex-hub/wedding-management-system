@@ -16,6 +16,8 @@ O Android usa o seletor de documentos e exige biometria forte ou credencial do a
 
 Na restauração web, cada anexo vindo do Android mantém a versão do PDF de contrato e um tipo aceito pela web (`CONTRACT`, `PROPOSAL`, `RECEIPT`, `INVOICE`, `ID_DOC`, `PHOTO`, `OTHER`). O tipo genérico `ATTACHMENT`, gravado pelo Android até a v1.2, vira `CONTRACT` quando o dono é um contrato e `OTHER` nos demais.
 
+A receita marcada como recebida no Android volta com `receivedAt`. A origem (`Income.source`) aceita só os valores da web; texto livre gravado por versões antigas do Android vira `OTHER`.
+
 Na importação v2, o Android compara cada contrato e cada anexo do SQLite web com os registros móveis, inclusive a associação do PDF ao contrato, o tamanho e o SHA-256. Se algum faltar ou divergir, a prévia falha e o banco atual permanece intacto. A prévia mostra separadamente o total de contratos e PDFs de contrato, incluindo versões anteriores. Depois de restaurar, abra o fornecedor para consultar os PDFs atuais e arquivados com seus números de versão. Se um pacote v2 antigo não trouxer a versão em `files.json`, o app a recupera do SQLite web.
 
 Na primeira transferência **Android → web** sem SQLite web anterior, a restauração mantém as contas administrativas da instalação web de destino e substitui os dados do casamento. A prévia bloqueia registros sem campos web obrigatórios, identificando o registro e o campo a corrigir; fornecedores exigem categoria, por exemplo. Os campos que só existem no Android continuam no estado portátil.

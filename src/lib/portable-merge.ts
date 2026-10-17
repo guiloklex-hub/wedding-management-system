@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
-import { webExtraColumns, type SqlValue } from "./portable-fields";
+import { webExtraColumns, webIncomeSource, type SqlValue } from "./portable-fields";
 import type { MobileRecord } from "./portable-projection";
 
 type FieldMap = { table: string; title: string; amount?: string; estimate?: string; date?: string; status?: string; parent?: string };
@@ -95,7 +95,7 @@ function columnMap(record: MobileRecord, map: FieldMap): Record<string, SqlValue
   else if (record.kind !== "vendor_note") columns.notes = record.notes || null;
   if (record.kind === "venue_check") columns.checked = record.status === "DONE" ? 1 : 0;
   if (record.kind === "vendor") columns.category = record.subtitle || "";
-  if (record.kind === "income") columns.source = record.subtitle || "SALARY";
+  if (record.kind === "income") columns.source = webIncomeSource(record.subtitle);
   return columns;
 }
 

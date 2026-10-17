@@ -45,7 +45,7 @@ export const EXTRA_FIELDS: Record<string, Record<string, FieldSpec>> = {
     installmentNumber: int(1, 120), totalInstallments: int(1, 120),
     lateFeePercent: percent, interestPercentPerMonth: percent, paidAt: instant,
   },
-  income: { frequency: oneOf(["ONE_TIME", "MONTHLY"]), givenByName: text(120) },
+  income: { frequency: oneOf(["ONE_TIME", "MONTHLY"]), givenByName: text(120), receivedAt: instant },
   goal: { imageUrl: text(2000), isActive: bool },
   honeymoon: { endDate: day, currency: oneOf(CURRENCIES) },
   honeymoon_item: {
@@ -184,6 +184,16 @@ export function mobileExtra(kind: string, row: Record<string, unknown>): Record<
       typeof parsed === "bigint" ? Number(parsed) : parsed;
   }
   return result;
+}
+
+/** Valores aceitos em `Income.source` (mesma lista de `incomeActions`). */
+export const INCOME_SOURCES = ["SALARY", "BONUS", "GIFT", "FREELANCE", "SALE", "RESTITUTION", "OTHER"] as const;
+
+/** Origem da receita vinda do Android, que até a v1.2 aceitava texto livre. */
+export function webIncomeSource(value: string): string {
+  const upper = value.trim().toUpperCase();
+  if (!upper) return "SALARY";
+  return (INCOME_SOURCES as readonly string[]).includes(upper) ? upper : "OTHER";
 }
 
 /** Valores aceitos em `Attachment.kind` (mesma lista de `attachmentActions`). */

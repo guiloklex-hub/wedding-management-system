@@ -50,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import br.com.paivalab.weddingmanagementsystem.R
+import br.com.paivalab.weddingmanagementsystem.data.ContractRules
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import br.com.paivalab.weddingmanagementsystem.data.FinanceRules
 import br.com.paivalab.weddingmanagementsystem.data.GiftRules
@@ -83,6 +84,8 @@ class ModuleActions(
     val setCheckedIn: (PlannerRecord, Boolean) -> Unit,
     val setThanked: (PlannerRecord, Boolean) -> Unit,
     val editMembers: (PlannerRecord) -> Unit,
+    val changeVendorStatus: (PlannerRecord) -> Unit,
+    val signContract: (PlannerRecord) -> Unit,
     val seedTasks: () -> Unit,
     val seedVenueChecklist: (String) -> Unit,
     val installments: () -> Unit,
@@ -393,6 +396,10 @@ private fun QuickActions(module: ModuleDefinition, record: PlannerRecord, index:
             if (actions.pixConfigured && GiftRules.type(extra) == "CASH") Action(R.string.share_pix) { actions.giftPix(record) }
         }
         Kinds.INVITATION, Kinds.SAVE_THE_DATE -> Action(R.string.prepare_invite) { actions.invite(record) }
+        Kinds.VENDOR -> Action(R.string.vendor_status_action) { actions.changeVendorStatus(record) }
+        Kinds.CONTRACT -> if (record.status in ContractRules.unsigned) Action(R.string.contract_mark_signed, PlannerEmerald) {
+            actions.signContract(record)
+        }
         Kinds.GROUP -> {
             Action(R.string.group_members_edit) { actions.editMembers(record) }
             listOf("CONFIRMED" to R.string.confirm_group, "DECLINED" to R.string.decline_group, "MAYBE" to R.string.status_maybe)

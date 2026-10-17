@@ -21,6 +21,7 @@ O projeto [android/](../android/README.md) usa Kotlin, Jetpack Compose, Room/SQL
 - **Pagamentos** em lista ou calendário mensal com resumo do ano, "Desfazer pagamento", "Sinal + saldo" e parcelas com intervalo em dias, forma de pagamento, multa e juros.
 - **Convidados** com indicadores (confirmados, lugares, pendentes, recusas, crianças e restrições), filtros da web, exportação CSV, check-in reversível, idade e idioma. **Grupos** com nome do contato, resumo de RSVP, aviso de grupo sem contato e escolha de integrantes.
 - **Presentes** em dinheiro ou item, com quem deu, cota da lua de mel, agradecimento reversível, filtro "falta agradecer" e lançamento único como receita ou ativo.
+- **Fornecedores** com as 23 categorias da web, situação na lista (com valor contratado), orçamento estimado na criação e comparação de 2 a 4. **Contratos** com "Marcar assinado", substituição do PDF com controle de versão e tipo de cada anexo.
 - Receitas podem ser registradas uma vez ou como recorrência mensal, considerada na projeção de caixa.
 - Insights com indicadores, radar de riscos, demografia para buffet e exportação CSV dos registros ativos pelo seletor de documentos.
 - Anexos privados em arquivos do app (`noBackupFilesDir/blobs`), abertos no app padrão ou exportados pelo seletor de documentos. Anexos gravados no SQLite por versões anteriores são migrados em blocos na primeira abertura, sem o limite de ~2 MB da `CursorWindow`.

@@ -36,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +65,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 import org.json.JSONObject
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VendorCompareScreen(records: List<PlannerRecord>, language: String, currency: String) {
     val active = records.filter { it.deletedAt == null }
@@ -72,6 +74,9 @@ fun VendorCompareScreen(records: List<PlannerRecord>, language: String, currency
     val totalPlanned = FinanceRules.budgetEstimated(active)
     val totalActual = FinanceRules.budgetActual(active)
     val totalDiff = totalActual - totalPlanned
+    // Como na web: escolha de 2 a 4 fornecedores; sem escolha, todos aparecem.
+    var selected by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    val shown = if (selected.size >= 2) vendors.filter { it.id in selected } else vendors
 
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
@@ -102,9 +107,25 @@ fun VendorCompareScreen(records: List<PlannerRecord>, language: String, currency
                 }
             }
         }
+        if (vendors.size > 2) item {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(stringResource(R.string.compare_pick, selected.size), style = MaterialTheme.typography.labelLarge)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    vendors.forEach { vendor ->
+                        val checked = vendor.id in selected
+                        FilterChip(
+                            selected = checked,
+                            enabled = checked || selected.size < 4,
+                            onClick = { selected = if (checked) selected - vendor.id else selected + vendor.id },
+                            label = { Text(vendor.title) },
+                        )
+                    }
+                }
+            }
+        }
         if (vendors.isEmpty()) item { Text(localized(R.string.empty, language)) }
-        items(vendors.size) { index ->
-            val vendor = vendors[index]
+        items(shown.size) { index ->
+            val vendor = shown[index]
             val budgets = active.filter { it.kind == Kinds.BUDGET && it.parentId == vendor.id }
             val payments = active.filter { it.kind == Kinds.PAYMENT && it.parentId == vendor.id }
             val planned = FinanceRules.budgetEstimated(budgets)
@@ -162,6 +183,19 @@ fun VendorCompareScreen(records: List<PlannerRecord>, language: String, currency
                         Text(stringResource(R.string.percent_paid, (paidRatio * 100).roundToInt()), style = MaterialTheme.typography.labelSmall, color = PlannerMuted)
                     }
                     PlannerProgressBar(paidRatio, PlannerEmerald, 8.dp)
+                    val extra = ExtraFields.parse(vendor.extraJson)
+                    Text(stringResource(R.string.compare_balance, localizedCurrency(actual - paid, currency, language)),
+                        style = MaterialTheme.typography.bodySmall)
+                    ExtraFields.text(extra, "indicatedBy").takeIf { it.isNotBlank() }?.let {
+                        Text("${stringResource(R.string.indicated_by)}: $it", style = MaterialTheme.typography.bodySmall, color = PlannerMuted)
+                    }
+                    ExtraFields.text(extra, "tags").takeIf { it.isNotBlank() }?.let {
+                        Text("${stringResource(R.string.tags)}: $it", style = MaterialTheme.typography.bodySmall, color = PlannerMuted)
+                    }
+                    val children = active.filter { it.parentId == vendor.id }
+                    Text(stringResource(R.string.compare_counts, children.count { it.kind == Kinds.CONTACT },
+                        children.count { it.kind == Kinds.VENDOR_NOTE }, children.count { it.kind == Kinds.CONTRACT }),
+                        style = MaterialTheme.typography.labelSmall, color = PlannerMuted)
                 }
             }
         }
@@ -691,6 +725,7 @@ fun auditLabel(action: String, language: String): String {
         "MARK_PAID" -> localized(R.string.audit_paid, language)
         "UNDO_PAID" -> stringResource(R.string.audit_undo_paid)
         "GIFT_THANKED" -> stringResource(R.string.audit_gift_thanked)
+        "SIGN_CONTRACT" -> stringResource(R.string.audit_contract_signed)
         "GIFT_UNTHANKED" -> stringResource(R.string.audit_gift_unthanked)
         "GROUP_MEMBERS" -> stringResource(R.string.audit_group_members)
         "CHECK_IN_UNDONE" -> stringResource(R.string.audit_check_in_undone)

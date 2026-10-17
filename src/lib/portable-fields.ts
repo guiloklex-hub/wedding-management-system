@@ -185,3 +185,17 @@ export function mobileExtra(kind: string, row: Record<string, unknown>): Record<
   }
   return result;
 }
+
+/** Valores aceitos em `Attachment.kind` (mesma lista de `attachmentActions`). */
+export const ATTACHMENT_KINDS = ["CONTRACT", "PROPOSAL", "RECEIPT", "INVOICE", "ID_DOC", "PHOTO", "OTHER"] as const;
+
+/**
+ * Tipo e versão de um anexo vindo do Android. Até a v1.2 o Android gravava o
+ * tipo genérico `ATTACHMENT`; ele vira `CONTRACT` no contrato e `OTHER` no resto.
+ */
+export function webAttachment(file: { kind: string; version?: number }, ownerKind: string): { kind: string; version: number } {
+  const upper = file.kind.trim().toUpperCase();
+  const kind = (ATTACHMENT_KINDS as readonly string[]).includes(upper) ? upper : ownerKind === "contract" ? "CONTRACT" : "OTHER";
+  const version = Number.isInteger(file.version) && (file.version ?? 0) >= 1 && (file.version ?? 0) <= 999 ? (file.version as number) : 1;
+  return { kind, version };
+}

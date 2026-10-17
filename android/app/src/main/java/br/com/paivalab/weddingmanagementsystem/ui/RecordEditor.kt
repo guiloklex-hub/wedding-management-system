@@ -58,7 +58,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
+import br.com.paivalab.weddingmanagementsystem.data.ContractRules
 import br.com.paivalab.weddingmanagementsystem.data.GuestRules
+import br.com.paivalab.weddingmanagementsystem.data.VendorCategories
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
@@ -82,7 +84,9 @@ fun RecordEditorScreen(
     onSave: (PlannerRecord) -> Unit,
     onDelete: (PlannerRecord) -> Unit,
 ) {
-    val original = remember(initial?.id, module.kind) { editorFormFrom(module, initial, initialParentId) }
+    val original = remember(initial?.id, module.kind) {
+        editorFormFrom(module, initial, initialParentId, ContractRules.nextVersion(index, initialParentId))
+    }
     var form by rememberSaveable(initial?.id, module.kind, stateSaver = formSaver) { mutableStateOf(original) }
     var errors by remember { mutableStateOf<Map<EditorField, Int>>(emptyMap()) }
     var confirmDiscard by rememberSaveable { mutableStateOf(false) }
@@ -134,7 +138,17 @@ fun RecordEditorScreen(
                 stringResource(R.string.title), error(EditorField.TITLE))
             EditorTextField(form.subtitle, { update { copy(subtitle = it.take(EditorLimits.SHORT_TEXT)) } },
                 stringResource(if (module.kind == Kinds.VENDOR) R.string.category else R.string.subtitle), error(EditorField.SUBTITLE))
-            if (module.kind in setOf(Kinds.BUDGET, Kinds.TROUSSEAU)) {
+            if (module.kind == Kinds.VENDOR) {
+                val currentLabel = form.vendorCategoryKey.takeIf { it.isNotBlank() }?.let { stringResource(categoryLabel(it)) }
+                val labels = VendorCategories.keys.associateWith { stringResource(categoryLabel(it)) }
+                CategoryPicker(form.vendorCategoryKey, labels) { key ->
+                    // A descrição livre acompanha a categoria enquanto o usuário não a personalizou.
+                    update {
+                        copy(vendorCategoryKey = key, subtitle = if (subtitle.isBlank() || subtitle == currentLabel) labels[key].orEmpty() else subtitle)
+                    }
+                }
+            }
+            if (module.kind in setOf(Kinds.BUDGET, Kinds.TROUSSEAU) || module.kind == Kinds.VENDOR && initial == null) {
                 EditorTextField(form.estimated, { update { copy(estimated = it) } }, stringResource(R.string.report_estimated),
                     error(EditorField.ESTIMATED), KeyboardType.Decimal)
             }

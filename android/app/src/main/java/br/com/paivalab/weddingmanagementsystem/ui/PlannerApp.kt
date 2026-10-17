@@ -154,6 +154,10 @@ fun PlannerApp(
     var installments by rememberSaveable { mutableStateOf(false) }
     var splitPayment by rememberSaveable { mutableStateOf(false) }
     var postGiftId by rememberSaveable { mutableStateOf<String?>(null) }
+    var statusVendorId by rememberSaveable { mutableStateOf<String?>(null) }
+    var signContractId by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingFile by rememberSaveable { mutableStateOf<android.net.Uri?>(null) }
+    var pendingFileOwner by rememberSaveable { mutableStateOf<String?>(null) }
     var membersGroupId by rememberSaveable { mutableStateOf<String?>(null) }
     var showPixDialog by rememberSaveable { mutableStateOf(false) }
     var pixGiftId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -168,7 +172,11 @@ fun PlannerApp(
 
     val importFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val target = attachmentTargetId
-        if (uri != null && target != null) model.addAttachment(activity, target, uri)
+        if (uri != null && target != null) {
+            // PDF de contrato não tem escolha de tipo; os demais anexos pedem o tipo, como na web.
+            if (index.find(target)?.kind == Kinds.CONTRACT) model.addAttachment(activity, target, uri)
+            else { pendingFile = uri; pendingFileOwner = target }
+        }
         attachmentTargetId = null
     }
     val exportFile = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
@@ -286,6 +294,8 @@ fun PlannerApp(
                 setCheckedIn = { guest, present -> model.setCheckedIn(guest.id, present) },
                 setThanked = { gift, thanked -> model.setGiftThanked(gift.id, thanked) },
                 editMembers = { membersGroupId = it.id },
+                changeVendorStatus = { statusVendorId = it.id },
+                signContract = { signContractId = it.id },
                 seedTasks = model::seedTaskTemplates,
                 seedVenueChecklist = model::seedVenueChecklist,
                 installments = { installments = true },
@@ -396,6 +406,8 @@ fun PlannerApp(
                             onDial = { phone -> if (!dialPhone(activity, phone)) notify(genericError) },
                             onWhatsApp = { if (!openWhatsApp(activity, it)) notify(genericError) },
                             onOpenLink = { url -> if (!openLink(activity, url)) notify(genericError) },
+                            onChangeStatus = { statusVendorId = it.id },
+                            onSignContract = { signContractId = it.id },
                         )
                     } else {
                         VenueDetailScreen(
@@ -418,7 +430,12 @@ fun PlannerApp(
                     RecordEditorScreen(
                         module = module, initial = initial, initialParentId = route.parentId, index = index, language = language,
                         onClose = { nav.popBackStack() },
-                        onSave = { record -> model.save(record) { nav.popBackStack() } },
+                        onSave = { record ->
+                            if (record.kind == Kinds.VENDOR && initial == null) {
+                                model.createVendor(record.copy(estimatedCents = null), record.estimatedCents,
+                                    resources.getString(R.string.vendor_budget_title, record.title)) { nav.popBackStack() }
+                            } else model.save(record) { nav.popBackStack() }
+                        },
                         onDelete = { deleteTargetId = it.id },
                     )
                 }
@@ -541,6 +558,34 @@ fun PlannerApp(
                 installments = false
             },
         )
+    }
+    index.find(statusVendorId)?.let { vendor ->
+        val budgets = index.children(vendor.id, Kinds.BUDGET)
+        VendorStatusDialog(vendor, language, budgets.sumOf { it.estimatedCents ?: 0L }.takeIf { budgets.isNotEmpty() },
+            needsActual = budgets.none { it.amountCents != null }, onDismiss = { statusVendorId = null }) { status, actual ->
+            model.setVendorStatus(vendor.id, status, actual)
+            statusVendorId = null
+        }
+    }
+    index.find(signContractId)?.let { contract ->
+        ContractSignDialog(contract, onDismiss = { signContractId = null }) { method, date ->
+            model.signContract(contract.id, method, date)
+            signContractId = null
+        }
+    }
+    pendingFile?.let { uri ->
+        val owner = pendingFileOwner
+        val name = remember(uri) {
+            runCatching {
+                activity.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+                    ?.use { if (it.moveToFirst()) it.getString(0) else null }
+            }.getOrNull()
+        }
+        AttachmentKindDialog(name, onDismiss = { pendingFile = null; pendingFileOwner = null }) { kind ->
+            if (owner != null) model.addAttachment(activity, owner, uri, kind)
+            pendingFile = null
+            pendingFileOwner = null
+        }
     }
     index.find(postGiftId)?.let { gift ->
         GiftPostDialog(gift, index, currency, language, onDismiss = { postGiftId = null }) { target, name, date, notes ->

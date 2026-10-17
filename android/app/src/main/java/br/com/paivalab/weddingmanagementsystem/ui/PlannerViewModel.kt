@@ -244,8 +244,20 @@ class PlannerViewModel(
     fun setCheckedIn(id: String, present: Boolean) = launchAction {
         notify(if (present) R.string.msg_checked_in else R.string.msg_check_in_undone, undo = repository.setCheckedIn(id, present))
     }
-    fun addAttachment(context: Context, recordId: String, uri: Uri) = launchAction {
-        repository.addAttachment(context, recordId, uri)
+    fun addAttachment(context: Context, recordId: String, uri: Uri, kind: String = "OTHER") = launchAction {
+        repository.addAttachment(context, recordId, uri, kind)
+        notify(R.string.msg_file_added)
+    }
+    fun createVendor(vendor: PlannerRecord, estimatedCents: Long?, budgetTitle: String, done: () -> Unit = {}) = launchAction {
+        repository.createVendor(vendor, estimatedCents, budgetTitle)
+        notify(R.string.msg_saved)
+        done()
+    }
+    fun setVendorStatus(id: String, status: String, actualCents: Long?) = launchAction {
+        notify(R.string.msg_status_changed, undo = repository.setVendorStatus(id, status, actualCents))
+    }
+    fun signContract(id: String, method: String, signedAt: java.time.LocalDate) = launchAction {
+        notify(R.string.msg_contract_signed, undo = repository.signContract(id, method, signedAt))
     }
     fun exportAttachment(context: Context, file: PlannerFile, destination: Uri) = launchAction {
         repository.exportAttachment(context, file, destination)

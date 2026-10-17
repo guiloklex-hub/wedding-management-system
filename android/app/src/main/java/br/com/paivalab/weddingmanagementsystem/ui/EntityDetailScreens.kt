@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
@@ -30,10 +31,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
+import br.com.paivalab.weddingmanagementsystem.data.ContractRules
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
+import br.com.paivalab.weddingmanagementsystem.data.VendorCategories
 import org.json.JSONObject
 
 private fun fields(record: PlannerRecord): JSONObject =
@@ -75,7 +78,7 @@ private fun DetailValue(label: String, value: String) {
 @Composable
 private fun FileActions(file: PlannerFile, language: String, onOpen: (PlannerFile) -> Unit, onExport: (PlannerFile) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(file.fileName + (if (file.kind == "CONTRACT") " · v${file.version}" else "") +
+        Text(file.fileName + (if (file.kind == "CONTRACT") " · v${file.version}" else " · ${stringResource(attachmentKindLabel(file.kind))}") +
             (if (file.deletedAt != null) " · ${localized(R.string.archived_version, language)}" else ""),
             modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
         TextButton(onClick = { onOpen(file) }) { Text(localized(R.string.open_file, language)) }
@@ -100,6 +103,8 @@ fun VendorDetailScreen(
     onDial: (String) -> Unit,
     onWhatsApp: (PlannerRecord) -> Unit,
     onOpenLink: (String) -> Unit,
+    onChangeStatus: (PlannerRecord) -> Unit = {},
+    onSignContract: (PlannerRecord) -> Unit = {},
 ) {
     val vendorFields = fields(vendor)
     val contacts = records.filter { it.kind == Kinds.CONTACT && it.parentId == vendor.id }
@@ -115,8 +120,12 @@ fun VendorDetailScreen(
     LazyColumn(contentPadding = PaddingValues(16.dp, 10.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             DetailSection(vendor.title) {
+                VendorCategories.key(vendorFields)?.let { InfoBadge(stringResource(categoryLabel(it)), categoryColor(it)) }
                 DetailValue(localized(R.string.category, language), vendor.subtitle)
-                if (vendor.status.isNotBlank()) StatusBadge(vendor.status, language)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (vendor.status.isNotBlank()) StatusBadge(vendor.status, language)
+                    TextButton(onClick = { onChangeStatus(vendor) }) { Text(stringResource(R.string.vendor_status_action)) }
+                }
                 val rating = vendorFields.optInt("rating", 0)
                 if (rating in 1..5) {
                     val ratingDescription = stringResource(R.string.rating_value, rating)
@@ -192,7 +201,12 @@ fun VendorDetailScreen(
                     DetailValue(localized(R.string.notes, language), contract.notes)
                     Row {
                         TextButton(onClick = { onEdit(contract) }) { Text(localized(R.string.edit, language)) }
-                        TextButton(onClick = { onAttach(contract) }) { Text(localized(R.string.attach_file, language)) }
+                        if (contract.status in ContractRules.unsigned) {
+                            TextButton(onClick = { onSignContract(contract) }) { Text(stringResource(R.string.contract_mark_signed)) }
+                        }
+                        TextButton(onClick = { onAttach(contract) }) {
+                            Text(stringResource(if (contractFiles.any { it.deletedAt == null }) R.string.contract_replace_pdf else R.string.attach_file))
+                        }
                         TextButton(onClick = { onDelete(contract) }) { Text(localized(R.string.delete, language)) }
                     }
                     contractFiles.forEach { FileActions(it, language, onOpenFile, onExportFile) }
@@ -213,7 +227,10 @@ fun VendorDetailScreen(
                     Text(budget.title)
                     DetailValue(localized(R.string.report_estimated, language), localizedCurrency(budget.estimatedCents ?: 0L, currency, language))
                     budget.amountCents?.let { DetailValue(localized(R.string.budget_actual, language), localizedCurrency(it, currency, language)) }
-                    TextButton(onClick = { onEdit(budget) }) { Text(localized(R.string.edit, language)) }
+                    Row {
+                        TextButton(onClick = { onEdit(budget) }) { Text(localized(R.string.edit, language)) }
+                        TextButton(onClick = { onDelete(budget) }) { Text(localized(R.string.delete, language)) }
+                    }
                 }
             }
         }
@@ -228,6 +245,7 @@ fun VendorDetailScreen(
                     Row {
                         TextButton(onClick = { onEdit(payment) }) { Text(localized(R.string.edit, language)) }
                         if (payment.status != "PAID") TextButton(onClick = { onPaid(payment.id) }) { Text(localized(R.string.mark_paid, language)) }
+                        TextButton(onClick = { onDelete(payment) }) { Text(localized(R.string.delete, language)) }
                     }
                     HorizontalDivider(color = PlannerBorder)
                 }

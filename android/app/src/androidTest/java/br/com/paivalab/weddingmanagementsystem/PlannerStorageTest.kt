@@ -19,6 +19,8 @@ import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
 import br.com.paivalab.weddingmanagementsystem.data.PlannerPreferences
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRepository
+import br.com.paivalab.weddingmanagementsystem.data.VenueChecklist
+import br.com.paivalab.weddingmanagementsystem.data.VenueChecklistTemplates
 import java.io.File
 import java.security.MessageDigest
 import java.time.LocalDate
@@ -136,6 +138,26 @@ class PlannerStorageTest {
         assertTrue(ExtraFields.has(ExtraFields.parse(database.dao().find("ana")!!.extraJson), "checkedInAt"))
         repository.setCheckedIn("ana", false)
         assertTrue(!ExtraFields.parse(database.dao().find("ana")!!.extraJson).has("checkedInAt"))
+    }
+
+    @Test fun venueChecklistOrderAnswersAndIncomeReceipt() = runBlocking {
+        val count = repository.createVenue(PlannerRecord("venue", Kinds.VENUE, "Fazenda", date = "2026-08-22"), seedChecklist = true)
+        assertEquals(VenueChecklistTemplates.all.size, count)
+        suspend fun items() = database.dao().allRecords().filter { it.kind == Kinds.VENUE_CHECK && it.deletedAt == null }
+            .sortedBy(VenueChecklist::sortOrder)
+        assertEquals((0 until count).toList(), items().map(VenueChecklist::sortOrder))
+        assertTrue(items().all { it.subtitle.isEmpty() })
+
+        val second = items()[1]
+        repository.moveChecklistItem(second.id, -1)
+        assertEquals(second.id, items().first().id)
+        repository.setChecklistItem(second.id, checked = true, value = "  120 vagas  ")
+        val answered = database.dao().find(second.id)!!
+        assertEquals(listOf("DONE", "120 vagas"), listOf(answered.status, VenueChecklist.value(answered)))
+
+        repository.save(PlannerRecord("income", Kinds.INCOME, "Bônus", subtitle = "BONUS", amountCents = 1_000_00L, status = "EXPECTED"))
+        repository.setStatus("income", "RECEIVED")
+        assertTrue(ExtraFields.instant(ExtraFields.parse(database.dao().find("income")!!.extraJson), "receivedAt") != null)
     }
 
     @Test fun vendorStatusContractSigningAndPdfVersions() = runBlocking {

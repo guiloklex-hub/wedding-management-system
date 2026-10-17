@@ -60,10 +60,12 @@ import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.ContractRules
 import br.com.paivalab.weddingmanagementsystem.data.GuestRules
-import br.com.paivalab.weddingmanagementsystem.data.VendorCategories
+import br.com.paivalab.weddingmanagementsystem.data.IncomeRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
+import br.com.paivalab.weddingmanagementsystem.data.VendorCategories
+import br.com.paivalab.weddingmanagementsystem.data.VenueChecklist
 import br.com.paivalab.weddingmanagementsystem.data.WebValues
 import kotlinx.serialization.json.Json
 
@@ -81,7 +83,7 @@ fun RecordEditorScreen(
     index: RecordIndex,
     language: String,
     onClose: () -> Unit,
-    onSave: (PlannerRecord) -> Unit,
+    onSave: (EditorOutcome.Valid) -> Unit,
     onDelete: (PlannerRecord) -> Unit,
 ) {
     val original = remember(initial?.id, module.kind) {
@@ -115,7 +117,7 @@ fun RecordEditorScreen(
                     }
                     TextButton(onClick = {
                         when (val outcome = buildEditorRecord(module, form, initial, index)) {
-                            is EditorOutcome.Valid -> onSave(outcome.record)
+                            is EditorOutcome.Valid -> onSave(outcome)
                             is EditorOutcome.Invalid -> errors = outcome.errors
                         }
                     }) { Text(stringResource(R.string.save), fontWeight = FontWeight.SemiBold) }
@@ -136,8 +138,22 @@ fun RecordEditorScreen(
             }
             EditorTextField(form.title, { update { copy(title = it.take(EditorLimits.NAME)) } },
                 stringResource(R.string.title), error(EditorField.TITLE))
-            EditorTextField(form.subtitle, { update { copy(subtitle = it.take(EditorLimits.SHORT_TEXT)) } },
-                stringResource(if (module.kind == Kinds.VENDOR) R.string.category else R.string.subtitle), error(EditorField.SUBTITLE))
+            if (module.kind !in setOf(Kinds.INCOME, Kinds.VENUE_CHECK)) {
+                EditorTextField(form.subtitle, { update { copy(subtitle = it.take(EditorLimits.SHORT_TEXT)) } },
+                    stringResource(if (module.kind == Kinds.VENDOR) R.string.category else R.string.subtitle), error(EditorField.SUBTITLE))
+            }
+            if (module.kind == Kinds.INCOME) {
+                ChoiceRow(stringResource(R.string.income_source), IncomeRules.sources.map { it to stringResource(incomeSourceLabel(it)) },
+                    form.incomeSource) { update { copy(incomeSource = it) } }
+                if (form.incomeSource == "GIFT" || form.incomeGivenBy.isNotBlank()) {
+                    EditorTextField(form.incomeGivenBy, { update { copy(incomeGivenBy = it.take(EditorLimits.NAME)) } },
+                        stringResource(R.string.income_given_by), null)
+                }
+            }
+            if (module.kind == Kinds.VENUE_CHECK) {
+                EditorTextField(form.checklistValue, { update { copy(checklistValue = it.take(VenueChecklist.VALUE_MAX)) } },
+                    stringResource(R.string.checklist_value), null, singleLine = false)
+            }
             if (module.kind == Kinds.VENDOR) {
                 val currentLabel = form.vendorCategoryKey.takeIf { it.isNotBlank() }?.let { stringResource(categoryLabel(it)) }
                 val labels = VendorCategories.keys.associateWith { stringResource(categoryLabel(it)) }
@@ -164,8 +180,12 @@ fun RecordEditorScreen(
                 )
             }
             if (module.hasDate) {
-                DatePickerOutlinedField(form.date, { update { copy(date = it) } }, stringResource(R.string.date),
+                DatePickerOutlinedField(form.date, { update { copy(date = it) } },
+                    stringResource(if (module.kind == Kinds.VENUE) R.string.venue_visited_at else R.string.date),
                     error = error(EditorField.DATE))
+            }
+            if (module.kind == Kinds.GOAL) {
+                ToggleChip(stringResource(R.string.goal_active), form.goalActive) { update { copy(goalActive = it) } }
             }
             if (module.kind == Kinds.INCOME) {
                 ChoiceRow(stringResource(R.string.frequency), listOf("ONE_TIME" to R.string.one_time, "MONTHLY" to R.string.monthly)
@@ -261,6 +281,9 @@ fun RecordEditorScreen(
                 EditorTextField(form.venueCons, { update { copy(venueCons = it.take(EditorLimits.LONG_TEXT)) } },
                     stringResource(R.string.venue_cons), null, singleLine = false)
                 ToggleChip(stringResource(R.string.venue_shortlisted), form.venueShortlisted) { update { copy(venueShortlisted = it) } }
+                if (initial == null) {
+                    ToggleChip(stringResource(R.string.venue_seed_on_create), form.venueSeedChecklist) { update { copy(venueSeedChecklist = it) } }
+                }
             }
             if (module.kind == Kinds.VENDOR) {
                 RatingInput(form.rating) { update { copy(rating = it) } }

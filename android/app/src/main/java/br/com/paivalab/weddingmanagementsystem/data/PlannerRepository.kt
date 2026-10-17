@@ -138,17 +138,17 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
 
     suspend fun seedVenueChecklist(venueId: String): Int = database.withTransaction {
         require(dao.find(venueId)?.kind == Kinds.VENUE) { "Local inválido" }
-        val existingTitles = dao.allRecords().filter {
-            it.kind == Kinds.VENUE_CHECK && it.parentId == venueId && it.deletedAt == null
-        }.map { it.title.lowercase() }.toSet()
+        val existing = dao.allRecords().filter { it.kind == Kinds.VENUE_CHECK && it.parentId == venueId && it.deletedAt == null }
+        val existingTitles = existing.map { it.title.lowercase() }.toSet()
+        val first = VenueChecklist.nextSortOrder(existing)
         val additions = VenueChecklistTemplates.all.filterNot { it.lowercase() in existingTitles }.mapIndexed { idx, label ->
             PlannerRecord(
                 id = UUID.randomUUID().toString(),
                 kind = Kinds.VENUE_CHECK,
                 title = label,
-                subtitle = "Vistoria técnica #${idx + 1}",
                 status = "TODO",
                 parentId = venueId,
+                extraJson = JSONObject().put("sortOrder", first + idx).toString(),
             )
         }
         dao.saveRecords(additions)
@@ -156,6 +156,35 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
             dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), venueId, "SEED_VENUE_CHECKLIST", details = additions.size.toString()))
         }
         additions.size
+    }
+
+    /** Cria o local e, por padrão, o checklist de vistoria, como `createVenue` da web. */
+    suspend fun createVenue(venue: PlannerRecord, seedChecklist: Boolean): Int = database.withTransaction {
+        require(venue.kind == Kinds.VENUE && dao.findAny(venue.id) == null)
+        save(venue)
+        if (seedChecklist) seedVenueChecklist(venue.id) else 0
+    }
+
+    /** Marca o item e grava a resposta, como `toggleChecklistItem` da web. */
+    suspend fun setChecklistItem(id: String, checked: Boolean, value: String): UndoSnapshot = database.withTransaction {
+        val item = dao.find(id) ?: error("Item não encontrado")
+        require(item.kind == Kinds.VENUE_CHECK)
+        val extra = ExtraFields.parse(item.extraJson).apply {
+            val trimmed = value.trim().take(VenueChecklist.VALUE_MAX)
+            if (trimmed.isEmpty()) remove("value") else put("value", trimmed)
+        }
+        dao.save(item.copy(status = if (checked) "DONE" else "TODO", extraJson = extra.toString(), updatedAt = System.currentTimeMillis()))
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "STATUS", details = if (checked) "DONE" else "TODO"))
+        UndoSnapshot(listOf(item))
+    }
+
+    suspend fun moveChecklistItem(id: String, delta: Int) = database.withTransaction {
+        val item = dao.find(id) ?: return@withTransaction
+        val venueId = item.parentId ?: return@withTransaction
+        val siblings = dao.allRecords().filter { it.kind == Kinds.VENUE_CHECK && it.parentId == venueId && it.deletedAt == null }
+            .sortedWith(compareBy<PlannerRecord>(VenueChecklist::sortOrder).thenBy { it.createdAt })
+        val now = System.currentTimeMillis()
+        dao.saveRecords(VenueChecklist.moved(siblings, id, delta).map { it.copy(updatedAt = now) })
     }
 
     suspend fun createInstallments(plan: InstallmentPlan): Int = database.withTransaction {
@@ -309,9 +338,14 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
         }
         val now = System.currentTimeMillis()
         val previous = dao.findAny(record.id)
-        dao.save(GiftRules.normalize(previous, TaskRules.withCompletion(previous, record, now), now).copy(updatedAt = now))
+        dao.save(stamped(previous, record, now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), record.id, "SAVE"))
     }
+
+    /** Instantes que a web grava ao mudar a situação: conclusão, recebimento e agradecimento. */
+    private fun stamped(previous: PlannerRecord?, next: PlannerRecord, now: Long): PlannerRecord =
+        GiftRules.normalize(previous, IncomeRules.withReceipt(previous, TaskRules.withCompletion(previous, next, now), now), now)
+            .copy(updatedAt = now)
 
     suspend fun create(kind: String, title: String, subtitle: String = "", amountCents: Long? = null,
                        date: String? = null, status: String = "", phone: String = "", email: String = "",
@@ -375,7 +409,7 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
         val current = dao.find(id) ?: error("Registro não encontrado")
         val now = System.currentTimeMillis()
         val next = current.copy(status = status)
-        dao.save(GiftRules.normalize(current, TaskRules.withCompletion(current, next, now), now).copy(updatedAt = now))
+        dao.save(stamped(current, next, now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "STATUS", details = status))
         UndoSnapshot(listOf(current))
     }
@@ -467,6 +501,7 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
         require(GiftRules.type(giftExtra) == "CASH" && (gift.amountCents ?: 0L) > 0L) { GIFT_NOT_CASH }
         val now = System.currentTimeMillis()
         val incomeExtra = JSONObject().put("frequency", "ONE_TIME")
+            .put("receivedAt", date.atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli())
         ExtraFields.text(giftExtra, "giverName").takeIf { it.isNotBlank() }?.let { incomeExtra.put("givenByName", it) }
         val target = PlannerRecord(UUID.randomUUID().toString(), targetKind, title.trim(),
             amountCents = gift.amountCents, date = date.toString(), notes = notes.take(8000),

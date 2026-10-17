@@ -106,8 +106,10 @@ object DemoSeed {
                 amountCents = 38_000_00L,
                 phone = "+5511998881122",
                 email = "visitas@fazendavilarica.com.br",
+                date = "2026-08-22",
                 notes = "Estacionamento interno para 120 carros e suíte da noiva inclusa.",
-                extraJson = JSONObject().put("address", "Rod. Dom Gabriel Paulino Bueno Couto, km 92 — Itu/SP").toString(),
+                extraJson = JSONObject().put("address", "Rod. Dom Gabriel Paulino Bueno Couto, km 92 — Itu/SP")
+                    .put("capacitySeated", 220).put("capacityStanding", 300).put("isShortlisted", true).toString(),
             ),
             PlannerRecord(
                 id = "seed-venue-2",
@@ -127,6 +129,7 @@ object DemoSeed {
                 title = "Gerador 150kVA dedicado testado e incluso",
                 status = "DONE",
                 parentId = "seed-venue-1",
+                extraJson = JSONObject().put("sortOrder", 0).put("value", "Testado na visita de agosto").toString(),
             ),
             PlannerRecord(
                 id = "seed-venue-check-2",
@@ -134,6 +137,7 @@ object DemoSeed {
                 title = "Suíte da noiva climatizada com luz natural",
                 status = "DONE",
                 parentId = "seed-venue-1",
+                extraJson = JSONObject().put("sortOrder", 1).toString(),
             ),
             PlannerRecord(
                 id = "seed-venue-check-3",
@@ -141,6 +145,7 @@ object DemoSeed {
                 title = "Vistoria técnica de iluminação cênica",
                 status = "TODO",
                 parentId = "seed-venue-1",
+                extraJson = JSONObject().put("sortOrder", 2).toString(),
             ),
             // Budgets
             PlannerRecord(
@@ -248,21 +253,21 @@ object DemoSeed {
                 id = "seed-income-1",
                 kind = Kinds.INCOME,
                 title = "Aporte Mensal do Casal — Setembro",
-                subtitle = "Poupança conjunta",
+                subtitle = "SALARY",
                 amountCents = 12_000_00L,
                 date = "2026-09-05",
                 status = "RECEIVED",
-                extraJson = JSONObject().put("frequency", "MONTHLY").put("source", "SALARY").toString(),
+                extraJson = JSONObject().put("frequency", "MONTHLY").put("receivedAt", 1_788_609_600_000L).toString(),
             ),
             PlannerRecord(
                 id = "seed-income-2",
                 kind = Kinds.INCOME,
                 title = "Presente Especial dos Pais",
-                subtitle = "Contribuição familiar",
+                subtitle = "GIFT",
                 amountCents = 30_000_00L,
                 date = "2026-10-15",
                 status = "EXPECTED",
-                extraJson = JSONObject().put("frequency", "ONE_TIME").put("source", "PARENTS").toString(),
+                extraJson = JSONObject().put("frequency", "ONE_TIME").put("givenByName", "Pais da noiva").toString(),
             ),
             // Goals & Assets
             PlannerRecord(

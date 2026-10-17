@@ -14,11 +14,11 @@ Legenda: **sim** = fluxo principal equivalente; **parcial** = tela existe, mas f
 | `/dashboard/vendors` | Sim | As 23 categorias da web com cor, avaliação, situação na lista (ao contratar sem valor real, pede o valor contratado) e orçamento estimado criado junto com o fornecedor. |
 | `/dashboard/vendors/compare` | Sim | Escolha de 2 a 4 fornecedores; valores, pagamentos, saldo, avaliação, situação, indicação, tags e contagem de contatos, notas e contratos. |
 | `/dashboard/vendors/[id]` | Sim | Contatos, observações, cláusulas, contratos com "Marcar assinado" (digital ou físico), substituição do PDF com nova versão e arquivo da anterior, tipo de cada anexo, orçamento e pagamentos com exclusão. |
-| `/dashboard/venues` | Sim | Cadastro, busca e edição locais. |
-| `/dashboard/venues/[id]` | Parcial | Página dedicada móvel mostra condições, restrições, checklist e anexos; faltam alguns campos de edição da web. |
+| `/dashboard/venues` | Sim | Cadastro, busca e edição locais; o cartão mostra pré-seleção, capacidade, progresso do checklist e data da visita. |
+| `/dashboard/venues/[id]` | Sim | Condições, restrições, visita (`visitedAt`), anexos e checklist com resposta, ordem e progresso. |
 | `/dashboard/tasks` | Sim | Lista e Kanban, filtros "em aberto", "atrasadas" e "próximos 7 dias", barra de fases, responsável, fornecedor, local e `completedAt`. Avisos por email/WhatsApp são da web. |
 | `/dashboard/payments` | Sim | Lista e calendário mensal com resumo do ano, marcar e desfazer pagamento, sinal + saldo, parcelas com intervalo em dias, forma de pagamento, multa e juros. Avisos por email/WhatsApp são da web. |
-| `/dashboard/income`, `/assets`, `/goals` | Sim | Cadastros e totais locais; projeção e visualização têm diferenças. |
+| `/dashboard/income`, `/assets`, `/goals` | Sim | Origem da receita como na web, "dado por", data de recebimento; metas com ativa/inativa, falta, valor por mês e aportes. |
 | `/dashboard/guests`, `/guests/groups`, `/guests/import` | Parcial | Indicadores, filtros (confirmados, pendentes, padrinhos, crianças, presentes no evento), exportação CSV com as colunas da web, check-in reversível, idade e idioma. Grupos com contato, resumo de RSVP, aviso de grupo sem contato e gestão de integrantes. A importação por colagem de texto e os três modos de deduplicação da web ainda diferem; o PIN e o link público de RSVP dependem do servidor. |
 | `/dashboard/gifts`, `/gifts/[id]/pix` | Sim | Tipo dinheiro ou item, quem deu, cota da lua de mel, marcar ou desmarcar agradecimento, lançar como receita ou ativo uma única vez, filtro "falta agradecer", indicadores e Pix individual. A confirmação automática do Pix é da web. |
 | `/dashboard/wedding-day`, `/wedding-day/seating` | Parcial | Cronograma, plano B, check-in e mesas locais; não há arrastar e soltar da web. |
@@ -65,10 +65,17 @@ Navegação tipada com estado preservado, editor em tela cheia com validação i
 - O primeiro PDF de um contrato fica com a versão do contrato; os seguintes arquivam o atual e incrementam a versão, como `replaceContractFile`. Contrato novo começa na versão seguinte às do fornecedor, como `createContract`.
 - Anexos comuns pedem o tipo (proposta, recibo, nota fiscal, documento, foto, outro). Na web, a restauração passou a manter a versão do PDF e a converter o tipo genérico antigo do Android.
 
+## Locais, receitas e metas (Fase 2, parte 4)
+
+- Local novo nasce com o checklist de vistoria da web (desmarcável no editor). Cada item guarda a resposta (`value`, até 500 caracteres) e a ordem (`sortOrder`); as setas da tela do local reordenam os itens e um item novo entra no fim.
+- A data do local é a data da visita (`visitedAt`).
+- A origem da receita usa as 7 opções de `incomeActions`. Origens antigas em texto livre aparecem como "Outro", que é como a restauração web as grava. `receivedAt` é gravado ao marcar como recebida e limpo ao reabrir, como `updateIncome`; o presente lançado como receita usa a data escolhida.
+- O cartão da meta repete o da web: falta, valor por mês (meses restantes arredondados para cima, em blocos de 30 dias) e quantidade de aportes. Metas inativas ficam no fim da lista.
+
 ## Próximas lacunas de paridade
 
 1. Definir se as funções que dependem do servidor serão sincronizadas no Android ou terão apenas alternativas locais.
-2. Portar campos e ações restantes dos detalhes de fornecedor/local, especialmente a assinatura formal e a substituição de PDF com incremento automático de versão.
+2. Portar Insights e relatórios com gráficos, mapa de mesas com arrastar e soltar, lua de mel e enxoval.
 3. Portar visualizações e filtros completos dos relatórios, mais a central de ajuda.
 4. Validar o envio concluído pelo usuário e o fluxo separado do WhatsApp Business. No Samsung SM-S908E, a prévia do WhatsApp já mostrou a imagem e o texto do convite juntos; nenhum envio foi confirmado.
 

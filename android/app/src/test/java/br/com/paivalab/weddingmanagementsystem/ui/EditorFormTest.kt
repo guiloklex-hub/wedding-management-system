@@ -87,4 +87,40 @@ class EditorFormTest {
             br.com.paivalab.weddingmanagementsystem.data.ContractRules.nextVersion(withContract, "v1"))
         assertEquals("2", form.contractVersion)
     }
+
+    @Test fun incomeSourceIsAWebValueAndKeepsWhoGaveIt() {
+        val legacy = PlannerRecord("i1", Kinds.INCOME, "Pais", subtitle = "Contribuição familiar", status = "EXPECTED")
+        val form = editorFormFrom(module(Kinds.INCOME), legacy, null)
+        assertEquals("OTHER", form.incomeSource)
+        val record = (buildEditorRecord(module(Kinds.INCOME), form.copy(incomeSource = "GIFT", incomeGivenBy = " Tia Ana "), legacy, index)
+            as EditorOutcome.Valid).record
+        assertEquals("GIFT", record.subtitle)
+        assertEquals("Tia Ana", JSONObject(record.extraJson).getString("givenByName"))
+    }
+
+    @Test fun goalCanBeDeactivated() {
+        val goal = PlannerRecord("m1", Kinds.GOAL, "Viagem", amountCents = 100_00L)
+        val form = editorFormFrom(module(Kinds.GOAL), goal, null)
+        assertTrue(form.goalActive)
+        val record = (buildEditorRecord(module(Kinds.GOAL), form.copy(goalActive = false), goal, index) as EditorOutcome.Valid).record
+        assertEquals(false, JSONObject(record.extraJson).getBoolean("isActive"))
+    }
+
+    @Test fun newVenueSeedsChecklistAndNewItemGoesLast() {
+        val venue = buildEditorRecord(module(Kinds.VENUE), EditorFormState(title = "Fazenda", date = "2026-08-22"), null, index)
+            as EditorOutcome.Valid
+        assertTrue(venue.seedVenueChecklist)
+        assertEquals("2026-08-22", venue.record.date)
+        val noSeed = buildEditorRecord(module(Kinds.VENUE), EditorFormState(title = "Fazenda", venueSeedChecklist = false), null, index)
+        assertFalse((noSeed as EditorOutcome.Valid).seedVenueChecklist)
+
+        val place = PlannerRecord("p1", Kinds.VENUE, "Fazenda")
+        val item = PlannerRecord("k1", Kinds.VENUE_CHECK, "Gerador", parentId = "p1", extraJson = """{"sortOrder":4}""")
+        val withItems = RecordIndex(listOf(place, item))
+        val added = buildEditorRecord(module(Kinds.VENUE_CHECK),
+            EditorFormState(title = "Banheiros", checklistValue = "Seis", parentId = "p1", status = "TODO"), null, withItems)
+        val extra = JSONObject((added as EditorOutcome.Valid).record.extraJson)
+        assertEquals(5, extra.getInt("sortOrder"))
+        assertEquals("Seis", extra.getString("value"))
+    }
 }

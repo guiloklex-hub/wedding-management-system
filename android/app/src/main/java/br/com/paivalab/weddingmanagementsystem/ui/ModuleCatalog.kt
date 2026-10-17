@@ -45,7 +45,7 @@ val modules = listOf(
         parentKind = Kinds.VENDOR),
     ModuleDefinition(Kinds.VENDOR, R.string.vendors, Icons.Default.People, listOf("NEGOTIATION", "CONTRACTED", "FINALIZED"), hasContact = true),
     ModuleDefinition(Kinds.GUEST, R.string.guests, Icons.Default.Person, listOf("NOT_INVITED", "INVITED", "CONFIRMED", "DECLINED", "MAYBE"), hasContact = true),
-    ModuleDefinition(Kinds.VENUE, R.string.venues, Icons.Default.Hotel, hasAmount = true, hasContact = true),
+    ModuleDefinition(Kinds.VENUE, R.string.venues, Icons.Default.Hotel, hasAmount = true, hasDate = true, hasContact = true),
     ModuleDefinition(Kinds.BUDGET, R.string.budget, Icons.Default.Receipt, hasAmount = true, parentKind = Kinds.VENDOR),
     ModuleDefinition(Kinds.PAYMENT, R.string.payments, Icons.Default.CreditCard, listOf("PENDING", "PAID"), true, true, parentKind = Kinds.VENDOR),
     ModuleDefinition(Kinds.INCOME, R.string.income, Icons.Default.Payments, listOf("EXPECTED", "RECEIVED", "CANCELLED"), true, true),

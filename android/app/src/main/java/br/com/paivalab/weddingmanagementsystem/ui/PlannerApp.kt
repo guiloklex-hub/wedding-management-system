@@ -414,7 +414,7 @@ fun PlannerApp(
                             venue = record, records = records, files = storedFiles.filter { it.deletedAt == null },
                             language = language, currency = currency, onEdit = edit, onAddRelated = related, onAttach = attach,
                             onOpenFile = openFile, onExportFile = export, onChecklistStatus = model::setStatus,
-                            onSeedChecklist = model::seedVenueChecklist,
+                            onMoveChecklist = model::moveChecklistItem, onSeedChecklist = model::seedVenueChecklist,
                             onMaps = { if (!openMap(activity, it)) notify(genericError) },
                         )
                     }
@@ -430,11 +430,16 @@ fun PlannerApp(
                     RecordEditorScreen(
                         module = module, initial = initial, initialParentId = route.parentId, index = index, language = language,
                         onClose = { nav.popBackStack() },
-                        onSave = { record ->
-                            if (record.kind == Kinds.VENDOR && initial == null) {
-                                model.createVendor(record.copy(estimatedCents = null), record.estimatedCents,
-                                    resources.getString(R.string.vendor_budget_title, record.title)) { nav.popBackStack() }
-                            } else model.save(record) { nav.popBackStack() }
+                        onSave = { outcome ->
+                            val record = outcome.record
+                            when {
+                                record.kind == Kinds.VENDOR && initial == null ->
+                                    model.createVendor(record.copy(estimatedCents = null), record.estimatedCents,
+                                        resources.getString(R.string.vendor_budget_title, record.title)) { nav.popBackStack() }
+                                record.kind == Kinds.VENUE && initial == null ->
+                                    model.createVenue(record, outcome.seedVenueChecklist) { nav.popBackStack() }
+                                else -> model.save(record) { nav.popBackStack() }
+                            }
                         },
                         onDelete = { deleteTargetId = it.id },
                     )

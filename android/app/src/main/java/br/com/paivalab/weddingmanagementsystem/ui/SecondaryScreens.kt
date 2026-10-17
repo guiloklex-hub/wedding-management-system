@@ -299,14 +299,14 @@ fun SettingsScreen(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(localized(R.string.language, language), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("pt-BR" to "Português (BR)", "en" to "English", "es" to "Español").forEach { (option, label) ->
+                        languageOptions.forEach { (option, label) ->
                             FilterChip(selected = language == option, onClick = { model.setLocale(option) }, label = { Text(label) })
                         }
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(localized(R.string.currency, language), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("BRL" to "R$ (BRL)", "USD" to "US$ (USD)", "EUR" to "€ (EUR)").forEach { (option, label) ->
+                        currencyOptions.forEach { (option, label) ->
                             FilterChip(selected = currency == option, onClick = { model.setCurrency(option) }, label = { Text(label) })
                         }
                     }
@@ -689,6 +689,8 @@ fun auditLabel(action: String, language: String): String {
         "DELETE" -> localized(R.string.audit_delete, language)
         "STATUS" -> localized(R.string.audit_status, language)
         "MARK_PAID" -> localized(R.string.audit_paid, language)
+        "UNDO_PAID" -> stringResource(R.string.audit_undo_paid)
+        "CREATE_SPLIT_PAYMENT" -> stringResource(R.string.audit_split_payment)
         "ADD_FILE" -> localized(R.string.audit_file, language)
         "IMPORT_GUESTS" -> localized(R.string.audit_import, language)
         "SEED_TASK_TEMPLATES" -> stringResource(R.string.audit_task_templates)

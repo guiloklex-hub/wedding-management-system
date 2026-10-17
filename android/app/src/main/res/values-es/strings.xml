@@ -25,7 +25,6 @@
     <string name="search">Buscar</string><string name="empty">Aún no hay registros</string>
     <string name="confirm_delete">¿Eliminar este registro?</string>
     <string name="total_budget">Presupuesto previsto</string><string name="total_paid">Total pagado</string>
-    <string name="pending_tasks">Tareas pendientes</string><string name="confirmed_guests">Confirmados</string>
     <string name="upcoming">Próximas acciones</string><string name="mark_paid">Marcar pagado</string>
     <string name="mark_done">Completar</string><string name="confirm_guest">Confirmar asistencia</string>
     <string name="decline_guest">Rechazar asistencia</string><string name="check_in">Registrar llegada</string>
@@ -268,9 +267,7 @@
     <string name="risk_radar_count">Radar de riesgos (%1$d)</string>
     <string name="risk_critical">Atención crítica</string>
     <string name="risk_warning">Alerta</string>
-    <plurals name="budget_items"><item quantity="one">%1$d partida de presupuesto</item><item quantity="other">%1$d partidas de presupuesto</item></plurals>
     <string name="percent_of_budget">%1$d%% del presupuesto</string>
-    <plurals name="tasks_done"><item quantity="one">%1$d completada</item><item quantity="other">%1$d completadas</item></plurals>
     <plurals name="seats_confirmed"><item quantity="one">%1$d lugar confirmado</item><item quantity="other">%1$d lugares confirmados</item></plurals>
     <plurals name="pending_count"><item quantity="one">%1$d pendiente</item><item quantity="other">%1$d pendientes</item></plurals>
     <string name="no_upcoming">No hay tareas ni pagos pendientes con fecha.</string>
@@ -359,4 +356,109 @@
     <string name="share">Compartir</string>
     <string name="pix_share_text">Regalo vía Pix (%1$s)\n\nClave: %2$s\n\nPix copia y pega:\n%3$s</string>
     <string name="add_to_section">Añadir en %1$s</string>
+    <string name="onboarding_title">Configuremos tu boda</string>
+    <string name="onboarding_step_couple">La pareja</string>
+    <string name="onboarding_step_budget">Contingencia</string>
+    <string name="onboarding_step_start">Primeros pasos</string>
+    <string name="onboarding_step_done">Listo</string>
+    <string name="onboarding_step_of">Paso %1$d de %2$d · %3$s</string>
+    <string name="onboarding_couple_title">¿Quién se casa y cuándo?</string>
+    <string name="onboarding_couple_body">Los nombres y la fecha aparecen en el panel y en la cuenta regresiva. Puedes cambiarlos después en Ajustes.</string>
+    <string name="onboarding_budget_title">¿Cuánto reservar?</string>
+    <string name="onboarding_budget_body" formatted="false">Recomendamos un 10% del valor contratado para imprevistos.</string>
+    <string name="onboarding_contingency_value">Fondo de contingencia: %1$d%%</string>
+    <string name="onboarding_contingency_hint">El fondo se suma al presupuesto total del panel y ayuda a absorber lluvia, cambios de menú o más invitados.</string>
+    <string name="onboarding_start_title">Cómo funciona la app</string>
+    <string name="onboarding_start_body">Elige si quieres empezar con la lista de tareas recomendada.</string>
+    <string name="onboarding_seed_tasks">Crear la lista de tareas recomendada</string>
+    <string name="onboarding_seed_needs_date">Indica la fecha de la boda en el primer paso para generar las tareas con plazos.</string>
+    <string name="onboarding_offline">Todo se guarda solo en este dispositivo, sin cuenta ni internet.</string>
+    <string name="onboarding_backup">Haz copias cifradas en Más › Copia de seguridad para no perder nada al cambiar de móvil.</string>
+    <string name="onboarding_reminders">Los recordatorios de pagos y tareas llegan como notificaciones del propio dispositivo.</string>
+    <string name="onboarding_demo">Explorar con datos de ejemplo</string>
+    <string name="onboarding_done_title">¡Todo listo!</string>
+    <string name="onboarding_done_body">Revisa el resumen. Puedes cambiar cualquier dato después en Ajustes.</string>
+    <string name="onboarding_next">Continuar</string>
+    <string name="onboarding_finish">Terminar</string>
+    <string name="dashboard_setup_title">Define la fecha de la boda</string>
+    <string name="dashboard_setup_body">Con la fecha, la app calcula la cuenta regresiva, la proyección de caja y los plazos de las tareas. Toca para abrir Ajustes.</string>
+    <string name="dashboard_settle_title">Alerta de liquidación</string>
+    <string name="kpi_total_budget">Presupuesto total</string>
+    <string name="kpi_contingency">Contingencia: %1$s</string>
+    <string name="kpi_remaining">Saldo pendiente</string>
+    <string name="kpi_contracted">Contratado: %1$s</string>
+    <string name="kpi_cash_coverage">Cobertura de caja</string>
+    <string name="kpi_coverage_percent">%1$d%% del saldo pendiente</string>
+    <string name="kpi_balance_settled">Saldo liquidado</string>
+    <string name="countdown_past">El evento ya pasó</string>
+    <string name="countdown_today">¡Hoy es el día!</string>
+    <string name="action_stream_empty">¡Todo al día! No hay nada pendiente ahora.</string>
+    <string name="show_less">Mostrar menos</string>
+    <string name="action_pay">Pagar a %1$s — %2$s</string>
+    <string name="action_task">Tarea: %1$s</string>
+    <string name="action_sign_contract">Firmar el contrato de %1$s</string>
+    <string name="action_due_today">vence hoy</string>
+    <string name="funnel_title">Embudo de proveedores</string>
+    <string name="funnel_empty">No hay proveedores registrados.</string>
+    <string name="funnel_negotiating">Negociando</string>
+    <string name="funnel_contracted">Contratados</string>
+    <string name="funnel_finalized">Finalizados</string>
+    <string name="rsvp_title">Confirmaciones (RSVP)</string>
+    <string name="rsvp_empty">Aún no hay invitados registrados.</string>
+    <string name="rsvp_responded">%1$d de %2$d han confirmado</string>
+    <string name="gifts_received_title">Regalos recibidos</string>
+    <string name="gifts_empty">Aún no hay regalos registrados.</string>
+    <string name="gifts_breakdown">%1$d en efectivo · %2$d en artículos</string>
+    <string name="gifts_thanked">Agradecidos: %1$d%% (%2$d de %3$d)</string>
+    <string name="dashboard_upcoming_payments">Próximos vencimientos</string>
+    <string name="dashboard_no_upcoming_payments">No hay pagos en los próximos 30 días.</string>
+    <string name="dashboard_due_on">Vence: %1$s</string>
+    <string name="dashboard_upcoming_tasks">Próximas tareas</string>
+    <string name="no_deadline">Sin plazo</string>
+    <string name="task_responsible">Responsable</string>
+    <string name="task_responsible_value">Responsable: %1$s</string>
+    <string name="phase_title">Fase de la organización</string>
+    <string name="phase_12m">12+ meses</string>
+    <string name="phase_6m">6 meses</string>
+    <string name="phase_3m">3 meses</string>
+    <string name="phase_1m">1 mes</string>
+    <string name="phase_1w">Semana final</string>
+    <string name="kanban_empty">Vacío</string>
+    <string name="task_overdue_on">Atrasada desde %1$s</string>
+    <string name="task_move">Mover %1$s</string>
+    <string name="view_list">Lista</string>
+    <string name="view_kanban">Kanban</string>
+    <string name="view_calendar">Calendario</string>
+    <string name="task_filter_open">Abiertas (%1$d)</string>
+    <string name="task_filter_overdue">Atrasadas (%1$d)</string>
+    <string name="task_filter_week">Próximos 7 días (%1$d)</string>
+    <string name="calendar_previous_month">Mes anterior</string>
+    <string name="calendar_next_month">Mes siguiente</string>
+    <string name="calendar_year_summary">Resumen de %1$d</string>
+    <string name="calendar_day_title">Pagos del %1$s</string>
+    <string name="calendar_day_empty">No hay pagos este día.</string>
+    <string name="undo_paid">Deshacer pago</string>
+    <string name="split_payment">Seña + saldo</string>
+    <string name="split_deposit_title">Seña (pagada hoy)</string>
+    <string name="split_deposit_amount">Importe de la seña</string>
+    <string name="split_balance_title">Saldo</string>
+    <string name="split_balance_amount">Importe del saldo</string>
+    <string name="split_balance_due">Vencimiento del saldo</string>
+    <string name="installment_interval_days">Intervalo (días)</string>
+    <string name="msg_payment_reverted">El pago volvió a pendiente</string>
+    <string name="msg_split_created">Seña y saldo creados</string>
+    <string name="audit_undo_paid">Pago deshecho</string>
+    <string name="audit_split_payment">Seña + saldo creados</string>
+    <plurals name="dashboard_settle_body"><item quantity="one">Queda %1$d día y aún hay un saldo pendiente de %2$s.</item><item quantity="other">Quedan %1$d días y aún hay un saldo pendiente de %2$s.</item></plurals>
+    <plurals name="action_stream_more"><item quantity="one">+%1$d acción</item><item quantity="other">+%1$d acciones</item></plurals>
+    <plurals name="action_rsvp_pending"><item quantity="one">%1$d invitado sin responder</item><item quantity="other">%1$d invitados sin responder</item></plurals>
+    <plurals name="action_gift_thank"><item quantity="one">%1$d agradecimiento pendiente</item><item quantity="other">%1$d agradecimientos pendientes</item></plurals>
+    <plurals name="action_overdue_by"><item quantity="one">atrasado por %1$d día</item><item quantity="other">atrasado por %1$d días</item></plurals>
+    <plurals name="action_due_in"><item quantity="one">vence en %1$d día</item><item quantity="other">vence en %1$d días</item></plurals>
+    <plurals name="rsvp_confirmed"><item quantity="one">%1$d confirmado</item><item quantity="other">%1$d confirmados</item></plurals>
+    <plurals name="rsvp_maybe"><item quantity="one">%1$d quizá</item><item quantity="other">%1$d quizá</item></plurals>
+    <plurals name="rsvp_declined"><item quantity="one">%1$d rechazo</item><item quantity="other">%1$d rechazos</item></plurals>
+    <plurals name="rsvp_plus_ones"><item quantity="one">+%1$d acompañante confirmado</item><item quantity="other">+%1$d acompañantes confirmados</item></plurals>
+    <plurals name="calendar_day_payments"><item quantity="one">%1$s: %2$d pago</item><item quantity="other">%1$s: %2$d pagos</item></plurals>
+    <string name="onboarding_summary_seeded">Lista recomendada</string>
 </resources>

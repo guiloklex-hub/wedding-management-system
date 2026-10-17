@@ -70,6 +70,9 @@ function daysFromTo(from: Date, to: Date): number {
   return Math.round((to.getTime() - from.getTime()) / MS_PER_DAY);
 }
 
+/** Mesmos status do risk-radar: contrato ainda sem assinatura e não cancelado. */
+const UNSIGNED_CONTRACT = new Set(["DRAFT", "SENT", "NEGOTIATING"]);
+
 function isHighPriority(priority: string): boolean {
   return priority === "HIGH" || priority === "URGENT";
 }
@@ -143,7 +146,7 @@ export function aggregateActionStream(input: ActionStreamInput): ActionItem[] {
   }
 
   for (const c of input.contracts) {
-    if (c.status === "SIGNED" || !c.expiresAt) continue;
+    if (!UNSIGNED_CONTRACT.has(c.status) || !c.expiresAt) continue;
     const days = daysFromTo(today, c.expiresAt);
     if (days < 0 || days > contractExpiryDays) continue;
     items.push({

@@ -20,6 +20,8 @@ data class ModuleListState(
     val total: Int = 0,
     val statusCounts: Map<String, Int> = emptyMap(),
     val overdue: Int = 0,
+    val open: Int = 0,
+    val week: Int = 0,
 )
 
 /** Estado de busca, filtro e ordenação de uma lista de módulo; sobrevive à rotação. */
@@ -32,11 +34,18 @@ class ModuleListViewModel(
     val status: StateFlow<String?> = state.getStateFlow(STATUS, null)
     val tag: StateFlow<String?> = state.getStateFlow(TAG, null)
     val sort: StateFlow<String> = state.getStateFlow(SORT, SORT_RECENT)
+    val view: StateFlow<String> = state.getStateFlow(VIEW, VIEW_LIST)
+    /** Mês exibido no calendário de pagamentos (`YYYY-MM`) e dia selecionado (`YYYY-MM-DD`). */
+    val month: StateFlow<String> = state.getStateFlow(MONTH, java.time.YearMonth.now().toString())
+    val day: StateFlow<String?> = state.getStateFlow(DAY, null)
 
     fun setQuery(value: String) { state[QUERY] = value.take(120) }
     fun setStatus(value: String?) { state[STATUS] = value }
     fun setTag(value: String?) { state[TAG] = value }
     fun setSort(value: String) { state[SORT] = value }
+    fun setView(value: String) { state[VIEW] = value }
+    fun setMonth(value: java.time.YearMonth) { state[MONTH] = value.toString(); state[DAY] = null }
+    fun setDay(value: String?) { state[DAY] = value }
 
     val list: StateFlow<ModuleListState> = combine(index, query, status, tag, sort) { idx, q, st, tg, so ->
         filter(idx, kind, q, st, tg, so)
@@ -44,6 +53,11 @@ class ModuleListViewModel(
 
     companion object {
         const val STATUS_OVERDUE = "OVERDUE"
+        const val STATUS_OPEN = "OPEN"
+        const val STATUS_WEEK = "WEEK"
+        const val VIEW_LIST = "list"
+        const val VIEW_KANBAN = "kanban"
+        const val VIEW_CALENDAR = "calendar"
         const val SORT_RECENT = "recent"
         const val SORT_NAME = "name"
         const val SORT_DATE = "date"
@@ -51,6 +65,9 @@ class ModuleListViewModel(
         private const val STATUS = "status"
         private const val TAG = "tag"
         private const val SORT = "sort"
+        private const val VIEW = "view"
+        private const val MONTH = "month"
+        private const val DAY = "day"
         private val doneStatuses = setOf("PAID", "DONE", "RECEIVED", "BOUGHT", "PROCESSED")
 
         fun isOverdue(record: PlannerRecord, today: String = LocalDate.now().toString()): Boolean =
@@ -59,6 +76,7 @@ class ModuleListViewModel(
         fun filter(index: RecordIndex, kind: String, query: String, status: String?, tag: String?, sort: String): ModuleListState {
             val all = index.kind(kind)
             val today = LocalDate.now().toString()
+            val week = LocalDate.now().plusDays(7).toString()
             val needle = query.trim().lowercase(Locale.ROOT)
             val items = all.filter { record ->
                 (needle.isEmpty() || record.title.lowercase(Locale.ROOT).contains(needle) ||
@@ -68,6 +86,9 @@ class ModuleListViewModel(
                     when (status) {
                         null -> true
                         STATUS_OVERDUE -> isOverdue(record, today)
+                        STATUS_OPEN -> record.status !in doneStatuses
+                        // Como o filtro "próximos 7 dias" da web: inclui as já atrasadas.
+                        STATUS_WEEK -> record.status !in doneStatuses && !record.date.isNullOrBlank() && record.date <= week
                         else -> record.status == status
                     }
             }.let { list ->
@@ -82,6 +103,8 @@ class ModuleListViewModel(
                 total = all.size,
                 statusCounts = all.groupingBy { it.status }.eachCount(),
                 overdue = if (kind in setOf(Kinds.PAYMENT, Kinds.TASK)) all.count { isOverdue(it, today) } else 0,
+                open = all.count { it.status !in doneStatuses },
+                week = all.count { it.status !in doneStatuses && !it.date.isNullOrBlank() && it.date <= week },
             )
         }
     }

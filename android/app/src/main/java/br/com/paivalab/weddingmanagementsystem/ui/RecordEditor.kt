@@ -193,6 +193,13 @@ fun RecordEditorScreen(
                 EditorTextField(form.trousseauStore, { update { copy(trousseauStore = it.take(EditorLimits.NAME)) } },
                     stringResource(R.string.store), null)
             }
+            if (module.kind == Kinds.TASK) {
+                EditorTextField(form.taskResponsible, { update { copy(taskResponsible = it.take(EditorLimits.NAME)) } },
+                    stringResource(R.string.task_responsible), null)
+                RecordPickerField(stringResource(R.string.venues), form.taskVenueId, index.kind(Kinds.VENUE), allowNone = true) {
+                    update { copy(taskVenueId = it) }
+                }
+            }
             if (module.kind in setOf(Kinds.TASK, Kinds.TROUSSEAU)) {
                 val priorities = if (module.kind == Kinds.TASK) WebValues.taskPriorities else WebValues.trousseauPriorities
                 ChoiceRow(stringResource(R.string.priority), priorities.map { it to webValueLabel(it, language) }, form.itemPriority) {

@@ -82,6 +82,21 @@ describe("aggregateActionStream", () => {
     expect(items[0].params.vendor).toBe("Foto");
   });
 
+  it("usa os status reais do contrato: assinado (digital ou físico) e cancelado não entram", () => {
+    const items = aggregateActionStream(
+      baseInput({
+        contracts: [
+          { id: "c1", vendorName: "Digital", status: "SIGNED_DIGITAL", expiresAt: daysFromToday(5) },
+          { id: "c2", vendorName: "Físico", status: "SIGNED_PHYSICAL", expiresAt: daysFromToday(5) },
+          { id: "c3", vendorName: "Cancelado", status: "CANCELLED", expiresAt: daysFromToday(5) },
+          { id: "c4", vendorName: "Enviado", status: "SENT", expiresAt: daysFromToday(6) },
+          { id: "c5", vendorName: "Negociando", status: "NEGOTIATING", expiresAt: daysFromToday(7) },
+        ],
+      }),
+    );
+    expect(items.map((i) => i.params.vendor)).toEqual(["Enviado", "Negociando"]);
+  });
+
   it("agrega RSVP pendente e agradecimentos como itens únicos de baixa prioridade", () => {
     const items = aggregateActionStream(
       baseInput({ rsvpPending: 12, giftsPendingThank: 3 }),

@@ -156,18 +156,45 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
         additions.size
     }
 
-    suspend fun createInstallments(vendorId: String?, title: String, totalCents: Long,
-                                   count: Int, firstDueDate: LocalDate) = database.withTransaction {
-        require(title.isNotBlank() && title.length <= 160)
-        require(vendorId != null && dao.find(vendorId)?.kind == Kinds.VENDOR) { PAYMENT_NEEDS_VENDOR }
-        val payments = InstallmentMath.split(totalCents, count).mapIndexed { index, amount ->
-            PlannerRecord(UUID.randomUUID().toString(), Kinds.PAYMENT, title,
-                amountCents = amount, date = firstDueDate.plusMonths(index.toLong()).toString(),
-                status = "PENDING", parentId = vendorId,
-                extraJson = JSONObject().put("installmentNumber", index + 1).put("totalInstallments", count).toString())
+    suspend fun createInstallments(plan: InstallmentPlan): Int = database.withTransaction {
+        require(plan.title.isNotBlank() && plan.title.length <= 160)
+        require(dao.find(plan.vendorId)?.kind == Kinds.VENDOR) { PAYMENT_NEEDS_VENDOR }
+        val dates = InstallmentMath.dueDates(plan.firstDueDate, plan.count, plan.intervalDays)
+        val payments = InstallmentMath.split(plan.totalCents, plan.count).mapIndexed { index, amount ->
+            val extra = JSONObject().put("installmentNumber", index + 1).put("totalInstallments", plan.count)
+                .put("method", plan.method)
+            plan.lateFeePercent?.let { extra.put("lateFeePercent", it) }
+            plan.interestPercentPerMonth?.let { extra.put("interestPercentPerMonth", it) }
+            PlannerRecord(UUID.randomUUID().toString(), Kinds.PAYMENT, plan.title.trim(),
+                amountCents = amount, date = dates[index].toString(),
+                status = "PENDING", parentId = plan.vendorId, extraJson = extra.toString())
         }
         dao.saveRecords(payments)
-        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), null, "CREATE_INSTALLMENTS", details = "$count:$totalCents"))
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), null, "CREATE_INSTALLMENTS", details = "${plan.count}:${plan.totalCents}"))
+        payments.size
+    }
+
+    /** Sinal pago hoje e saldo pendente, como `createSplitPayment` da web. */
+    suspend fun createSplitPayment(
+        vendorId: String, title: String, depositCents: Long, depositMethod: String,
+        finalCents: Long, finalDueDate: LocalDate, finalMethod: String,
+    ): UndoSnapshot = database.withTransaction {
+        require(title.isNotBlank() && title.length <= 160)
+        require(dao.find(vendorId)?.kind == Kinds.VENDOR) { PAYMENT_NEEDS_VENDOR }
+        require(depositCents > 0 && finalCents > 0)
+        require(depositMethod in WebValues.paymentMethods && finalMethod in WebValues.paymentMethods)
+        val now = System.currentTimeMillis()
+        fun extra(number: Int, method: String) =
+            JSONObject().put("installmentNumber", number).put("totalInstallments", 2).put("method", method)
+        val deposit = PlannerRecord(UUID.randomUUID().toString(), Kinds.PAYMENT, title.trim(), amountCents = depositCents,
+            date = LocalDate.now().toString(), status = "PAID", parentId = vendorId,
+            extraJson = extra(1, depositMethod).put("paidAt", now).toString())
+        val balance = PlannerRecord(UUID.randomUUID().toString(), Kinds.PAYMENT, title.trim(), amountCents = finalCents,
+            date = finalDueDate.toString(), status = "PENDING", parentId = vendorId,
+            extraJson = extra(2, finalMethod).toString())
+        dao.saveRecords(listOf(deposit, balance))
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), deposit.id, "CREATE_SPLIT_PAYMENT", details = balance.id))
+        UndoSnapshot(emptyList(), listOf(deposit.id, balance.id))
     }
 
     suspend fun addAttachment(context: Context, recordId: String, uri: Uri) {
@@ -236,6 +263,8 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
 
     suspend fun setting(key: String): String? = dao.setting(key)?.value
 
+    suspend fun hasRecords(): Boolean = dao.activeRecordCount() > 0
+
     suspend fun setSetting(key: String, value: String) = database.withTransaction {
         dao.saveSetting(PlannerSetting(key, value))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), null, "SETTING", details = key))
@@ -262,7 +291,8 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
             }.sumOf { 1 + it.plusOnesConfirmed }
             require(occupied + 1 + record.plusOnesConfirmed <= capacity) { "Mesa sem lugares" }
         }
-        dao.save(record.copy(updatedAt = System.currentTimeMillis()))
+        val now = System.currentTimeMillis()
+        dao.save(TaskRules.withCompletion(dao.findAny(record.id), record, now).copy(updatedAt = now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), record.id, "SAVE"))
     }
 
@@ -326,7 +356,8 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
 
     suspend fun setStatus(id: String, status: String): UndoSnapshot = database.withTransaction {
         val current = dao.find(id) ?: error("Registro não encontrado")
-        dao.save(current.copy(status = status, updatedAt = System.currentTimeMillis()))
+        val now = System.currentTimeMillis()
+        dao.save(TaskRules.withCompletion(current, current.copy(status = status), now).copy(updatedAt = now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "STATUS", details = status))
         UndoSnapshot(listOf(current))
     }
@@ -351,6 +382,17 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
         val extra = ExtraFields.parse(payment.extraJson).put("paidAt", now)
         dao.save(payment.copy(status = "PAID", extraJson = extra.toString(), updatedAt = now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "MARK_PAID"))
+        UndoSnapshot(listOf(payment))
+    }
+
+    /** Volta um pagamento para pendente, como `undoPaymentPaid` da web. */
+    suspend fun undoPaid(id: String): UndoSnapshot = database.withTransaction {
+        val payment = dao.find(id) ?: error("Pagamento não encontrado")
+        require(payment.kind == Kinds.PAYMENT)
+        if (payment.status != "PAID") return@withTransaction UndoSnapshot.EMPTY
+        val extra = ExtraFields.parse(payment.extraJson).apply { remove("paidAt") }
+        dao.save(payment.copy(status = "PENDING", extraJson = extra.toString(), updatedAt = System.currentTimeMillis()))
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "UNDO_PAID"))
         UndoSnapshot(listOf(payment))
     }
 

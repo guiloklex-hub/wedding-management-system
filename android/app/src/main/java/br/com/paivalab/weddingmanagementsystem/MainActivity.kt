@@ -96,6 +96,7 @@ class MainActivity : AppCompatActivity() {
                         externalRecordId = requestedRecordId,
                         onExternalConsumed = { requestedSection = null; requestedRecordId = null },
                         onLoadDemoSeed = { model.loadDemoSeed(database, blobs) },
+                        onStartWithDemo = { model.startWithDemo(database, blobs) },
                     )
                 } else {
                     UnlockScreen(

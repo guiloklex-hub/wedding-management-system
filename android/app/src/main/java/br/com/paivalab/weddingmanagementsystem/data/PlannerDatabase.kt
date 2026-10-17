@@ -97,6 +97,9 @@ interface PlannerDao {
     @Query("SELECT * FROM records ORDER BY createdAt ASC")
     suspend fun allRecords(): List<PlannerRecord>
 
+    @Query("SELECT COUNT(*) FROM records WHERE deletedAt IS NULL")
+    suspend fun activeRecordCount(): Int
+
     @Query("SELECT * FROM files ORDER BY createdAt ASC")
     suspend fun allFiles(): List<PlannerFile>
 

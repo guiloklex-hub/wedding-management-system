@@ -25,7 +25,6 @@
     <string name="search">Search</string><string name="empty">No records yet</string>
     <string name="confirm_delete">Delete this record?</string>
     <string name="total_budget">Planned budget</string><string name="total_paid">Total paid</string>
-    <string name="pending_tasks">Pending tasks</string><string name="confirmed_guests">Confirmed</string>
     <string name="upcoming">Next actions</string><string name="mark_paid">Mark paid</string>
     <string name="mark_done">Complete</string><string name="confirm_guest">Confirm attendance</string>
     <string name="decline_guest">Decline attendance</string><string name="check_in">Check in</string>
@@ -268,9 +267,7 @@
     <string name="risk_radar_count">Risk radar (%1$d)</string>
     <string name="risk_critical">Critical</string>
     <string name="risk_warning">Warning</string>
-    <plurals name="budget_items"><item quantity="one">%1$d budget item</item><item quantity="other">%1$d budget items</item></plurals>
     <string name="percent_of_budget">%1$d%% of budget</string>
-    <plurals name="tasks_done"><item quantity="one">%1$d done</item><item quantity="other">%1$d done</item></plurals>
     <plurals name="seats_confirmed"><item quantity="one">%1$d seat confirmed</item><item quantity="other">%1$d seats confirmed</item></plurals>
     <plurals name="pending_count"><item quantity="one">%1$d pending</item><item quantity="other">%1$d pending</item></plurals>
     <string name="no_upcoming">No pending tasks or payments with a date.</string>
@@ -359,4 +356,109 @@
     <string name="share">Share</string>
     <string name="pix_share_text">Gift via Pix (%1$s)\n\nKey: %2$s\n\nPix copy-paste code:\n%3$s</string>
     <string name="add_to_section">Add to %1$s</string>
+    <string name="onboarding_title">Let\'s set up your wedding</string>
+    <string name="onboarding_step_couple">The couple</string>
+    <string name="onboarding_step_budget">Contingency</string>
+    <string name="onboarding_step_start">First steps</string>
+    <string name="onboarding_step_done">Done</string>
+    <string name="onboarding_step_of">Step %1$d of %2$d · %3$s</string>
+    <string name="onboarding_couple_title">Who is getting married, and when?</string>
+    <string name="onboarding_couple_body">The names and date appear on the dashboard and in the countdown. You can change them later in Settings.</string>
+    <string name="onboarding_budget_title">How much should you set aside?</string>
+    <string name="onboarding_budget_body" formatted="false">We recommend 10% of the contracted amount for surprises.</string>
+    <string name="onboarding_contingency_value">Contingency fund: %1$d%%</string>
+    <string name="onboarding_contingency_hint">The fund is added to the dashboard\'s total budget and helps absorb rain, menu changes or extra guests.</string>
+    <string name="onboarding_start_title">How the app works</string>
+    <string name="onboarding_start_body">Choose whether to start with the recommended task list.</string>
+    <string name="onboarding_seed_tasks">Create the recommended task list</string>
+    <string name="onboarding_seed_needs_date">Enter the wedding date in the first step to generate tasks with deadlines.</string>
+    <string name="onboarding_offline">Everything is stored only on this device, with no account or internet.</string>
+    <string name="onboarding_backup">Make encrypted backups in More › Backup so nothing is lost when you change phones.</string>
+    <string name="onboarding_reminders">Payment and task reminders arrive as notifications on this device.</string>
+    <string name="onboarding_demo">Explore with sample data</string>
+    <string name="onboarding_done_title">All set!</string>
+    <string name="onboarding_done_body">Review the summary. You can change anything later in Settings.</string>
+    <string name="onboarding_next">Continue</string>
+    <string name="onboarding_finish">Finish</string>
+    <string name="dashboard_setup_title">Set the wedding date</string>
+    <string name="dashboard_setup_body">With the date, the app calculates the countdown, the cash projection and task deadlines. Tap to open Settings.</string>
+    <string name="dashboard_settle_title">Payoff alert</string>
+    <string name="kpi_total_budget">Total budget</string>
+    <string name="kpi_contingency">Contingency: %1$s</string>
+    <string name="kpi_remaining">Outstanding balance</string>
+    <string name="kpi_contracted">Contracted: %1$s</string>
+    <string name="kpi_cash_coverage">Cash coverage</string>
+    <string name="kpi_coverage_percent">%1$d%% of the outstanding balance</string>
+    <string name="kpi_balance_settled">Balance settled</string>
+    <string name="countdown_past">The event has passed</string>
+    <string name="countdown_today">Today\'s the day!</string>
+    <string name="action_stream_empty">All caught up! Nothing pending right now.</string>
+    <string name="show_less">Show less</string>
+    <string name="action_pay">Pay %1$s — %2$s</string>
+    <string name="action_task">Task: %1$s</string>
+    <string name="action_sign_contract">Sign the %1$s contract</string>
+    <string name="action_due_today">due today</string>
+    <string name="funnel_title">Vendor funnel</string>
+    <string name="funnel_empty">No vendors registered.</string>
+    <string name="funnel_negotiating">Negotiating</string>
+    <string name="funnel_contracted">Contracted</string>
+    <string name="funnel_finalized">Finalized</string>
+    <string name="rsvp_title">RSVPs</string>
+    <string name="rsvp_empty">No guests registered yet.</string>
+    <string name="rsvp_responded">%1$d of %2$d have confirmed</string>
+    <string name="gifts_received_title">Gifts received</string>
+    <string name="gifts_empty">No gifts recorded yet.</string>
+    <string name="gifts_breakdown">%1$d in cash · %2$d in items</string>
+    <string name="gifts_thanked">Thanked: %1$d%% (%2$d of %3$d)</string>
+    <string name="dashboard_upcoming_payments">Upcoming payments</string>
+    <string name="dashboard_no_upcoming_payments">No payments in the next 30 days.</string>
+    <string name="dashboard_due_on">Due: %1$s</string>
+    <string name="dashboard_upcoming_tasks">Upcoming tasks</string>
+    <string name="no_deadline">No deadline</string>
+    <string name="task_responsible">Owner</string>
+    <string name="task_responsible_value">Owner: %1$s</string>
+    <string name="phase_title">Planning phase</string>
+    <string name="phase_12m">12+ months</string>
+    <string name="phase_6m">6 months</string>
+    <string name="phase_3m">3 months</string>
+    <string name="phase_1m">1 month</string>
+    <string name="phase_1w">Final week</string>
+    <string name="kanban_empty">Empty</string>
+    <string name="task_overdue_on">Overdue since %1$s</string>
+    <string name="task_move">Move %1$s</string>
+    <string name="view_list">List</string>
+    <string name="view_kanban">Kanban</string>
+    <string name="view_calendar">Calendar</string>
+    <string name="task_filter_open">Open (%1$d)</string>
+    <string name="task_filter_overdue">Overdue (%1$d)</string>
+    <string name="task_filter_week">Next 7 days (%1$d)</string>
+    <string name="calendar_previous_month">Previous month</string>
+    <string name="calendar_next_month">Next month</string>
+    <string name="calendar_year_summary">%1$d summary</string>
+    <string name="calendar_day_title">Payments on %1$s</string>
+    <string name="calendar_day_empty">No payments on this day.</string>
+    <string name="undo_paid">Undo payment</string>
+    <string name="split_payment">Deposit + balance</string>
+    <string name="split_deposit_title">Deposit (paid today)</string>
+    <string name="split_deposit_amount">Deposit amount</string>
+    <string name="split_balance_title">Balance</string>
+    <string name="split_balance_amount">Balance amount</string>
+    <string name="split_balance_due">Balance due date</string>
+    <string name="installment_interval_days">Interval (days)</string>
+    <string name="msg_payment_reverted">Payment set back to pending</string>
+    <string name="msg_split_created">Deposit and balance created</string>
+    <string name="audit_undo_paid">Payment undone</string>
+    <string name="audit_split_payment">Deposit + balance created</string>
+    <plurals name="dashboard_settle_body"><item quantity="one">%1$d day left and there is still an outstanding balance of %2$s.</item><item quantity="other">%1$d days left and there is still an outstanding balance of %2$s.</item></plurals>
+    <plurals name="action_stream_more"><item quantity="one">+%1$d action</item><item quantity="other">+%1$d actions</item></plurals>
+    <plurals name="action_rsvp_pending"><item quantity="one">%1$d guest without a reply</item><item quantity="other">%1$d guests without a reply</item></plurals>
+    <plurals name="action_gift_thank"><item quantity="one">%1$d pending thank-you</item><item quantity="other">%1$d pending thank-yous</item></plurals>
+    <plurals name="action_overdue_by"><item quantity="one">overdue by %1$d day</item><item quantity="other">overdue by %1$d days</item></plurals>
+    <plurals name="action_due_in"><item quantity="one">due in %1$d day</item><item quantity="other">due in %1$d days</item></plurals>
+    <plurals name="rsvp_confirmed"><item quantity="one">%1$d confirmed</item><item quantity="other">%1$d confirmed</item></plurals>
+    <plurals name="rsvp_maybe"><item quantity="one">%1$d maybe</item><item quantity="other">%1$d maybe</item></plurals>
+    <plurals name="rsvp_declined"><item quantity="one">%1$d declined</item><item quantity="other">%1$d declined</item></plurals>
+    <plurals name="rsvp_plus_ones"><item quantity="one">+%1$d plus-one confirmed</item><item quantity="other">+%1$d plus-ones confirmed</item></plurals>
+    <plurals name="calendar_day_payments"><item quantity="one">%1$s: %2$d payment</item><item quantity="other">%1$s: %2$d payments</item></plurals>
+    <string name="onboarding_summary_seeded">Recommended list</string>
 </resources>

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.paivalab.weddingmanagementsystem.data.GiftRules
+import br.com.paivalab.weddingmanagementsystem.data.GoalRules
 import br.com.paivalab.weddingmanagementsystem.data.GuestRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
@@ -104,7 +105,7 @@ class ModuleListViewModel(
                     SORT_NAME -> list.sortedBy { it.title.lowercase(Locale.ROOT) }
                     SORT_DATE -> list.sortedWith(compareBy(nullsLast()) { it.date })
                     else -> list.sortedByDescending { it.updatedAt }
-                }
+                }.let { sorted -> if (kind == Kinds.GOAL) GoalRules.ordered(sorted) else sorted }
             }
             return ModuleListState(
                 items = items,

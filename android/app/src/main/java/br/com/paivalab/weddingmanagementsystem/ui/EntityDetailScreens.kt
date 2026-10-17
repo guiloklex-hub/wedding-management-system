@@ -37,6 +37,7 @@ import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.VendorCategories
+import br.com.paivalab.weddingmanagementsystem.data.VenueChecklist
 import org.json.JSONObject
 
 private fun fields(record: PlannerRecord): JSONObject =
@@ -267,11 +268,13 @@ fun VenueDetailScreen(
     onOpenFile: (PlannerFile) -> Unit,
     onExportFile: (PlannerFile) -> Unit,
     onChecklistStatus: (String, String) -> Unit,
+    onMoveChecklist: (String, Int) -> Unit,
     onSeedChecklist: (String) -> Unit,
     onMaps: (PlannerRecord) -> Unit,
 ) {
     val data = fields(venue)
-    val checks = records.filter { it.kind == Kinds.VENUE_CHECK && it.parentId == venue.id }
+    val checks = records.filter { it.kind == Kinds.VENUE_CHECK && it.parentId == venue.id && it.deletedAt == null }
+        .sortedWith(compareBy<PlannerRecord>(VenueChecklist::sortOrder).thenBy { it.createdAt })
     val venueFiles = files.filter { it.recordId == venue.id }
     LazyColumn(contentPadding = PaddingValues(16.dp, 10.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
@@ -280,6 +283,8 @@ fun VenueDetailScreen(
                 DetailValue(localized(R.string.venue_capacity_seated, language), data.text("capacitySeated"))
                 DetailValue(localized(R.string.venue_capacity_standing, language), data.text("capacityStanding"))
                 venue.amountCents?.let { DetailValue(localized(R.string.amount, language), localizedCurrency(it, currency, language)) }
+                DetailValue(localized(R.string.venue_visited_at, language),
+                    venue.date?.let { formatDisplayDate(it, language) } ?: localized(R.string.venue_not_visited, language))
                 DetailValue(localized(R.string.venue_contact_name, language), data.text("contactName"))
                 if (ExtraFields.bool(data, "isShortlisted")) Text(localized(R.string.venue_shortlisted, language), color = PlannerChampagne)
                 DetailValue(localized(R.string.venue_pricing, language), data.text("pricingNotes"))
@@ -296,15 +301,21 @@ fun VenueDetailScreen(
         }
         item {
             DetailSection(localized(R.string.venue_check, language), { onAddRelated(Kinds.VENUE_CHECK, venue.id) }) {
+                if (checks.isNotEmpty()) {
+                    val done = checks.count { it.status == "DONE" }
+                    Text(stringResource(R.string.venue_checklist_progress, done, checks.size), style = MaterialTheme.typography.labelMedium,
+                        color = PlannerChampagne)
+                    PlannerProgressBar(done.toFloat() / checks.size, PlannerEmerald)
+                }
                 OutlinedButton(onClick = { onSeedChecklist(venue.id) }) { Text(localized(R.string.seed_venue_checklist, language)) }
                 if (checks.isEmpty()) Text(localized(R.string.empty, language), color = PlannerMuted)
-                checks.forEach { check ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(check.title, modifier = Modifier.weight(1f))
-                        TextButton(onClick = { onChecklistStatus(check.id, if (check.status == "DONE") "TODO" else "DONE") }) {
-                            Text(localized(if (check.status == "DONE") R.string.status_done else R.string.status_todo, language))
-                        }
-                    }
+                checks.forEachIndexed { position, check ->
+                    ChecklistItemRow(
+                        item = check, first = position == 0, last = position == checks.lastIndex,
+                        onToggle = { onChecklistStatus(check.id, if (it) "DONE" else "TODO") },
+                        onOpen = { onEdit(check) },
+                        onMove = { onMoveChecklist(check.id, it) },
+                    )
                 }
             }
         }

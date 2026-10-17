@@ -248,6 +248,12 @@ class PlannerViewModel(
         repository.addAttachment(context, recordId, uri, kind)
         notify(R.string.msg_file_added)
     }
+    fun createVenue(venue: PlannerRecord, seedChecklist: Boolean, done: () -> Unit = {}) = launchAction {
+        val count = repository.createVenue(venue, seedChecklist)
+        if (count > 0) notify(R.plurals.msg_checklist_added, count, quantity = count) else notify(R.string.msg_saved)
+        done()
+    }
+    fun moveChecklistItem(id: String, delta: Int) = launchAction { repository.moveChecklistItem(id, delta) }
     fun createVendor(vendor: PlannerRecord, estimatedCents: Long?, budgetTitle: String, done: () -> Unit = {}) = launchAction {
         repository.createVendor(vendor, estimatedCents, budgetTitle)
         notify(R.string.msg_saved)

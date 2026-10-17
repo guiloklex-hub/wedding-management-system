@@ -28,12 +28,15 @@ import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import br.com.paivalab.weddingmanagementsystem.data.GiftRules
+import br.com.paivalab.weddingmanagementsystem.data.GoalRules
 import br.com.paivalab.weddingmanagementsystem.data.GuestRules
+import br.com.paivalab.weddingmanagementsystem.data.IncomeRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PaymentAdjustment
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
 import br.com.paivalab.weddingmanagementsystem.data.VendorCategories
+import java.time.LocalDate
 import kotlin.math.roundToInt
 
 @Composable
@@ -64,7 +67,7 @@ internal fun RecordCard(
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(record.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                if (record.subtitle.isNotBlank()) {
+                if (record.subtitle.isNotBlank() && record.kind != Kinds.INCOME) {
                     Text(record.subtitle, maxLines = 2, overflow = TextOverflow.Ellipsis, color = PlannerMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -94,6 +97,35 @@ internal fun RecordCard(
             Kinds.VENUE -> {
                 val address = ExtraFields.text(extra, "address")
                 if (address.isNotBlank()) Text(address, color = PlannerMuted, style = MaterialTheme.typography.bodySmall)
+                val seated = ExtraFields.int(extra, "capacitySeated")
+                val standing = ExtraFields.int(extra, "capacityStanding")
+                val checks = index.children(record.id, Kinds.VENUE_CHECK)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (ExtraFields.bool(extra, "isShortlisted")) InfoBadge(stringResource(R.string.venue_shortlisted), PlannerChampagne)
+                    if (seated != null || standing != null) {
+                        InfoBadge(stringResource(R.string.venue_capacity_value, seated?.toString() ?: "—", standing?.toString() ?: "—"), PlannerMuted)
+                    }
+                    if (checks.isNotEmpty()) {
+                        val done = checks.count { it.status == "DONE" }
+                        InfoBadge(stringResource(R.string.venue_checklist_progress, done, checks.size),
+                            if (done == checks.size) PlannerEmerald else PlannerChampagne)
+                    }
+                    InfoBadge(record.date?.let { stringResource(R.string.venue_visited_value, formatDisplayDate(it, language)) }
+                        ?: stringResource(R.string.venue_not_visited), if (record.date != null) PlannerEmerald else PlannerMuted)
+                }
+            }
+            Kinds.INCOME -> {
+                val givenBy = ExtraFields.text(extra, "givenByName")
+                val receivedAt = ExtraFields.instant(extra, "receivedAt")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    InfoBadge(stringResource(incomeSourceLabel(IncomeRules.source(record))), PlannerChampagne)
+                    if (ExtraFields.text(extra, "frequency") == "MONTHLY") InfoBadge(stringResource(R.string.monthly), PlannerMuted)
+                    if (givenBy.isNotBlank()) InfoBadge(stringResource(R.string.income_given_by_value, givenBy), PlannerMuted)
+                    if (record.status == "RECEIVED" && receivedAt != null) {
+                        val day = java.time.Instant.ofEpochMilli(receivedAt).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
+                        InfoBadge(stringResource(R.string.income_received_on, formatDisplayDate(day, language)), PlannerEmerald)
+                    }
+                }
             }
             Kinds.CONTACT -> ContactLine(record, PlannerChampagne)
             Kinds.VENDOR_NOTE -> if (record.notes.isNotBlank()) {
@@ -185,15 +217,22 @@ internal fun RecordCard(
                 InfoBadge(plural(R.plurals.tag_guests, count, count), PlannerChampagne)
             }
             Kinds.GOAL -> {
-                val target = record.amountCents ?: 0L
-                val saved = index.children(record.id, Kinds.ASSET).sumOf { it.amountCents ?: 0L }
-                val ratio = if (target <= 0L) 0f else (saved.toFloat() / target.toFloat()).coerceIn(0f, 1f)
+                val progress = GoalRules.progress(record, index, LocalDate.now())
+                val ratio = (progress.percent / 100).toFloat()
+                if (!progress.active) InfoBadge(stringResource(R.string.goal_inactive), PlannerMuted)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(stringResource(R.string.saved_amount, localizedCurrency(saved, currency, language)),
+                    Text(stringResource(R.string.saved_amount, localizedCurrency(progress.savedCents, currency, language)),
                         style = MaterialTheme.typography.labelSmall, color = PlannerEmerald)
-                    Text("${(ratio * 100).roundToInt()}%", style = MaterialTheme.typography.labelSmall, color = PlannerChampagne, fontWeight = FontWeight.Bold)
+                    Text("${progress.percent.roundToInt()}%", style = MaterialTheme.typography.labelSmall, color = PlannerChampagne,
+                        fontWeight = FontWeight.Bold)
                 }
-                PlannerProgressBar(ratio, PlannerEmerald)
+                PlannerProgressBar(ratio, if (progress.percent >= 100.0) PlannerChampagne else PlannerEmerald)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    InfoBadge(stringResource(R.string.goal_remaining, localizedCurrency(progress.remainingCents, currency, language)), PlannerRose)
+                    InfoBadge(stringResource(R.string.goal_per_month, progress.perMonthCents?.let { localizedCurrency(it, currency, language) } ?: "—"),
+                        PlannerChampagne)
+                    InfoBadge(stringResource(R.string.goal_contributions, progress.contributions), PlannerMuted)
+                }
             }
             Kinds.HONEYMOON -> {
                 val itemsTotal = index.children(record.id, Kinds.HONEYMOON_ITEM).sumOf { it.amountCents ?: 0L }
@@ -260,10 +299,11 @@ internal fun RecordCard(
                         style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 }
             }
-            if (!record.date.isNullOrBlank()) {
+            if (!record.date.isNullOrBlank() && record.kind != Kinds.VENUE) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(Icons.Default.Event, null, tint = PlannerMuted, modifier = Modifier.size(14.dp))
-                    Text(formatDisplayDate(record.date, language), style = MaterialTheme.typography.bodySmall, color = PlannerMuted)
+                    Text(if (record.kind == Kinds.GOAL) stringResource(R.string.goal_target_date, formatDisplayDate(record.date, language))
+                        else formatDisplayDate(record.date, language), style = MaterialTheme.typography.bodySmall, color = PlannerMuted)
                 }
             }
         }

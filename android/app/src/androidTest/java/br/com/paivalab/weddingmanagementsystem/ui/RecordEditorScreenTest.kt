@@ -31,7 +31,7 @@ class RecordEditorScreenTest {
                 RecordEditorScreen(
                     module = modules.first { it.kind == Kinds.TASK },
                     initial = null, initialParentId = null, index = RecordIndex(emptyList()), language = "pt-BR",
-                    onClose = {}, onSave = { saved = it }, onDelete = {},
+                    onClose = {}, onSave = { saved = it.record }, onDelete = {},
                 )
             }
         }

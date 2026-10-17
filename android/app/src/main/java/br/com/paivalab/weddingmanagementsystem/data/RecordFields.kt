@@ -95,6 +95,7 @@ object WebValues {
     )
     private val instantKeys = mapOf(
         Kinds.PAYMENT to setOf("paidAt"), Kinds.GUEST to setOf("checkedInAt"), Kinds.TASK to setOf("completedAt"),
+        Kinds.INCOME to setOf("receivedAt"),
         Kinds.GIFT to setOf("thankedAt", "pixPaidAt", "processedAt"),
     )
 

@@ -5,11 +5,13 @@ import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import br.com.paivalab.weddingmanagementsystem.data.GiftRules
 import br.com.paivalab.weddingmanagementsystem.data.GuestRules
+import br.com.paivalab.weddingmanagementsystem.data.IncomeRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.Money
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
 import br.com.paivalab.weddingmanagementsystem.data.VendorCategories
+import br.com.paivalab.weddingmanagementsystem.data.VenueChecklist
 import br.com.paivalab.weddingmanagementsystem.data.WebValues
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -38,12 +40,17 @@ data class EditorFormState(
     val venueContactName: String = "",
     val venueMapsUrl: String = "",
     val venueShortlisted: Boolean = false,
+    val venueSeedChecklist: Boolean = true,
+    val checklistValue: String = "",
     val rating: Int = 0,
     val vendorCategoryKey: String = "",
     val vendorIndicatedBy: String = "",
     val vendorTags: String = "",
     val vendorContractLink: String = "",
     val incomeFrequency: String = "ONE_TIME",
+    val incomeSource: String = "SALARY",
+    val incomeGivenBy: String = "",
+    val goalActive: Boolean = true,
     val contractVersion: String = "1",
     val contractExpiresAt: String = "",
     val contractPaymentTerms: String = "",
@@ -88,7 +95,8 @@ enum class EditorField {
 }
 
 sealed interface EditorOutcome {
-    data class Valid(val record: PlannerRecord) : EditorOutcome
+    /** `seedVenueChecklist`: local novo que deve nascer com o checklist, como o padrão da web. */
+    data class Valid(val record: PlannerRecord, val seedVenueChecklist: Boolean = false) : EditorOutcome
     data class Invalid(val errors: Map<EditorField, Int>) : EditorOutcome
 }
 
@@ -133,12 +141,16 @@ fun editorFormFrom(module: ModuleDefinition, initial: PlannerRecord?, parentId: 
         venueContactName = text("contactName"),
         venueMapsUrl = text("mapsUrl"),
         venueShortlisted = ExtraFields.bool(json, "isShortlisted"),
+        checklistValue = text("value"),
         rating = ExtraFields.int(json, "rating")?.coerceIn(0, 5) ?: 0,
         vendorCategoryKey = VendorCategories.key(json).orEmpty(),
         vendorIndicatedBy = text("indicatedBy"),
         vendorTags = text("tags"),
         vendorContractLink = text("contractLink"),
         incomeFrequency = text("frequency", "ONE_TIME"),
+        incomeSource = IncomeRules.source(initial),
+        incomeGivenBy = text("givenByName"),
+        goalActive = ExtraFields.bool(json, "isActive", default = true),
         contractVersion = (ExtraFields.int(json, "version") ?: if (initial == null) nextContractVersion else 1).toString(),
         contractExpiresAt = ExtraFields.day(json, "expiresAt")?.toString().orEmpty(),
         contractPaymentTerms = text("paymentTerms"),
@@ -320,7 +332,17 @@ fun buildEditorRecord(
                 val venueId = form.taskVenueId?.takeIf { index.find(it)?.kind == Kinds.VENUE }
                 if (venueId == null) remove("venueId") else put("venueId", venueId)
             }
-            Kinds.INCOME -> put("frequency", form.incomeFrequency)
+            Kinds.INCOME -> {
+                put("frequency", form.incomeFrequency)
+                putText("givenByName", form.incomeGivenBy)
+            }
+            Kinds.GOAL -> put("isActive", form.goalActive)
+            Kinds.VENUE_CHECK -> {
+                putText("value", form.checklistValue.take(VenueChecklist.VALUE_MAX))
+                if (initial == null) {
+                    put("sortOrder", VenueChecklist.nextSortOrder(form.parentId?.let { index.children(it, Kinds.VENUE_CHECK) }.orEmpty()))
+                }
+            }
             Kinds.CONTRACT -> {
                 put("version", version ?: 1)
                 if (expiresAt == null) remove("expiresAt") else put("expiresAt", expiresAt)
@@ -338,7 +360,7 @@ fun buildEditorRecord(
     val base = initial ?: PlannerRecord(newId(), module.kind, form.title.trim())
     return EditorOutcome.Valid(
         base.copy(
-            title = form.title.trim(), subtitle = form.subtitle.trim(), amountCents = amount, estimatedCents = estimated,
+            title = form.title.trim(), subtitle = if (module.kind == Kinds.INCOME) form.incomeSource else form.subtitle.trim(), amountCents = amount, estimatedCents = estimated,
             date = date, status = form.status, phone = form.phone.trim(), email = form.email.trim(), notes = form.notes.trim(),
             parentId = form.parentId,
             guestGroupId = if (module.kind == Kinds.GUEST) form.guestGroupId else base.guestGroupId,
@@ -346,5 +368,6 @@ fun buildEditorRecord(
             plusOnesAllowed = plusAllowed, plusOnesConfirmed = plusConfirmed,
             extraJson = extra.toString(),
         ),
+        seedVenueChecklist = module.kind == Kinds.VENUE && initial == null && form.venueSeedChecklist,
     )
 }

@@ -83,7 +83,9 @@ import androidx.navigation.toRoute
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.backup.BackupArchive
 import br.com.paivalab.weddingmanagementsystem.data.CalendarExport
+import br.com.paivalab.weddingmanagementsystem.data.GuestRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
+import br.com.paivalab.weddingmanagementsystem.data.ReportExport
 import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
@@ -151,6 +153,8 @@ fun PlannerApp(
     var pendingInvite by rememberSaveable { mutableStateOf<List<String>?>(null) }
     var installments by rememberSaveable { mutableStateOf(false) }
     var splitPayment by rememberSaveable { mutableStateOf(false) }
+    var postGiftId by rememberSaveable { mutableStateOf<String?>(null) }
+    var membersGroupId by rememberSaveable { mutableStateOf<String?>(null) }
     var showPixDialog by rememberSaveable { mutableStateOf(false) }
     var pixGiftId by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -178,6 +182,19 @@ fun PlannerApp(
                 activity.contentResolver.openOutputStream(uri, "w")?.use { stream ->
                     stream.write(CalendarExport.generate(records).toByteArray(Charsets.UTF_8))
                 } ?: error("calendar")
+            }
+            if (written.isFailure) notify(genericError)
+        }
+    }
+    val csvHeader = listOf(R.string.csv_name, R.string.phone, R.string.email, R.string.guest_side, R.string.groups, R.string.status,
+        R.string.plus_confirmed, R.string.seating, R.string.guest_dietary, R.string.guest_city, R.string.guest_padrinho,
+        R.string.guest_vip, R.string.guest_child).map { stringResource(it) }
+    val csvYes = stringResource(R.string.csv_yes)
+    val guestCsv = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        if (uri != null) {
+            val rows = GuestRules.csvRows(index.kind(Kinds.GUEST), index, csvHeader, csvYes) { status -> statusResource(status)?.let(activity::getString) ?: status }
+            val written = runCatching {
+                activity.contentResolver.openOutputStream(uri, "w")?.use { it.write(ReportExport.csv(rows)) } ?: error("csv")
             }
             if (written.isFailure) notify(genericError)
         }
@@ -259,12 +276,16 @@ fun PlannerApp(
                 maps = { if (!openMap(activity, it)) notify(genericError) },
                 attach = attach,
                 openFile = openFile,
-                postGift = { model.convertGift(it.id, Kinds.INCOME) },
+                postGift = { postGiftId = it.id },
                 invite = { template ->
                     inviteTemplateId = template.id
                     inviteAttachmentId = index.files(template.id).maxByOrNull { it.createdAt }?.id
                 },
                 importGuests = { guestFile.launch(arrayOf("*/*")) },
+                exportGuests = { guestCsv.launch("convidados-${java.time.LocalDate.now()}.csv") },
+                setCheckedIn = { guest, present -> model.setCheckedIn(guest.id, present) },
+                setThanked = { gift, thanked -> model.setGiftThanked(gift.id, thanked) },
+                editMembers = { membersGroupId = it.id },
                 seedTasks = model::seedTaskTemplates,
                 seedVenueChecklist = model::seedVenueChecklist,
                 installments = { installments = true },
@@ -520,6 +541,18 @@ fun PlannerApp(
                 installments = false
             },
         )
+    }
+    index.find(postGiftId)?.let { gift ->
+        GiftPostDialog(gift, index, currency, language, onDismiss = { postGiftId = null }) { target, name, date, notes ->
+            model.convertGift(gift.id, target, name, date, notes)
+            postGiftId = null
+        }
+    }
+    index.find(membersGroupId)?.let { group ->
+        GroupMembersDialog(group, index, onDismiss = { membersGroupId = null }) { ids ->
+            model.setGroupMembers(group.id, ids)
+            membersGroupId = null
+        }
     }
     if (splitPayment) {
         SplitPaymentDialog(

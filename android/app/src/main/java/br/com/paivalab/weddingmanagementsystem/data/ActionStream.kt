@@ -89,9 +89,3 @@ object ActionStream {
         )
     }
 }
-
-object GiftRules {
-    /** A web só olha `thankedAt`; o status THANKED vem de backups antigos do Android. */
-    fun thanked(gift: PlannerRecord, extra: org.json.JSONObject): Boolean =
-        ExtraFields.has(extra, "thankedAt") || gift.status == "THANKED"
-}

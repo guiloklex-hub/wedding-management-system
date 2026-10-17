@@ -58,11 +58,18 @@ class PlannerStorageTest {
         assertNotNull(failure)
         assertNull(database.dao().find("guest2")?.seatingTableId)
 
-        repository.save(PlannerRecord("gift", Kinds.GIFT, "Presente", amountCents = 5_000))
-        repository.convertGift("gift", Kinds.INCOME)
+        repository.save(PlannerRecord("gift", Kinds.GIFT, "Presente", amountCents = 5_000,
+            extraJson = """{"type":"CASH","giverName":"Colegas"}"""))
+        repository.convertGift("gift", Kinds.INCOME, "Presente dos colegas", LocalDate.parse("2027-02-01"))
         assertTrue(ExtraFields.has(ExtraFields.parse(database.dao().find("gift")!!.extraJson), "processedAt"))
-        assertNotNull(runCatching { repository.convertGift("gift", Kinds.INCOME) }.exceptionOrNull())
-        assertEquals(1, database.dao().allRecords().count { it.kind == Kinds.INCOME })
+        assertNotNull(runCatching { repository.convertGift("gift", Kinds.INCOME, "De novo") }.exceptionOrNull())
+        val income = database.dao().allRecords().single { it.kind == Kinds.INCOME }
+        assertEquals(listOf("Presente dos colegas", "GIFT", "2027-02-01", "RECEIVED"),
+            listOf(income.title, income.subtitle, income.date, income.status))
+        assertEquals("Colegas", ExtraFields.parse(income.extraJson).getString("givenByName"))
+
+        repository.save(PlannerRecord("item", Kinds.GIFT, "Jogo de panelas", amountCents = 5_000, extraJson = """{"type":"ITEM"}"""))
+        assertNotNull(runCatching { repository.convertGift("item", Kinds.ASSET, "Panelas") }.exceptionOrNull())
     }
 
     @Test fun paymentFlowsMatchTheWeb() = runBlocking {
@@ -104,6 +111,31 @@ class PlannerStorageTest {
         assertEquals(completed, ExtraFields.instant(ExtraFields.parse(database.dao().find("task")!!.extraJson), "completedAt"))
         repository.setStatus("task", "IN_PROGRESS")
         assertTrue(!ExtraFields.parse(database.dao().find("task")!!.extraJson).has("completedAt"))
+    }
+
+    @Test fun giftThanksGroupMembersAndCheckIn() = runBlocking {
+        repository.save(PlannerRecord("gift", Kinds.GIFT, "Pix", status = "RECEIVED"))
+        val thanked = repository.setGiftThanked("gift", true)
+        val gift = database.dao().find("gift")!!
+        assertEquals("THANKED", gift.status)
+        assertTrue(ExtraFields.has(ExtraFields.parse(gift.extraJson), "thankedAt"))
+        repository.undo(thanked)
+        assertEquals("RECEIVED", database.dao().find("gift")!!.status)
+
+        repository.save(PlannerRecord("group", Kinds.GROUP, "Família"))
+        repository.save(PlannerRecord("other", Kinds.GROUP, "Amigos"))
+        repository.save(PlannerRecord("ana", Kinds.GUEST, "Ana", guestGroupId = "group"))
+        repository.save(PlannerRecord("bia", Kinds.GUEST, "Bia", guestGroupId = "other"))
+        repository.save(PlannerRecord("caio", Kinds.GUEST, "Caio"))
+        val members = repository.setGroupMembers("group", setOf("bia", "caio"))
+        assertEquals(listOf(null, "group", "group"), listOf("ana", "bia", "caio").map { database.dao().find(it)!!.guestGroupId })
+        repository.undo(members)
+        assertEquals(listOf("group", "other", null), listOf("ana", "bia", "caio").map { database.dao().find(it)!!.guestGroupId })
+
+        repository.setCheckedIn("ana", true)
+        assertTrue(ExtraFields.has(ExtraFields.parse(database.dao().find("ana")!!.extraJson), "checkedInAt"))
+        repository.setCheckedIn("ana", false)
+        assertTrue(!ExtraFields.parse(database.dao().find("ana")!!.extraJson).has("checkedInAt"))
     }
 
     @Test fun groupRsvpUpdatesMembersOnly() = runBlocking {

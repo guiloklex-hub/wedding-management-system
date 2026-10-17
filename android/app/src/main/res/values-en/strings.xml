@@ -53,7 +53,7 @@
     <string name="backup_partial_preview">Older partial backup: {records} records and {files} attachments. Restore it only into an empty installation.</string>
     <string name="backup_preview_details">Areas: {areas}. Minimum space: {bytes} bytes. Changed: {changed}; created: {created}; deleted: {deleted}. A reversal copy will be kept.</string>
     <string name="backup_export_reversal">Export latest reversal copy</string>
-    <string name="attach_file">Add attachment</string><string name="post_gift">Post gift as income</string>
+    <string name="attach_file">Add attachment</string><string name="post_gift">Post</string>
     <string name="health_score">Planning health</string><string name="cashflow">Monthly cash flow</string>
     <string name="choose_guest">Choose a guest</string><string name="prepare_invite">Prepare message</string>
     <string name="confirmed_sends">Confirmed sends</string>
@@ -461,4 +461,55 @@
     <plurals name="rsvp_plus_ones"><item quantity="one">+%1$d plus-one confirmed</item><item quantity="other">+%1$d plus-ones confirmed</item></plurals>
     <plurals name="calendar_day_payments"><item quantity="one">%1$s: %2$d payment</item><item quantity="other">%1$s: %2$d payments</item></plurals>
     <string name="onboarding_summary_seeded">Recommended list</string>
+    <string name="group_contact_name">Contact name</string>
+    <string name="group_contact_value">Contact: %1$s</string>
+    <string name="group_rsvp_summary">Confirmed: %1$d · declined: %2$d · pending: %3$d</string>
+    <string name="group_no_contact">No phone or email</string>
+    <string name="group_contact_fallback">Uses %1$s\'s contact</string>
+    <string name="group_members_edit">Members</string>
+    <string name="group_members_title">Members of %1$s</string>
+    <string name="group_members_moves_from">Leaves the %1$s group</string>
+    <string name="msg_group_members_saved">Members updated</string>
+    <string name="guest_age">Age</string>
+    <string name="guest_language">Guest language</string>
+    <string name="guest_checked_in">Arrived</string>
+    <string name="undo_check_in">Undo check-in</string>
+    <string name="msg_check_in_undone">Check-in undone.</string>
+    <string name="guest_filter_confirmed">Confirmed (%1$d)</string>
+    <string name="guest_filter_pending">Pending (%1$d)</string>
+    <string name="guest_filter_padrinhos">Wedding party (%1$d)</string>
+    <string name="guest_filter_children">Children (%1$d)</string>
+    <string name="guest_filter_checked_in">Checked in (%1$d)</string>
+    <string name="export_guests_csv">Export CSV</string>
+    <string name="csv_name">Name</string>
+    <string name="csv_yes">Yes</string>
+    <string name="summary_guests_detail">%1$s · pending: %2$d · declined: %3$d · children: %4$d · dietary needs: %5$d</string>
+    <string name="gift_type">Gift type</string>
+    <string name="gift_type_cash">Cash</string>
+    <string name="gift_type_item">Item</string>
+    <string name="gift_giver_name">Given by (if not a guest)</string>
+    <string name="gift_anonymous">Anonymous</string>
+    <string name="gift_honeymoon_share">Honeymoon fund</string>
+    <string name="gift_posted">Posted to finances</string>
+    <string name="gift_mark_thanked">Mark thanked</string>
+    <string name="gift_unmark_thanked">Unmark thanked</string>
+    <string name="gift_filter_pending_thank">Not thanked yet (%1$d)</string>
+    <string name="gift_not_cash">Only cash gifts with an amount can be posted.</string>
+    <string name="gift_post_as">Post as</string>
+    <string name="gift_post_amount">Amount: %1$s</string>
+    <string name="gift_post_default_title">Gift from %1$s</string>
+    <string name="gift_post_notes">Posted from the gift \"%1$s\".</string>
+    <string name="gift_post_once">Each gift can only be posted once.</string>
+    <string name="msg_gift_thanked">Thank-you recorded.</string>
+    <string name="msg_gift_unthanked">Thank-you unmarked.</string>
+    <string name="summary_gifts_cash">Cash: %1$s · to post: %2$s</string>
+    <string name="summary_gifts_detail">Items received: %1$d · not thanked: %2$d</string>
+    <string name="audit_gift_thanked">Gift thanked</string>
+    <string name="audit_gift_unthanked">Thank-you undone</string>
+    <string name="audit_group_members">Group members</string>
+    <string name="audit_check_in_undone">Check-in undone</string>
+    <plurals name="guest_age_value"><item quantity="one">%1$d year old</item><item quantity="other">%1$d years old</item></plurals>
+    <plurals name="group_members_selected"><item quantity="one">%1$d selected</item><item quantity="other">%1$d selected</item></plurals>
+    <string name="gift_post_title">Post to finances</string>
+    <string name="group_members_in">Currently in %1$s</string>
 </resources>

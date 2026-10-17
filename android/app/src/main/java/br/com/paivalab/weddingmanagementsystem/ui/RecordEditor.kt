@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
+import br.com.paivalab.weddingmanagementsystem.data.GuestRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
@@ -193,6 +194,19 @@ fun RecordEditorScreen(
                 EditorTextField(form.trousseauStore, { update { copy(trousseauStore = it.take(EditorLimits.NAME)) } },
                     stringResource(R.string.store), null)
             }
+            if (module.kind == Kinds.GIFT) {
+                ChoiceRow(stringResource(R.string.gift_type), listOf("CASH" to stringResource(R.string.gift_type_cash),
+                    "ITEM" to stringResource(R.string.gift_type_item)), form.giftType) { update { copy(giftType = it) } }
+                EditorTextField(form.giftGiverName, { update { copy(giftGiverName = it.take(EditorLimits.NAME)) } },
+                    stringResource(R.string.gift_giver_name), null)
+                if (form.giftType == "CASH") {
+                    ToggleChip(stringResource(R.string.gift_honeymoon_share), form.giftHoneymoonShare) { update { copy(giftHoneymoonShare = it) } }
+                }
+            }
+            if (module.kind == Kinds.GROUP) {
+                EditorTextField(form.groupContactName, { update { copy(groupContactName = it.take(EditorLimits.NAME)) } },
+                    stringResource(R.string.group_contact_name), null)
+            }
             if (module.kind == Kinds.TASK) {
                 EditorTextField(form.taskResponsible, { update { copy(taskResponsible = it.take(EditorLimits.NAME)) } },
                     stringResource(R.string.task_responsible), null)
@@ -271,6 +285,10 @@ fun RecordEditorScreen(
                 EditorTextField(form.guestDietary, { update { copy(guestDietary = it.take(EditorLimits.TEXT)) } },
                     stringResource(R.string.guest_dietary), null, placeholder = stringResource(R.string.guest_dietary_hint))
                 EditorTextField(form.guestCity, { update { copy(guestCity = it.take(EditorLimits.NAME)) } }, stringResource(R.string.guest_city), null)
+                EditorTextField(form.guestAge, { update { copy(guestAge = it.filter(Char::isDigit).take(3)) } }, stringResource(R.string.guest_age),
+                    error(EditorField.AGE), KeyboardType.Number)
+                ChoiceRow(stringResource(R.string.guest_language), GuestRules.languages.zip(languageOptions.map { it.second }),
+                    form.guestLanguage, allowNone = true) { update { copy(guestLanguage = it) } }
                 RecordPickerField(stringResource(R.string.groups), form.guestGroupId, index.kind(Kinds.GROUP), allowNone = true) {
                     update { copy(guestGroupId = it) }
                 }

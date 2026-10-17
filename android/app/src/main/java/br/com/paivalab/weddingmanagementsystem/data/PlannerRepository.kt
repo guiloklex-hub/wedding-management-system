@@ -44,6 +44,8 @@ object Kinds {
 const val PAYMENT_NEEDS_VENDOR = "PAYMENT_NEEDS_VENDOR"
 const val VENDOR_NEEDS_CATEGORY = "VENDOR_NEEDS_CATEGORY"
 const val HONEYMOON_NOT_DELETABLE = "HONEYMOON_NOT_DELETABLE"
+const val GIFT_ALREADY_POSTED = "GIFT_ALREADY_POSTED"
+const val GIFT_NOT_CASH = "GIFT_NOT_CASH"
 
 private val VENDOR_OWNED = setOf(Kinds.BUDGET, Kinds.PAYMENT, Kinds.CONTACT, Kinds.VENDOR_NOTE, Kinds.CONTRACT)
 private val UNLINK_ON_DELETE = setOf(Kinds.GOAL, Kinds.VENDOR, Kinds.GUEST)
@@ -292,7 +294,8 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
             require(occupied + 1 + record.plusOnesConfirmed <= capacity) { "Mesa sem lugares" }
         }
         val now = System.currentTimeMillis()
-        dao.save(TaskRules.withCompletion(dao.findAny(record.id), record, now).copy(updatedAt = now))
+        val previous = dao.findAny(record.id)
+        dao.save(GiftRules.normalize(previous, TaskRules.withCompletion(previous, record, now), now).copy(updatedAt = now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), record.id, "SAVE"))
     }
 
@@ -357,7 +360,8 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
     suspend fun setStatus(id: String, status: String): UndoSnapshot = database.withTransaction {
         val current = dao.find(id) ?: error("Registro não encontrado")
         val now = System.currentTimeMillis()
-        dao.save(TaskRules.withCompletion(current, current.copy(status = status), now).copy(updatedAt = now))
+        val next = current.copy(status = status)
+        dao.save(GiftRules.normalize(current, TaskRules.withCompletion(current, next, now), now).copy(updatedAt = now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "STATUS", details = status))
         UndoSnapshot(listOf(current))
     }
@@ -396,22 +400,58 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
         UndoSnapshot(listOf(payment))
     }
 
-    suspend fun convertGift(id: String, targetKind: String): UndoSnapshot = database.withTransaction {
+    /**
+     * Lança um presente em dinheiro como receita (fonte GIFT) ou ativo, uma
+     * única vez, como `convertGiftCashToIncomeOrAsset` da web.
+     */
+    suspend fun convertGift(
+        id: String, targetKind: String, title: String, date: LocalDate = LocalDate.now(), notes: String = "",
+    ): UndoSnapshot = database.withTransaction {
         require(targetKind == Kinds.INCOME || targetKind == Kinds.ASSET)
+        require(title.isNotBlank() && title.length <= 120)
         val gift = dao.find(id) ?: error("Presente não encontrado")
-        require(gift.kind == Kinds.GIFT && gift.amountCents != null)
+        require(gift.kind == Kinds.GIFT)
         val giftExtra = ExtraFields.parse(gift.extraJson)
-        require(gift.status != "PROCESSED" && !ExtraFields.has(giftExtra, "processedAt")) { "Presente já lançado" }
+        require(!GiftRules.processed(gift, giftExtra)) { GIFT_ALREADY_POSTED }
+        require(GiftRules.type(giftExtra) == "CASH" && (gift.amountCents ?: 0L) > 0L) { GIFT_NOT_CASH }
         val now = System.currentTimeMillis()
-        val target = PlannerRecord(UUID.randomUUID().toString(), targetKind, gift.title,
-            amountCents = gift.amountCents, date = LocalDate.now().toString(),
+        val incomeExtra = JSONObject().put("frequency", "ONE_TIME")
+        ExtraFields.text(giftExtra, "giverName").takeIf { it.isNotBlank() }?.let { incomeExtra.put("givenByName", it) }
+        val target = PlannerRecord(UUID.randomUUID().toString(), targetKind, title.trim(),
+            amountCents = gift.amountCents, date = date.toString(), notes = notes.take(8000),
             status = if (targetKind == Kinds.INCOME) "RECEIVED" else "",
             subtitle = if (targetKind == Kinds.INCOME) "GIFT" else "",
-            extraJson = if (targetKind == Kinds.INCOME) JSONObject().put("frequency", "ONE_TIME").toString() else "{}")
+            extraJson = if (targetKind == Kinds.INCOME) incomeExtra.toString() else "{}")
         dao.save(target)
         dao.save(gift.copy(extraJson = giftExtra.put("processedAt", now).toString(), updatedAt = now))
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, "CONVERT_TO_FINANCE", details = target.id))
         UndoSnapshot(listOf(gift), listOf(target.id))
+    }
+
+    /** Marca ou desmarca o agradecimento, como `markGiftThanked` da web. */
+    suspend fun setGiftThanked(id: String, thanked: Boolean): UndoSnapshot = database.withTransaction {
+        val gift = dao.find(id) ?: error("Presente não encontrado")
+        require(gift.kind == Kinds.GIFT)
+        val now = System.currentTimeMillis()
+        val extra = ExtraFields.parse(gift.extraJson)
+        if (thanked) extra.put("thankedAt", now) else extra.remove("thankedAt")
+        dao.save(gift.copy(status = if (thanked) "THANKED" else "RECEIVED", extraJson = extra.toString(), updatedAt = now))
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), id, if (thanked) "GIFT_THANKED" else "GIFT_UNTHANKED"))
+        UndoSnapshot(listOf(gift))
+    }
+
+    /** Define exatamente quem pertence ao grupo, como `setGroupMembers` da web. */
+    suspend fun setGroupMembers(groupId: String, guestIds: Set<String>): UndoSnapshot = database.withTransaction {
+        val group = dao.find(groupId) ?: error("Grupo não encontrado")
+        require(group.kind == Kinds.GROUP && guestIds.size <= 500)
+        val now = System.currentTimeMillis()
+        val changed = dao.allRecords().filter { it.kind == Kinds.GUEST && it.deletedAt == null }
+            .filter { (it.guestGroupId == groupId) != (it.id in guestIds) }
+        dao.saveRecords(changed.map { guest ->
+            guest.copy(guestGroupId = if (guest.id in guestIds) groupId else null, updatedAt = now)
+        })
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), groupId, "GROUP_MEMBERS", details = guestIds.size.toString()))
+        UndoSnapshot(changed)
     }
 
     suspend fun assignGuestToTable(guestId: String, tableId: String?) = database.withTransaction {
@@ -443,14 +483,15 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
         dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), log.id, "CONFIRM_SENT", details = channel))
     }
 
-    suspend fun checkInGuest(guestId: String): UndoSnapshot = database.withTransaction {
+    /** Marca ou desfaz a chegada do convidado, como `toggleCheckin` da web. */
+    suspend fun setCheckedIn(guestId: String, present: Boolean): UndoSnapshot = database.withTransaction {
         val guest = dao.find(guestId) ?: error("Convidado não encontrado")
-        require(guest.kind == Kinds.GUEST && guest.status == "CONFIRMED")
+        require(guest.kind == Kinds.GUEST)
         val extra = ExtraFields.parse(guest.extraJson)
-        if (ExtraFields.has(extra, "checkedInAt")) return@withTransaction UndoSnapshot.EMPTY
-        extra.put("checkedInAt", System.currentTimeMillis())
+        if (ExtraFields.has(extra, "checkedInAt") == present) return@withTransaction UndoSnapshot.EMPTY
+        if (present) extra.put("checkedInAt", System.currentTimeMillis()) else extra.remove("checkedInAt")
         dao.save(guest.copy(extraJson = extra.toString(), updatedAt = System.currentTimeMillis()))
-        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), guestId, "CHECK_IN"))
+        dao.addAudit(PlannerAudit(UUID.randomUUID().toString(), guestId, if (present) "CHECK_IN" else "CHECK_IN_UNDONE"))
         UndoSnapshot(listOf(guest))
     }
 }

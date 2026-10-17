@@ -53,7 +53,7 @@ val modules = listOf(
     ModuleDefinition(Kinds.GOAL, R.string.goals, Icons.Default.Flag, hasAmount = true, hasDate = true),
     ModuleDefinition(Kinds.GROUP, R.string.groups, Icons.Default.Group, hasContact = true),
     ModuleDefinition(Kinds.TAG, R.string.tags, Icons.Default.LocalOffer),
-    ModuleDefinition(Kinds.GIFT, R.string.gifts, Icons.Default.Favorite, listOf("PENDING", "RECEIVED", "THANKED", "PROCESSED"), true, parentKind = Kinds.GUEST),
+    ModuleDefinition(Kinds.GIFT, R.string.gifts, Icons.Default.Favorite, listOf("RECEIVED", "THANKED"), true, true, parentKind = Kinds.GUEST),
     ModuleDefinition(Kinds.HONEYMOON, R.string.honeymoon, Icons.Default.Flight, hasAmount = true, hasDate = true),
     ModuleDefinition(Kinds.HONEYMOON_ITEM, R.string.honeymoon_items, Icons.Default.Inventory, listOf("PLANNED", "BOOKED", "CONFIRMED", "PAID", "CANCELLED"), true, true, parentKind = Kinds.HONEYMOON),
     ModuleDefinition(Kinds.TROUSSEAU, R.string.trousseau, Icons.Default.Inventory, listOf("TO_BUY", "BOUGHT", "GIFTED"), true),

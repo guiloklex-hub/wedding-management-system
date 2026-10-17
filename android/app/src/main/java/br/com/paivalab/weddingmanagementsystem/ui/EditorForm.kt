@@ -3,6 +3,8 @@ package br.com.paivalab.weddingmanagementsystem.ui
 import androidx.annotation.StringRes
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
+import br.com.paivalab.weddingmanagementsystem.data.GiftRules
+import br.com.paivalab.weddingmanagementsystem.data.GuestRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.Money
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
@@ -54,6 +56,12 @@ data class EditorFormState(
     val guestIsVip: Boolean = false,
     val guestIsPadrinho: Boolean = false,
     val guestIsChild: Boolean = false,
+    val guestAge: String = "",
+    val guestLanguage: String = "",
+    val giftType: String = "CASH",
+    val giftGiverName: String = "",
+    val giftHoneymoonShare: Boolean = false,
+    val groupContactName: String = "",
     val paymentMethod: String = "",
     val lateFeePercent: String = "",
     val interestPercentPerMonth: String = "",
@@ -74,7 +82,7 @@ data class EditorFormState(
 
 enum class EditorField {
     TITLE, SUBTITLE, AMOUNT, ESTIMATED, DATE, PHONE, EMAIL, PARENT, LATE_FEE, INTEREST, CONTRACT_VERSION,
-    CONTRACT_EXPIRES, CAPACITY_SEATED, CAPACITY_STANDING, MAPS_URL, CONTRACT_LINK, PLUS_ALLOWED, PLUS_CONFIRMED, TABLE,
+    CONTRACT_EXPIRES, CAPACITY_SEATED, CAPACITY_STANDING, MAPS_URL, CONTRACT_LINK, PLUS_ALLOWED, PLUS_CONFIRMED, TABLE, AGE,
 }
 
 sealed interface EditorOutcome {
@@ -142,6 +150,12 @@ fun editorFormFrom(module: ModuleDefinition, initial: PlannerRecord?, parentId: 
         guestIsVip = ExtraFields.bool(json, "isVIP"),
         guestIsPadrinho = ExtraFields.bool(json, "isPadrinho"),
         guestIsChild = ExtraFields.bool(json, "isChild"),
+        guestAge = ExtraFields.int(json, "age")?.toString().orEmpty(),
+        guestLanguage = text("language").takeIf { it in GuestRules.languages }.orEmpty(),
+        giftType = GiftRules.type(json),
+        giftGiverName = text("giverName"),
+        giftHoneymoonShare = ExtraFields.bool(json, "isHoneymoonShare"),
+        groupContactName = text("contactName"),
         paymentMethod = text("method"),
         lateFeePercent = ExtraFields.double(json, "lateFeePercent")?.toString().orEmpty(),
         interestPercentPerMonth = ExtraFields.double(json, "interestPercentPerMonth")?.toString().orEmpty(),
@@ -226,6 +240,7 @@ fun buildEditorRecord(
     val standing = if (module.kind == Kinds.VENUE) int(EditorField.CAPACITY_STANDING, form.venueCapacityStanding, 0..100_000) else null
     if (module.kind == Kinds.VENUE && !EditorLimits.validUrl(form.venueMapsUrl)) fail(EditorField.MAPS_URL, R.string.err_url)
     if (module.kind == Kinds.VENDOR && !EditorLimits.validUrl(form.vendorContractLink)) fail(EditorField.CONTRACT_LINK, R.string.err_url)
+    val age = if (module.kind == Kinds.GUEST) int(EditorField.AGE, form.guestAge, 0..130) else null
     var plusAllowed = 0
     var plusConfirmed = 0
     if (module.kind == Kinds.GUEST) {
@@ -270,7 +285,15 @@ fun buildEditorRecord(
                 put("isVIP", form.guestIsVip)
                 put("isPadrinho", form.guestIsPadrinho)
                 put("isChild", form.guestIsChild)
+                if (age == null) remove("age") else put("age", age)
+                putText("language", form.guestLanguage)
             }
+            Kinds.GIFT -> {
+                put("type", form.giftType)
+                putText("giverName", form.giftGiverName)
+                if (form.giftType == "CASH") put("isHoneymoonShare", form.giftHoneymoonShare) else remove("isHoneymoonShare")
+            }
+            Kinds.GROUP -> putText("contactName", form.groupContactName)
             Kinds.PAYMENT -> {
                 putText("method", form.paymentMethod)
                 if (lateFee == null) remove("lateFeePercent") else put("lateFeePercent", lateFee)

@@ -18,14 +18,18 @@ object ReportExport {
                     record.notes,
                 )
             }
-        return ("\uFEFF" + rows.joinToString("\r\n", postfix = "\r\n") { row ->
+        return csv(rows.toList())
+    }
+
+    /** CSV com BOM e `;` para o Excel em pt-BR; neutraliza fórmulas no início das células. */
+    fun csv(rows: List<List<String>>): ByteArray =
+        ("\uFEFF" + rows.joinToString("\r\n", postfix = "\r\n") { row ->
             row.joinToString(";") { cell ->
                 val first = cell.trimStart().firstOrNull()
                 val safe = if (first != null && first in "=+-@") "'$cell" else cell
                 "\"${safe.replace("\"", "\"\"")}\""
             }
         }).toByteArray(Charsets.UTF_8)
-    }
 
     private fun amount(cents: Long): String = BigDecimal.valueOf(cents, 2).toPlainString()
 }

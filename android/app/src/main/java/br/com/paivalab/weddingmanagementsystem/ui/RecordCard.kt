@@ -27,6 +27,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
+import br.com.paivalab.weddingmanagementsystem.data.GiftRules
+import br.com.paivalab.weddingmanagementsystem.data.GuestRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PaymentAdjustment
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
@@ -140,6 +142,8 @@ internal fun RecordCard(
                     if (ExtraFields.bool(extra, "isChild")) InfoBadge(stringResource(R.string.guest_child), PlannerEmerald)
                     if (dietary.isNotBlank()) InfoBadge(stringResource(R.string.guest_dietary_value, dietary), PlannerRose)
                     if (city.isNotBlank()) InfoBadge(city, PlannerMuted)
+                    ExtraFields.int(extra, "age")?.let { InfoBadge(plural(R.plurals.guest_age_value, it, it), PlannerMuted) }
+                    if (ExtraFields.has(extra, "checkedInAt")) InfoBadge(stringResource(R.string.guest_checked_in), PlannerEmerald)
                     index.find(record.guestGroupId)?.let { InfoBadge(stringResource(R.string.group_value, it.title), PlannerChampagne) }
                     index.find(record.seatingTableId)?.let { InfoBadge(stringResource(R.string.table_value, it.title), PlannerChampagne) }
                     index.tagIdsByGuest[record.id].orEmpty().mapNotNull { index.find(it)?.title }.forEach { InfoBadge(it, PlannerRose) }
@@ -147,8 +151,32 @@ internal fun RecordCard(
             }
             Kinds.GROUP -> {
                 val members = index.groupMembers(record.id)
-                InfoBadge(plural(R.plurals.group_members, members.size, members.size,
-                    members.sumOf { 1 + it.plusOnesConfirmed }), PlannerChampagne)
+                val summary = GuestRules.summarizeGroup(record, members)
+                val contactName = ExtraFields.text(extra, "contactName")
+                if (contactName.isNotBlank()) Text(stringResource(R.string.group_contact_value, contactName), color = PlannerMuted,
+                    style = MaterialTheme.typography.bodySmall)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    InfoBadge(plural(R.plurals.group_members, members.size, members.size,
+                        members.sumOf { 1 + it.plusOnesConfirmed }), PlannerChampagne)
+                    if (members.isNotEmpty()) {
+                        InfoBadge(stringResource(R.string.group_rsvp_summary, summary.confirmed, summary.declined, summary.pending), PlannerEmerald)
+                    }
+                    when {
+                        !summary.willReceive -> InfoBadge(stringResource(R.string.group_no_contact), PlannerDanger)
+                        summary.fallbackName != null -> InfoBadge(stringResource(R.string.group_contact_fallback, summary.fallbackName), PlannerMuted)
+                    }
+                }
+            }
+            Kinds.GIFT -> {
+                val type = GiftRules.type(extra)
+                val giverName = ExtraFields.text(extra, "giverName")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    InfoBadge(stringResource(if (type == "CASH") R.string.gift_type_cash else R.string.gift_type_item),
+                        if (type == "CASH") PlannerEmerald else PlannerChampagne)
+                    if (parent == null) InfoBadge(giverName.ifBlank { stringResource(R.string.gift_anonymous) }, PlannerMuted)
+                    if (type == "CASH" && ExtraFields.bool(extra, "isHoneymoonShare")) InfoBadge(stringResource(R.string.gift_honeymoon_share), PlannerRose)
+                    if (GiftRules.processed(record, extra)) InfoBadge(stringResource(R.string.gift_posted), PlannerEmerald)
+                }
             }
             Kinds.TAG -> {
                 val count = index.guestsWithTag(record.id)

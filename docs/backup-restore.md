@@ -14,6 +14,8 @@ Em **Ajustes → Backup → Backup completo**:
 
 O Android usa o seletor de documentos e exige biometria forte ou credencial do aparelho antes de exportar ou restaurar. A versão móvel mantém o SQLite web e os arquivos exclusivos em um cofre privado cifrado pelo Android Keystore. Sua próxima exportação inclui esse estado e as edições móveis. No web, o estado móvel exclusivo fica em `PortableState` e `.portable-state/` e volta ao próximo pacote.
 
+Na restauração web, cada anexo vindo do Android mantém a versão do PDF de contrato e um tipo aceito pela web (`CONTRACT`, `PROPOSAL`, `RECEIPT`, `INVOICE`, `ID_DOC`, `PHOTO`, `OTHER`). O tipo genérico `ATTACHMENT`, gravado pelo Android até a v1.2, vira `CONTRACT` quando o dono é um contrato e `OTHER` nos demais.
+
 Na importação v2, o Android compara cada contrato e cada anexo do SQLite web com os registros móveis, inclusive a associação do PDF ao contrato, o tamanho e o SHA-256. Se algum faltar ou divergir, a prévia falha e o banco atual permanece intacto. A prévia mostra separadamente o total de contratos e PDFs de contrato, incluindo versões anteriores. Depois de restaurar, abra o fornecedor para consultar os PDFs atuais e arquivados com seus números de versão. Se um pacote v2 antigo não trouxer a versão em `files.json`, o app a recupera do SQLite web.
 
 Na primeira transferência **Android → web** sem SQLite web anterior, a restauração mantém as contas administrativas da instalação web de destino e substitui os dados do casamento. A prévia bloqueia registros sem campos web obrigatórios, identificando o registro e o campo a corrigir; fornecedores exigem categoria, por exemplo. Os campos que só existem no Android continuam no estado portátil.

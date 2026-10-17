@@ -7,6 +7,7 @@ import { acquirePortableOperation, clearRestoreJournal, writeRestoreJournal } fr
 import { databasePath } from "./portable-export";
 import { inspectPortable, mergeOptions, type InspectedPortable, type PortablePreview } from "./portable-inspect";
 import { mergeMobileRecords, prepareAndroidBase } from "./portable-merge";
+import { webAttachment } from "./portable-fields";
 import { sha256File } from "./portable-format";
 
 type SettingsRow = { key: string; value: string };
@@ -69,18 +70,19 @@ async function applyFiles(result: InspectedPortable, database: DatabaseSync, upl
     const target = path.join(uploads, relative);
     await fs.mkdir(path.dirname(target), { recursive: true });
     await fs.copyFile(stateTarget, target);
+    const { kind, version } = webAttachment(file, owner.kind);
     if (prior) {
-      database.prepare("UPDATE Attachment SET filename = ?, mimeType = ?, size = ?, sha256Full = ?, storagePath = ?, deletedAt = ? WHERE id = ?")
-        .run(file.fileName, file.mimeType, file.byteSize, file.sha256, relative, sqlDate(file.deletedAt), file.id);
+      database.prepare("UPDATE Attachment SET filename = ?, mimeType = ?, size = ?, sha256Full = ?, storagePath = ?, version = ?, deletedAt = ? WHERE id = ?")
+        .run(file.fileName, file.mimeType, file.byteSize, file.sha256, relative, version, sqlDate(file.deletedAt), file.id);
     } else {
       const type = owner.kind.toUpperCase();
       database.prepare(`INSERT INTO Attachment
         (id, ownerType, ownerId, vendorId, contractId, venueId, kind, filename, mimeType, size,
          storagePath, sha256Full, version, uploadedById, createdAt, deletedAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NULL, ?, ?)`)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`)
         .run(file.id, type, owner.id, owner.kind === "vendor" ? owner.id : null,
           owner.kind === "contract" ? owner.id : null, owner.kind === "venue" ? owner.id : null,
-          file.kind, file.fileName, file.mimeType, file.byteSize, relative, file.sha256,
+          kind, file.fileName, file.mimeType, file.byteSize, relative, file.sha256, version,
           sqlDate(file.createdAt), sqlDate(file.deletedAt));
     }
   }

@@ -15,7 +15,8 @@ comportamentos principais.
   vencimentos (30 dias).
 - **Próximas ações:** card no topo (`ActionStreamCard`) com a lista priorizada
   de itens acionáveis — pagamentos atrasados/a vencer, tarefas atrasadas/no
-  prazo, contratos a expirar, RSVP sem resposta e agradecimentos pendentes.
+  prazo, contratos ainda não assinados (rascunho, enviado ou em negociação)
+  que expiram em até 30 dias, RSVP sem resposta e agradecimentos pendentes.
   Cada linha leva direto à tela da ação. A priorização (atrasados primeiro) e o
   ordenamento são do helper puro [src/lib/action-stream.ts](../src/lib/action-stream.ts)
   (`aggregateActionStream`); itens financeiros só aparecem para quem tem

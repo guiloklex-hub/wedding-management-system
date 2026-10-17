@@ -235,7 +235,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
       { title: "Clique e resolva", body: "Cada item leva direto à tela certa (pagamentos, tarefas, convidados, presentes, fornecedores)." },
       { title: "Ordem por urgência", body: "Itens atrasados aparecem no topo. Mostra até 10 e indica '+N ações' quando há mais. Some quando estiver tudo em dia." },
     ],
-    tips: ["Itens financeiros (pagamentos/contratos) só aparecem para quem tem permissão de finanças."],
+    tips: [
+      "Itens financeiros (pagamentos/contratos) só aparecem para quem tem permissão de finanças.",
+      "Contratos assinados (digital ou físico) ou cancelados não entram na lista, mesmo perto da validade.",
+    ],
   },
   {
     id: "add-team-members",

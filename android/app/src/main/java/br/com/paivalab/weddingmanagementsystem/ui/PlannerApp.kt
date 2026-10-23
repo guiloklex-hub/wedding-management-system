@@ -468,7 +468,7 @@ fun PlannerApp(
                         onLoadDemoSeed = onLoadDemoSeed, onNotify = notify, navigate = nav::openSection,
                     )
                 }
-                composable<InsightsRoute> { InsightsScreen(records, language, currency, eventDate, contingencyPercent, nav::openSection) }
+                composable<InsightsRoute> { InsightsScreen(index, language, currency, eventDate, contingencyPercent) }
                 composable<ReportsRoute> { ReportsHubScreen(language, nav::openSection) }
                 composable<ReportRoute> { entry ->
                     ReportDetailScreen(entry.toRoute<ReportRoute>().route, records, audits, language, currency, eventDate, nav::openSection)

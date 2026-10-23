@@ -9,7 +9,7 @@ Legenda: **sim** = fluxo principal equivalente; **parcial** = tela existe, mas f
 | Tela/fluxo web | Android atual | Diferença relevante |
 |---|---|---|
 | `/dashboard` | Parcial | Mesmos números da web (orçamento com contingência, pago, saldo devedor, cobertura de caixa), alerta de quitação, próximas ações com os 7 tipos, funil, RSVP, presentes e próximos vencimentos. Falta o gráfico de distribuição por categoria. |
-| `/dashboard/insights` | Parcial | Indicadores, caixa e riscos locais existem; Curva S, burndown e waterfall detalhados não foram portados. |
+| `/dashboard/insights` | Sim | Health score com os 6 fatores, alertas e recomendações; sobra até o evento; fluxo de caixa projetado; entradas e saídas por mês; Curva S com banda de contingência; burndown de tarefas; simulador "Posso fechar esse contrato agora?"; variação por categoria em cascata e em lista; concentração de pagamentos pendentes. A narrativa por IA depende do servidor. |
 | `/dashboard/reports` e 10 entradas | Parcial | Há um hub móvel e telas resumidas para fluxo de caixa, funil, riscos, convidados, presentes, tarefas, lua de mel, enxoval e atividade. Gráficos, séries temporais e filtros da web ainda diferem. |
 | `/dashboard/vendors` | Sim | As 23 categorias da web com cor, avaliação, situação na lista (ao contratar sem valor real, pede o valor contratado) e orçamento estimado criado junto com o fornecedor. |
 | `/dashboard/vendors/compare` | Sim | Escolha de 2 a 4 fornecedores; valores, pagamentos, saldo, avaliação, situação, indicação, tags e contagem de contatos, notas e contratos. |
@@ -79,10 +79,19 @@ Navegação tipada com estado preservado, editor em tela cheia com validação i
 - Cada item tem moeda própria (BRL, USD ou EUR), companhia ou fornecedor (`vendor`) e data de fim (`endAt`). Um item novo nasce como "Atividade", o padrão da web.
 - O enxoval abre ordenado por prioridade (essencial, desejável, luxo), cômodo e nome. Os atalhos "Comprado" e "Ganhei" alternam com "a comprar", como os botões da web. O item comprado ou ganho aparece riscado. O link da loja (até 500 caracteres) abre no navegador.
 
+## Insights (Fase 2, parte 6)
+
+- A tela segue a ordem de `/dashboard/insights` e calcula os números como `loadInsightsSnapshot`. O teste `InsightsRulesTest` compara o Android com valores gerados pelas próprias funções da web (`cashflow.ts`, `payment-curve.ts`, `task-burndown.ts`).
+- O orçamento do health score agora usa o valor real dos itens (`actualValue ?? estimatedValue`) de fornecedores ativos, como a web; antes o Android usava o estimado. Os limites de cor também seguem a web (75 e 50).
+- O fluxo de caixa lança a receita no mês em que foi recebida (`receivedAt`) e, sem recebimento, no mês previsto, como a web. Isso vale também para o painel e o radar de riscos.
+- Os gráficos são desenhados em Compose (`ui/Charts.kt`), sem biblioteca nova. Tocar ou arrastar mostra os valores do ponto; cada gráfico tem descrição para leitor de tela.
+- Os rótulos dos fatores e os alertas do health score estão traduzidos nos 3 idiomas; na web ainda estão fixos em português.
+- A demografia para o buffet e a exportação CSV continuam no fim da tela até a parte de relatórios.
+
 ## Próximas lacunas de paridade
 
 1. Definir se as funções que dependem do servidor serão sincronizadas no Android ou terão apenas alternativas locais.
-2. Portar Insights e relatórios com gráficos e mapa de mesas com arrastar e soltar.
+2. Portar relatórios com gráficos e mapa de mesas com arrastar e soltar.
 3. Portar visualizações e filtros completos dos relatórios, mais a central de ajuda.
 4. Validar o envio concluído pelo usuário e o fluxo separado do WhatsApp Business. No Samsung SM-S908E, a prévia do WhatsApp já mostrou a imagem e o texto do convite juntos; nenhum envio foi confirmado.
 

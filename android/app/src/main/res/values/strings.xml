@@ -54,7 +54,7 @@
     <string name="backup_preview_details">Áreas: {areas}. Espaço mínimo: {bytes} bytes. Alterados: {changed}; criados: {created}; excluídos: {deleted}. Uma cópia de reversão será guardada.</string>
     <string name="backup_export_reversal">Exportar última cópia de reversão</string>
     <string name="attach_file">Adicionar anexo</string><string name="post_gift">Lançar</string>
-    <string name="health_score">Saúde do planejamento</string><string name="cashflow">Fluxo de caixa mensal</string>
+    <string name="health_score">Saúde do planejamento</string>
     <string name="choose_guest">Escolha um convidado</string><string name="prepare_invite">Preparar envio</string>
     <string name="confirmed_sends">Envios confirmados</string>
     <string name="export_calendar">Exportar calendário (.ics)</string>
@@ -307,17 +307,8 @@
     <string name="pix_city">Cidade do titular</string>
     <string name="view_qr_code">Ver QR Code</string>
     <string name="settings_security_title">Segurança, backup e dados</string>
-    <string name="contingency_value">Contingência (%1$d%%): %2$s</string>
-    <string name="health_excellent">Excelente equilíbrio financeiro e operacional</string>
-    <string name="health_good">Planejamento saudável; atenção às próximas parcelas</string>
-    <string name="health_attention">Atenção ao fluxo de caixa e às tarefas pendentes</string>
-    <plurals name="alerts_count"><item quantity="one">%1$d alerta</item><item quantity="other">%1$d alertas</item></plurals>
-    <string name="insights_funnel_title">Funil de fornecedores</string>
     <string name="insights_demographics_title">Convidados e restrições alimentares</string>
     <string name="insights_dietary_title">Restrições alimentares para o buffet (%1$d):</string>
-    <string name="progress_of">%1$s · %2$d de %3$d</string>
-    <string name="cashflow_in">Entradas: %1$s</string>
-    <string name="cashflow_out">Saídas: %1$s</string>
     <string name="help_private_title">Privado e offline no seu celular</string>
     <string name="help_invites_title">Convites, RSVP e WhatsApp</string>
     <string name="help_backup_title">Backup cifrado (.wfpbackup)</string>
@@ -620,4 +611,72 @@
     <string name="summary_trousseau">Estimado: %1$s · Comprado: %2$s</string>
     <string name="summary_trousseau_detail">A comprar: %1$d · Ganhei: %2$d</string>
     <string name="sort_priority">Prioridade</string>
+    <string name="insights_subtitle">Projeção, saúde do projeto e detector de orçamento por categoria.</string>
+    <string name="insights_no_data">Sem dados ainda.</string>
+    <string name="insights_chart_hint">Toque ou arraste no gráfico para ver os valores.</string>
+    <string name="health_status_good">Projeto saudável.</string>
+    <string name="health_status_warn">Atenção em alguns pontos.</string>
+    <string name="health_status_bad">Precisa de ajustes urgentes.</string>
+    <string name="health_score_value">%1$d/100</string>
+    <string name="health_factor_contracted">Cobertura contratada</string>
+    <string name="health_factor_paid" formatted="false">Adiantamento (% pago)</string>
+    <string name="health_factor_liquidity">Liquidez (sem mês no vermelho)</string>
+    <string name="health_factor_tasks">Tarefas em dia</string>
+    <string name="health_factor_on_track">No prazo (contratação x calendário)</string>
+    <string name="health_factor_cash">Cobertura de caixa</string>
+    <string name="health_factor_value">%1$d%%</string>
+    <string name="health_alert_negative_month">Pelo menos um mês fica negativo na projeção atual.</string>
+    <string name="health_alert_overdue">%1$d%% das tarefas estão atrasadas.</string>
+    <string name="health_alert_late_contracting">Você está atrasado em fechar fornecedores para a distância do evento.</string>
+    <string name="health_alert_low_cash">Caixa cobre menos de %1$d%% do saldo devedor.</string>
+    <string name="health_rec_low_contracted">Apenas %1$d%% do orçamento está contratado (esperado ~%2$d%% nesta fase). Priorize fechar fornecedores.</string>
+    <string name="health_rec_low_cash">O caixa cobre só %1$d%% do saldo devedor. Reforce a reserva ou reduza gastos futuros.</string>
+    <plurals name="health_rec_overdue"><item quantity="one">%1$d de %2$d tarefas está atrasada. Atualize prazos ou acelere o andamento.</item><item quantity="other">%1$d de %2$d tarefas estão atrasadas. Atualize prazos ou acelere o andamento.</item></plurals>
+    <string name="health_rec_negative_month">Pelo menos um mês fica negativo na projeção. Reajuste o cronograma de pagamentos.</string>
+    <plurals name="health_rec_low_payment"><item quantity="one">Só %1$d%% foi pago com %2$d dia até o evento. Antecipe pagamentos ou revise o orçamento.</item><item quantity="other">Só %1$d%% foi pago com %2$d dias até o evento. Antecipe pagamentos ou revise o orçamento.</item></plurals>
+    <string name="liquidity_label">Sobra até o evento</string>
+    <string name="liquidity_description">Caixa disponível após os pagamentos planejados e a contingência.</string>
+    <string name="liquidity_positive">Margem saudável</string>
+    <string name="liquidity_warning">Margem reduzida</string>
+    <string name="liquidity_critical">Déficit projetado</string>
+    <string name="insights_cashflow_title">Fluxo de caixa projetado</string>
+    <string name="insights_cashflow_description">Saldo cumulativo até o evento, considerando aportes existentes + receitas previstas − pagamentos pendentes.</string>
+    <string name="insights_worst_balance">Pior saldo: %1$s</string>
+    <string name="insights_monthly_flow_title">Entradas e saídas por mês</string>
+    <string name="insights_monthly_flow_description">Barras verdes = receitas. Barras vermelhas = pagamentos. Fundo vermelho = mês com saldo negativo projetado.</string>
+    <string name="insights_legend_ending">Saldo final</string>
+    <string name="insights_legend_income">Receitas</string>
+    <string name="insights_legend_outflow">Pagamentos</string>
+    <string name="insights_scurve_title">Curva S — Previsto vs Realizado</string>
+    <string name="insights_scurve_hint">Banda = contingência configurada</string>
+    <string name="insights_scurve_planned">Previsto</string>
+    <string name="insights_scurve_paid">Realizado</string>
+    <string name="insights_scurve_band">Banda de contingência</string>
+    <string name="insights_burndown_title">Burndown de Tarefas</string>
+    <string name="insights_burndown_hint">Ideal vs real até a data do evento</string>
+    <string name="insights_burndown_ideal">Ideal</string>
+    <string name="insights_burndown_actual">Pendentes</string>
+    <string name="insights_burndown_overdue">Atrasadas</string>
+    <string name="insights_whatif_title">Posso fechar esse contrato agora?</string>
+    <string name="insights_whatif_description">Simule adicionar um pagamento futuro e veja o impacto no fluxo de caixa até %1$s.</string>
+    <string name="insights_whatif_amount">Valor</string>
+    <string name="insights_whatif_date">Data prevista</string>
+    <string name="insights_whatif_prompt">Preencha valor e data</string>
+    <string name="insights_whatif_balance_at">Saldo em %1$s</string>
+    <string name="insights_whatif_worst">Pior saldo até o evento</string>
+    <string name="insights_whatif_final">Saldo final no evento</string>
+    <string name="insights_whatif_ok">Pode fechar</string>
+    <string name="insights_whatif_exceeds">Estoura o caixa</string>
+    <string name="insights_waterfall_title">Variação por Categoria</string>
+    <string name="insights_waterfall_hint">Verde = poupou · Rosa = estourou</string>
+    <string name="insights_waterfall_total">Total</string>
+    <string name="insights_creep_title">Variação por categoria</string>
+    <string name="insights_creep_description" formatted="false">Compara estimado vs contratado em cada categoria. Itens com aumento &gt; 10% precisam de atenção.</string>
+    <string name="insights_creep_ok">Nenhuma categoria está acima do estimado.</string>
+    <string name="insights_creep_estimated">Estimado: %1$s</string>
+    <string name="insights_creep_contracted">Contratado: %1$s</string>
+    <string name="insights_creep_pct">%1$s%%</string>
+    <string name="insights_heatmap_title">Concentração de pagamentos pendentes</string>
+    <plurals name="insights_heatmap_description"><item quantity="one">Até %1$s (%2$d dia). Quanto mais intenso, mais concentrado o dia.</item><item quantity="other">Até %1$s (%2$d dias). Quanto mais intenso, mais concentrado o dia.</item></plurals>
+    <plurals name="insights_heatmap_cell"><item quantity="one">%1$s · %2$s (%3$d pagamento)</item><item quantity="other">%1$s · %2$s (%3$d pagamentos)</item></plurals>
 </resources>

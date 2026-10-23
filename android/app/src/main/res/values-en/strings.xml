@@ -54,7 +54,7 @@
     <string name="backup_preview_details">Areas: {areas}. Minimum space: {bytes} bytes. Changed: {changed}; created: {created}; deleted: {deleted}. A reversal copy will be kept.</string>
     <string name="backup_export_reversal">Export latest reversal copy</string>
     <string name="attach_file">Add attachment</string><string name="post_gift">Post</string>
-    <string name="health_score">Planning health</string><string name="cashflow">Monthly cash flow</string>
+    <string name="health_score">Planning health</string>
     <string name="choose_guest">Choose a guest</string><string name="prepare_invite">Prepare message</string>
     <string name="confirmed_sends">Confirmed sends</string>
     <string name="export_calendar">Export calendar (.ics)</string>
@@ -307,17 +307,8 @@
     <string name="pix_city">Account holder\'s city</string>
     <string name="view_qr_code">View QR code</string>
     <string name="settings_security_title">Security, backup and data</string>
-    <string name="contingency_value">Contingency (%1$d%%): %2$s</string>
-    <string name="health_excellent">Excellent financial and operational balance</string>
-    <string name="health_good">Healthy planning; watch the next installments</string>
-    <string name="health_attention">Watch cash flow and pending tasks</string>
-    <plurals name="alerts_count"><item quantity="one">%1$d alert</item><item quantity="other">%1$d alerts</item></plurals>
-    <string name="insights_funnel_title">Vendor funnel</string>
     <string name="insights_demographics_title">Guests and dietary restrictions</string>
     <string name="insights_dietary_title">Dietary restrictions for catering (%1$d):</string>
-    <string name="progress_of">%1$s · %2$d of %3$d</string>
-    <string name="cashflow_in">In: %1$s</string>
-    <string name="cashflow_out">Out: %1$s</string>
     <string name="help_private_title">Private and offline on your phone</string>
     <string name="help_invites_title">Invitations, RSVP and WhatsApp</string>
     <string name="help_backup_title">Encrypted backup (.wfpbackup)</string>
@@ -620,4 +611,72 @@
     <string name="summary_trousseau">Estimated: %1$s · Bought: %2$s</string>
     <string name="summary_trousseau_detail">To buy: %1$d · Gifted: %2$d</string>
     <string name="sort_priority">Priority</string>
+    <string name="insights_subtitle">Projection, project health and per-category budget creep detector.</string>
+    <string name="insights_no_data">No data yet.</string>
+    <string name="insights_chart_hint">Tap or drag on the chart to see the values.</string>
+    <string name="health_status_good">Healthy project.</string>
+    <string name="health_status_warn">A few points need attention.</string>
+    <string name="health_status_bad">Needs urgent adjustments.</string>
+    <string name="health_score_value">%1$d/100</string>
+    <string name="health_factor_contracted">Contracted coverage</string>
+    <string name="health_factor_paid" formatted="false">Advance (% paid)</string>
+    <string name="health_factor_liquidity">Liquidity (no month in the red)</string>
+    <string name="health_factor_tasks">Tasks on schedule</string>
+    <string name="health_factor_on_track">On track (contracting vs calendar)</string>
+    <string name="health_factor_cash">Cash coverage</string>
+    <string name="health_factor_value">%1$d%%</string>
+    <string name="health_alert_negative_month">At least one month goes negative in the current projection.</string>
+    <string name="health_alert_overdue">%1$d%% of tasks are overdue.</string>
+    <string name="health_alert_late_contracting">You are behind on closing vendors for how close the event is.</string>
+    <string name="health_alert_low_cash">Cash covers less than %1$d%% of the balance due.</string>
+    <string name="health_rec_low_contracted">Only %1$d%% of the budget is contracted (≈%2$d%% expected at this stage). Prioritize closing vendors.</string>
+    <string name="health_rec_low_cash">Cash covers only %1$d%% of the balance due. Boost your reserve or cut future spending.</string>
+    <plurals name="health_rec_overdue"><item quantity="one">%1$d of %2$d tasks is overdue. Update deadlines or speed things up.</item><item quantity="other">%1$d of %2$d tasks are overdue. Update deadlines or speed things up.</item></plurals>
+    <string name="health_rec_negative_month">At least one month goes negative in the projection. Reschedule payments.</string>
+    <plurals name="health_rec_low_payment"><item quantity="one">Only %1$d%% paid with %2$d day to the event. Bring payments forward or review the budget.</item><item quantity="other">Only %1$d%% paid with %2$d days to the event. Bring payments forward or review the budget.</item></plurals>
+    <string name="liquidity_label">Leftover until the event</string>
+    <string name="liquidity_description">Cash available after planned payments and contingency.</string>
+    <string name="liquidity_positive">Healthy margin</string>
+    <string name="liquidity_warning">Reduced margin</string>
+    <string name="liquidity_critical">Projected deficit</string>
+    <string name="insights_cashflow_title">Projected cash flow</string>
+    <string name="insights_cashflow_description">Cumulative balance up to the event, considering existing contributions + expected income − pending payments.</string>
+    <string name="insights_worst_balance">Worst balance: %1$s</string>
+    <string name="insights_monthly_flow_title">Inflows and outflows by month</string>
+    <string name="insights_monthly_flow_description">Green bars = income. Red bars = payments. Red background = month with a projected negative balance.</string>
+    <string name="insights_legend_ending">Ending balance</string>
+    <string name="insights_legend_income">Income</string>
+    <string name="insights_legend_outflow">Payments</string>
+    <string name="insights_scurve_title">S-Curve — Planned vs Actual</string>
+    <string name="insights_scurve_hint">Band = configured contingency</string>
+    <string name="insights_scurve_planned">Planned</string>
+    <string name="insights_scurve_paid">Actual</string>
+    <string name="insights_scurve_band">Contingency band</string>
+    <string name="insights_burndown_title">Task Burndown</string>
+    <string name="insights_burndown_hint">Ideal vs actual up to the event date</string>
+    <string name="insights_burndown_ideal">Ideal</string>
+    <string name="insights_burndown_actual">Remaining</string>
+    <string name="insights_burndown_overdue">Overdue</string>
+    <string name="insights_whatif_title">Can I sign this contract now?</string>
+    <string name="insights_whatif_description">Simulate adding a future payment and see the impact on cash flow up to %1$s.</string>
+    <string name="insights_whatif_amount">Amount</string>
+    <string name="insights_whatif_date">Expected date</string>
+    <string name="insights_whatif_prompt">Enter amount and date</string>
+    <string name="insights_whatif_balance_at">Balance in %1$s</string>
+    <string name="insights_whatif_worst">Worst balance until the event</string>
+    <string name="insights_whatif_final">Final balance at the event</string>
+    <string name="insights_whatif_ok">You can afford it</string>
+    <string name="insights_whatif_exceeds">Overdraws your cash</string>
+    <string name="insights_waterfall_title">Variation by Category</string>
+    <string name="insights_waterfall_hint">Green = saved · Pink = over budget</string>
+    <string name="insights_waterfall_total">Total</string>
+    <string name="insights_creep_title">Variation by category</string>
+    <string name="insights_creep_description" formatted="false">Compares estimated vs contracted in each category. Items with an increase &gt; 10% need attention.</string>
+    <string name="insights_creep_ok">No category is above the estimate.</string>
+    <string name="insights_creep_estimated">Estimated: %1$s</string>
+    <string name="insights_creep_contracted">Contracted: %1$s</string>
+    <string name="insights_creep_pct">%1$s%%</string>
+    <string name="insights_heatmap_title">Pending payment concentration</string>
+    <plurals name="insights_heatmap_description"><item quantity="one">Until %1$s (%2$d day). The more intense, the more concentrated the day.</item><item quantity="other">Until %1$s (%2$d days). The more intense, the more concentrated the day.</item></plurals>
+    <plurals name="insights_heatmap_cell"><item quantity="one">%1$s · %2$s (%3$d payment)</item><item quantity="other">%1$s · %2$s (%3$d payments)</item></plurals>
 </resources>

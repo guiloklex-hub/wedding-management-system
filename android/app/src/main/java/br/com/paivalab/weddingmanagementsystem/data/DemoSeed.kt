@@ -2,12 +2,16 @@ package br.com.paivalab.weddingmanagementsystem.data
 
 import androidx.room.withTransaction
 import java.security.MessageDigest
+import java.time.LocalDate
+import java.time.ZoneOffset
 import org.json.JSONArray
 import org.json.JSONObject
 
 const val DEMO_REQUIRES_EMPTY = "DEMO_REQUIRES_EMPTY"
 
 object DemoSeed {
+    private fun noon(day: String): Long = LocalDate.parse(day).atTime(12, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
+
     suspend fun populate(database: PlannerDatabase, preferences: PlannerPreferences, blobs: BlobStore) {
         val dao = database.dao()
         require(dao.allRecords().none { it.deletedAt == null }) { DEMO_REQUIRES_EMPTY }
@@ -193,7 +197,7 @@ object DemoSeed {
                 date = "2026-08-15",
                 status = "PAID",
                 parentId = "seed-vendor-1",
-                extraJson = JSONObject().put("installmentNumber", 1).put("totalInstallments", 2).toString(),
+                extraJson = JSONObject().put("installmentNumber", 1).put("totalInstallments", 2).put("paidAt", noon("2026-08-14")).toString(),
             ),
             PlannerRecord(
                 id = "seed-payment-2",
@@ -214,7 +218,8 @@ object DemoSeed {
                 date = "2026-09-10",
                 status = "PAID",
                 parentId = "seed-vendor-2",
-                extraJson = JSONObject().put("installmentNumber", 1).put("totalInstallments", 3).put("method", "PIX").toString(),
+                extraJson = JSONObject().put("installmentNumber", 1).put("totalInstallments", 3).put("method", "PIX")
+                    .put("paidAt", noon("2026-09-10")).toString(),
             ),
             PlannerRecord(
                 id = "seed-payment-4",
@@ -246,7 +251,7 @@ object DemoSeed {
                 date = "2026-09-20",
                 status = "PAID",
                 parentId = "seed-vendor-4",
-                extraJson = JSONObject().put("method", "PIX").toString(),
+                extraJson = JSONObject().put("method", "PIX").put("paidAt", noon("2026-09-18")).toString(),
             ),
             // Income
             PlannerRecord(
@@ -312,7 +317,8 @@ object DemoSeed {
                 subtitle = "Jurídico & Pagamento",
                 date = "2026-08-15",
                 status = "DONE",
-                extraJson = JSONObject().put("priority", "HIGH").toString(),
+                createdAt = noon("2026-07-01"),
+                extraJson = JSONObject().put("priority", "HIGH").put("completedAt", noon("2026-08-12")).toString(),
             ),
             PlannerRecord(
                 id = "seed-task-2",
@@ -321,6 +327,7 @@ object DemoSeed {
                 subtitle = "Buffet Alta Gastronomia",
                 date = "2026-11-20",
                 status = "IN_PROGRESS",
+                createdAt = noon("2026-07-01"),
                 extraJson = JSONObject().put("priority", "HIGH").toString(),
             ),
             PlannerRecord(
@@ -330,6 +337,7 @@ object DemoSeed {
                 subtitle = "Ateliê Floral Botânica",
                 date = "2026-12-05",
                 status = "TODO",
+                createdAt = noon("2026-07-01"),
                 extraJson = JSONObject().put("priority", "MEDIUM").toString(),
             ),
             PlannerRecord(
@@ -339,6 +347,7 @@ object DemoSeed {
                 subtitle = "Comunicação",
                 date = "2026-10-10",
                 status = "TODO",
+                createdAt = noon("2026-07-01"),
                 extraJson = JSONObject().put("priority", "HIGH").toString(),
             ),
             // Groups, Tags, Tables, Guests

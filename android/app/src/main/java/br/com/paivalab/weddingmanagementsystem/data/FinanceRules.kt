@@ -3,7 +3,6 @@ package br.com.paivalab.weddingmanagementsystem.data
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlin.math.min
-import kotlin.math.roundToInt
 
 data class MonthlyCashflow(
     val month: YearMonth,
@@ -26,8 +25,12 @@ object FinanceRules {
         val isMonthly = { record: PlannerRecord -> ExtraFields.text(ExtraFields.parse(record.extraJson), "frequency") == "MONTHLY" }
         val monthly = incomes.filter(isMonthly)
             .sumOf { it.amountCents ?: 0 }
+        // Como a web: a receita entra no mês em que foi recebida e, antes disso, no mês previsto.
         val once = incomes.filterNot(isMonthly)
-            .groupBy { it.date?.take(7) }.mapValues { (_, rows) -> rows.sumOf { it.amountCents ?: 0 } }
+            .groupBy { income ->
+                ExtraFields.instant(ExtraFields.parse(income.extraJson), "receivedAt")
+                    ?.let { YearMonth.from(InsightsRules.utcDay(it)).toString() } ?: income.date?.take(7)
+            }.mapValues { (_, rows) -> rows.sumOf { it.amountCents ?: 0 } }
         val outflow = active.filter { it.kind == Kinds.PAYMENT && it.status != "PAID" }
             .groupBy { it.date?.take(7) }.mapValues { (_, rows) -> rows.sumOf { it.amountCents ?: 0 } }
         var running = assets
@@ -53,20 +56,5 @@ object FinanceRules {
         daysToEvent > 90 -> .85
         daysToEvent > 30 -> .95
         else -> 1.0
-    }
-
-    fun healthScore(
-        budgetCents: Long, contractedCents: Long, paidCents: Long, cashCents: Long,
-        daysToEvent: Long, totalTasks: Int, tasksDone: Int, tasksOverdue: Int, worstBalanceCents: Long,
-    ): Int {
-        val contracted = if (budgetCents > 0) (contractedCents.toDouble() / budgetCents).coerceIn(0.0, 1.0) else 0.0
-        val paid = if (budgetCents > 0) (paidCents.toDouble() / budgetCents).coerceIn(0.0, 1.0) else 0.0
-        val taskRatio = if (totalTasks > 0) tasksDone.toDouble() / totalTasks else 0.0
-        val overdue = if (totalTasks > 0) tasksOverdue.toDouble() / totalTasks else 0.0
-        val cash = if (budgetCents > 0) (cashCents.toDouble() / maxOf(budgetCents - paidCents, 1)).coerceIn(0.0, 1.0) else 0.0
-        val onTrack = (contracted / expectedContractedFraction(daysToEvent)).coerceIn(0.0, 1.0)
-        val liquidity = if (worstBalanceCents >= 0) 1.0 else 0.0
-        return (100 * (contracted * .25 + paid * .20 + liquidity * .20 +
-            (taskRatio - overdue).coerceAtLeast(0.0) * .15 + onTrack * .10 + cash * .10)).roundToInt()
     }
 }

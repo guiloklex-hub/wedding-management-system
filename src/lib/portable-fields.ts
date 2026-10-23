@@ -196,6 +196,17 @@ export function webIncomeSource(value: string): string {
   return (INCOME_SOURCES as readonly string[]).includes(upper) ? upper : "OTHER";
 }
 
+/**
+ * O Android exige título; a lua de mel sem destino viaja com este texto
+ * provisório (mesmo fallback de `migrate_web.py`) e volta como destino vazio.
+ */
+export const HONEYMOON_PLACEHOLDER = "honeymoon";
+
+export function webHoneymoonDestination(title: string): string | null {
+  const trimmed = title.trim();
+  return trimmed && trimmed !== HONEYMOON_PLACEHOLDER ? trimmed : null;
+}
+
 /** Valores aceitos em `Attachment.kind` (mesma lista de `attachmentActions`). */
 export const ATTACHMENT_KINDS = ["CONTRACT", "PROPOSAL", "RECEIPT", "INVOICE", "ID_DOC", "PHOTO", "OTHER"] as const;
 

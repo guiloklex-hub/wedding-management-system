@@ -9,6 +9,7 @@ import br.com.paivalab.weddingmanagementsystem.data.GuestRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
+import br.com.paivalab.weddingmanagementsystem.data.TrousseauRules
 import java.time.LocalDate
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +39,8 @@ class ModuleListViewModel(
     val query: StateFlow<String> = state.getStateFlow(QUERY, "")
     val status: StateFlow<String?> = state.getStateFlow(STATUS, null)
     val tag: StateFlow<String?> = state.getStateFlow(TAG, null)
-    val sort: StateFlow<String> = state.getStateFlow(SORT, SORT_RECENT)
+    // O enxoval da web abre ordenado por prioridade, cômodo e nome.
+    val sort: StateFlow<String> = state.getStateFlow(SORT, if (kind == Kinds.TROUSSEAU) SORT_PRIORITY else SORT_RECENT)
     val view: StateFlow<String> = state.getStateFlow(VIEW, VIEW_LIST)
     /** Mês exibido no calendário de pagamentos (`YYYY-MM`) e dia selecionado (`YYYY-MM-DD`). */
     val month: StateFlow<String> = state.getStateFlow(MONTH, java.time.YearMonth.now().toString())
@@ -66,6 +68,7 @@ class ModuleListViewModel(
         const val SORT_RECENT = "recent"
         const val SORT_NAME = "name"
         const val SORT_DATE = "date"
+        const val SORT_PRIORITY = "priority"
         private const val QUERY = "query"
         private const val STATUS = "status"
         private const val TAG = "tag"
@@ -104,6 +107,7 @@ class ModuleListViewModel(
                 when (sort) {
                     SORT_NAME -> list.sortedBy { it.title.lowercase(Locale.ROOT) }
                     SORT_DATE -> list.sortedWith(compareBy(nullsLast()) { it.date })
+                    SORT_PRIORITY -> TrousseauRules.ordered(list)
                     else -> list.sortedByDescending { it.updatedAt }
                 }.let { sorted -> if (kind == Kinds.GOAL) GoalRules.ordered(sorted) else sorted }
             }

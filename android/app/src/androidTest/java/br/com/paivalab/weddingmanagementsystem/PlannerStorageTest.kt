@@ -10,6 +10,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import br.com.paivalab.weddingmanagementsystem.backup.BackupArchive
 import br.com.paivalab.weddingmanagementsystem.data.BlobStore
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
+import br.com.paivalab.weddingmanagementsystem.data.HoneymoonRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.GuestImport
 import br.com.paivalab.weddingmanagementsystem.data.InstallmentPlan
@@ -158,6 +159,15 @@ class PlannerStorageTest {
         repository.save(PlannerRecord("income", Kinds.INCOME, "Bônus", subtitle = "BONUS", amountCents = 1_000_00L, status = "EXPECTED"))
         repository.setStatus("income", "RECEIVED")
         assertTrue(ExtraFields.instant(ExtraFields.parse(database.dao().find("income")!!.extraJson), "receivedAt") != null)
+    }
+
+    @Test fun honeymoonIsASingleTrip() = runBlocking {
+        val id = repository.ensureHoneymoon("USD")
+        assertEquals("singleton", id)
+        val trip = database.dao().find(id)!!
+        assertEquals(listOf(HoneymoonRules.PLACEHOLDER, "USD"), listOf(trip.title, HoneymoonRules.currency(trip)))
+        assertEquals(id, repository.ensureHoneymoon("BRL"))
+        assertEquals(1, database.dao().allRecords().count { it.kind == Kinds.HONEYMOON })
     }
 
     @Test fun vendorStatusContractSigningAndPdfVersions() = runBlocking {

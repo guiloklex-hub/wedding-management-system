@@ -18,11 +18,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
@@ -30,6 +32,7 @@ import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import br.com.paivalab.weddingmanagementsystem.data.GiftRules
 import br.com.paivalab.weddingmanagementsystem.data.GoalRules
 import br.com.paivalab.weddingmanagementsystem.data.GuestRules
+import br.com.paivalab.weddingmanagementsystem.data.HoneymoonRules
 import br.com.paivalab.weddingmanagementsystem.data.IncomeRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PaymentAdjustment
@@ -66,7 +69,15 @@ internal fun RecordCard(
     Column(Modifier.fillMaxWidth().clickable(onClick = onClick), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(record.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                // Como na web, item do enxoval já comprado ou presenteado aparece riscado.
+                val crossed = record.kind == Kinds.TROUSSEAU && record.status.isNotBlank() && record.status != "TO_BUY"
+                Text(
+                    if (record.kind == Kinds.HONEYMOON) HoneymoonRules.destination(record).ifBlank { stringResource(R.string.honeymoon_not_decided) }
+                    else record.title,
+                    style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                    textDecoration = if (crossed) TextDecoration.LineThrough else null,
+                    color = if (crossed) PlannerMuted else Color.Unspecified,
+                )
                 if (record.subtitle.isNotBlank() && record.kind != Kinds.INCOME) {
                     Text(record.subtitle, maxLines = 2, overflow = TextOverflow.Ellipsis, color = PlannerMuted, style = MaterialTheme.typography.bodySmall)
                 }
@@ -243,8 +254,10 @@ internal fun RecordCard(
             Kinds.HONEYMOON_ITEM -> {
                 val itemKind = ExtraFields.text(extra, "kind")
                 val confirmation = ExtraFields.text(extra, "confirmationNumber")
+                val vendor = ExtraFields.text(extra, "vendor")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (itemKind.isNotBlank()) InfoBadge(honeymoonKindLabel(itemKind), PlannerChampagne)
+                    if (vendor.isNotBlank()) InfoBadge(vendor, PlannerMuted)
                     if (confirmation.isNotBlank()) InfoBadge(stringResource(R.string.booking_code, confirmation), PlannerEmerald)
                 }
             }
@@ -255,6 +268,7 @@ internal fun RecordCard(
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (room.isNotBlank()) InfoBadge(webValueLabel(room, language), PlannerChampagne)
                     if (store.isNotBlank()) InfoBadge(store, PlannerEmerald)
+                    if (ExtraFields.text(extra, "link").isNotBlank()) InfoBadge(stringResource(R.string.trousseau_store_link), PlannerChampagne)
                     if (priority.isNotBlank()) {
                         InfoBadge("${stringResource(R.string.priority)}: ${webValueLabel(priority, language)}", priorityColor(priority))
                     }
@@ -295,7 +309,8 @@ internal fun RecordCard(
                     val capacity = record.amountCents
                     InfoBadge("$occupied / $capacity ${stringResource(R.string.seats)}", if (occupied <= capacity) PlannerEmerald else PlannerRose)
                 } else {
-                    Text(localizedCurrency(record.amountCents, currency, language), color = PlannerChampagne,
+                    val shown = if (record.kind in setOf(Kinds.HONEYMOON, Kinds.HONEYMOON_ITEM)) HoneymoonRules.currency(record, currency) else currency
+                    Text(localizedCurrency(record.amountCents, shown, language), color = PlannerChampagne,
                         style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 }
             }

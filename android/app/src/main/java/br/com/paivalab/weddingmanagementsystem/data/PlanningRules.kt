@@ -92,3 +92,58 @@ object GoalRules {
     /** Metas ativas primeiro, como a ordenação da página web. */
     fun ordered(goals: List<PlannerRecord>): List<PlannerRecord> = goals.sortedByDescending(::active)
 }
+
+/** Lua de mel da web (`honeymoon-client.tsx`): registro único, itens por tipo e totais. */
+object HoneymoonRules {
+    /** O backup exige título; a viagem sem destino usa este texto, que a web devolve como destino vazio. */
+    const val PLACEHOLDER = "honeymoon"
+    val currencies = listOf("BRL", "USD", "EUR")
+    private val settled = setOf("CONFIRMED", "PAID")
+
+    fun destination(trip: PlannerRecord?): String = trip?.title?.trim()?.takeUnless { it == PLACEHOLDER }.orEmpty()
+
+    fun currency(record: PlannerRecord?, fallback: String = "BRL"): String =
+        record?.let { ExtraFields.text(ExtraFields.parse(it.extraJson), "currency") }?.takeIf { it in currencies } ?: fallback
+
+    fun itemKind(item: PlannerRecord): String =
+        ExtraFields.text(ExtraFields.parse(item.extraJson), "kind").takeIf { it in WebValues.honeymoonItemKinds } ?: "OTHER"
+
+    fun trip(index: RecordIndex): PlannerRecord? = index.kind(Kinds.HONEYMOON).minWithOrNull(compareBy({ it.createdAt }, { it.id }))
+
+    /** Ordem da página web: início ascendente (sem data primeiro, como no SQLite) e depois criação. */
+    fun items(index: RecordIndex): List<PlannerRecord> =
+        index.kind(Kinds.HONEYMOON_ITEM).sortedWith(compareBy(nullsFirst()) { it: PlannerRecord -> it.date }.thenBy { it.createdAt })
+
+    /** Grupos por tipo na ordem em que cada tipo aparece primeiro. */
+    fun grouped(items: List<PlannerRecord>): Map<String, List<PlannerRecord>> = items.groupBy(::itemKind)
+
+    fun committedCents(items: List<PlannerRecord>): Long = items.sumOf { it.amountCents ?: 0L }
+
+    fun documentsPending(items: List<PlannerRecord>): Int = items.count { itemKind(it) == "DOCUMENT" && it.status !in settled }
+}
+
+data class TrousseauStats(val estimatedCents: Long, val boughtCents: Long, val toBuy: Int, val gifted: Int)
+
+/** Enxoval da web (`trousseau-client.tsx`): ordem por prioridade, atalhos de status e indicadores. */
+object TrousseauRules {
+    const val LINK_MAX = 500
+    private val weights = mapOf("ESSENTIAL" to 1, "NICE_TO_HAVE" to 2, "LUXURY" to 3)
+
+    private fun weight(item: PlannerRecord) = weights[ExtraFields.text(ExtraFields.parse(item.extraJson), "priority")] ?: 2
+
+    fun ordered(items: List<PlannerRecord>): List<PlannerRecord> = items.sortedWith(
+        compareBy<PlannerRecord>(::weight)
+            .thenBy { ExtraFields.text(ExtraFields.parse(it.extraJson), "room") }
+            .thenBy { it.title.lowercase() },
+    )
+
+    /** Os botões da web alternam entre o status pedido e "a comprar". */
+    fun toggled(item: PlannerRecord, target: String): String = if (item.status == target) "TO_BUY" else target
+
+    fun stats(items: List<PlannerRecord>) = TrousseauStats(
+        estimatedCents = items.sumOf { it.estimatedCents ?: 0L },
+        boughtCents = items.sumOf { it.amountCents ?: 0L },
+        toBuy = items.count { it.status == "TO_BUY" },
+        gifted = items.count { it.status == "GIFTED" },
+    )
+}

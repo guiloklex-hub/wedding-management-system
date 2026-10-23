@@ -254,6 +254,7 @@ class PlannerViewModel(
         done()
     }
     fun moveChecklistItem(id: String, delta: Int) = launchAction { repository.moveChecklistItem(id, delta) }
+    fun ensureHoneymoon(currency: String, ready: (String) -> Unit) = launchAction { ready(repository.ensureHoneymoon(currency)) }
     fun createVendor(vendor: PlannerRecord, estimatedCents: Long?, budgetTitle: String, done: () -> Unit = {}) = launchAction {
         repository.createVendor(vendor, estimatedCents, budgetTitle)
         notify(R.string.msg_saved)

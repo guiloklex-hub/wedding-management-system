@@ -60,10 +60,12 @@ import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.ContractRules
 import br.com.paivalab.weddingmanagementsystem.data.GuestRules
+import br.com.paivalab.weddingmanagementsystem.data.HoneymoonRules
 import br.com.paivalab.weddingmanagementsystem.data.IncomeRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
+import br.com.paivalab.weddingmanagementsystem.data.TrousseauRules
 import br.com.paivalab.weddingmanagementsystem.data.VendorCategories
 import br.com.paivalab.weddingmanagementsystem.data.VenueChecklist
 import br.com.paivalab.weddingmanagementsystem.data.WebValues
@@ -112,7 +114,7 @@ fun RecordEditorScreen(
                     IconButton(onClick = close) { Icon(Icons.Default.Close, stringResource(R.string.cancel)) }
                 },
                 actions = {
-                    if (initial != null) {
+                    if (initial != null && module.kind != Kinds.HONEYMOON) {
                         IconButton(onClick = { onDelete(initial) }) { Icon(Icons.Default.Delete, stringResource(R.string.delete)) }
                     }
                     TextButton(onClick = {
@@ -137,8 +139,8 @@ fun RecordEditorScreen(
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             }
             EditorTextField(form.title, { update { copy(title = it.take(EditorLimits.NAME)) } },
-                stringResource(R.string.title), error(EditorField.TITLE))
-            if (module.kind !in setOf(Kinds.INCOME, Kinds.VENUE_CHECK)) {
+                stringResource(if (module.kind == Kinds.HONEYMOON) R.string.honeymoon_destination else R.string.title), error(EditorField.TITLE))
+            if (module.kind !in setOf(Kinds.INCOME, Kinds.VENUE_CHECK, Kinds.HONEYMOON, Kinds.HONEYMOON_ITEM, Kinds.TROUSSEAU)) {
                 EditorTextField(form.subtitle, { update { copy(subtitle = it.take(EditorLimits.SHORT_TEXT)) } },
                     stringResource(if (module.kind == Kinds.VENDOR) R.string.category else R.string.subtitle), error(EditorField.SUBTITLE))
             }
@@ -174,6 +176,7 @@ fun RecordEditorScreen(
                     stringResource(when (module.kind) {
                         Kinds.TABLE -> R.string.capacity
                         Kinds.BUDGET, Kinds.TROUSSEAU -> R.string.budget_actual
+                        Kinds.HONEYMOON -> R.string.honeymoon_budget
                         else -> R.string.amount
                     }),
                     error(EditorField.AMOUNT), if (module.kind == Kinds.TABLE) KeyboardType.Number else KeyboardType.Decimal,
@@ -181,8 +184,21 @@ fun RecordEditorScreen(
             }
             if (module.hasDate) {
                 DatePickerOutlinedField(form.date, { update { copy(date = it) } },
-                    stringResource(if (module.kind == Kinds.VENUE) R.string.venue_visited_at else R.string.date),
+                    stringResource(when (module.kind) {
+                        Kinds.VENUE -> R.string.venue_visited_at
+                        Kinds.HONEYMOON -> R.string.honeymoon_departure
+                        Kinds.HONEYMOON_ITEM -> R.string.honeymoon_item_start
+                        else -> R.string.date
+                    }),
                     error = error(EditorField.DATE))
+            }
+            if (module.kind in setOf(Kinds.HONEYMOON, Kinds.HONEYMOON_ITEM)) {
+                DatePickerOutlinedField(form.honeymoonEndDate, { update { copy(honeymoonEndDate = it) } },
+                    stringResource(if (module.kind == Kinds.HONEYMOON) R.string.honeymoon_return else R.string.honeymoon_item_end),
+                    error = error(EditorField.END_DATE))
+                ChoiceRow(stringResource(R.string.currency), HoneymoonRules.currencies.map { it to it }, form.honeymoonCurrency) {
+                    update { copy(honeymoonCurrency = it) }
+                }
             }
             if (module.kind == Kinds.GOAL) {
                 ToggleChip(stringResource(R.string.goal_active), form.goalActive) { update { copy(goalActive = it) } }
@@ -196,7 +212,7 @@ fun RecordEditorScreen(
                     update { copy(status = it) }
                 }
             }
-            if (module.parentKind != null) {
+            if (module.parentKind != null && module.kind != Kinds.HONEYMOON_ITEM) {
                 val parentModule = modules.first { it.kind == module.parentKind }
                 RecordPickerField(
                     label = stringResource(singularLabel(module.parentKind) ?: parentModule.title),
@@ -219,6 +235,8 @@ fun RecordEditorScreen(
             if (module.kind == Kinds.HONEYMOON_ITEM) {
                 ChoiceRow(stringResource(R.string.honeymoon_item_kind), WebValues.honeymoonItemKinds.map { it to honeymoonKindLabel(it) },
                     form.honeymoonItemKind) { update { copy(honeymoonItemKind = it) } }
+                EditorTextField(form.honeymoonVendor, { update { copy(honeymoonVendor = it.take(EditorLimits.NAME)) } },
+                    stringResource(R.string.honeymoon_item_vendor), null)
                 EditorTextField(form.honeymoonConfirmation, { update { copy(honeymoonConfirmation = it.take(EditorLimits.NAME)) } },
                     stringResource(R.string.booking_code_label), null)
             }
@@ -227,6 +245,8 @@ fun RecordEditorScreen(
                     form.trousseauRoom) { update { copy(trousseauRoom = it) } }
                 EditorTextField(form.trousseauStore, { update { copy(trousseauStore = it.take(EditorLimits.NAME)) } },
                     stringResource(R.string.store), null)
+                EditorTextField(form.trousseauLink, { update { copy(trousseauLink = it.take(TrousseauRules.LINK_MAX)) } },
+                    stringResource(R.string.trousseau_link), error(EditorField.LINK), KeyboardType.Uri)
             }
             if (module.kind == Kinds.GIFT) {
                 ChoiceRow(stringResource(R.string.gift_type), listOf("CASH" to stringResource(R.string.gift_type_cash),

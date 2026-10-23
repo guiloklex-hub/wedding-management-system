@@ -123,4 +123,39 @@ class EditorFormTest {
         assertEquals(5, extra.getInt("sortOrder"))
         assertEquals("Seis", extra.getString("value"))
     }
+
+    @Test fun honeymoonWithoutDestinationKeepsThePlaceholderAndChecksDates() {
+        val hm = module(Kinds.HONEYMOON)
+        val trip = (buildEditorRecord(hm, EditorFormState(date = "2027-05-17", honeymoonEndDate = "2027-05-31", honeymoonCurrency = "EUR"),
+            null, index) as EditorOutcome.Valid).record
+        assertEquals("honeymoon", trip.title)
+        assertEquals("", editorFormFrom(hm, trip, null).title)
+        val extra = JSONObject(trip.extraJson)
+        assertEquals("2027-05-31", extra.getString("endDate"))
+        assertEquals("EUR", extra.getString("currency"))
+
+        val backwards = buildEditorRecord(hm, EditorFormState(date = "2027-05-17", honeymoonEndDate = "2027-05-10"), null, index)
+        assertEquals(R.string.err_end_before_start, (backwards as EditorOutcome.Invalid).errors[EditorField.END_DATE])
+    }
+
+    @Test fun honeymoonItemSavesVendorEndAndCurrency() {
+        val form = editorFormFrom(module(Kinds.HONEYMOON_ITEM), null, "trip")
+        assertEquals("ACTIVITY", form.honeymoonItemKind)
+        val item = (buildEditorRecord(module(Kinds.HONEYMOON_ITEM), form.copy(title = "Hotel", honeymoonItemKind = "HOTEL",
+            honeymoonVendor = "Villa Cora", date = "2027-05-18", honeymoonEndDate = "2027-05-23", honeymoonCurrency = "EUR"),
+            null, index) as EditorOutcome.Valid).record
+        assertEquals("trip", item.parentId)
+        val extra = JSONObject(item.extraJson)
+        assertEquals("Villa Cora", extra.getString("vendor"))
+        assertEquals("2027-05-23", extra.getString("endAt"))
+        assertEquals("EUR", extra.getString("currency"))
+        assertEquals("2027-05-23", editorFormFrom(module(Kinds.HONEYMOON_ITEM), item, null).honeymoonEndDate)
+    }
+
+    @Test fun trousseauLinkMustBeAWebLink() {
+        val bad = buildEditorRecord(module(Kinds.TROUSSEAU), EditorFormState(title = "Panela", trousseauLink = "loja.com"), null, index)
+        assertEquals(R.string.err_url, (bad as EditorOutcome.Invalid).errors[EditorField.LINK])
+        val good = buildEditorRecord(module(Kinds.TROUSSEAU), EditorFormState(title = "Panela", trousseauLink = "https://loja.com/p"), null, index)
+        assertEquals("https://loja.com/p", JSONObject((good as EditorOutcome.Valid).record.extraJson).getString("link"))
+    }
 }

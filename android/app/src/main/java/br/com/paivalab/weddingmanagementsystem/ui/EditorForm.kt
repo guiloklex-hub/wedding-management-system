@@ -5,11 +5,13 @@ import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import br.com.paivalab.weddingmanagementsystem.data.GiftRules
 import br.com.paivalab.weddingmanagementsystem.data.GuestRules
+import br.com.paivalab.weddingmanagementsystem.data.HoneymoonRules
 import br.com.paivalab.weddingmanagementsystem.data.IncomeRules
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.Money
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
+import br.com.paivalab.weddingmanagementsystem.data.TrousseauRules
 import br.com.paivalab.weddingmanagementsystem.data.VendorCategories
 import br.com.paivalab.weddingmanagementsystem.data.VenueChecklist
 import br.com.paivalab.weddingmanagementsystem.data.WebValues
@@ -74,10 +76,14 @@ data class EditorFormState(
     val paymentMethod: String = "",
     val lateFeePercent: String = "",
     val interestPercentPerMonth: String = "",
-    val honeymoonItemKind: String = "FLIGHT",
+    val honeymoonItemKind: String = "ACTIVITY",
     val honeymoonConfirmation: String = "",
+    val honeymoonVendor: String = "",
+    val honeymoonEndDate: String = "",
+    val honeymoonCurrency: String = "BRL",
     val trousseauRoom: String = "OTHER",
     val trousseauStore: String = "",
+    val trousseauLink: String = "",
     val itemPriority: String = "MEDIUM",
     val taskResponsible: String = "",
     val taskVenueId: String? = null,
@@ -92,6 +98,7 @@ data class EditorFormState(
 enum class EditorField {
     TITLE, SUBTITLE, AMOUNT, ESTIMATED, DATE, PHONE, EMAIL, PARENT, LATE_FEE, INTEREST, CONTRACT_VERSION,
     CONTRACT_EXPIRES, CAPACITY_SEATED, CAPACITY_STANDING, MAPS_URL, CONTRACT_LINK, PLUS_ALLOWED, PLUS_CONFIRMED, TABLE, AGE,
+    END_DATE, LINK,
 }
 
 sealed interface EditorOutcome {
@@ -122,7 +129,7 @@ fun editorFormFrom(module: ModuleDefinition, initial: PlannerRecord?, parentId: 
     val json = ExtraFields.parse(WebValues.normalizeExtra(module.kind, initial?.extraJson ?: "{}"))
     fun text(key: String, default: String = "") = ExtraFields.text(json, key, default)
     return EditorFormState(
-        title = initial?.title.orEmpty(),
+        title = if (module.kind == Kinds.HONEYMOON) HoneymoonRules.destination(initial) else initial?.title.orEmpty(),
         subtitle = initial?.subtitle.orEmpty(),
         amount = if (module.kind == Kinds.TABLE) initial?.amountCents?.toString().orEmpty() else centsText(initial?.amountCents),
         estimated = centsText(initial?.estimatedCents),
@@ -174,10 +181,14 @@ fun editorFormFrom(module: ModuleDefinition, initial: PlannerRecord?, parentId: 
         paymentMethod = text("method"),
         lateFeePercent = ExtraFields.double(json, "lateFeePercent")?.toString().orEmpty(),
         interestPercentPerMonth = ExtraFields.double(json, "interestPercentPerMonth")?.toString().orEmpty(),
-        honeymoonItemKind = text("kind", "FLIGHT"),
+        honeymoonItemKind = text("kind", "ACTIVITY"),
         honeymoonConfirmation = text("confirmationNumber"),
+        honeymoonVendor = text("vendor"),
+        honeymoonEndDate = ExtraFields.day(json, if (module.kind == Kinds.HONEYMOON) "endDate" else "endAt")?.toString().orEmpty(),
+        honeymoonCurrency = HoneymoonRules.currency(initial),
         trousseauRoom = text("room", "OTHER"),
         trousseauStore = text("store"),
+        trousseauLink = text("link"),
         itemPriority = text("priority", if (module.kind == Kinds.TROUSSEAU) "NICE_TO_HAVE" else "MEDIUM"),
         taskResponsible = text("responsible"),
         taskVenueId = text("venueId").ifBlank { null },
@@ -225,7 +236,8 @@ fun buildEditorRecord(
         return value
     }
 
-    if (form.title.isBlank()) fail(EditorField.TITLE, R.string.err_required)
+    // A web aceita a lua de mel sem destino; o registro guarda o título provisório.
+    if (form.title.isBlank() && module.kind != Kinds.HONEYMOON) fail(EditorField.TITLE, R.string.err_required)
     if (module.kind == Kinds.VENDOR && form.subtitle.isBlank()) fail(EditorField.SUBTITLE, R.string.vendor_needs_category)
     if (module.hasContact) {
         if (!EditorLimits.validPhone(form.phone)) fail(EditorField.PHONE, R.string.err_phone)
@@ -248,6 +260,12 @@ fun buildEditorRecord(
     if (module.kind == Kinds.PAYMENT) {
         if (date == null && form.date.isBlank()) fail(EditorField.DATE, R.string.err_required)
         if (form.parentId == null || index.find(form.parentId)?.kind != Kinds.VENDOR) fail(EditorField.PARENT, R.string.err_vendor_required)
+    }
+    val trip = module.kind in setOf(Kinds.HONEYMOON, Kinds.HONEYMOON_ITEM)
+    val endDate = if (trip) day(EditorField.END_DATE, form.honeymoonEndDate) else null
+    if (date != null && endDate != null && endDate < date) fail(EditorField.END_DATE, R.string.err_end_before_start)
+    if (module.kind == Kinds.TROUSSEAU && (form.trousseauLink.length > TrousseauRules.LINK_MAX || !EditorLimits.validUrl(form.trousseauLink))) {
+        fail(EditorField.LINK, R.string.err_url)
     }
     val lateFee = if (module.kind == Kinds.PAYMENT) percent(EditorField.LATE_FEE, form.lateFeePercent) else null
     val interest = if (module.kind == Kinds.PAYMENT) percent(EditorField.INTEREST, form.interestPercentPerMonth) else null
@@ -317,13 +335,21 @@ fun buildEditorRecord(
                 if (lateFee == null) remove("lateFeePercent") else put("lateFeePercent", lateFee)
                 if (interest == null) remove("interestPercentPerMonth") else put("interestPercentPerMonth", interest)
             }
+            Kinds.HONEYMOON -> {
+                if (endDate == null) remove("endDate") else put("endDate", endDate)
+                put("currency", form.honeymoonCurrency)
+            }
             Kinds.HONEYMOON_ITEM -> {
                 put("kind", form.honeymoonItemKind)
                 putText("confirmationNumber", form.honeymoonConfirmation)
+                putText("vendor", form.honeymoonVendor)
+                if (endDate == null) remove("endAt") else put("endAt", endDate)
+                put("currency", form.honeymoonCurrency)
             }
             Kinds.TROUSSEAU -> {
                 put("room", form.trousseauRoom)
                 putText("store", form.trousseauStore)
+                putText("link", form.trousseauLink)
                 put("priority", form.itemPriority)
             }
             Kinds.TASK -> {
@@ -357,10 +383,11 @@ fun buildEditorRecord(
             }
         }
     }
-    val base = initial ?: PlannerRecord(newId(), module.kind, form.title.trim())
+    val title = form.title.trim().ifBlank { HoneymoonRules.PLACEHOLDER.takeIf { module.kind == Kinds.HONEYMOON }.orEmpty() }
+    val base = initial ?: PlannerRecord(newId(), module.kind, title)
     return EditorOutcome.Valid(
         base.copy(
-            title = form.title.trim(), subtitle = if (module.kind == Kinds.INCOME) form.incomeSource else form.subtitle.trim(), amountCents = amount, estimatedCents = estimated,
+            title = title, subtitle = if (module.kind == Kinds.INCOME) form.incomeSource else form.subtitle.trim(), amountCents = amount, estimatedCents = estimated,
             date = date, status = form.status, phone = form.phone.trim(), email = form.email.trim(), notes = form.notes.trim(),
             parentId = form.parentId,
             guestGroupId = if (module.kind == Kinds.GUEST) form.guestGroupId else base.guestGroupId,

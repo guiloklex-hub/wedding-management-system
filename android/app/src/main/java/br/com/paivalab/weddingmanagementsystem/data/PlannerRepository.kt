@@ -165,6 +165,17 @@ class PlannerRepository(private val database: PlannerDatabase, private val blobs
         if (seedChecklist) seedVenueChecklist(venue.id) else 0
     }
 
+    /** Viagem única, como `ensureHoneymoon` da web: devolve a existente ou cria a `singleton`. */
+    suspend fun ensureHoneymoon(currency: String): String = database.withTransaction {
+        dao.allRecords().filter { it.kind == Kinds.HONEYMOON && it.deletedAt == null }
+            .minWithOrNull(compareBy({ it.createdAt }, { it.id }))?.id ?: run {
+            val id = if (dao.findAny("singleton") == null) "singleton" else UUID.randomUUID().toString()
+            val tripCurrency = currency.takeIf { it in HoneymoonRules.currencies } ?: "BRL"
+            save(PlannerRecord(id, Kinds.HONEYMOON, HoneymoonRules.PLACEHOLDER, extraJson = JSONObject().put("currency", tripCurrency).toString()))
+            id
+        }
+    }
+
     /** Marca o item e grava a resposta, como `toggleChecklistItem` da web. */
     suspend fun setChecklistItem(id: String, checked: Boolean, value: String): UndoSnapshot = database.withTransaction {
         val item = dao.find(id) ?: error("Item não encontrado")

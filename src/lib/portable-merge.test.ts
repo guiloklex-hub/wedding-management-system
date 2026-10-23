@@ -147,6 +147,17 @@ describe("transferência móvel para web", () => {
     } finally { db.close(); }
   });
 
+  it("devolve a lua de mel sem destino como destino vazio, e não como o título provisório", () => {
+    const db = new DatabaseSync(":memory:");
+    try {
+      db.exec(`CREATE TABLE Honeymoon (id TEXT PRIMARY KEY NOT NULL, destination TEXT, startDate INTEGER, budget REAL,
+          currency TEXT NOT NULL DEFAULT 'BRL', notes TEXT, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);`);
+      const trip = { ...guest("android-trip"), kind: "honeymoon", title: "honeymoon", status: "", amountCents: 900000 };
+      mergeMobileRecords(db, [trip], []);
+      expect(db.prepare("SELECT destination, budget FROM Honeymoon").get()).toEqual({ destination: null, budget: 9000 });
+    } finally { db.close(); }
+  });
+
   it("mantém ativo ligado a meta criada no mesmo backup e preserva colunas web sem mapeamento", () => {
     const db = new DatabaseSync(":memory:");
     try {

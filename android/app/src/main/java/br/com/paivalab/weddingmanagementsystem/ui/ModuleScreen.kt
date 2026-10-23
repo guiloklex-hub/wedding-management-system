@@ -59,6 +59,7 @@ import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
+import br.com.paivalab.weddingmanagementsystem.data.TrousseauRules
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.ChronoUnit
@@ -94,6 +95,7 @@ class ModuleActions(
     val compare: () -> Unit,
     val sharePix: () -> Unit,
     val giftPix: (PlannerRecord) -> Unit,
+    val openLink: (String) -> Unit,
     val pixConfigured: Boolean,
 )
 
@@ -169,7 +171,14 @@ fun ModuleScreen(
                     ModuleListViewModel.SORT_RECENT to R.string.sort_recent,
                     ModuleListViewModel.SORT_NAME to R.string.sort_name,
                     ModuleListViewModel.SORT_DATE to R.string.sort_date,
-                ).filter { it.first != ModuleListViewModel.SORT_DATE || module.hasDate }.forEach { (key, label) ->
+                    ModuleListViewModel.SORT_PRIORITY to R.string.sort_priority,
+                ).filter { (key, _) ->
+                    when (key) {
+                        ModuleListViewModel.SORT_DATE -> module.hasDate
+                        ModuleListViewModel.SORT_PRIORITY -> module.kind == Kinds.TROUSSEAU
+                        else -> true
+                    }
+                }.forEach { (key, label) ->
                     FilterChip(selected = sort == key, onClick = { viewModel.setSort(key) }, label = { Text(stringResource(label)) })
                 }
             }
@@ -396,6 +405,16 @@ private fun QuickActions(module: ModuleDefinition, record: PlannerRecord, index:
             if (actions.pixConfigured && GiftRules.type(extra) == "CASH") Action(R.string.share_pix) { actions.giftPix(record) }
         }
         Kinds.INVITATION, Kinds.SAVE_THE_DATE -> Action(R.string.prepare_invite) { actions.invite(record) }
+        Kinds.TROUSSEAU -> {
+            Action(if (record.status == "BOUGHT") R.string.trousseau_unmark_bought else R.string.trousseau_mark_bought, PlannerEmerald) {
+                actions.setStatus(record, TrousseauRules.toggled(record, "BOUGHT"))
+            }
+            Action(if (record.status == "GIFTED") R.string.trousseau_unmark_gifted else R.string.trousseau_mark_gifted) {
+                actions.setStatus(record, TrousseauRules.toggled(record, "GIFTED"))
+            }
+            val link = ExtraFields.text(index.extra(record), "link")
+            if (link.isNotBlank()) Action(R.string.trousseau_store_link) { actions.openLink(link) }
+        }
         Kinds.VENDOR -> Action(R.string.vendor_status_action) { actions.changeVendorStatus(record) }
         Kinds.CONTRACT -> if (record.status in ContractRules.unsigned) Action(R.string.contract_mark_signed, PlannerEmerald) {
             actions.signContract(record)
@@ -465,6 +484,11 @@ private fun ModuleSummaryBanner(kind: String, index: RecordIndex, currency: Stri
             val stats = GiftRules.stats(items, index::extra)
             Triple(stringResource(R.string.summary_gifts_cash, money(stats.cashCents), money(stats.cashPendingCents)),
                 stringResource(R.string.summary_gifts_detail, stats.items, stats.pendingThanks), PlannerChampagne)
+        }
+        Kinds.TROUSSEAU -> {
+            val stats = TrousseauRules.stats(items)
+            Triple(stringResource(R.string.summary_trousseau, money(stats.estimatedCents), money(stats.boughtCents)),
+                stringResource(R.string.summary_trousseau_detail, stats.toBuy, stats.gifted), PlannerEmerald)
         }
         Kinds.TABLE -> {
             val capacity = items.sumOf { it.amountCents ?: 0L }.toInt()

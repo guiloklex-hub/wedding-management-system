@@ -58,4 +58,38 @@ class PlanningRulesTest {
         val inactive = goal.copy(id = "z", extraJson = """{"isActive":false}""")
         assertEquals(listOf("g", "z"), GoalRules.ordered(listOf(inactive, goal)).map { it.id })
     }
+
+    @Test fun honeymoonGroupsLikeTheWebPage() {
+        fun item(id: String, kind: String, date: String?, status: String = "PLANNED", amount: Long? = null, createdAt: Long = 0L) =
+            PlannerRecord(id, Kinds.HONEYMOON_ITEM, id, date = date, status = status, amountCents = amount, createdAt = createdAt,
+                extraJson = """{"kind":"$kind"}""")
+        val trip = PlannerRecord("singleton", Kinds.HONEYMOON, "honeymoon", createdAt = 5L)
+        val index = RecordIndex(listOf(
+            PlannerRecord("late", Kinds.HONEYMOON, "Roma", createdAt = 9L), trip,
+            item("hotel", "HOTEL", "2027-05-18", amount = 2_000_00L),
+            item("flight", "FLIGHT", "2027-05-17", status = "PAID", amount = 5_000_00L),
+            item("passport", "DOCUMENT", null, createdAt = 2L),
+            item("visa", "DOCUMENT", null, status = "CONFIRMED", createdAt = 1L),
+        ))
+        assertEquals("singleton", HoneymoonRules.trip(index)?.id)
+        assertEquals("", HoneymoonRules.destination(trip))
+        val items = HoneymoonRules.items(index)
+        assertEquals(listOf("visa", "passport", "flight", "hotel"), items.map { it.id })
+        assertEquals(listOf("DOCUMENT", "FLIGHT", "HOTEL"), HoneymoonRules.grouped(items).keys.toList())
+        assertEquals(7_000_00L, HoneymoonRules.committedCents(items))
+        assertEquals(1, HoneymoonRules.documentsPending(items))
+        assertEquals("BRL", HoneymoonRules.currency(trip))
+    }
+
+    @Test fun trousseauOrdersByPriorityAndTogglesLikeTheWeb() {
+        fun item(id: String, priority: String, room: String, status: String = "TO_BUY", estimated: Long? = null, paid: Long? = null) =
+            PlannerRecord(id, Kinds.TROUSSEAU, id, status = status, estimatedCents = estimated, amountCents = paid,
+                extraJson = """{"priority":"$priority","room":"$room"}""")
+        val items = listOf(item("sofa", "LUXURY", "LIVING"), item("pan", "ESSENTIAL", "KITCHEN", "BOUGHT", 100_00L, 90_00L),
+            item("bed", "ESSENTIAL", "BEDROOM", "GIFTED", 300_00L), item("lamp", "NICE_TO_HAVE", "BEDROOM", estimated = 50_00L))
+        assertEquals(listOf("bed", "pan", "lamp", "sofa"), TrousseauRules.ordered(items).map { it.id })
+        assertEquals(TrousseauStats(450_00L, 90_00L, toBuy = 2, gifted = 1), TrousseauRules.stats(items))
+        assertEquals("TO_BUY", TrousseauRules.toggled(items[1], "BOUGHT"))
+        assertEquals("GIFTED", TrousseauRules.toggled(items[1], "GIFTED"))
+    }
 }

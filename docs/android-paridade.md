@@ -22,7 +22,7 @@ Legenda: **sim** = fluxo principal equivalente; **parcial** = tela existe, mas f
 | `/dashboard/guests`, `/guests/groups`, `/guests/import` | Parcial | Indicadores, filtros (confirmados, pendentes, padrinhos, crianças, presentes no evento), exportação CSV com as colunas da web, check-in reversível, idade e idioma. Grupos com contato, resumo de RSVP, aviso de grupo sem contato e gestão de integrantes. A importação por colagem de texto e os três modos de deduplicação da web ainda diferem; o PIN e o link público de RSVP dependem do servidor. |
 | `/dashboard/gifts`, `/gifts/[id]/pix` | Sim | Tipo dinheiro ou item, quem deu, cota da lua de mel, marcar ou desmarcar agradecimento, lançar como receita ou ativo uma única vez, filtro "falta agradecer", indicadores e Pix individual. A confirmação automática do Pix é da web. |
 | `/dashboard/wedding-day`, `/wedding-day/seating` | Parcial | Cronograma, plano B, check-in e mesas locais; não há arrastar e soltar da web. |
-| `/dashboard/honeymoon`, `/trousseau` | Parcial | Cadastro e resumos locais; alguns campos, moedas de item e gráficos ainda diferem. |
+| `/dashboard/honeymoon`, `/trousseau` | Sim | Lua de mel como viagem única, com destino, saída, volta, orçamento e moeda; itens agrupados por tipo, com companhia, início, fim, moeda própria e localizador; comprometido e documentos pendentes. Enxoval ordenado por prioridade, com link da loja, atalhos "comprado" e "ganhei" e indicadores. |
 | `/dashboard/save-the-date`, `/invitations` | Parcial | Modelo local, anexo, envio individual pelo compartilhamento do Android e confirmação manual. Disparos em lote, controle de entrega, PIN e links públicos de RSVP exigem o servidor web. |
 | `/dashboard/settings`, `/onboarding` | Local | Assistente na primeira execução (casal, data, moeda, idioma, contingência, tarefas recomendadas ou dados de exemplo). Ajustes do evento, idioma, moeda, Pix, backup e segurança do aparelho; configurações de servidor (SMTP, WhatsApp) são da web. |
 | `/dashboard/profile`, `/profile/change-password` | Não | Contas, senha e 2FA são conceitos do servidor; o Android offline usa biometria ou PIN do aparelho. |
@@ -72,10 +72,17 @@ Navegação tipada com estado preservado, editor em tela cheia com validação i
 - A origem da receita usa as 7 opções de `incomeActions`. Origens antigas em texto livre aparecem como "Outro", que é como a restauração web as grava. `receivedAt` é gravado ao marcar como recebida e limpo ao reabrir, como `updateIncome`; o presente lançado como receita usa a data escolhida.
 - O cartão da meta repete o da web: falta, valor por mês (meses restantes arredondados para cima, em blocos de 30 dias) e quantidade de aportes. Metas inativas ficam no fim da lista.
 
+## Lua de mel e enxoval (Fase 2, parte 5)
+
+- A lua de mel abre numa tela própria, como `/dashboard/honeymoon`: os dados da viagem no topo e os itens agrupados por tipo, na ordem de início. O total comprometido soma todos os itens, como a web, e o indicador conta documentos ainda não confirmados nem pagos.
+- Só existe uma viagem. A primeira é criada como `singleton`, que é o id da web, ao adicionar um item. A viagem não pode ser excluída. Sem destino, o registro guarda o título provisório `honeymoon`, e a web o devolve como destino vazio.
+- Cada item tem moeda própria (BRL, USD ou EUR), companhia ou fornecedor (`vendor`) e data de fim (`endAt`). Um item novo nasce como "Atividade", o padrão da web.
+- O enxoval abre ordenado por prioridade (essencial, desejável, luxo), cômodo e nome. Os atalhos "Comprado" e "Ganhei" alternam com "a comprar", como os botões da web. O item comprado ou ganho aparece riscado. O link da loja (até 500 caracteres) abre no navegador.
+
 ## Próximas lacunas de paridade
 
 1. Definir se as funções que dependem do servidor serão sincronizadas no Android ou terão apenas alternativas locais.
-2. Portar Insights e relatórios com gráficos, mapa de mesas com arrastar e soltar, lua de mel e enxoval.
+2. Portar Insights e relatórios com gráficos e mapa de mesas com arrastar e soltar.
 3. Portar visualizações e filtros completos dos relatórios, mais a central de ajuda.
 4. Validar o envio concluído pelo usuário e o fluxo separado do WhatsApp Business. No Samsung SM-S908E, a prévia do WhatsApp já mostrou a imagem e o texto do convite juntos; nenhum envio foi confirmado.
 

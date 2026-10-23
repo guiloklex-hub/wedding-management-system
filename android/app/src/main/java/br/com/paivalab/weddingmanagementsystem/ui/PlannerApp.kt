@@ -304,6 +304,7 @@ fun PlannerApp(
                 compare = { nav.navigate(VendorCompareRoute) },
                 sharePix = { pixGiftId = null; showPixDialog = true },
                 giftPix = { gift -> pixGiftId = gift.id; showPixDialog = true },
+                openLink = { url -> if (!openLink(activity, url)) notify(genericError) },
                 pixConfigured = pixKey.isNotBlank(),
             ),
         )
@@ -365,7 +366,8 @@ fun PlannerApp(
             },
             snackbarHost = { SnackbarHost(snackbar) },
             floatingActionButton = {
-                if (moduleKind != null) {
+                // A lua de mel é uma viagem só; a tela dela tem os próprios botões.
+                if (moduleKind != null && moduleKind != Kinds.HONEYMOON) {
                     ExtendedFloatingActionButton(
                         onClick = { nav.navigate(EditorRoute(moduleKind)) },
                         containerColor = PlannerRose,
@@ -389,7 +391,22 @@ fun PlannerApp(
                 composable<TasksTabRoute> { moduleContent(Kinds.TASK) }
                 composable<VendorsTabRoute> { moduleContent(Kinds.VENDOR) }
                 composable<GuestsTabRoute> { moduleContent(Kinds.GUEST) }
-                composable<ModuleRoute> { entry -> moduleContent(entry.toRoute<ModuleRoute>().kind) }
+                composable<ModuleRoute> { entry ->
+                    val kind = entry.toRoute<ModuleRoute>().kind
+                    if (kind == Kinds.HONEYMOON) {
+                        HoneymoonScreen(
+                            index = index, currency = currency, language = language,
+                            onEditTrip = { trip -> nav.navigate(EditorRoute(Kinds.HONEYMOON, trip?.id)) },
+                            onAddItem = { trip ->
+                                if (trip != null) nav.navigate(EditorRoute(Kinds.HONEYMOON_ITEM, parentId = trip.id))
+                                else model.ensureHoneymoon(currency) { nav.navigate(EditorRoute(Kinds.HONEYMOON_ITEM, parentId = it)) }
+                            },
+                            onOpenItem = { nav.navigate(EditorRoute(it.kind, it.id)) },
+                        )
+                    } else {
+                        moduleContent(kind)
+                    }
+                }
                 composable<DetailRoute> { entry ->
                     val record = index.find(entry.toRoute<DetailRoute>().id)
                     if (record == null) {

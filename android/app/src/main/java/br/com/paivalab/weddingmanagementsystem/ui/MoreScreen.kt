@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
+import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.RecordIndex
 
 private data class SystemEntry(val section: String, @StringRes val title: Int, val icon: ImageVector)
@@ -58,7 +59,8 @@ private val systemEntries = listOf(
 
 @Composable
 internal fun MoreScreen(index: RecordIndex, navigate: (String) -> Unit) {
-    val secondaryModules = modules.filter { it.kind !in primaryTabs }
+    // Os itens da lua de mel ficam dentro da tela da viagem, como na web.
+    val secondaryModules = modules.filter { it.kind !in primaryTabs && it.kind != Kinds.HONEYMOON_ITEM }
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 160.dp),
         contentPadding = PaddingValues(16.dp),

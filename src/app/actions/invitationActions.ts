@@ -216,7 +216,7 @@ export async function saveInvitationConfig(
       rsvpMode: parsed.data.invitationRsvpUseExternal ? "EXTERNAL" : "NATIVE",
       hasArt: !!artUpdate.invitationFilePath,
     });
-    revalidatePath("/dashboard/invitations");
+    revalidatePath("/dashboard/communications/invitations");
     return { success: true };
   } catch (err) {
     if (newlyStoredPath) {
@@ -704,7 +704,7 @@ export async function startInvitationBroadcast(
     eligible: pendingRecipients.length,
   });
 
-  revalidatePath("/dashboard/invitations");
+  revalidatePath("/dashboard/communications/invitations");
 
   const progress = await progressFor(broadcast.id);
   return { success: true, data: progress ?? undefined };
@@ -813,7 +813,7 @@ export async function resendFailedInvitations(
 
   armBroadcastWorker();
   await audit("Broadcast", broadcastId, "UPDATE", { action: "RESEND_FAILED", count: reset.count });
-  revalidatePath("/dashboard/invitations");
+  revalidatePath("/dashboard/communications/invitations");
 
   const progress = await progressFor(broadcastId);
   return { success: true, data: progress ?? undefined };
@@ -841,7 +841,7 @@ export async function cancelInvitationBroadcast(broadcastId: string): Promise<Ac
   ]);
 
   await audit("Broadcast", broadcastId, "UPDATE", { action: "CANCEL" });
-  revalidatePath("/dashboard/invitations");
+  revalidatePath("/dashboard/communications/invitations");
   return { success: true };
 }
 

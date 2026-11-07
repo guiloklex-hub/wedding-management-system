@@ -139,7 +139,7 @@ export async function saveSaveTheDateConfig(
     }
 
     await audit("EventSettings", "singleton", "UPDATE", { area: "saveTheDate" });
-    revalidatePath("/dashboard/save-the-date");
+    revalidatePath("/dashboard/communications/save-the-date");
     return { success: true };
   } catch (err) {
     console.error("[saveSaveTheDateConfig]", err);
@@ -363,7 +363,9 @@ export type BroadcastProgress = {
 };
 
 async function progressFor(broadcastId: string): Promise<BroadcastProgress | null> {
-  const broadcast = await prisma.broadcast.findUnique({ where: { id: broadcastId } });
+  const broadcast = await prisma.broadcast.findFirst({
+    where: { id: broadcastId, kind: "SAVE_THE_DATE" },
+  });
   if (!broadcast) return null;
   const grouped = await prisma.broadcastRecipient.groupBy({
     by: ["status"],
@@ -444,7 +446,7 @@ export async function startSaveTheDateBroadcast(
 
   armBroadcastWorker();
   await audit("Broadcast", broadcast.id, "CREATE", { kind: "SAVE_THE_DATE", total: pendingCount });
-  revalidatePath("/dashboard/save-the-date");
+  revalidatePath("/dashboard/communications/save-the-date");
 
   const progress = await progressFor(broadcast.id);
   return { success: true, data: progress ?? undefined };
@@ -484,7 +486,7 @@ export async function getSaveTheDateBroadcastRecipients(
   const denied = await denyIfNoManage();
   if (denied) return null;
   const rows = await prisma.broadcastRecipient.findMany({
-    where: { broadcastId },
+    where: { broadcastId, broadcast: { kind: "SAVE_THE_DATE" } },
     select: {
       name: true,
       memberNames: true,
@@ -512,7 +514,9 @@ export async function resendFailedSaveTheDate(
   const denied = await denyIfNoManage();
   if (denied) return denied;
 
-  const broadcast = await prisma.broadcast.findUnique({ where: { id: broadcastId } });
+  const broadcast = await prisma.broadcast.findFirst({
+    where: { id: broadcastId, kind: "SAVE_THE_DATE" },
+  });
   if (!broadcast) return { success: false, error: t("broadcastNotFound") };
 
   const reset = await prisma.broadcastRecipient.updateMany({
@@ -527,7 +531,7 @@ export async function resendFailedSaveTheDate(
   });
   armBroadcastWorker();
   await audit("Broadcast", broadcastId, "UPDATE", { resendFailed: reset.count });
-  revalidatePath("/dashboard/save-the-date");
+  revalidatePath("/dashboard/communications/save-the-date");
 
   const progress = await progressFor(broadcastId);
   return { success: true, data: progress ?? undefined };
@@ -538,7 +542,9 @@ export async function cancelSaveTheDateBroadcast(broadcastId: string): Promise<A
   const denied = await denyIfNoManage();
   if (denied) return denied;
 
-  const broadcast = await prisma.broadcast.findUnique({ where: { id: broadcastId } });
+  const broadcast = await prisma.broadcast.findFirst({
+    where: { id: broadcastId, kind: "SAVE_THE_DATE" },
+  });
   if (!broadcast) return { success: false, error: t("broadcastNotFound") };
 
   await prisma.$transaction([
@@ -552,6 +558,6 @@ export async function cancelSaveTheDateBroadcast(broadcastId: string): Promise<A
     }),
   ]);
   await audit("Broadcast", broadcastId, "UPDATE", { cancelled: true });
-  revalidatePath("/dashboard/save-the-date");
+  revalidatePath("/dashboard/communications/save-the-date");
   return { success: true };
 }

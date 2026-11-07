@@ -2400,5 +2400,45 @@
       "resendStarted": "Resending failed items started.",
       "broadcastCancelled": "Broadcast cancelled."
     }
+  },
+  "communications": {
+    "tabs": {
+      "aria": "Communication sections",
+      "overview": "Overview",
+      "saveTheDate": "Save the Date",
+      "invitations": "Official Invitations",
+      "announcements": "Announcements"
+    },
+    "hub": {
+      "title": "Communications",
+      "subtitle": "Everything you send to your guests in one place: Save the Date, official invitations and announcements.",
+      "items": {
+        "saveTheDate": {
+          "title": "Save the Date",
+          "description": "Announce the wedding date to every guest, with artwork and website links."
+        },
+        "invitations": {
+          "title": "Official Invitations",
+          "description": "Send the formal invitation with PIN, RSVP link and response deadline."
+        },
+        "announcements": {
+          "title": "Announcements",
+          "description": "Send reminders and information in free text, choosing who receives them — for example, only confirmed guests."
+        }
+      },
+      "status": {
+        "none": "Nothing sent yet",
+        "broadcast": "{status} · {sent} of {total} sent",
+        "announcements": "{drafts, plural, =0 {No drafts} one {# draft} other {# drafts}} · {sent, plural, =0 {no announcements sent} one {# announcement sent} other {# announcements sent}}",
+        "announcementsWithLast": "{drafts, plural, =0 {No drafts} one {# draft} other {# drafts}} · last sent on {date}",
+        "label": {
+          "DRAFT": "Draft",
+          "SENDING": "Sending",
+          "PAUSED": "Paused",
+          "DONE": "Done",
+          "CANCELLED": "Cancelled"
+        }
+      }
+    }
   }
 }

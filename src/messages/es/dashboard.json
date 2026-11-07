@@ -2400,5 +2400,45 @@
       "resendStarted": "Reintento de elementos fallidos iniciado.",
       "broadcastCancelled": "Envío cancelado."
     }
+  },
+  "communications": {
+    "tabs": {
+      "aria": "Secciones de comunicaciones",
+      "overview": "Resumen",
+      "saveTheDate": "Save the Date",
+      "invitations": "Invitaciones Oficiales",
+      "announcements": "Avisos"
+    },
+    "hub": {
+      "title": "Comunicaciones",
+      "subtitle": "Todo lo que envían a sus invitados en un solo lugar: Save the Date, invitaciones oficiales y avisos.",
+      "items": {
+        "saveTheDate": {
+          "title": "Save the Date",
+          "description": "Anuncien la fecha de la boda a todos los invitados, con arte y enlaces del sitio."
+        },
+        "invitations": {
+          "title": "Invitaciones Oficiales",
+          "description": "Envíen la invitación formal con PIN, enlace de confirmación (RSVP) y fecha límite."
+        },
+        "announcements": {
+          "title": "Avisos",
+          "description": "Envíen recordatorios e información con texto libre, eligiendo quién los recibe — por ejemplo, solo los confirmados."
+        }
+      },
+      "status": {
+        "none": "Aún no se ha enviado nada",
+        "broadcast": "{status} · {sent} de {total} enviados",
+        "announcements": "{drafts, plural, =0 {Ningún borrador} one {# borrador} other {# borradores}} · {sent, plural, =0 {ningún aviso enviado} one {# aviso enviado} other {# avisos enviados}}",
+        "announcementsWithLast": "{drafts, plural, =0 {Ningún borrador} one {# borrador} other {# borradores}} · último envío el {date}",
+        "label": {
+          "DRAFT": "Borrador",
+          "SENDING": "Enviando",
+          "PAUSED": "Pausado",
+          "DONE": "Completado",
+          "CANCELLED": "Cancelado"
+        }
+      }
+    }
   }
 }

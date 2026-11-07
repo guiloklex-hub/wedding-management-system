@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { readUpload } from "@/lib/storage";
 import { coerceLocale } from "@/i18n/config";
-import { notify, type NotifyMedia, type NotifyResult } from "./index";
+import type { NotifyMedia } from "./index";
+import { deliverByChannel } from "./channel-policy";
 
 export const INVITATION_ART_CID = "invitation-art";
 
@@ -177,63 +178,14 @@ export async function sendInvitation(args: {
     imageCid: ctx.media?.inlineCid ?? null,
   };
 
-  const tryWa = async (): Promise<NotifyResult> => {
-    return notify(
-      { phone: recipientPayload.phone, locale },
-      renderInput,
-      { refType: recipientPayload.refType, refId: recipientPayload.refId, media: ctx.media },
-    );
-  };
-
-  const tryEmail = async (): Promise<NotifyResult> => {
-    return notify(
-      { email: recipientPayload.email, locale },
-      renderInput,
-      { refType: recipientPayload.refType, refId: recipientPayload.refId, media: ctx.media },
-    );
-  };
-
-  if (channelOverride === "WHATSAPP") {
-    if (!recipientPayload.phone) return { ok: false, error: "NO_PHONE" };
-    const res = await tryWa();
-    if (res.whatsapp.ok) return { ok: true, channelUsed: "WHATSAPP" };
-    return { ok: false, error: res.whatsapp.error || "WHATSAPP_FAILED" };
-  }
-
-  if (channelOverride === "EMAIL") {
-    if (!recipientPayload.email) return { ok: false, error: "NO_EMAIL" };
-    const res = await tryEmail();
-    if (res.email.ok) return { ok: true, channelUsed: "EMAIL" };
-    return { ok: false, error: res.email.error || "EMAIL_FAILED" };
-  }
-
-  // Channel policy: AUTO (WhatsApp first, fallback to Email if WhatsApp fails or unavailable)
-  if (recipientPayload.phone) {
-    const waRes = await tryWa();
-    if (waRes.whatsapp.ok) {
-      return { ok: true, channelUsed: "WHATSAPP" };
-    }
-    // WhatsApp failed. Attempt email fallback if available.
-    if (recipientPayload.email) {
-      const emailRes = await tryEmail();
-      if (emailRes.email.ok) {
-        return { ok: true, channelUsed: "EMAIL" };
-      }
-      return {
-        ok: false,
-        error: `WhatsApp: ${waRes.whatsapp.error || "Failed"}; Email: ${emailRes.email.error || "Failed"}`,
-      };
-    }
-    return { ok: false, error: waRes.whatsapp.error || "WHATSAPP_FAILED" };
-  }
-
-  if (recipientPayload.email) {
-    const emailRes = await tryEmail();
-    if (emailRes.email.ok) {
-      return { ok: true, channelUsed: "EMAIL" };
-    }
-    return { ok: false, error: emailRes.email.error || "EMAIL_FAILED" };
-  }
-
-  return { ok: false, error: "NO_CONTACT" };
+  return deliverByChannel({
+    policy: channelOverride ?? "AUTO",
+    phone: recipientPayload.phone,
+    email: recipientPayload.email,
+    locale,
+    input: renderInput,
+    refType: recipientPayload.refType,
+    refId: recipientPayload.refId,
+    media: ctx.media,
+  });
 }

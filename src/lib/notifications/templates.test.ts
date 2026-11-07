@@ -129,3 +129,45 @@ describe("render (es)", () => {
     expect(r.text).toMatch(/2 días/);
   });
 });
+
+describe("render ANNOUNCEMENT", () => {
+  const base = {
+    kind: "ANNOUNCEMENT" as const,
+    title: "Lembrete do traje",
+    coupleNames: "Ana & Beto",
+    message: "Oi {convidados}! Traje: esporte fino.\nConfirme: {link-rsvp} {foo}",
+    memberNames: "Carla e Davi",
+    eventDate: "2026-12-12T00:00:00.000Z",
+    venueName: "Sítio",
+    siteUrl: null,
+    registryUrl: null,
+    rsvpLink: "https://app/rsvp/abc",
+    pin: null,
+  };
+
+  it("texto livre, título no assunto e tag desconhecida preservada", async () => {
+    const r = await render({ ...base, locale: "pt-BR" });
+    expect(r.subject).toBe("Lembrete do traje — Ana & Beto");
+    expect(r.waText).toBe("Oi Carla e Davi! Traje: esporte fino.\nConfirme: https://app/rsvp/abc {foo}");
+    expect(r.text).toBe(r.waText);
+    expect(r.html).toContain('<a href="https://app/rsvp/abc"');
+    expect(r.html).toContain("<br>");
+  });
+
+  it("escapa HTML da mensagem e dos nomes", async () => {
+    const r = await render({
+      ...base,
+      locale: "pt-BR",
+      message: "<script>x</script> {convidados}",
+      memberNames: "<img src=x onerror=alert(1)>",
+    });
+    expect(r.html).not.toContain("<script>");
+    expect(r.html).not.toContain("<img src=x");
+    expect(r.html).toContain("&lt;script&gt;");
+  });
+
+  it("formata {data} no idioma do destinatário", async () => {
+    const r = await render({ ...base, message: "{data}", locale: "en" });
+    expect(r.waText).toBe("December 12, 2026");
+  });
+});

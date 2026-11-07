@@ -1,3 +1,6 @@
+import { formatDate } from "@/i18n/format";
+import { coerceLocale } from "@/i18n/config";
+
 /**
  * Mensagem dos avisos — helpers puros compartilhados pelo template (servidor) e
  * pelo preview (client). Nenhuma tag é obrigatória.
@@ -55,4 +58,17 @@ export function findUnknownAnnouncementTags(template: string): string[] {
 
 export function announcementUsesTag(template: string, tag: AnnouncementTag): boolean {
   return template.includes(`{${tag}}`);
+}
+
+/** Data do evento por extenso no idioma do destinatário (mesma regra do Save the Date). */
+export function formatAnnouncementDate(iso: string | null, locale: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return formatDate(d, coerceLocale(locale), {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }

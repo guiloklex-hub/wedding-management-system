@@ -156,5 +156,9 @@
   },
   "OFFICIAL_INVITATION": {
     "subject": "Invitación Oficial — {names}"
+  },
+  "ANNOUNCEMENT": {
+    "subject": "{title} — {names}",
+    "imageAlt": "Imagen del aviso: {title}"
   }
 }

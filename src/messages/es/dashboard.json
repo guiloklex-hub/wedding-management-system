@@ -2440,5 +2440,259 @@
         }
       }
     }
+  },
+  "announcements": {
+    "status": {
+      "DRAFT": "Borrador",
+      "SENDING": "Enviando",
+      "PAUSED": "Pausado",
+      "DONE": "Completado",
+      "CANCELLED": "Cancelado"
+    },
+    "list": {
+      "title": "Avisos",
+      "subtitle": "Mensajes libres para recordar información a los invitados, sin etiquetas obligatorias. Elijan quién los recibe — por ejemplo, solo quienes confirmaron.",
+      "new": "Nuevo aviso",
+      "empty": "Aún no hay avisos. Creen el primero para recordar algo importante a sus invitados.",
+      "colTitle": "Aviso",
+      "colStatus": "Estado",
+      "colChannel": "Canal",
+      "colDate": "Fecha",
+      "colResult": "Resultado",
+      "untitled": "Aviso sin título",
+      "sentOn": "Enviado el",
+      "createdOn": "Creado el",
+      "result": "{sent} enviados · {failed} fallos"
+    },
+    "detail": {
+      "back": "Volver a Avisos",
+      "draftSubtitle": "Borrador — escriban el mensaje, elijan quién lo recibe y envíenlo cuando esté listo.",
+      "sentSubtitle": "Informe del envío. Los avisos enviados no se pueden modificar; duplíquenlo para reutilizarlo."
+    },
+    "editor": {
+      "notConfigured": "Configuren los nombres de la pareja (en el onboarding o en Ajustes) para poder enviar avisos.",
+      "audienceTitle": "Quién lo recibirá",
+      "unsaved": "Cambios sin guardar",
+      "allSaved": "Todo guardado",
+      "compose": {
+        "title": "Mensaje",
+        "subjectLabel": "Título",
+        "subjectHint": "Aparece en el historial y como asunto del e-mail. No se incluye en el texto de WhatsApp.",
+        "messageLabel": "Texto del aviso",
+        "messagePlaceholder": "Ej.: ¡Hola {tag}! Les recordamos que la ceremonia empieza a las 16 h en punto y el código de vestimenta es semiformal. ¡Nos vemos!",
+        "tagsOptional": "Las etiquetas son opcionales — úsenlas solo si quieren personalizar.",
+        "unknownTags": "Estas etiquetas no se reconocen y se enviarán como texto: {tags}",
+        "artLabel": "Imagen o PDF (opcional)",
+        "removeArt": "Quitar archivo",
+        "artHint": "PNG, JPG, WEBP o PDF de hasta 10 MB. Se envía como imagen en WhatsApp y como adjunto en el e-mail."
+      },
+      "channel": {
+        "title": "Canal de envío",
+        "unavailable": "El canal elegido no está disponible ahora (WhatsApp desconectado o e-mail no configurado).",
+        "AUTO": {
+          "label": "WhatsApp, con e-mail de respaldo",
+          "hint": "Intenta WhatsApp primero; si falla o no hay teléfono, envía por e-mail."
+        },
+        "WHATSAPP": {
+          "label": "Solo WhatsApp",
+          "hint": "Quien no tenga teléfono válido queda fuera."
+        },
+        "EMAIL": {
+          "label": "Solo e-mail",
+          "hint": "Quien no tenga e-mail queda fuera."
+        }
+      },
+      "preview": {
+        "title": "Vista previa",
+        "empty": "Escriban el mensaje para ver la vista previa.",
+        "hint": "Vista previa con los datos del primer destinatario de la lista.",
+        "sampleGuests": "Ana y Bruno"
+      },
+      "test": {
+        "title": "Enviar prueba",
+        "toPlaceholder": "Teléfono o e-mail (vacío = el de tu perfil)",
+        "whatsapp": "Probar en WhatsApp",
+        "email": "Probar por e-mail",
+        "hint": "La prueba usa el borrador guardado y datos de ejemplo; ningún invitado la recibe."
+      },
+      "actions": {
+        "delete": "Eliminar",
+        "duplicate": "Duplicar",
+        "save": "Guardar borrador",
+        "send": "{count, plural, =0 {Enviar} one {Enviar a # destinatario} other {Enviar a # destinatarios}}",
+        "sendNeedsManager": "Solo la pareja o el admin pueden iniciar el envío."
+      },
+      "confirmSend": {
+        "title": "¿Enviar el aviso ahora?",
+        "summary": "Se {messages, plural, one {enviará # mensaje} other {enviarán # mensajes}}, alcanzando a {guests, plural, one {# invitado} other {# invitados}}.",
+        "channel": "Canal: {channel}.",
+        "skipped": "{count, plural, one {# familia quedará fuera} other {# familias quedarán fuera}} por falta de contacto o duplicidad.",
+        "withArt": "El archivo adjunto se incluirá.",
+        "irreversible": "Una vez iniciado, el aviso no se puede editar.",
+        "confirm": "Enviar"
+      },
+      "confirmDelete": {
+        "title": "¿Eliminar borrador?",
+        "description": "Se eliminarán el borrador y el archivo adjunto. Esta acción no se puede deshacer.",
+        "confirm": "Eliminar"
+      },
+      "toasts": {
+        "saved": "Borrador guardado.",
+        "testSent": "Prueba enviada.",
+        "started": "Envío iniciado.",
+        "deleted": "Borrador eliminado.",
+        "duplicated": "Aviso duplicado."
+      }
+    },
+    "tags": {
+      "nomes": {
+        "hint": "nombres de la pareja"
+      },
+      "convidados": {
+        "hint": "invitados de la familia que reciben el aviso"
+      },
+      "data": {
+        "hint": "fecha de la boda completa"
+      },
+      "local": {
+        "hint": "lugar principal registrado"
+      },
+      "site": {
+        "hint": "sitio web de la boda"
+      },
+      "site-presentes": {
+        "hint": "lista de regalos"
+      },
+      "link-rsvp": {
+        "hint": "enlace de confirmación de asistencia"
+      },
+      "pin": {
+        "hint": "PIN del RSVP (quien no tenga PIN queda fuera)"
+      }
+    },
+    "audience": {
+      "rsvp": {
+        "label": "Estado de asistencia",
+        "hint": "Por defecto: solo confirmados. Quien aún no fue invitado nunca lo recibe.",
+        "CONFIRMED": "Confirmados",
+        "INVITED": "Pendientes",
+        "MAYBE": "Quizás",
+        "DECLINED": "Rechazaron"
+      },
+      "includeTags": {
+        "label": "Solo quienes tienen las etiquetas",
+        "hint": "Sin etiquetas marcadas, no filtra por etiqueta."
+      },
+      "excludeTags": {
+        "label": "Excluir a quienes tienen las etiquetas"
+      },
+      "side": {
+        "label": "Lado",
+        "hint": "Ninguno marcado = todos los lados.",
+        "NOIVO": "Novio",
+        "NOIVA": "Novia",
+        "AMBOS": "Ambos",
+        "UNSET": "Sin lado"
+      },
+      "padrinhos": {
+        "label": "Padrinos",
+        "ALL": "Incluir",
+        "ONLY": "Solo padrinos",
+        "EXCLUDE": "Excluir padrinos"
+      }
+    },
+    "preList": {
+      "title": "Prelista de destinatarios",
+      "summary": {
+        "messages": "mensajes",
+        "guests": "invitados alcanzados",
+        "skipped": "omitidos",
+        "unchecked": "desmarcados"
+      },
+      "searchPlaceholder": "Buscar por nombre",
+      "checkAll": "Marcar todos",
+      "uncheckAll": "Desmarcar todos",
+      "colInclude": "Incluir",
+      "colName": "Destinatario",
+      "colChannel": "Canal",
+      "colStatus": "Situación",
+      "toggleAria": "Incluir a {name} en el envío",
+      "family": "familia",
+      "channel": {
+        "WHATSAPP": "WhatsApp",
+        "EMAIL": "E-mail"
+      },
+      "ready": "Listo",
+      "reason": {
+        "MANUAL_EXCLUDED": "Desmarcado",
+        "NO_PIN": "Sin PIN",
+        "NO_CONTACT": "Sin teléfono ni e-mail",
+        "NO_PHONE": "Sin teléfono",
+        "NO_EMAIL": "Sin e-mail",
+        "INVALID_PHONE": "Teléfono inválido",
+        "DUPLICATE_PHONE": "Teléfono repetido",
+        "DUPLICATE_EMAIL": "E-mail repetido"
+      },
+      "empty": "Nadie coincide con los filtros elegidos.",
+      "noMatch": "Sin resultados para la búsqueda.",
+      "familyHint": "Las familias reciben un único mensaje en el contacto del grupo, mencionando solo a los integrantes que cumplen el filtro."
+    },
+    "report": {
+      "progressTitle": "Progreso",
+      "metrics": {
+        "pending": "en cola",
+        "sent": "enviados",
+        "failed": "fallos",
+        "skipped": "omitidos"
+      },
+      "queued": "{count, plural, one {Esperando a que termine # otro envío.} other {Esperando a que terminen # otros envíos.}}",
+      "actions": {
+        "resend": "Reenviar {count, plural, one {# fallo} other {# fallos}}",
+        "cancel": "Cancelar envío",
+        "csv": "Exportar CSV",
+        "duplicate": "Duplicar como nuevo borrador"
+      },
+      "messageTitle": "Mensaje enviado",
+      "viewArt": "Ver archivo",
+      "recipientsTitle": "Destinatarios",
+      "recipientStatus": {
+        "PENDING": "En cola",
+        "PROCESSING": "Enviando",
+        "SENT": "Enviado",
+        "FAILED": "Falló",
+        "SKIPPED": "Omitido"
+      },
+      "reason": {
+        "CANCELLED": "Cancelado",
+        "DELIVERY_STATE_UNKNOWN": "Estado desconocido (puede haberse entregado)",
+        "WHATSAPP_FAILED": "Fallo en WhatsApp",
+        "EMAIL_FAILED": "Fallo en el e-mail",
+        "SEND_FAILED": "Error en el envío",
+        "BROADCAST_PAYLOAD_MISSING": "Faltan datos del aviso",
+        "RECIPIENT_PAYLOAD_MISSING": "Faltan datos del destinatario",
+        "INVALID_RECIPIENT_PAYLOAD": "Datos del destinatario inválidos",
+        "INVALID_SNAPSHOT": "Datos del aviso inválidos",
+        "ART_READ_ERROR": "No se pudo leer el archivo adjunto"
+      },
+      "audience": {
+        "include": "con la etiqueta {tag}",
+        "exclude": "sin la etiqueta {tag}"
+      },
+      "csvFileName": "aviso",
+      "toasts": {
+        "resent": "Fallos puestos de nuevo en cola.",
+        "cancelled": "Envío cancelado."
+      },
+      "confirmCancel": {
+        "title": "¿Cancelar el envío?",
+        "description": "{count, plural, one {# mensaje en cola no se enviará.} other {# mensajes en cola no se enviarán.}}",
+        "confirm": "Cancelar envío"
+      },
+      "confirmResend": {
+        "title": "¿Reenviar de todos modos?",
+        "description": "{count, plural, one {# envío está} other {# envíos están}} en estado desconocido y puede que ya hayan llegado. Reenviar puede duplicar el mensaje.",
+        "confirm": "Reenviar"
+      }
+    }
   }
 }

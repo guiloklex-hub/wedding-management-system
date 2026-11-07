@@ -84,6 +84,12 @@ import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.backup.BackupArchive
 import br.com.paivalab.weddingmanagementsystem.data.CalendarExport
+import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
+import br.com.paivalab.weddingmanagementsystem.data.FinanceRules
+import br.com.paivalab.weddingmanagementsystem.data.HONEYMOON_NOT_DELETABLE
+import br.com.paivalab.weddingmanagementsystem.data.PAYMENT_NEEDS_VENDOR
+import br.com.paivalab.weddingmanagementsystem.data.VENDOR_NEEDS_CATEGORY
+import br.com.paivalab.weddingmanagementsystem.data.WebValues
 import br.com.paivalab.weddingmanagementsystem.data.InstallmentMath
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.Money
@@ -191,7 +197,14 @@ fun PlannerApp(
     }
     LaunchedEffect(error) {
         if (error != null) {
-            snackbar.showSnackbar(if (error == "Mesa sem lugares") tableFullError else genericError)
+            snackbar.showSnackbar(when (error) {
+                "Mesa sem lugares" -> tableFullError
+                PAYMENT_NEEDS_VENDOR -> localizedText(activity, R.string.payment_needs_vendor, language)
+                VENDOR_NEEDS_CATEGORY -> localizedText(activity, R.string.vendor_needs_category, language)
+                HONEYMOON_NOT_DELETABLE -> localizedText(activity, R.string.honeymoon_not_deletable, language)
+                "Presente já lançado" -> localizedText(activity, R.string.gift_already_processed, language)
+                else -> genericError
+            })
             model.clearError()
         }
     }
@@ -387,6 +400,7 @@ fun PlannerApp(
             pixCity = pixCity.ifBlank { "SAO PAULO" },
             initialAmountCents = allRecords.firstOrNull { it.id == pixGiftId }?.amountCents,
             transactionId = pixGiftId,
+            language = language,
             onDismiss = { showPixDialog = false; pixGiftId = null },
             onNotify = notify,
         )
@@ -556,7 +570,7 @@ private fun DashboardScreen(
     navigate: (String) -> Unit,
 ) {
     val active = records.filter { it.deletedAt == null }
-    val budget = active.filter { it.kind == Kinds.BUDGET }.sumOf { it.estimatedCents ?: it.amountCents ?: 0L }
+    val budget = FinanceRules.budgetEstimated(active)
     val paid = active.filter { it.kind == Kinds.PAYMENT && it.status == "PAID" }.sumOf { it.amountCents ?: 0L }
     val tasks = active.count { it.kind == Kinds.TASK && it.status != "DONE" }
     val doneTasks = active.count { it.kind == Kinds.TASK && it.status == "DONE" }
@@ -567,9 +581,10 @@ private fun DashboardScreen(
     val paidRatio = if (budget <= 0L) 0f else (paid.toFloat() / budget.toFloat()).coerceIn(0f, 1f)
     val daysUntil = runCatching { ChronoUnit.DAYS.between(LocalDate.now(), LocalDate.parse(eventDate)) }.getOrNull()
     val riskAlerts = remember(active, daysUntil, currency, language) {
+        val wedding = runCatching { LocalDate.parse(eventDate) }.getOrNull()
         RiskRadar.compute(
             activeRecords = active,
-            cashflow = emptyList(),
+            cashflow = wedding?.let { FinanceRules.monthlyCashflow(active, it, LocalDate.now()) }.orEmpty(),
             daysToEvent = daysUntil,
             formatMoney = { localizedCurrency(it, currency, language) },
         )
@@ -1012,8 +1027,8 @@ private fun ModuleSummaryBanner(kind: String, active: List<PlannerRecord>, curre
     if (items.isEmpty()) return
     val summary: Triple<String, String, Color>? = when (kind) {
         Kinds.BUDGET -> {
-            val est = items.sumOf { it.estimatedCents ?: 0L }
-            val real = items.sumOf { it.amountCents ?: 0L }
+            val est = FinanceRules.budgetEstimated(items)
+            val real = FinanceRules.budgetActual(items)
             val diff = real - est
             val detail = if (diff <= 0L) "Economia de ${localizedCurrency(-diff, currency, language)}" else "Excedente de +${localizedCurrency(diff, currency, language)}"
             Triple("Previsto: ${localizedCurrency(est, currency, language)} · Real: ${localizedCurrency(real, currency, language)}", detail, if (diff <= 0L) PlannerEmerald else PlannerRose)
@@ -1034,7 +1049,8 @@ private fun ModuleSummaryBanner(kind: String, active: List<PlannerRecord>, curre
         }
         Kinds.GOAL -> {
             val target = items.sumOf { it.amountCents ?: 0L }
-            val saved = active.filter { it.kind == Kinds.ASSET }.sumOf { it.amountCents ?: 0L }
+            val goalIds = items.map { it.id }.toSet()
+            val saved = active.filter { it.kind == Kinds.ASSET && it.parentId in goalIds }.sumOf { it.amountCents ?: 0L }
             val pct = if (target <= 0L) 0 else ((saved.toFloat() / target) * 100).roundToInt()
             Triple("Metas: ${localizedCurrency(target, currency, language)}", "Acumulado: ${localizedCurrency(saved, currency, language)} ($pct%)", PlannerChampagne)
         }
@@ -1124,11 +1140,11 @@ private fun RecordCard(
                 val json = runCatching { JSONObject(record.extraJson) }.getOrElse { JSONObject() }
                 val n = json.optInt("installmentNumber", 0)
                 val total = json.optInt("totalInstallments", 0)
-                val method = json.optString("method", "")
+                val method = ExtraFields.text(json, "method")
                 val adj = PaymentAdjustment.compute(record)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (n > 0 && total > 0) InfoBadge("Parcela $n de $total", PlannerChampagne)
-                    if (method.isNotBlank()) InfoBadge("💳 $method", PlannerEmerald)
+                    if (method.isNotBlank()) InfoBadge(webValueLabel(method, language), PlannerEmerald)
                     if (adj.lateDays > 0) {
                         val feeText = if (adj.hasAdjustment) {
                             "⚠️ ${adj.lateDays}d atraso · Atualizado: ${localizedCurrency(adj.adjustedCents, currency, language)}"
@@ -1140,37 +1156,25 @@ private fun RecordCard(
                 }
             }
             Kinds.TASK -> {
-                val priority = runCatching { JSONObject(record.extraJson).optString("priority", "") }.getOrDefault("")
+                val priority = ExtraFields.text(ExtraFields.parse(record.extraJson), "priority")
                 if (priority.isNotBlank()) {
-                    val pLabel = when (priority) {
-                        "HIGH" -> "Prioridade Alta"
-                        "MEDIUM" -> "Prioridade Média"
-                        else -> "Prioridade Normal"
-                    }
-                    InfoBadge(pLabel, if (priority == "HIGH") PlannerRose else PlannerChampagne)
+                    InfoBadge("${localized(R.string.priority, language)}: ${webValueLabel(priority, language)}", priorityColor(priority))
                 }
             }
             Kinds.GUEST -> {
-                val json = runCatching { JSONObject(record.extraJson) }.getOrElse { JSONObject() }
-                val side = json.optString("side", "")
-                val dietary = json.optString("dietary", "")
-                val city = json.optString("city", "")
-                val isVip = json.optBoolean("isVIP", false)
-                val isPadrinho = json.optBoolean("isPadrinho", false)
-                val isChild = json.optBoolean("isChild", false)
+                val json = ExtraFields.parse(record.extraJson)
+                val side = ExtraFields.text(json, "side")
+                val dietary = ExtraFields.text(json, "dietary")
+                val city = ExtraFields.text(json, "city")
+                val isVip = ExtraFields.bool(json, "isVIP")
+                val isPadrinho = ExtraFields.bool(json, "isPadrinho")
+                val isChild = ExtraFields.bool(json, "isChild")
                 val group = record.guestGroupId?.let { gid -> allRecords.find { it.id == gid }?.title }
                 val table = record.seatingTableId?.let { tid -> allRecords.find { it.id == tid }?.title }
                 val tags = recordTagIds(record).mapNotNull { tid -> allRecords.find { it.id == tid }?.title }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     InfoBadge("${1 + record.plusOnesConfirmed} lugar(es) (+${record.plusOnesConfirmed}/${record.plusOnesAllowed} acomp.)", PlannerEmerald)
-                    if (side.isNotBlank()) {
-                        val sideLabel = when (side) {
-                            "BRIDE" -> "👰 Lado Noiva"
-                            "GROOM" -> "🤵 Lado Noivo"
-                            else -> "💑 Lado Comum"
-                        }
-                        InfoBadge(sideLabel, PlannerChampagne)
-                    }
+                    if (side.isNotBlank()) InfoBadge(webValueLabel(side, language), PlannerChampagne)
                     if (isVip) InfoBadge("⭐ VIP", PlannerRose)
                     if (isPadrinho) InfoBadge("💍 Padrinho", PlannerChampagne)
                     if (isChild) InfoBadge("🧒 Criança", PlannerEmerald)
@@ -1211,16 +1215,18 @@ private fun RecordCard(
                 }
             }
             Kinds.HONEYMOON_ITEM -> {
-                val json = runCatching { JSONObject(record.extraJson) }.getOrElse { JSONObject() }
-                val itemKind = json.optString("itemKind", "")
-                val confirmationNumber = json.optString("confirmationNumber", "")
+                val json = ExtraFields.parse(record.extraJson)
+                val itemKind = ExtraFields.text(json, "kind")
+                val confirmationNumber = ExtraFields.text(json, "confirmationNumber")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (itemKind.isNotBlank()) {
                         val label = when (itemKind) {
                             "FLIGHT" -> "✈️ Voo"
                             "HOTEL" -> "🏨 Hospedagem"
                             "ACTIVITY" -> "🗺️ Passeio"
-                            "TRANSPORT" -> "🚗 Transporte"
+                            "TRANSFER" -> "🚗 Transfer"
+                            "DOCUMENT" -> "🛂 Documento"
+                            "BAGGAGE" -> "🧳 Bagagem"
                             else -> "📄 Outro"
                         }
                         InfoBadge(label, PlannerChampagne)
@@ -1231,14 +1237,14 @@ private fun RecordCard(
                 }
             }
             Kinds.TROUSSEAU -> {
-                val json = runCatching { JSONObject(record.extraJson) }.getOrElse { JSONObject() }
-                val room = json.optString("room", "")
-                val store = json.optString("store", "")
-                val priority = json.optString("priority", "")
+                val json = ExtraFields.parse(record.extraJson)
+                val room = ExtraFields.text(json, "room")
+                val store = ExtraFields.text(json, "store")
+                val priority = ExtraFields.text(json, "priority")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (room.isNotBlank()) InfoBadge("🏠 $room", PlannerChampagne)
+                    if (room.isNotBlank()) InfoBadge(webValueLabel(room, language), PlannerChampagne)
                     if (store.isNotBlank()) InfoBadge("🛍️ $store", PlannerEmerald)
-                    if (priority.isNotBlank()) InfoBadge("Prioridade: $priority", if (priority == "HIGH") PlannerRose else PlannerMuted)
+                    if (priority.isNotBlank()) InfoBadge("${localized(R.string.priority, language)}: ${webValueLabel(priority, language)}", priorityColor(priority))
                 }
             }
             Kinds.INVITATION, Kinds.SAVE_THE_DATE -> {
@@ -1363,7 +1369,7 @@ private fun RecordEditor(
 ) {
     val invalidMessage = localized(R.string.invalid_fields, language)
     var form by remember(initial?.id, module.kind) {
-        val json = runCatching { JSONObject(initial?.extraJson ?: "{}") }.getOrElse { JSONObject() }
+        val json = ExtraFields.parse(WebValues.normalizeExtra(module.kind, initial?.extraJson ?: "{}"))
         mutableStateOf(
             EditorFormState(
                 title = initial?.title.orEmpty(),
@@ -1388,34 +1394,34 @@ private fun RecordEditor(
                 venueCons = json.optString("cons", ""),
                 venueContactName = json.optString("contactName", ""),
                 venueMapsUrl = json.optString("mapsUrl", ""),
-                venueShortlisted = json.optBoolean("isShortlisted", false),
-                rating = json.optInt("rating", 0).takeIf { it > 0 }?.toString().orEmpty(),
+                venueShortlisted = ExtraFields.bool(json, "isShortlisted"),
+                rating = ExtraFields.int(json, "rating")?.takeIf { it > 0 }?.toString().orEmpty(),
                 vendorIndicatedBy = json.optString("indicatedBy", ""),
                 vendorTags = json.optString("tags", ""),
                 vendorContractLink = json.optString("contractLink", ""),
                 incomeFrequency = json.optString("frequency", "ONE_TIME"),
-                contractVersion = json.optInt("version", 1).toString(),
-                contractExpiresAt = json.optString("expiresAt", "").take(10),
+                contractVersion = (ExtraFields.int(json, "version") ?: 1).toString(),
+                contractExpiresAt = ExtraFields.day(json, "expiresAt")?.toString().orEmpty(),
                 contractPaymentTerms = json.optString("paymentTerms", ""),
                 contractCancellationPolicy = json.optString("cancellationPolicy", ""),
                 contractIncludedItems = json.optString("includedItems", ""),
                 contractExcludedItems = json.optString("excludedItems", ""),
                 contactRole = json.optString("role", ""),
-                contactPrimary = json.optBoolean("isPrimary", false),
-                guestSide = json.optString("side", "BOTH"),
+                contactPrimary = ExtraFields.bool(json, "isPrimary"),
+                guestSide = ExtraFields.text(json, "side"),
                 guestDietary = json.optString("dietary", ""),
                 guestCity = json.optString("city", ""),
-                guestIsVip = json.optBoolean("isVIP", false),
-                guestIsPadrinho = json.optBoolean("isPadrinho", false),
-                guestIsChild = json.optBoolean("isChild", false),
-                paymentMethod = json.optString("method", "PIX"),
-                lateFeePercent = json.optDouble("lateFeePercent", 2.0).toString(),
-                interestPercentPerMonth = json.optDouble("interestPercentPerMonth", 1.0).toString(),
-                honeymoonItemKind = json.optString("itemKind", "FLIGHT"),
+                guestIsVip = ExtraFields.bool(json, "isVIP"),
+                guestIsPadrinho = ExtraFields.bool(json, "isPadrinho"),
+                guestIsChild = ExtraFields.bool(json, "isChild"),
+                paymentMethod = ExtraFields.text(json, "method"),
+                lateFeePercent = ExtraFields.double(json, "lateFeePercent")?.toString().orEmpty(),
+                interestPercentPerMonth = ExtraFields.double(json, "interestPercentPerMonth")?.toString().orEmpty(),
+                honeymoonItemKind = ExtraFields.text(json, "kind", "FLIGHT"),
                 honeymoonConfirmation = json.optString("confirmationNumber", ""),
-                trousseauRoom = json.optString("room", ""),
+                trousseauRoom = ExtraFields.text(json, "room", "OTHER"),
                 trousseauStore = json.optString("store", ""),
-                itemPriority = json.optString("priority", "MEDIUM"),
+                itemPriority = ExtraFields.text(json, "priority", if (module.kind == Kinds.TROUSSEAU) "NICE_TO_HAVE" else "MEDIUM"),
                 parentId = initial?.parentId ?: initialParentId,
                 guestGroupId = initial?.guestGroupId,
                 seatingTableId = initial?.seatingTableId,
@@ -1487,10 +1493,12 @@ private fun RecordEditor(
                     }
                 }
                 if (module.kind == Kinds.PAYMENT) {
-                    Text("Forma de Pagamento", style = MaterialTheme.typography.labelLarge)
+                    Text(localized(R.string.payment_method, language), style = MaterialTheme.typography.labelLarge)
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf("PIX" to "PIX", "BOLETO" to "Boleto", "CREDIT_CARD" to "Cartão", "TRANSFER" to "TED/DOC").forEach { (key, lbl) ->
-                            FilterChip(selected = form.paymentMethod == key, onClick = { form = form.copy(paymentMethod = key) }, label = { Text(lbl) })
+                        WebValues.paymentMethods.forEach { key ->
+                            FilterChip(selected = form.paymentMethod == key,
+                                onClick = { form = form.copy(paymentMethod = if (form.paymentMethod == key) "" else key) },
+                                label = { Text(webValueLabel(key, language)) })
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1519,7 +1527,9 @@ private fun RecordEditor(
                             "FLIGHT" to "✈️ Voo",
                             "HOTEL" to "🏨 Hotel",
                             "ACTIVITY" to "🗺️ Passeio",
-                            "TRANSPORT" to "🚗 Transporte",
+                            "TRANSFER" to "🚗 Transfer",
+                            "DOCUMENT" to "🛂 Documento",
+                            "BAGGAGE" to "🧳 Bagagem",
                             "OTHER" to "📄 Outro",
                         ).forEach { (key, lbl) ->
                             FilterChip(selected = form.honeymoonItemKind == key, onClick = { form = form.copy(honeymoonItemKind = key) }, label = { Text(lbl) })
@@ -1534,28 +1544,26 @@ private fun RecordEditor(
                     )
                 }
                 if (module.kind == Kinds.TROUSSEAU) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            form.trousseauRoom,
-                            { form = form.copy(trousseauRoom = it.take(60)) },
-                            label = { Text("Cômodo (Quarto, Cozinha...)") },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                        )
-                        OutlinedTextField(
-                            form.trousseauStore,
-                            { form = form.copy(trousseauStore = it.take(80)) },
-                            label = { Text("Loja / Marca") },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                        )
+                    Text(localized(R.string.trousseau_room, language), style = MaterialTheme.typography.labelLarge)
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        WebValues.trousseauRooms.forEach { key ->
+                            FilterChip(selected = form.trousseauRoom == key, onClick = { form = form.copy(trousseauRoom = key) }, label = { Text(webValueLabel(key, language)) })
+                        }
                     }
+                    OutlinedTextField(
+                        form.trousseauStore,
+                        { form = form.copy(trousseauStore = it.take(80)) },
+                        label = { Text("Loja / Marca") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
                 if (module.kind in setOf(Kinds.TASK, Kinds.TROUSSEAU)) {
-                    Text("Prioridade", style = MaterialTheme.typography.labelLarge)
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf("HIGH" to "Alta", "MEDIUM" to "Média", "LOW" to "Baixa").forEach { (key, lbl) ->
-                            FilterChip(selected = form.itemPriority == key, onClick = { form = form.copy(itemPriority = key) }, label = { Text(lbl) })
+                    val priorities = if (module.kind == Kinds.TASK) WebValues.taskPriorities else WebValues.trousseauPriorities
+                    Text(localized(R.string.priority, language), style = MaterialTheme.typography.labelLarge)
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        priorities.forEach { key ->
+                            FilterChip(selected = form.itemPriority == key, onClick = { form = form.copy(itemPriority = key) }, label = { Text(webValueLabel(key, language)) })
                         }
                     }
                 }
@@ -1626,7 +1634,9 @@ private fun RecordEditor(
                 if (module.parentKind != null) {
                     Text(localized(modules.first { it.kind == module.parentKind }.title, language), style = MaterialTheme.typography.labelLarge)
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FilterChip(selected = form.parentId == null, onClick = { form = form.copy(parentId = null) }, label = { Text("—") })
+                        if (module.kind != Kinds.PAYMENT) {
+                            FilterChip(selected = form.parentId == null, onClick = { form = form.copy(parentId = null) }, label = { Text("—") })
+                        }
                         records.filter { it.kind == module.parentKind && it.deletedAt == null }.forEach { parent ->
                             FilterChip(selected = form.parentId == parent.id, onClick = { form = form.copy(parentId = parent.id) }, label = { Text(parent.title) })
                         }
@@ -1635,9 +1645,11 @@ private fun RecordEditor(
                 if (module.kind == Kinds.GUEST) {
                     Text("Lado do Casal & Perfil", style = MaterialTheme.typography.labelLarge)
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FilterChip(selected = form.guestSide == "BRIDE", onClick = { form = form.copy(guestSide = "BRIDE") }, label = { Text("👰 Noiva") })
-                        FilterChip(selected = form.guestSide == "GROOM", onClick = { form = form.copy(guestSide = "GROOM") }, label = { Text("🤵 Noivo") })
-                        FilterChip(selected = form.guestSide == "BOTH", onClick = { form = form.copy(guestSide = "BOTH") }, label = { Text("💑 Comum") })
+                        WebValues.guestSides.forEach { key ->
+                            FilterChip(selected = form.guestSide == key,
+                                onClick = { form = form.copy(guestSide = if (form.guestSide == key) "" else key) },
+                                label = { Text(webValueLabel(key, language)) })
+                        }
                     }
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         FilterChip(selected = form.guestIsVip, onClick = { form = form.copy(guestIsVip = !form.guestIsVip) }, label = { Text("⭐ VIP") })
@@ -1727,7 +1739,9 @@ private fun RecordEditor(
                     val contractExpiresAt = if (module.kind == Kinds.CONTRACT) normalizeDateInput(form.contractExpiresAt) else ""
                     if (contractExpiresAt.isNotBlank()) LocalDate.parse(contractExpiresAt)
                     if (normalizedDate.isNotBlank()) LocalDate.parse(normalizedDate)
-                    val updatedJson = JSONObject(initial?.extraJson ?: "{}").apply {
+                    val lateFee = form.lateFeePercent.takeIf { it.isNotBlank() }?.replace(',', '.')?.toDouble()?.also { require(it in 0.0..100.0) }
+                    val interest = form.interestPercentPerMonth.takeIf { it.isNotBlank() }?.replace(',', '.')?.toDouble()?.also { require(it in 0.0..100.0) }
+                    val updatedJson = ExtraFields.parse(WebValues.normalizeExtra(module.kind, initial?.extraJson ?: "{}")).apply {
                         when (module.kind) {
                             Kinds.VENUE -> {
                                 put("address", form.venueAddress.trim())
@@ -1749,7 +1763,7 @@ private fun RecordEditor(
                             }
                             Kinds.GUEST -> {
                                 put("tagIds", JSONArray(form.selectedTagIds.sorted()))
-                                put("side", form.guestSide)
+                                if (form.guestSide.isBlank()) remove("side") else put("side", form.guestSide)
                                 put("dietary", form.guestDietary.trim())
                                 put("city", form.guestCity.trim())
                                 put("isVIP", form.guestIsVip)
@@ -1757,16 +1771,16 @@ private fun RecordEditor(
                                 put("isChild", form.guestIsChild)
                             }
                             Kinds.PAYMENT -> {
-                                put("method", form.paymentMethod)
-                                put("lateFeePercent", form.lateFeePercent.toDoubleOrNull() ?: 2.0)
-                                put("interestPercentPerMonth", form.interestPercentPerMonth.toDoubleOrNull() ?: 1.0)
+                                if (form.paymentMethod.isBlank()) remove("method") else put("method", form.paymentMethod)
+                                put("lateFeePercent", lateFee ?: JSONObject.NULL)
+                                put("interestPercentPerMonth", interest ?: JSONObject.NULL)
                             }
                             Kinds.HONEYMOON_ITEM -> {
-                                put("itemKind", form.honeymoonItemKind)
+                                put("kind", form.honeymoonItemKind)
                                 put("confirmationNumber", form.honeymoonConfirmation.trim())
                             }
                             Kinds.TROUSSEAU -> {
-                                put("room", form.trousseauRoom.trim())
+                                put("room", form.trousseauRoom)
                                 put("store", form.trousseauStore.trim())
                                 put("priority", form.itemPriority)
                             }

@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import br.com.paivalab.weddingmanagementsystem.R
 import br.com.paivalab.weddingmanagementsystem.data.Money
 import br.com.paivalab.weddingmanagementsystem.data.PixBrCode
 import br.com.paivalab.weddingmanagementsystem.data.QrCodeMatrix
@@ -67,6 +68,7 @@ fun PixQrDialog(
     pixCity: String,
     initialAmountCents: Long? = null,
     transactionId: String? = null,
+    language: String,
     onDismiss: () -> Unit,
     onNotify: (String) -> Unit,
 ) {
@@ -77,9 +79,9 @@ fun PixQrDialog(
         if (customAmountText.isBlank()) null else runCatching { Money.parseToCents(customAmountText) }.getOrNull()
     }
     val brCode = remember(pixKey, pixHolderName, pixCity, parsedCents, transactionId) {
-        runCatching {
+        if (pixKey.isBlank()) "" else runCatching {
             PixBrCode.generate(
-                key = pixKey.ifBlank { "casamento@guilhermeemarina.com.br" },
+                key = pixKey,
                 merchantName = pixHolderName.ifBlank { "Casamento" },
                 merchantCity = pixCity.ifBlank { "SAO PAULO" },
                 amountCents = parsedCents,
@@ -105,6 +107,9 @@ fun PixQrDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                if (pixKey.isBlank()) {
+                    Text(localized(R.string.pix_key_missing, language), color = MaterialTheme.colorScheme.error)
+                }
                 if (matrix != null) {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color.White),

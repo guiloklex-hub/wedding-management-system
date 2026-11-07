@@ -16,7 +16,6 @@ data class MonthlyCashflow(
 }
 
 object FinanceRules {
-    private val monthlyFrequency = Regex("\\\"frequency\\\"\\s*:\\s*\\\"MONTHLY\\\"")
     fun monthlyCashflow(records: List<PlannerRecord>, eventDate: LocalDate, today: LocalDate): List<MonthlyCashflow> {
         val active = records.filter { it.deletedAt == null }
         val first = YearMonth.from(today)
@@ -24,11 +23,12 @@ object FinanceRules {
         if (last < first) return emptyList()
         val assets = active.filter { it.kind == Kinds.ASSET }.sumOf { it.amountCents ?: 0 }
         val incomes = active.filter { it.kind == Kinds.INCOME && it.status != "CANCELLED" }
-        val monthly = incomes.filter { monthlyFrequency.containsMatchIn(it.extraJson) }
+        val isMonthly = { record: PlannerRecord -> ExtraFields.text(ExtraFields.parse(record.extraJson), "frequency") == "MONTHLY" }
+        val monthly = incomes.filter(isMonthly)
             .sumOf { it.amountCents ?: 0 }
-        val once = incomes.filterNot { monthlyFrequency.containsMatchIn(it.extraJson) }
+        val once = incomes.filterNot(isMonthly)
             .groupBy { it.date?.take(7) }.mapValues { (_, rows) -> rows.sumOf { it.amountCents ?: 0 } }
-        val outflow = active.filter { it.kind == Kinds.PAYMENT }
+        val outflow = active.filter { it.kind == Kinds.PAYMENT && it.status != "PAID" }
             .groupBy { it.date?.take(7) }.mapValues { (_, rows) -> rows.sumOf { it.amountCents ?: 0 } }
         var running = assets
         return (0..min(120L, java.time.temporal.ChronoUnit.MONTHS.between(first, last)).toInt()).map { offset ->
@@ -38,6 +38,14 @@ object FinanceRules {
             MonthlyCashflow(month, running, income, spending, running + income - spending).also { running = it.endingCents }
         }
     }
+
+    /** Orçamento previsto como na web: soma de `estimatedValue` dos itens. */
+    fun budgetEstimated(records: List<PlannerRecord>): Long =
+        records.filter { it.kind == Kinds.BUDGET && it.deletedAt == null }.sumOf { it.estimatedCents ?: it.amountCents ?: 0L }
+
+    /** Valor real como na web: `actualValue ?? estimatedValue`. */
+    fun budgetActual(records: List<PlannerRecord>): Long =
+        records.filter { it.kind == Kinds.BUDGET && it.deletedAt == null }.sumOf { it.amountCents ?: it.estimatedCents ?: 0L }
 
     fun expectedContractedFraction(daysToEvent: Long): Double = when {
         daysToEvent > 365 -> .3

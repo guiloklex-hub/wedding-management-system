@@ -261,20 +261,14 @@ object QrCodeMatrix {
 }
 
 internal object ExtraJsonParser {
-    fun optDouble(json: String, key: String, default: Double = 0.0): Double {
-        val m = Regex("\"$key\"\\s*:\\s*([0-9]+(?:\\.[0-9]+)?)").find(json)
-        return m?.groupValues?.get(1)?.toDoubleOrNull() ?: default
-    }
+    fun optDouble(json: String, key: String, default: Double = 0.0): Double =
+        ExtraFields.double(ExtraFields.parse(json), key) ?: default
 
-    fun optBoolean(json: String, key: String, default: Boolean = false): Boolean {
-        val m = Regex("\"$key\"\\s*:\\s*(true|false)", RegexOption.IGNORE_CASE).find(json)
-        return m?.groupValues?.get(1)?.lowercase(Locale.ROOT)?.toBooleanStrictOrNull() ?: default
-    }
+    fun optBoolean(json: String, key: String, default: Boolean = false): Boolean =
+        ExtraFields.bool(ExtraFields.parse(json), key, default)
 
-    fun optString(json: String, key: String, default: String = ""): String {
-        val m = Regex("\"$key\"\\s*:\\s*\"([^\"]*)\"").find(json)
-        return m?.groupValues?.get(1) ?: default
-    }
+    fun optString(json: String, key: String, default: String = ""): String =
+        ExtraFields.text(ExtraFields.parse(json), key, default)
 }
 
 data class PaymentAdjustmentResult(
@@ -321,7 +315,10 @@ data class RiskAlertItem(
     val targetSection: String,
 )
 
+/** Port de `src/lib/reports/risk-radar.ts`: mesmas regras, limites e severidades. */
 object RiskRadar {
+    private fun day(value: String?): LocalDate? = value?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+
     fun compute(
         activeRecords: List<PlannerRecord>,
         cashflow: List<MonthlyCashflow>,
@@ -330,107 +327,110 @@ object RiskRadar {
         today: LocalDate = LocalDate.now(),
     ): List<RiskAlertItem> {
         val alerts = mutableListOf<RiskAlertItem>()
-        val vendorsById = activeRecords.filter { it.kind == Kinds.VENDOR }.associateBy { it.id }
+        val vendors = activeRecords.filter { it.kind == Kinds.VENDOR }
+        val vendorsById = vendors.associateBy { it.id }
 
-        // 1. Overdue payments
         val overduePayments = activeRecords.filter {
-            it.kind == Kinds.PAYMENT && it.status != "PAID" &&
-                it.date?.let { d -> runCatching { LocalDate.parse(d).isBefore(today) }.getOrDefault(false) } == true
+            it.kind == Kinds.PAYMENT && it.status != "PAID" && day(it.date)?.isBefore(today) == true
         }
         if (overduePayments.isNotEmpty()) {
-            val totalAdjusted = overduePayments.sumOf { PaymentAdjustment.compute(it, today).adjustedCents }
+            val total = overduePayments.sumOf { it.amountCents ?: 0L }
             alerts.add(
                 RiskAlertItem(
                     id = "overdue-payments",
                     severity = "HIGH",
                     title = "${overduePayments.size} pagamento(s) vencido(s)",
-                    body = "Total corrigido de ${formatMoney(totalAdjusted)}. Toque para regularizar.",
+                    body = "Soma de ${formatMoney(total)}. Possível incidência de juros e multas.",
                     targetSection = Kinds.PAYMENT,
                 ),
             )
         }
 
-        // 2. Negative cashflow projection
-        val firstNegative = cashflow.firstOrNull { it.negative }
-        if (firstNegative != null) {
+        cashflow.firstOrNull { it.negative }?.let { negative ->
             alerts.add(
                 RiskAlertItem(
                     id = "negative-cashflow",
                     severity = "HIGH",
-                    title = "Projeção de caixa negativa (${firstNegative.month})",
-                    body = "Saldo projetado fecha em ${formatMoney(firstNegative.endingCents)}. Revise entradas e parcelas.",
+                    title = "Projeção de caixa negativa",
+                    body = "O mês ${negative.month} fecha em ${formatMoney(negative.endingCents)}.",
                     targetSection = "insights",
                 ),
             )
         }
 
-        // 3. Unsigned contracts expiring within 90 days
-        activeRecords.filter { it.kind == Kinds.CONTRACT && it.status == "DRAFT" }.forEach { contract ->
-            val expDate = contract.date?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-            if (expDate != null) {
-                val daysLeft = ChronoUnit.DAYS.between(today, expDate)
-                if (daysLeft <= 90L) {
-                    val vendorName = contract.parentId?.let { vendorsById[it]?.title } ?: contract.title
-                    alerts.add(
-                        RiskAlertItem(
-                            id = "contract-${contract.id}",
-                            severity = if (daysLeft <= 30L) "HIGH" else "MEDIUM",
-                            title = "Minuta pendente: $vendorName",
-                            body = if (daysLeft < 0) "Prazo venceu há ${-daysLeft} dia(s) sem assinatura." else "Vence em $daysLeft dia(s) com status Minuta.",
-                            targetSection = Kinds.CONTRACT,
-                        ),
-                    )
-                }
+        val limit = today.plusDays(90)
+        activeRecords.filter { it.kind == Kinds.CONTRACT && it.status in setOf("DRAFT", "SENT", "NEGOTIATING") }
+            .forEach { contract ->
+                val expires = ExtraFields.day(ExtraFields.parse(contract.extraJson), "expiresAt") ?: return@forEach
+                if (expires.isAfter(limit)) return@forEach
+                val daysLeft = ChronoUnit.DAYS.between(today, expires)
+                val vendorName = contract.parentId?.let { vendorsById[it]?.title } ?: contract.title
+                alerts.add(
+                    RiskAlertItem(
+                        id = "contract-${contract.id}",
+                        severity = if (daysLeft <= 30L) "HIGH" else "MEDIUM",
+                        title = "Contrato sem assinatura: $vendorName",
+                        body = "Vence em $daysLeft dia(s) e está com status ${contract.status}.",
+                        targetSection = Kinds.CONTRACT,
+                    ),
+                )
+            }
+
+        val budgetsByVendor = activeRecords.filter { it.kind == Kinds.BUDGET && it.parentId != null }.groupBy { it.parentId }
+        vendors.forEach { vendor ->
+            val items = budgetsByVendor[vendor.id].orEmpty()
+            val estimated = items.sumOf { it.estimatedCents ?: 0L }
+            val actual = items.sumOf { it.amountCents ?: it.estimatedCents ?: 0L }
+            if (estimated > 0L && actual * 100 > estimated * 115) {
+                val overPct = (((actual - estimated).toDouble() / estimated) * 100.0).roundToLong()
+                alerts.add(
+                    RiskAlertItem(
+                        id = "vendor-creep-${vendor.id}",
+                        severity = if (actual * 100 > estimated * 130) "HIGH" else "MEDIUM",
+                        title = "${vendor.title} estourou orçamento",
+                        body = "Atual ${formatMoney(actual)} vs estimado ${formatMoney(estimated)} ($overPct%).",
+                        targetSection = Kinds.VENDOR,
+                    ),
+                )
             }
         }
 
-        // 4. Budget creep per item / vendor (> 5% or > 15%)
-        activeRecords.filter { it.kind == Kinds.BUDGET }.forEach { budget ->
-            val est = budget.estimatedCents ?: 0L
-            val real = budget.amountCents ?: 0L
-            if (est > 0L && real > est) {
-                val overPct = (((real - est).toDouble() / est) * 100.0).roundToLong()
-                if (overPct >= 5L) {
-                    alerts.add(
-                        RiskAlertItem(
-                            id = "budget-creep-${budget.id}",
-                            severity = if (overPct >= 15L) "HIGH" else "MEDIUM",
-                            title = "Acima do previsto: ${budget.title} (+$overPct%)",
-                            body = "Real ${formatMoney(real)} vs estimado ${formatMoney(est)} (+${formatMoney(real - est)}).",
-                            targetSection = Kinds.BUDGET,
-                        ),
-                    )
-                }
-            }
+        fun lateTasks(priority: String) = activeRecords.filter {
+            it.kind == Kinds.TASK && it.status != "DONE" && day(it.date)?.isBefore(today) == true &&
+                ExtraFields.text(ExtraFields.parse(it.extraJson), "priority") == priority
         }
-
-        // 5. Overdue urgent / high tasks
-        val overdueTasks = activeRecords.filter {
-            it.kind == Kinds.TASK && it.status != "DONE" &&
-                it.date?.let { d -> runCatching { LocalDate.parse(d).isBefore(today) }.getOrDefault(false) } == true
-        }
-        if (overdueTasks.isNotEmpty()) {
+        lateTasks("URGENT").takeIf { it.isNotEmpty() }?.let { tasks ->
             alerts.add(
                 RiskAlertItem(
-                    id = "overdue-tasks",
+                    id = "urgent-tasks-late",
                     severity = "HIGH",
-                    title = "${overdueTasks.size} tarefa(s) com prazo vencido",
-                    body = overdueTasks.take(2).joinToString(" · ") { it.title },
+                    title = "${tasks.size} tarefa(s) urgente(s) atrasada(s)",
+                    body = tasks.take(3).joinToString(" · ") { it.title },
+                    targetSection = Kinds.TASK,
+                ),
+            )
+        }
+        lateTasks("HIGH").takeIf { it.isNotEmpty() }?.let { tasks ->
+            alerts.add(
+                RiskAlertItem(
+                    id = "high-tasks-late",
+                    severity = "MEDIUM",
+                    title = "${tasks.size} tarefa(s) de alta prioridade atrasada(s)",
+                    body = tasks.take(3).joinToString(" · ") { it.title },
                     targetSection = Kinds.TASK,
                 ),
             )
         }
 
-        // 6. Vendors not finalized near event
-        if (daysToEvent != null && daysToEvent <= 60L) {
-            val pendingVendors = activeRecords.filter { it.kind == Kinds.VENDOR && it.status != "FINALIZED" }
-            if (pendingVendors.isNotEmpty()) {
+        if (daysToEvent != null && daysToEvent <= 30L) {
+            val pendingFinalize = vendors.filter { it.status == "CONTRACTED" }
+            if (pendingFinalize.isNotEmpty()) {
                 alerts.add(
                     RiskAlertItem(
-                        id = "vendors-pending",
+                        id = "vendors-not-finalized",
                         severity = "MEDIUM",
-                        title = "${pendingVendors.size} fornecedor(es) ainda não finalizado(s)",
-                        body = "Confirme entregáveis e alinhamento final para o Grande Dia.",
+                        title = "${pendingFinalize.size} fornecedor(es) ainda não finalizado(s)",
+                        body = "Próximo ao evento, confirme entregáveis e itens pendentes.",
                         targetSection = Kinds.VENDOR,
                     ),
                 )

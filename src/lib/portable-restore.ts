@@ -5,7 +5,7 @@ import path from "node:path";
 import { backup, DatabaseSync } from "node:sqlite";
 import { acquirePortableOperation, clearRestoreJournal, writeRestoreJournal } from "./portable-maintenance";
 import { databasePath } from "./portable-export";
-import { inspectPortable, type InspectedPortable, type PortablePreview } from "./portable-inspect";
+import { inspectPortable, mergeOptions, type InspectedPortable, type PortablePreview } from "./portable-inspect";
 import { mergeMobileRecords, prepareAndroidBase } from "./portable-merge";
 import { sha256File } from "./portable-format";
 
@@ -143,7 +143,7 @@ async function stage(result: InspectedPortable, target: string): Promise<{ datab
   const db = new DatabaseSync(stagedDb);
   try {
     if (!result.preview.manifest.webDatabase) prepareAndroidBase(db);
-    mergeMobileRecords(db, result.records, result.baseline);
+    mergeMobileRecords(db, result.records, result.baseline, mergeOptions(result.preview.manifest));
     await applyFiles(result, db, stagedUploads, stagedState);
     applySettings(db, await result.archive.readJson<SettingsRow[]>("settings.json"), result.preview);
     applyTemplates(db, result.records, result.baseline);

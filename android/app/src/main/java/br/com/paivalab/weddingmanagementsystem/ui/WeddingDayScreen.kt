@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
+import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import org.json.JSONObject
@@ -45,7 +46,7 @@ fun WeddingDayScreen(
     var rain by remember(storedRain) { mutableStateOf(storedRain) }
     var notes by remember(storedNotes) { mutableStateOf(storedNotes) }
     val confirmed = records.filter { it.kind == Kinds.GUEST && it.status == "CONFIRMED" && it.deletedAt == null }
-    val checked = confirmed.count { runCatching { JSONObject(it.extraJson).has("checkedInAt") }.getOrDefault(false) }
+    val checked = confirmed.count { ExtraFields.has(ExtraFields.parse(it.extraJson), "checkedInAt") }
     val tables = records.filter { it.kind == Kinds.TABLE && it.deletedAt == null }.sortedBy { it.title }
     val unseated = confirmed.filter { it.seatingTableId == null }
 
@@ -133,7 +134,7 @@ fun WeddingDayScreen(
             }
         }
         items(confirmed, key = { it.id }) { guest ->
-            val checkedAt = runCatching { JSONObject(guest.extraJson).optLong("checkedInAt", 0L) }.getOrDefault(0L)
+            val checkedAt = ExtraFields.instant(ExtraFields.parse(guest.extraJson), "checkedInAt") ?: 0L
             val isChecked = checkedAt > 0L
             Card(
                 colors = CardDefaults.cardColors(containerColor = PlannerSurface),

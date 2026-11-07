@@ -65,33 +65,44 @@ class DomainEnhancementsTest {
     }
 
     @Test
-    fun `RiskRadar flags overdue payments and budget creep`() {
+    fun `RiskRadar follows web rules for payments vendor creep contracts and tasks`() {
         val records = listOf(
-            PlannerRecord(
-                id = "b1",
-                kind = Kinds.BUDGET,
-                title = "Buffet",
-                estimatedCents = 50_000_00L,
-                amountCents = 60_000_00L, // +20% creep
-            ),
-            PlannerRecord(
-                id = "p1",
-                kind = Kinds.PAYMENT,
-                title = "Sinal Decoração",
-                amountCents = 5_000_00L,
-                date = "2026-08-01",
-                status = "PENDING",
-            ),
+            PlannerRecord(id = "v1", kind = Kinds.VENDOR, title = "Buffet", subtitle = "Buffet", status = "CONTRACTED"),
+            PlannerRecord(id = "b1", kind = Kinds.BUDGET, title = "Buffet", parentId = "v1",
+                estimatedCents = 50_000_00L, amountCents = 60_000_00L), // +20%: amber
+            PlannerRecord(id = "p1", kind = Kinds.PAYMENT, title = "Sinal", parentId = "v1",
+                amountCents = 5_000_00L, date = "2026-08-01", status = "PENDING"),
+            PlannerRecord(id = "c1", kind = Kinds.CONTRACT, title = "Contrato", parentId = "v1", status = "SENT",
+                date = "2026-01-10", extraJson = """{"expiresAt":"2026-10-15"}"""),
+            PlannerRecord(id = "t1", kind = Kinds.TASK, title = "Enviar convites", status = "TODO",
+                date = "2026-09-01", extraJson = """{"priority":"URGENT"}"""),
+            PlannerRecord(id = "t2", kind = Kinds.TASK, title = "Sem prioridade alta", status = "TODO",
+                date = "2026-09-01", extraJson = """{"priority":"MEDIUM"}"""),
         )
         val alerts = RiskRadar.compute(
             activeRecords = records,
             cashflow = emptyList(),
-            daysToEvent = 45L,
+            daysToEvent = 25L,
             formatMoney = { "R$ ${it / 100}" },
             today = LocalDate.parse("2026-09-28"),
+        ).associateBy { it.id }
+        assertEquals("HIGH", alerts.getValue("overdue-payments").severity)
+        assertEquals("MEDIUM", alerts.getValue("vendor-creep-v1").severity)
+        assertEquals("HIGH", alerts.getValue("contract-c1").severity)
+        assertEquals("HIGH", alerts.getValue("urgent-tasks-late").severity)
+        assertEquals("MEDIUM", alerts.getValue("vendors-not-finalized").severity)
+        assertTrue("high-tasks-late" !in alerts)
+    }
+
+    @Test
+    fun `RiskRadar ignores signed contracts and signature date`() {
+        val records = listOf(
+            PlannerRecord(id = "c1", kind = Kinds.CONTRACT, title = "Assinado", status = "SIGNED_DIGITAL",
+                extraJson = """{"expiresAt":"2026-10-01"}"""),
+            PlannerRecord(id = "c2", kind = Kinds.CONTRACT, title = "Minuta", status = "DRAFT", date = "2026-09-30"),
         )
-        assertTrue(alerts.any { it.id == "overdue-payments" && it.severity == "HIGH" })
-        assertTrue(alerts.any { it.id == "budget-creep-b1" && it.severity == "HIGH" })
+        val alerts = RiskRadar.compute(records, emptyList(), null, { "" }, LocalDate.parse("2026-09-28"))
+        assertTrue(alerts.isEmpty())
     }
 
     @Test

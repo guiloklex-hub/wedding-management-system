@@ -1535,7 +1535,9 @@
         "exportInput": "Enter your account password and a backup password of at least 12 characters.",
         "validateInput": "Select a file and enter its backup password.",
         "restoreInput": "Select a file, enter both passwords, and confirm replacement.",
-        "accountPasswordInvalid": "Incorrect account password."
+        "accountPasswordInvalid": "Incorrect account password.",
+        "webChangesLost": "{count, plural, one {# record changed on the web after this export will be overwritten. Export a web backup first if you want to keep it.} other {# records changed on the web after this export will be overwritten. Export a web backup first if you want to keep them.}}",
+        "replacesAllWebData": "This backup came from an Android device without a copy of the web database: all current web data will be erased and replaced with the phone's data."
       },
       "exportTitle": "Export backup",
       "exportSubtitle": "Legacy partial JSON: includes selected records and a checksum, but not uploads/ bytes, orphan artwork, or every current table.",

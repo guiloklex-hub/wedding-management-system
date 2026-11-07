@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -62,8 +64,8 @@ fun VendorCompareScreen(records: List<PlannerRecord>, language: String, currency
     val active = records.filter { it.deletedAt == null }
     val vendors = active.filter { it.kind == Kinds.VENDOR }
         .sortedWith(compareBy({ it.subtitle.lowercase() }, { it.title.lowercase() }))
-    val totalPlanned = active.filter { it.kind == Kinds.BUDGET }.sumOf { it.estimatedCents ?: 0L }
-    val totalActual = active.filter { it.kind == Kinds.BUDGET }.sumOf { it.amountCents ?: 0L }
+    val totalPlanned = FinanceRules.budgetEstimated(active)
+    val totalActual = FinanceRules.budgetActual(active)
     val totalDiff = totalActual - totalPlanned
 
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -190,6 +192,23 @@ fun SettingsScreen(
     var pixHolder by remember(storedPixHolder) { mutableStateOf(storedPixHolder) }
     var pixCity by remember(storedPixCity) { mutableStateOf(storedPixCity) }
     var showPixDialog by remember { mutableStateOf(false) }
+    var confirmDemo by remember { mutableStateOf(false) }
+    val records by model.records.collectAsState()
+
+    if (confirmDemo) {
+        AlertDialog(
+            onDismissRequest = { confirmDemo = false },
+            text = { Text(localized(R.string.demo_seed_confirm, language)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDemo = false
+                    onLoadDemoSeed()
+                    onNotify(localizedText(context, R.string.demo_seed_loaded, language))
+                }) { Text(localized(R.string.demo_seed_button, language)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDemo = false }) { Text(localized(R.string.cancel, language)) } },
+        )
+    }
 
     if (showPixDialog && activity != null) {
         PixQrDialog(
@@ -197,6 +216,7 @@ fun SettingsScreen(
             pixKey = pixKey,
             pixHolderName = pixHolder,
             pixCity = pixCity,
+            language = language,
             onDismiss = { showPixDialog = false },
             onNotify = onNotify,
         )
@@ -306,14 +326,10 @@ fun SettingsScreen(
                     OutlinedButton(onClick = { authenticate(null) }, modifier = Modifier.fillMaxWidth()) {
                         Text(localized(R.string.unlock_button, language))
                     }
-                    OutlinedButton(
-                        onClick = {
-                            onLoadDemoSeed()
-                            onNotify("Dados de demonstração (Seed) recarregados!")
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text("Recarregar dados de demonstração (Seed)")
+                    if (records.isEmpty()) {
+                        OutlinedButton(onClick = { confirmDemo = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(localized(R.string.demo_seed_button, language))
+                        }
                     }
                 }
             }
@@ -344,8 +360,8 @@ fun InsightsScreen(
         }.isFailure
     }
     val active = records.filter { it.deletedAt == null }
-    val expected = active.filter { it.kind == Kinds.BUDGET }.sumOf { it.estimatedCents ?: it.amountCents ?: 0L }
-    val actualTotal = active.filter { it.kind == Kinds.BUDGET }.sumOf { it.amountCents ?: it.estimatedCents ?: 0L }
+    val expected = FinanceRules.budgetEstimated(active)
+    val actualTotal = FinanceRules.budgetActual(active)
     val contingencyCents = (expected * contingencyPercent) / 100L
     val contracted = active.count { it.kind == Kinds.VENDOR && it.status in setOf("CONTRACTED", "FINALIZED") }
     val vendors = active.count { it.kind == Kinds.VENDOR }
@@ -651,7 +667,8 @@ fun AuditScreen(audits: List<PlannerAudit>, records: List<PlannerRecord>, langua
                 "SEED_DEMO" -> "Dados de demonstração (Seed) carregados"
                 "CHECK_IN" -> "Check-in de convidado no evento"
                 "GROUP_RSVP" -> "RSVP do grupo atualizado"
-                "CONFIRM_INVITE" -> "Envio de convite confirmado"
+                "CONFIRM_SENT", "CONFIRM_INVITE" -> localized(R.string.audit_invite_sent, language)
+                "SEED_VENUE_CHECKLIST" -> localized(R.string.audit_venue_checklist, language)
                 else -> audit.action.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }
             }
             val recordTitle = names[audit.recordId].orEmpty()

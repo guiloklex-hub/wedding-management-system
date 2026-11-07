@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import br.com.paivalab.weddingmanagementsystem.R
+import br.com.paivalab.weddingmanagementsystem.data.ExtraFields
 import br.com.paivalab.weddingmanagementsystem.data.Kinds
 import br.com.paivalab.weddingmanagementsystem.data.PlannerFile
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
@@ -91,7 +92,7 @@ fun VendorDetailScreen(
 ) {
     val vendorFields = fields(vendor)
     val contacts = records.filter { it.kind == Kinds.CONTACT && it.parentId == vendor.id }
-        .sortedByDescending { fields(it).optBoolean("isPrimary") }
+        .sortedByDescending { ExtraFields.bool(fields(it), "isPrimary") }
     val notes = records.filter { it.kind == Kinds.VENDOR_NOTE && it.parentId == vendor.id }.sortedByDescending { it.createdAt }
     val contracts = records.filter { it.kind == Kinds.CONTRACT && it.parentId == vendor.id }.sortedByDescending { fields(it).optInt("version", 1) }
     val budgets = records.filter { it.kind == Kinds.BUDGET && it.parentId == vendor.id }
@@ -134,7 +135,7 @@ fun VendorDetailScreen(
                 if (contacts.isEmpty()) Text(localized(R.string.empty, language), color = PlannerMuted)
                 contacts.forEach { contact ->
                     DetailValue(contact.title, listOf(fields(contact).text("role"), contact.phone, contact.email).filter { it.isNotBlank() }.joinToString(" · "))
-                    if (fields(contact).optBoolean("isPrimary")) Text(localized(R.string.primary_contact, language), color = PlannerChampagne)
+                    if (ExtraFields.bool(fields(contact), "isPrimary")) Text(localized(R.string.primary_contact, language), color = PlannerChampagne)
                     Row {
                         TextButton(onClick = { onEdit(contact) }) { Text(localized(R.string.edit, language)) }
                         if (contact.phone.isNotBlank()) TextButton(onClick = { onDial(contact.phone) }) { Text(localized(R.string.call_phone, language)) }
@@ -247,7 +248,7 @@ fun VenueDetailScreen(
                 DetailValue(localized(R.string.venue_capacity_standing, language), data.text("capacityStanding"))
                 venue.amountCents?.let { DetailValue(localized(R.string.amount, language), localizedCurrency(it, currency, language)) }
                 DetailValue(localized(R.string.venue_contact_name, language), data.text("contactName"))
-                if (data.optBoolean("isShortlisted")) Text(localized(R.string.venue_shortlisted, language), color = PlannerChampagne)
+                if (ExtraFields.bool(data, "isShortlisted")) Text(localized(R.string.venue_shortlisted, language), color = PlannerChampagne)
                 DetailValue(localized(R.string.venue_pricing, language), data.text("pricingNotes"))
                 DetailValue(localized(R.string.venue_restrictions, language), data.text("restrictions"))
                 DetailValue(localized(R.string.venue_pros, language), data.text("pros"))

@@ -28,6 +28,8 @@ export type PortableManifest = {
   schemas: { web: string | null; android: number };
   uploads: Record<string, { sha256: string; size: number }>;
   webDatabase: { sha256: string; size: number } | null;
+  /** Presente a partir do Android v1.1.1: `extraJson` usa nomes e valores das colunas web. */
+  fieldMap?: number;
 };
 
 export function sqliteSchemaHash(database: import("node:sqlite").DatabaseSync): string {

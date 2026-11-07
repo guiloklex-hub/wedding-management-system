@@ -4,6 +4,8 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import androidx.room.withTransaction
+import br.com.paivalab.weddingmanagementsystem.data.FIELD_MAP_VERSION
+import br.com.paivalab.weddingmanagementsystem.data.LegacyRepair
 import br.com.paivalab.weddingmanagementsystem.data.PlannerAudit
 import br.com.paivalab.weddingmanagementsystem.data.PlannerBlob
 import br.com.paivalab.weddingmanagementsystem.data.PlannerDatabase
@@ -12,6 +14,7 @@ import br.com.paivalab.weddingmanagementsystem.data.PlannerPreferences
 import br.com.paivalab.weddingmanagementsystem.data.PlannerRecord
 import br.com.paivalab.weddingmanagementsystem.data.PlannerSetting
 import br.com.paivalab.weddingmanagementsystem.data.PortableState
+import br.com.paivalab.weddingmanagementsystem.data.WebValues
 import java.io.File
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
@@ -156,7 +159,8 @@ class BackupArchive(
                         .put("uploads", savedManifest?.optJSONObject("uploads") ?: JSONObject())
                         .put("webDatabase", savedManifest?.optJSONObject("webDatabase") ?: JSONObject.NULL)
                         .put("locale", locale)
-                        .put("currency", currency))
+                        .put("currency", currency)
+                        .put("fieldMap", FIELD_MAP_VERSION))
                 }
                 BackupPreview(records.size, files.size, exportedAt, true,
                     savedManifest?.optJSONObject("webTables")?.length() ?: 0)
@@ -210,7 +214,12 @@ class BackupArchive(
                 dao.clearSettings()
                 dao.clearRecords()
                 dao.clearPortableState()
-                dao.saveRecords(backup.records)
+                val legacyAndroid = backup.manifest.optString("origin") == "android" &&
+                    backup.manifest.optInt("fieldMap", 0) < FIELD_MAP_VERSION
+                val baselineExtras = if (legacyAndroid) LegacyRepair.baselineExtras(backup.baseline) else emptyMap()
+                dao.saveRecords(backup.records.map { record ->
+                    WebValues.normalize(LegacyRepair.repair(record, baselineExtras[record.id]))
+                })
                 dao.saveFiles(backup.files)
                 dao.saveSettings(backup.settings)
                 dao.addAudit(backup.audits)

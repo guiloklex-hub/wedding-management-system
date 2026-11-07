@@ -59,6 +59,17 @@ SECRET_FIELDS = {
     "rsvpPin", "tokenHash", "uploadedById", "userId", "invitationRsvpUrl",
 }
 
+# Espelha src/lib/portable-fields.ts: tipos que precisam de normalização no extraJson.
+BOOL_FIELDS = {
+    "contact": {"isPrimary"}, "venue": {"isShortlisted"}, "goal": {"isActive"},
+    "guest": {"isVIP", "isPadrinho", "isChild"}, "gift": {"isHoneymoonShare"},
+}
+DATE_FIELDS = {"contract": {"expiresAt"}, "honeymoon": {"endDate"}, "honeymoon_item": {"endAt"}}
+INSTANT_FIELDS = {
+    "payment": {"paidAt"}, "guest": {"checkedInAt"}, "task": {"completedAt"},
+    "gift": {"thankedAt", "pixPaidAt", "processedAt"},
+}
+
 
 class ConversionError(ValueError):
     def __init__(self, message, report):
@@ -103,6 +114,25 @@ def millis(value):
 def day(value):
     stamp = millis(value)
     return dt.datetime.fromtimestamp(stamp / 1000, dt.timezone.utc).date().isoformat() if stamp is not None else None
+
+
+def mobile_extra(kind, row):
+    result = {}
+    for key, value in row.items():
+        if key in SECRET_FIELDS or key == "id" or value is None:
+            continue
+        if key in BOOL_FIELDS.get(kind, ()):
+            if value in (True, 1, "1", "true"):
+                result[key] = True
+            elif value in (False, 0, "0", "false"):
+                result[key] = False
+        elif key in DATE_FIELDS.get(kind, ()):
+            result[key] = day(value)
+        elif key in INSTANT_FIELDS.get(kind, ()):
+            result[key] = millis(value)
+        else:
+            result[key] = value
+    return result
 
 
 def cents(value):
@@ -185,7 +215,7 @@ def convert(tables, uploads, source_type, allow_missing, stream_blobs=False):
             identifier = str(row["id"])
             title = str(row.get(title_key) or (f"Pagamento {identifier}" if kind == "payment" else kind))[:160]
             amount = row.get("actualValue") if kind == "budget" else (row.get(amount_key) if amount_key else None)
-            extra = {key: value for key, value in row.items() if key not in SECRET_FIELDS and key != "id"}
+            extra = mobile_extra(kind, row)
             record = {
                 "id": identifier, "kind": kind, "title": title, "subtitle": str(row.get("category") or row.get("source") or ""),
                 "amountCents": int(amount) if kind == "table" and amount is not None else cents(amount),

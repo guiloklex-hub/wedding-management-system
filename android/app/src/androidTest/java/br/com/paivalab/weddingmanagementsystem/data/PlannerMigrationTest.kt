@@ -35,7 +35,7 @@ class PlannerMigrationTest {
             database.version = 1
         }
         val migrated = Room.databaseBuilder(context, PlannerDatabase::class.java, name)
-            .addMigrations(PlannerDatabase.MIGRATION_1_2, PlannerDatabase.MIGRATION_2_3).build()
+            .addMigrations(PlannerDatabase.MIGRATION_1_2, PlannerDatabase.MIGRATION_2_3, PlannerDatabase.MIGRATION_3_4).build()
         try {
             assertEquals("BRL", migrated.dao().allSettings().first { it.key == "currency" }.value)
             migrated.dao().savePortableState(PortableState("lineage", "v3"))
@@ -69,10 +69,54 @@ class PlannerMigrationTest {
             database.version = 2
         }
         val migrated = Room.databaseBuilder(context, PlannerDatabase::class.java, name)
-            .addMigrations(PlannerDatabase.MIGRATION_1_2, PlannerDatabase.MIGRATION_2_3).build()
+            .addMigrations(PlannerDatabase.MIGRATION_1_2, PlannerDatabase.MIGRATION_2_3, PlannerDatabase.MIGRATION_3_4).build()
         try {
             assertEquals(1, migrated.dao().allFiles().single().version)
             assertEquals("contrato.pdf", migrated.dao().allFiles().single().fileName)
+        } finally {
+            migrated.close()
+            context.deleteDatabase(name)
+        }
+    }
+
+    @Test fun migrationAlignsLegacyMetadataWithWebValues() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val assets = InstrumentationRegistry.getInstrumentation().context.assets
+        val schema = assets.open("br.com.paivalab.weddingmanagementsystem.data.PlannerDatabase/3.json")
+            .bufferedReader().use { JSONObject(it.readText()) }.getJSONObject("database")
+        val name = "planner-v3-to-v4.db"
+        context.deleteDatabase(name)
+        context.openOrCreateDatabase(name, Context.MODE_PRIVATE, null).use { database ->
+            val entities = schema.getJSONArray("entities")
+            for (index in 0 until entities.length()) {
+                val entity = entities.getJSONObject(index)
+                val table = entity.getString("tableName")
+                database.execSQL(entity.getString("createSql").replace("\${TABLE_NAME}", table))
+                val indexes = entity.optJSONArray("indices") ?: JSONArray()
+                for (item in 0 until indexes.length()) {
+                    database.execSQL(indexes.getJSONObject(item).getString("createSql").replace("\${TABLE_NAME}", table))
+                }
+            }
+            val insert = "INSERT INTO records (id, kind, title, subtitle, status, plusOnesAllowed, plusOnesConfirmed, phone, " +
+                "email, notes, extraJson, createdAt, updatedAt, parentId) VALUES (?, ?, ?, '', '', 0, 0, '', '', '', ?, 1, 1, ?)"
+            database.execSQL(insert, arrayOf("vip", "guest", "Ana", """{"isVIP":false,"side":"BOTH","checkedInAt":null}""", null))
+            database.execSQL(insert, arrayOf("new", "guest", "Bia", """{"side":"BRIDE"}""", null))
+            database.execSQL(insert, arrayOf("gift", "gift", "Pix", "{}", null))
+            database.execSQL(insert, arrayOf("asset", "asset", "Pix", "{}", "gift"))
+            database.execSQL("INSERT INTO portable_state (`key`, `value`) VALUES ('baseline', ?)",
+                arrayOf("""[{"id":"vip","extraJson":"{\"isVIP\":1,\"checkedInAt\":null}"}]"""))
+            database.version = 3
+        }
+        val migrated = Room.databaseBuilder(context, PlannerDatabase::class.java, name)
+            .addMigrations(PlannerDatabase.MIGRATION_1_2, PlannerDatabase.MIGRATION_2_3, PlannerDatabase.MIGRATION_3_4).build()
+        try {
+            val records = migrated.dao().allRecords().associateBy { it.id }
+            val vip = JSONObject(records.getValue("vip").extraJson)
+            assertEquals(true, vip.getBoolean("isVIP"))
+            assertEquals(false, vip.has("side"))
+            assertEquals(false, vip.has("checkedInAt"))
+            assertEquals("NOIVA", JSONObject(records.getValue("new").extraJson).getString("side"))
+            assertEquals(null, records.getValue("asset").parentId)
         } finally {
             migrated.close()
             context.deleteDatabase(name)

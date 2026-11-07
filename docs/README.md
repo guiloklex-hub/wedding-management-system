@@ -43,6 +43,7 @@ Se você é um casal querendo apenas usar o sistema, comece pelo
 |---|---|
 | Mapa de assentos (seating chart) | [seating-chart.md](seating-chart.md) |
 | RSVP individual e em grupo | [rsvp.md](rsvp.md) |
+| Comunicações: hub e Avisos (envio livre com público escolhido) | [comunicacoes.md](comunicacoes.md) |
 | Save the Date (envio em massa com anexo) | [save-the-date.md](save-the-date.md) |
 | Convites Oficiais (envio com PIN gate e RSVP) | [invitations.md](invitations.md) |
 | Pix nos presentes (cota lua de mel) | [pix.md](pix.md) |

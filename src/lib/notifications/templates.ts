@@ -2,6 +2,13 @@ import { getTranslations } from "next-intl/server";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 import { formatCurrency, formatDate } from "@/i18n/format";
 import { interpolateBaseTags } from "./std-message";
+import {
+  ANNOUNCEMENT_LINK_TAGS,
+  formatAnnouncementDate,
+  renderAnnouncementText,
+  replaceAnnouncementTags,
+  type AnnouncementTagValues,
+} from "./announcement-message";
 
 export type NotificationKind =
   | "ACCOUNT_CREATED"
@@ -14,6 +21,7 @@ export type NotificationKind =
   | "GUEST_RSVP"
   | "SAVE_THE_DATE"
   | "OFFICIAL_INVITATION"
+  | "ANNOUNCEMENT"
   | "RSVP_REMINDER"
   | "RSVP_REMINDER_GROUP"
   | "SYSTEM_WHATSAPP_DOWN"
@@ -107,6 +115,20 @@ export type RenderInput =
       deadline: string | null;
       eventDate: Date | string | null;
       daySchedule?: string | null;
+      imageCid?: string | null;
+    } & WithLocale)
+  | ({
+      kind: "ANNOUNCEMENT";
+      title: string;
+      coupleNames: string;
+      message: string;
+      memberNames: string;
+      eventDate: string | null;
+      venueName: string | null;
+      siteUrl: string | null;
+      registryUrl: string | null;
+      rsvpLink: string | null;
+      pin: string | null;
       imageCid?: string | null;
     } & WithLocale)
   | ({
@@ -714,6 +736,39 @@ ${tk("intro", { guest: escapeWaMarkdown(input.guestName) })}
       );
 
       return { subject, html, text, waText };
+    }
+
+    case "ANNOUNCEMENT": {
+      const values: AnnouncementTagValues = {
+        nomes: input.coupleNames,
+        convidados: input.memberNames,
+        data: formatAnnouncementDate(input.eventDate, locale),
+        local: input.venueName ?? "",
+        site: input.siteUrl ?? "",
+        "site-presentes": input.registryUrl ?? "",
+        "link-rsvp": input.rsvpLink ?? "",
+        pin: input.pin ?? "",
+      };
+      const subject = t("ANNOUNCEMENT.subject", { title: input.title, names: input.coupleNames });
+      const text = renderAnnouncementText(input.message, values).trim();
+      const anchor = (url: string) =>
+        url ? `<a href="${escapeHtml(url)}" style="color:#fda4af;">${escapeHtml(url)}</a>` : "";
+      const bodyHtml = replaceAnnouncementTags(escapeHtml(input.message), (tag) =>
+        ANNOUNCEMENT_LINK_TAGS.has(tag) ? anchor(values[tag]) : escapeHtml(values[tag]),
+      )
+        .trim()
+        .replace(/\n/g, "<br>");
+      const imageHtml = input.imageCid
+        ? `<p style="text-align:center;margin:0 0 20px;"><img src="cid:${escapeHtml(input.imageCid)}" alt="${escapeHtml(t("ANNOUNCEMENT.imageAlt", { title: input.title }))}" style="max-width:100%;border-radius:12px;"></p>`
+        : "";
+      const html = wrapHtml(
+        subject,
+        `${imageHtml}<p style="font-size:16px;line-height:1.6;">${bodyHtml}</p>`,
+        locale,
+        "",
+        input.coupleNames,
+      );
+      return { subject, html, text, waText: text };
     }
 
     case "SYSTEM_WHATSAPP_DOWN": {

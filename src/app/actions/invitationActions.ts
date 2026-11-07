@@ -13,7 +13,8 @@ import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { getEventConfig, updateEventConfig } from "@/lib/event-config";
 import { coerceLocale } from "@/i18n/config";
 import { saveUpload, readUpload, removeUpload } from "@/lib/storage";
-import { detectMagic, assertMagicMatchesMime, FileValidationError } from "@/lib/file-validation";
+import { FileValidationError } from "@/lib/file-validation";
+import { validateArtFile } from "@/lib/art-upload";
 import {
   buildInvitationRecipients,
   type BuiltRecipient,
@@ -31,8 +32,6 @@ import { armBroadcastWorker } from "@/lib/notifications/broadcast-worker";
 import { normalizeMsisdn } from "@/lib/notifications/std-message";
 import type { ActionResult } from "@/types";
 
-const ART_MIME = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp"]);
-const ART_MAX_BYTES = 10 * 1024 * 1024;
 
 const optUrl = z
   .string()
@@ -157,14 +156,8 @@ export async function saveInvitationConfig(
 
   if (file instanceof File && file.size > 0) {
     try {
-      if (file.size > ART_MAX_BYTES) {
-        return { success: false, error: t("fileTooLarge") };
-      }
-      if (!ART_MIME.has(file.type)) {
-        return { success: false, error: t("fileTypeInvalid") };
-      }
-      const bytes = Buffer.from(await file.arrayBuffer());
-      assertMagicMatchesMime(detectMagic(bytes), file.type);
+      const invalidArt = await validateArtFile(file);
+      if (invalidArt) return { success: false, error: t(invalidArt) };
 
       const stored = await saveUpload(file, {
         ownerType: "OFFICIAL_INVITATION",
@@ -216,7 +209,7 @@ export async function saveInvitationConfig(
       rsvpMode: parsed.data.invitationRsvpUseExternal ? "EXTERNAL" : "NATIVE",
       hasArt: !!artUpdate.invitationFilePath,
     });
-    revalidatePath("/dashboard/invitations");
+    revalidatePath("/dashboard/communications/invitations");
     return { success: true };
   } catch (err) {
     if (newlyStoredPath) {
@@ -704,7 +697,7 @@ export async function startInvitationBroadcast(
     eligible: pendingRecipients.length,
   });
 
-  revalidatePath("/dashboard/invitations");
+  revalidatePath("/dashboard/communications/invitations");
 
   const progress = await progressFor(broadcast.id);
   return { success: true, data: progress ?? undefined };
@@ -813,7 +806,7 @@ export async function resendFailedInvitations(
 
   armBroadcastWorker();
   await audit("Broadcast", broadcastId, "UPDATE", { action: "RESEND_FAILED", count: reset.count });
-  revalidatePath("/dashboard/invitations");
+  revalidatePath("/dashboard/communications/invitations");
 
   const progress = await progressFor(broadcastId);
   return { success: true, data: progress ?? undefined };
@@ -841,7 +834,7 @@ export async function cancelInvitationBroadcast(broadcastId: string): Promise<Ac
   ]);
 
   await audit("Broadcast", broadcastId, "UPDATE", { action: "CANCEL" });
-  revalidatePath("/dashboard/invitations");
+  revalidatePath("/dashboard/communications/invitations");
   return { success: true };
 }
 

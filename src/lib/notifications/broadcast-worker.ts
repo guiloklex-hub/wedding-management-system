@@ -11,6 +11,12 @@ import {
   RecipientPayloadSchema,
   type InvitationContext,
 } from "./official-invitation";
+import {
+  loadAnnouncementContextFromPayload,
+  sendAnnouncement,
+  type AnnouncementContext,
+} from "./announcement";
+import { AnnouncementRecipientPayloadSchema } from "./announcement-config";
 
 const INTERVAL_MS = Math.max(1000, Number(process.env.BROADCAST_INTERVAL_MS ?? 4000));
 const STALE_PROCESSING_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
@@ -23,7 +29,10 @@ const g = globalThis as unknown as WorkerGlobals;
 
 export type ProcessOutcome = "SENT" | "FAILED" | "SKIPPED" | "IDLE";
 
-const contextCache = new Map<string, { kind: string; ctx: SaveTheDateContext | InvitationContext }>();
+const contextCache = new Map<
+  string,
+  { kind: string; ctx: SaveTheDateContext | InvitationContext | AnnouncementContext }
+>();
 
 /**
  * Worker em processo (mesmo padrão do watchdog do WhatsApp): acorda em intervalo
@@ -131,6 +140,8 @@ export async function processOne(
     return processSaveTheDateRecipient(broadcast.id, recipient, injectedCtx);
   } else if (broadcast.kind === "OFFICIAL_INVITATION") {
     return processOfficialInvitationRecipient(broadcast.id, recipient, broadcast.payloadJson);
+  } else if (broadcast.kind === "ANNOUNCEMENT") {
+    return processAnnouncementRecipient(broadcast.id, recipient, broadcast.payloadJson);
   } else {
     await prisma.broadcastRecipient.update({
       where: { id: recipient.id },
@@ -318,6 +329,61 @@ async function processOfficialInvitationRecipient(
     },
   });
 
+  return sendRes.ok ? "SENT" : "FAILED";
+}
+
+async function failRecipient(id: string, error: string): Promise<ProcessOutcome> {
+  await prisma.broadcastRecipient.update({
+    where: { id },
+    data: { status: "FAILED", error, processingStartedAt: null },
+  });
+  return "FAILED";
+}
+
+async function processAnnouncementRecipient(
+  broadcastId: string,
+  recipient: { id: string; payloadJson: string | null },
+  broadcastPayloadJson: string | null,
+): Promise<ProcessOutcome> {
+  if (!broadcastPayloadJson) return failRecipient(recipient.id, "BROADCAST_PAYLOAD_MISSING");
+
+  let ctx: AnnouncementContext;
+  const cached = contextCache.get(broadcastId);
+  if (cached && cached.kind === "ANNOUNCEMENT") {
+    ctx = cached.ctx as AnnouncementContext;
+  } else {
+    const loaded = await loadAnnouncementContextFromPayload(broadcastPayloadJson);
+    if (!loaded.ok) return failRecipient(recipient.id, loaded.error);
+    ctx = loaded.ctx;
+    contextCache.set(broadcastId, { kind: "ANNOUNCEMENT", ctx });
+  }
+
+  if (!recipient.payloadJson) return failRecipient(recipient.id, "RECIPIENT_PAYLOAD_MISSING");
+  let parsed;
+  try {
+    parsed = AnnouncementRecipientPayloadSchema.safeParse(JSON.parse(recipient.payloadJson));
+  } catch {
+    return failRecipient(recipient.id, "INVALID_RECIPIENT_PAYLOAD");
+  }
+  if (!parsed.success) return failRecipient(recipient.id, "INVALID_RECIPIENT_PAYLOAD");
+
+  let sendRes;
+  try {
+    sendRes = await sendAnnouncement({ ctx, recipient: parsed.data });
+  } catch (err) {
+    return failRecipient(recipient.id, err instanceof Error ? err.message : String(err));
+  }
+
+  await prisma.broadcastRecipient.update({
+    where: { id: recipient.id },
+    data: {
+      status: sendRes.ok ? "SENT" : "FAILED",
+      channelUsed: sendRes.channelUsed ?? null,
+      error: sendRes.ok ? null : sendRes.error ?? "SEND_FAILED",
+      sentAt: sendRes.ok ? new Date() : null,
+      processingStartedAt: null,
+    },
+  });
   return sendRes.ok ? "SENT" : "FAILED";
 }
 

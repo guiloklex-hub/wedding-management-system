@@ -26,6 +26,7 @@ Os checks abaixo são aplicados via `requireFinanceAccess()` nas pages e `denyIf
 | QR Code PIX do gift | ✅ | ✅ (`canEdit`) | 🚫 redirect |
 | Dia D + Seating | ✅ | ✅ | leitura |
 | Mesas (criar/editar/posicionar) | ✅ | ✅ | 🚫 (`denyIfNoEdit`) |
+| Comunicações (Save the Date, Convites, Avisos) | ✅ | ver, rascunhos e testes; envio 🚫 (`denyIfNoManage`) | 🚫 redirect |
 | Lua de mel | ✅ | ✅ | leitura |
 | Enxoval | ✅ | ✅ | leitura |
 | **Pagamentos** | ✅ | 🚫 redirect | 🚫 redirect |

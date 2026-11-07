@@ -192,6 +192,19 @@ comportamentos principais.
 
 ---
 
+## 📣 Comunicações (`/dashboard/communications`)
+
+Hub com abas que reúne os envios aos convidados (detalhes em
+[comunicacoes.md](comunicacoes.md)):
+
+- **Save the Date** — anúncio da data para todos ([save-the-date.md](save-the-date.md)).
+- **Convites Oficiais** — convite formal com PIN e RSVP ([invitations.md](invitations.md)).
+- **Avisos** — mensagens livres (sem tags obrigatórias) com público filtrado por
+  status de RSVP, tags, lado e padrinhos, ajuste manual por família, canal
+  escolhido por aviso, histórico com rascunhos e relatório de entrega.
+
+---
+
 ## 15. ⚙️ Ajustes (`/dashboard/settings`)
 
 Abas:

@@ -2400,5 +2400,299 @@
       "resendStarted": "Resending failed items started.",
       "broadcastCancelled": "Broadcast cancelled."
     }
+  },
+  "communications": {
+    "tabs": {
+      "aria": "Communication sections",
+      "overview": "Overview",
+      "saveTheDate": "Save the Date",
+      "invitations": "Official Invitations",
+      "announcements": "Announcements"
+    },
+    "hub": {
+      "title": "Communications",
+      "subtitle": "Everything you send to your guests in one place: Save the Date, official invitations and announcements.",
+      "items": {
+        "saveTheDate": {
+          "title": "Save the Date",
+          "description": "Announce the wedding date to every guest, with artwork and website links."
+        },
+        "invitations": {
+          "title": "Official Invitations",
+          "description": "Send the formal invitation with PIN, RSVP link and response deadline."
+        },
+        "announcements": {
+          "title": "Announcements",
+          "description": "Send reminders and information in free text, choosing who receives them — for example, only confirmed guests."
+        }
+      },
+      "status": {
+        "none": "Nothing sent yet",
+        "broadcast": "{status} · {sent} of {total} sent",
+        "announcements": "{drafts, plural, =0 {No drafts} one {# draft} other {# drafts}} · {sent, plural, =0 {no announcements sent} one {# announcement sent} other {# announcements sent}}",
+        "announcementsWithLast": "{drafts, plural, =0 {No drafts} one {# draft} other {# drafts}} · last sent on {date}",
+        "label": {
+          "DRAFT": "Draft",
+          "SENDING": "Sending",
+          "PAUSED": "Paused",
+          "DONE": "Done",
+          "CANCELLED": "Cancelled"
+        }
+      }
+    }
+  },
+  "announcements": {
+    "status": {
+      "DRAFT": "Draft",
+      "SENDING": "Sending",
+      "PAUSED": "Paused",
+      "DONE": "Completed",
+      "CANCELLED": "Cancelled"
+    },
+    "list": {
+      "title": "Announcements",
+      "subtitle": "Free-text messages to remind your guests of important information, with no required tags. Choose who receives them — for example, only guests who confirmed.",
+      "new": "New announcement",
+      "empty": "No announcements yet. Create the first one to remind your guests of something important.",
+      "colTitle": "Announcement",
+      "colStatus": "Status",
+      "colChannel": "Channel",
+      "colDate": "Date",
+      "colResult": "Result",
+      "untitled": "Untitled announcement",
+      "sentOn": "Sent on",
+      "createdOn": "Created on",
+      "result": "{sent} sent · {failed} failed"
+    },
+    "detail": {
+      "back": "Back to Announcements",
+      "draftSubtitle": "Draft — write the message, choose who receives it and send when ready.",
+      "sentSubtitle": "Sending report. Sent announcements cannot be changed; duplicate to reuse."
+    },
+    "editor": {
+      "notConfigured": "Set the couple's names (in onboarding or Settings) to be able to send announcements.",
+      "audienceTitle": "Who will receive it",
+      "unsaved": "Unsaved changes",
+      "allSaved": "All saved",
+      "compose": {
+        "title": "Message",
+        "subjectLabel": "Title",
+        "subjectHint": "Shown in the history and as the e-mail subject. Not included in the WhatsApp text.",
+        "messageLabel": "Announcement text",
+        "messagePlaceholder": "E.g.: Hi {tag}! A reminder that the ceremony starts at 4pm sharp and the dress code is smart casual. See you there!",
+        "tagsOptional": "Tags are optional — use them only if you want to personalize.",
+        "unknownTags": "These tags are not recognized and will be sent as plain text: {tags}",
+        "artLabel": "Image or PDF (optional)",
+        "removeArt": "Remove file",
+        "artHint": "PNG, JPG, WEBP or PDF up to 10 MB. Sent as an image on WhatsApp and as an attachment by e-mail."
+      },
+      "channel": {
+        "title": "Sending channel",
+        "unavailable": "The chosen channel is not available right now (WhatsApp disconnected or e-mail not configured).",
+        "AUTO": {
+          "label": "WhatsApp, with e-mail fallback",
+          "hint": "Tries WhatsApp first; if it fails or there is no phone, sends by e-mail."
+        },
+        "WHATSAPP": {
+          "label": "WhatsApp only",
+          "hint": "Guests without a valid phone are left out."
+        },
+        "EMAIL": {
+          "label": "E-mail only",
+          "hint": "Guests without an e-mail are left out."
+        }
+      },
+      "preview": {
+        "title": "Preview",
+        "empty": "Write the message to see the preview.",
+        "hint": "Preview using the first recipient in the list.",
+        "sampleGuests": "Anna and Bruno"
+      },
+      "test": {
+        "title": "Send test",
+        "toPlaceholder": "Phone or e-mail (empty = the one in your profile)",
+        "whatsapp": "Test on WhatsApp",
+        "email": "Test by e-mail",
+        "hint": "The test uses the saved draft and sample data; no guest receives it."
+      },
+      "actions": {
+        "delete": "Delete",
+        "duplicate": "Duplicate",
+        "save": "Save draft",
+        "send": "{count, plural, =0 {Send} one {Send to # recipient} other {Send to # recipients}}",
+        "sendNeedsManager": "Only the couple or the admin can start sending."
+      },
+      "confirmSend": {
+        "title": "Send announcement now?",
+        "summary": "{messages, plural, one {# message will be sent} other {# messages will be sent}}, reaching {guests, plural, one {# guest} other {# guests}}.",
+        "channel": "Channel: {channel}.",
+        "skipped": "{count, plural, one {# household will be left out} other {# households will be left out}} due to missing or duplicate contact.",
+        "withArt": "The attached file will be included.",
+        "irreversible": "Once started, the announcement cannot be edited.",
+        "confirm": "Send"
+      },
+      "confirmDelete": {
+        "title": "Delete draft?",
+        "description": "The draft and its attached file will be deleted. This cannot be undone.",
+        "confirm": "Delete"
+      },
+      "toasts": {
+        "saved": "Draft saved.",
+        "testSent": "Test sent.",
+        "started": "Sending started.",
+        "deleted": "Draft deleted.",
+        "duplicated": "Announcement duplicated."
+      }
+    },
+    "tags": {
+      "nomes": {
+        "hint": "the couple's names"
+      },
+      "convidados": {
+        "hint": "household guests receiving the announcement"
+      },
+      "data": {
+        "hint": "wedding date in full"
+      },
+      "local": {
+        "hint": "main registered venue"
+      },
+      "site": {
+        "hint": "wedding website"
+      },
+      "site-presentes": {
+        "hint": "gift registry"
+      },
+      "link-rsvp": {
+        "hint": "RSVP link"
+      },
+      "pin": {
+        "hint": "RSVP PIN (guests without a PIN are left out)"
+      }
+    },
+    "audience": {
+      "rsvp": {
+        "label": "Attendance status",
+        "hint": "Default: confirmed only. Guests not yet invited never receive it.",
+        "CONFIRMED": "Confirmed",
+        "INVITED": "Pending",
+        "MAYBE": "Maybe",
+        "DECLINED": "Declined"
+      },
+      "includeTags": {
+        "label": "Only guests with tags",
+        "hint": "With no tags selected, tags are not used as a filter."
+      },
+      "excludeTags": {
+        "label": "Exclude guests with tags"
+      },
+      "side": {
+        "label": "Side",
+        "hint": "None selected = all sides.",
+        "NOIVO": "Groom",
+        "NOIVA": "Bride",
+        "AMBOS": "Both",
+        "UNSET": "No side"
+      },
+      "padrinhos": {
+        "label": "Wedding party",
+        "ALL": "Include",
+        "ONLY": "Wedding party only",
+        "EXCLUDE": "Exclude wedding party"
+      }
+    },
+    "preList": {
+      "title": "Recipient pre-list",
+      "summary": {
+        "messages": "messages",
+        "guests": "guests reached",
+        "skipped": "skipped",
+        "unchecked": "unchecked"
+      },
+      "searchPlaceholder": "Search by name",
+      "checkAll": "Check all",
+      "uncheckAll": "Uncheck all",
+      "colInclude": "Include",
+      "colName": "Recipient",
+      "colChannel": "Channel",
+      "colStatus": "Status",
+      "toggleAria": "Include {name} in the send",
+      "family": "household",
+      "channel": {
+        "WHATSAPP": "WhatsApp",
+        "EMAIL": "E-mail"
+      },
+      "ready": "Ready",
+      "reason": {
+        "MANUAL_EXCLUDED": "Unchecked",
+        "NO_PIN": "No PIN",
+        "NO_CONTACT": "No phone or e-mail",
+        "NO_PHONE": "No phone",
+        "NO_EMAIL": "No e-mail",
+        "INVALID_PHONE": "Invalid phone",
+        "DUPLICATE_PHONE": "Duplicate phone",
+        "DUPLICATE_EMAIL": "Duplicate e-mail"
+      },
+      "empty": "No one matches the chosen filters.",
+      "noMatch": "No results for this search.",
+      "familyHint": "Households receive a single message at the group contact, mentioning only the members that match the filter."
+    },
+    "report": {
+      "progressTitle": "Progress",
+      "metrics": {
+        "pending": "queued",
+        "sent": "sent",
+        "failed": "failed",
+        "skipped": "skipped"
+      },
+      "queued": "{count, plural, one {Waiting for # other send to finish.} other {Waiting for # other sends to finish.}}",
+      "actions": {
+        "resend": "Retry {count, plural, one {# failure} other {# failures}}",
+        "cancel": "Cancel sending",
+        "csv": "Export CSV",
+        "duplicate": "Duplicate as new draft"
+      },
+      "messageTitle": "Message sent",
+      "viewArt": "View file",
+      "recipientsTitle": "Recipients",
+      "recipientStatus": {
+        "PENDING": "Queued",
+        "PROCESSING": "Sending",
+        "SENT": "Sent",
+        "FAILED": "Failed",
+        "SKIPPED": "Skipped"
+      },
+      "reason": {
+        "CANCELLED": "Cancelled",
+        "DELIVERY_STATE_UNKNOWN": "Unknown state (may have been delivered)",
+        "WHATSAPP_FAILED": "WhatsApp failure",
+        "EMAIL_FAILED": "E-mail failure",
+        "SEND_FAILED": "Sending failed",
+        "BROADCAST_PAYLOAD_MISSING": "Announcement data missing",
+        "RECIPIENT_PAYLOAD_MISSING": "Recipient data missing",
+        "INVALID_RECIPIENT_PAYLOAD": "Invalid recipient data",
+        "INVALID_SNAPSHOT": "Invalid announcement data",
+        "ART_READ_ERROR": "Could not read the attached file"
+      },
+      "audience": {
+        "include": "with tag {tag}",
+        "exclude": "without tag {tag}"
+      },
+      "csvFileName": "announcement",
+      "toasts": {
+        "resent": "Failures queued again.",
+        "cancelled": "Sending cancelled."
+      },
+      "confirmCancel": {
+        "title": "Cancel sending?",
+        "description": "{count, plural, one {# queued message will not be sent.} other {# queued messages will not be sent.}}",
+        "confirm": "Cancel sending"
+      },
+      "confirmResend": {
+        "title": "Resend anyway?",
+        "description": "{count, plural, one {# send is} other {# sends are}} in an unknown state and may have arrived already. Resending may duplicate the message.",
+        "confirm": "Resend"
+      }
+    }
   }
 }

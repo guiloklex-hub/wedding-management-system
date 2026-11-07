@@ -1,6 +1,6 @@
 # ✉️ Módulo de Convites Oficiais
 
-O módulo de **Convites Oficiais** (`/dashboard/invitations`) gerencia o envio dos convites formais do casamento via WhatsApp e e-mail com controle de acesso por PIN de 4 dígitos para cada convidado ou grupo.
+O módulo de **Convites Oficiais** (`/dashboard/communications/invitations`, menu **Comunicações**; a rota antiga `/dashboard/invitations` redireciona) gerencia o envio dos convites formais do casamento via WhatsApp e e-mail com controle de acesso por PIN de 4 dígitos para cada convidado ou grupo.
 
 ---
 

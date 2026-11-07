@@ -23,7 +23,8 @@ Legenda: **sim** = fluxo principal equivalente; **parcial** = tela existe, mas f
 | `/dashboard/gifts`, `/gifts/[id]/pix` | Parcial | Presente e Pix individual com valor e identificador do presente; baixa continua manual, sem confirmação automática. |
 | `/dashboard/wedding-day`, `/wedding-day/seating` | Parcial | Cronograma, plano B, check-in e mesas locais; não há arrastar e soltar da web. |
 | `/dashboard/honeymoon`, `/trousseau` | Parcial | Cadastro e resumos locais; alguns campos, moedas de item e gráficos ainda diferem. |
-| `/dashboard/save-the-date`, `/invitations` | Parcial | Modelo local, anexo, envio individual pelo compartilhamento do Android e confirmação manual. Disparos em lote, controle de entrega, PIN e links públicos de RSVP exigem o servidor web. |
+| `/dashboard/communications/announcements` (Avisos) | Não | Avisos com público filtrado existem só na web; a projeção do backup rotula todos os destinatários de broadcast como `INVITE_*`. |
+| `/dashboard/communications/save-the-date`, `/communications/invitations` | Parcial | Modelo local, anexo, envio individual pelo compartilhamento do Android e confirmação manual. Disparos em lote, controle de entrega, PIN e links públicos de RSVP exigem o servidor web. |
 | `/dashboard/settings`, `/onboarding` | Local | Ajustes do evento, idioma, moeda, Pix, backup e segurança do aparelho. O wizard e configurações de servidor da web não foram reproduzidos. |
 | `/dashboard/profile`, `/profile/change-password` | Não | Contas, senha e 2FA são conceitos do servidor; o Android offline usa biometria ou PIN do aparelho. |
 | `/dashboard/help` | Parcial | Ajuda móvel curta; conteúdo extenso e histórico da web não foram portados. |

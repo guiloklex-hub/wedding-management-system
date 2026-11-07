@@ -10,6 +10,7 @@ import {
   Gift,
   Lock,
   Mail,
+  Megaphone,
   MessageSquare,
   PiggyBank,
   Plane,
@@ -563,7 +564,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     steps: [
       {
         title: "Monte o conteúdo",
-        body: "Em Save the Date, suba a arte (PNG, JPG, WEBP ou PDF, até 10 MB), preencha o Site dos noivos e a Lista de presentes (opcionais — links externos como Wedy) e escreva a mensagem.",
+        body: "Em Comunicações › Save the Date, suba a arte (PNG, JPG, WEBP ou PDF, até 10 MB), preencha o Site dos noivos e a Lista de presentes (opcionais — links externos como Wedy) e escreva a mensagem.",
       },
       {
         title: "Use as variáveis",
@@ -592,6 +593,32 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "Defina a data e os nomes do casal (no onboarding) antes de enviar.",
       "Envios disparam mensagens reais — use sempre o teste primeiro.",
       "Telefone fora do formato (sem DDD/DDI ou com poucos dígitos) aparece na pré-lista como 'Telefone inválido' e não envia por WhatsApp — confira a coluna de status antes de disparar.",
+    ],
+  },
+  {
+    id: "announcements",
+    title: "Enviar avisos só para quem você escolher",
+    category: "communications",
+    keywords: ["aviso", "avisos", "lembrete", "comunicado", "confirmados", "mensagem", "whatsapp", "email", "comunicações"],
+    icon: Megaphone,
+    summary:
+      "Mande lembretes e informações com texto livre — sem tags obrigatórias — escolhendo quem recebe, por exemplo só os convidados confirmados.",
+    steps: [
+      { title: "Crie um aviso", body: "Menu lateral › Comunicações › aba Avisos › 'Novo aviso'. Cada aviso fica salvo como rascunho até você enviar." },
+      { title: "Escreva a mensagem", body: "Dê um título (vira o assunto do e-mail) e escreva o texto. Tags como {convidados}, {data} ou {local} são opcionais; tags desconhecidas são enviadas como texto e o editor avisa." },
+      { title: "Escolha quem recebe", body: "Por padrão só os Confirmados. Combine com tags (incluir ou excluir), lado (noivo/noiva/ambos) e padrinhos. Na pré-lista, desmarque famílias específicas se quiser." },
+      { title: "Escolha o canal", body: "WhatsApp com e-mail de reserva (padrão), somente WhatsApp ou somente e-mail. Quem não tem o contato necessário aparece como ignorado na pré-lista." },
+      { title: "Teste e envie", body: "Envie um teste para você, confira a prévia e clique em 'Enviar'. O relatório mostra o andamento, permite reenviar falhas, cancelar, exportar CSV e duplicar o aviso." },
+    ],
+    tips: [
+      "Famílias recebem uma única mensagem no contato do grupo, citando só os integrantes que batem com o filtro — mesmo que o dono do contato não bata.",
+      "Use 'Duplicar' para reaproveitar um aviso enviado como modelo; o arquivo anexado vem junto.",
+      "Para lembrar quem ainda não respondeu, selecione Pendentes e use {link-rsvp} na mensagem.",
+    ],
+    warnings: [
+      "Depois de iniciado, o aviso não pode ser editado.",
+      "Os envios seguem uma fila única: se um Save the Date ou convite estiver em andamento, o aviso espera terminar.",
+      "Somente o casal ou o admin podem disparar o envio; o cerimonial pode preparar rascunhos e testar.",
     ],
   },
   {
@@ -1131,7 +1158,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     summary:
       "Configure e envie os convites oficiais com proteção por PIN de 4 dígitos para cada convidado ou família.",
     steps: [
-      { title: "Acesse Convites Oficiais", body: "Menu lateral › Pessoas & Negócios › Convites Oficiais (/dashboard/invitations)." },
+      { title: "Acesse Convites Oficiais", body: "Menu lateral › Comunicações › aba Convites Oficiais (/dashboard/communications/invitations)." },
       { title: "Configure a mensagem e arte", body: "Escreva a mensagem personalizada usando merge tags ({pin}, {link-rsvp}, {data-limite}, {nomes}, {convidados}, {data}, {local}). Se desejar, faça upload do arquivo de arte (imagem ou PDF de até 10 MB)." },
       { title: "Envie um teste", body: "Use a coluna 'Envio de Teste' para receber uma cópia do convite com PIN simulado no seu WhatsApp ou e-mail." },
       { title: "Verifique a pré-lista", body: "Abra a aba 'Destinatários' para conferir quem possui PIN gerado e quais contatos estão prontos." },

@@ -83,7 +83,7 @@ Arquivo: [prisma/schema.prisma](../prisma/schema.prisma).
 | `Gift` | Presentes (cash/item, status recebimento). |
 | `Task` | Tarefas (status, prioridade, responsável, deadline). |
 | `AuditLog` | Auditoria (entity, action, payload, userId). |
-| `Broadcast` | Campanha de envio em massa (`kind`, ex.: `SAVE_THE_DATE`; `status`, `total`). Reaproveitável para o convite formal futuro. |
+| `Broadcast` | Campanha de envio em massa. `kind`: `SAVE_THE_DATE`, `OFFICIAL_INVITATION` ou `ANNOUNCEMENT` (avisos). `status`: `DRAFT` (rascunho de aviso, nunca processado pelo worker) → `SENDING` → `DONE`/`CANCELLED`. `payloadJson` guarda o snapshot versionado (convites e avisos). |
 | `BroadcastRecipient` | Item da fila de um `Broadcast` (`refType`/`refId`, `phone`, `email`, `status` PENDING/SENT/FAILED/SKIPPED). Cascade no delete do `Broadcast`. |
 
 ### Convenções

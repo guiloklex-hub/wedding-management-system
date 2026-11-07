@@ -6,6 +6,14 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.2.0",
+    date: "2026-11-07",
+    highlights: [
+      "📣 **Avisos**: mensagens livres para os convidados, sem tags obrigatórias, com público escolhido — status de RSVP (padrão: só confirmados), tags, lado, padrinhos e ajuste manual por família. Canal por aviso (WhatsApp com e-mail de reserva, só WhatsApp ou só e-mail), rascunhos, histórico e relatório de entrega.",
+      "🗂️ **Menu Comunicações**: Save the Date, Convites Oficiais e Avisos agora ficam juntos em um único item do menu, com abas e o status do último envio de cada um. As rotas antigas redirecionam automaticamente.",
+    ],
+  },
+  {
     version: "1.1.0",
     date: "2026-09-29",
     highlights: [

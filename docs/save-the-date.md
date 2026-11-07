@@ -2,7 +2,8 @@
 
 Módulo para avisar os convidados da **data** do casamento — com uma arte
 (imagem ou PDF) e uma mensagem curta — **antes** do convite formal. Rota:
-`/dashboard/save-the-date`.
+`/dashboard/communications/save-the-date` (menu **Comunicações**; a rota antiga
+`/dashboard/save-the-date` redireciona). Veja também [comunicacoes.md](comunicacoes.md).
 
 ## Visão geral
 

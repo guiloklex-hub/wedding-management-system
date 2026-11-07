@@ -246,3 +246,9 @@ e linhas de site/lista de presentes condicionais. O disparo em massa usa a fila
 `Broadcast`/`BroadcastRecipient` drenada por um worker com throttle
 (`broadcast-worker.ts`, env `BROADCAST_INTERVAL_MS`) e o backstop
 `GET /api/cron/broadcast`. Detalhes em [save-the-date.md](save-the-date.md).
+
+O kind `ANNOUNCEMENT` (avisos) usa a mesma fila, com mensagem livre (sem tags
+obrigatórias), título como assunto do e-mail e canal escolhido por aviso via
+`deliverByChannel` ([channel-policy.ts](../src/lib/notifications/channel-policy.ts)) —
+o mesmo helper usado pelos Convites Oficiais (WhatsApp com e-mail de reserva,
+só WhatsApp ou só e-mail). Detalhes em [comunicacoes.md](comunicacoes.md).

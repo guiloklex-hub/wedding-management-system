@@ -47,6 +47,7 @@ confirmou a presença.
 - ✅ **Tarefas** com ~40 templates pré-prontos baseados na data do casamento
 - 👥 **Convidados** com **RSVP por link público**, +1s, dietary, padrinhos
 - 💌 **Save the Date** — arte (imagem/PDF) + mensagem com variáveis, site dos noivos e lista de presentes, envio em massa por WhatsApp/e-mail com fila e throttle
+- 📣 **Comunicações** — Save the Date, Convites Oficiais e **Avisos** num só menu; avisos com texto livre para um público escolhido (ex.: só confirmados), por WhatsApp e/ou e-mail, com rascunhos e relatório. Veja [comunicacoes.md](docs/comunicacoes.md)
 - 🎁 **Presentes** (cash/item) com controle de agradecimentos
 - 🌴 **Lua de mel** (destino, atividades, hospedagens, vôos)
 - 🛏️ **Enxoval** por cômodo
